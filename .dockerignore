@@ -1,0 +1,8 @@
+.coveralls.yml
+Dockerfile
+.git
+.gitignore
+.idea
+README.md
+target
+.travis.yml

@@ -1,0 +1,58 @@
+package org.broadinstitute.dsde.agora.server.webservice
+
+import akka.actor.Props
+import com.gettyimages.spray.swagger.SwaggerHttpService
+import com.wordnik.swagger.model.ApiInfo
+import org.broadinstitute.dsde.agora.server.AgoraConfig
+import org.broadinstitute.dsde.agora.server.webservice.tasks.TasksService
+import org.broadinstitute.dsde.agora.server.webservice.util.StandardServiceHandlerProps
+import spray.routing._
+
+import scala.reflect.runtime.universe._
+
+object ApiServiceActor {
+  def props: Props = Props(classOf[ApiServiceActor])
+}
+
+class ApiServiceActor extends HttpServiceActor {
+  override def actorRefFactory = context
+
+  trait ActorRefFactoryContext {
+    def actorRefFactory = context
+  }
+
+  val tasksService = new TasksService with ActorRefFactoryContext with StandardServiceHandlerProps
+
+  def possibleRoutes = tasksService.routes ~ swaggerService.routes ~
+    get {
+      pathSingleSlash {
+          getFromResource("swagger/index.html")
+      } ~ getFromResourceDirectory("swagger/") ~ getFromResourceDirectory("META-INF/resources/webjars/swagger-ui/2.0.24/")
+    }
+
+  def receive = runRoute(possibleRoutes)
+
+  val swaggerService = new SwaggerHttpService {
+    override def apiTypes = Seq(typeOf[TasksService])
+
+    override def apiVersion = AgoraConfig.SwaggerConfig.apiVersion
+
+    override def baseUrl = AgoraConfig.SwaggerConfig.baseUrl
+
+    override def docsPath = AgoraConfig.SwaggerConfig.apiDocs
+
+    override def actorRefFactory = context
+
+    override def swaggerVersion = AgoraConfig.SwaggerConfig.swaggerVersion
+
+    override def apiInfo = Some(
+      new ApiInfo(
+        AgoraConfig.SwaggerConfig.info,
+        AgoraConfig.SwaggerConfig.description,
+        AgoraConfig.SwaggerConfig.termsOfServiceUrl,
+        AgoraConfig.SwaggerConfig.contact,
+        AgoraConfig.SwaggerConfig.license,
+        AgoraConfig.SwaggerConfig.licenseUrl)
+    )
+  }
+}

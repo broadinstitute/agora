@@ -2,11 +2,16 @@ package org.broadinstitute.dsde.agora.server
 
 import akka.actor.ActorSystem
 import akka.io.IO
+import akka.io.Tcp.CommandFailed
+import akka.pattern.ask
+import akka.util.Timeout
 import com.typesafe.config.Config
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import net.ceedubs.ficus.Ficus._
 import org.broadinstitute.dsde.agora.server.webservice.ApiServiceActor
 import spray.can.Http
+import scala.concurrent.duration._
+import scala.concurrent.Await
 
 import scala.util.Try
 
@@ -18,22 +23,23 @@ class ServerInitializer(val config: Config) extends LazyLogging {
   lazy val webserviceInterface = config.as[Option[String]]("webservice.interface").getOrElse("0.0.0.0")
 
   def startAllServices() {
-    try {
-      startWebServiceActors()
-    } catch {
-      case e: Exception =>
-        logger.error("Error starting services.  Stopping and exiting!", e)
-        stopAndExit()
-    }
+    startWebServiceActors()
   }
 
   def stopAllServices() {
     stopAndCatchExceptions(stopWebServiceActors())
   }
 
-  private def startWebServiceActors() {
+  private def startWebServiceActors() = {
+    implicit val timeout = Timeout(5.seconds)
     val service = actorSystem.actorOf(ApiServiceActor.props, "agora-actor")
-    IO(Http) ! Http.Bind(service, interface = webserviceInterface, port = webservicePort)
+    Await.result(IO(Http) ? Http.Bind(service, interface = webserviceInterface, port = webservicePort), timeout.duration) match {
+      case CommandFailed(b: Http.Bind) =>
+        logger.error(s"Unable to bind to port $webservicePort on interface $webserviceInterface")
+        actorSystem.shutdown()
+        stopAndExit()
+      case _ =>
+    }
   }
 
   private def stopWebServiceActors() {

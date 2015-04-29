@@ -23,6 +23,8 @@ libraryDependencies ++= Seq(
   "net.ceedubs" %% "ficus" % "1.1.2",
   "org.webjars" % "swagger-ui" % "2.0.24",
   "com.gettyimages" %% "spray-swagger" % "0.5.0",
+  "org.mongodb" %% "casbah" % "2.8.1",
+  "com.novus" %% "salat" % "1.9.9",
   //---------- Test libraries -------------------//
   "io.spray" %% "spray-testkit" % sprayV % Test,
   "org.scalatest" %% "scalatest" % "2.2.4" % Test

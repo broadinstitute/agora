@@ -1,5 +1,7 @@
 language: scala
 scala:
   - 2.11.6
+services:
+  - mongodb
 script: sbt clean coverage test
 after_success: sbt coveralls

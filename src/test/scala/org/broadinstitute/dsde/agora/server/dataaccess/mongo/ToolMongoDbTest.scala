@@ -2,7 +2,6 @@ package org.broadinstitute.dsde.agora.server.dataaccess.mongo
 
 import java.util.Date
 
-import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.MongoClient
 import com.mongodb.casbah.commons.MongoDBObject
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.AgoraMongoClient._
@@ -38,10 +37,29 @@ class ToolMongoDbTest extends FlatSpec with BeforeAndAfterAll {
 
     testFixture.agoraDao.insert(agoraToolOne)
 
-    val tools = testFixture.agoraDao.findByName("echo")
+    val entities = testFixture.agoraDao.findByName("echo")
 
-    assert(tools.size == 1)
-    assert(tools.toList.head == agoraToolOne)
+    assert(entities.size == 1)
+    assert(entities.toVector.head == agoraToolOne)
+  }
+
+  "The method store" should "be able to query by namespace, name and version and get back a single entity" in {
+    val testFixture = fixture
+
+    val entity = testFixture.agoraDao.find(namespace = "broadinstitute", name = "echo", id = agoraToolOne.metadata.id.get)
+
+    assert(entity == agoraToolOne)
+  }
+
+  "The method store" should "increment the id number if we insert the same namespace/name entity" in {
+    val testFixture = fixture
+
+    testFixture.agoraDao.insert(agoraToolOne)
+
+    val entity1 = testFixture.agoraDao.find("broadinstitute", "echo", agoraToolOne.metadata.id.get - 1)
+    val entity2 = testFixture.agoraDao.find("broadinstitute", "echo", agoraToolOne.metadata.id.get)
+
+    assert(entity1.metadata.id != entity2.metadata.id)
   }
 
   "The method store" should "be able to query by a string in the entity payload" in {
@@ -49,9 +67,9 @@ class ToolMongoDbTest extends FlatSpec with BeforeAndAfterAll {
 
     testFixture.agoraDao.insert(agoraToolTwo)
 
-    val tools = testFixture.agoraDao.findPayloadByRegex(".*echo2.*")
+    val entities = testFixture.agoraDao.findPayloadByRegex(".*echo2.*")
 
-    assert(tools.size == 1)
-    assert(tools.toList.head == agoraToolTwo)
+    assert(entities.size == 1)
+    assert(entities.toVector.head == agoraToolTwo)
   }
 }

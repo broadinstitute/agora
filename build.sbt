@@ -1,4 +1,3 @@
-import org.scoverage.coveralls.CoverallsPlugin.CoverallsKeys._
 import sbtassembly.Plugin.AssemblyKeys._
 import sbtassembly.Plugin._
 import sbtrelease.ReleasePlugin._
@@ -65,8 +64,4 @@ val customMergeStrategy: String => MergeStrategy = {
 }
 
 mergeStrategy in assembly := customMergeStrategy
-
-Seq(CoverallsPlugin.singleProject: _*)
-
-coverallsServiceName := "travis-pro" 
 

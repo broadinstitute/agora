@@ -29,6 +29,7 @@ class ServerInitializer(val config: Config) extends LazyLogging {
 
   def startAllServices() {
     startWebServiceActors()
+    createAgoraDao()
   }
 
   def stopAllServices() {
@@ -46,7 +47,7 @@ class ServerInitializer(val config: Config) extends LazyLogging {
       case _ =>
     }
   }
-
+  
   private def stopWebServiceActors() {
     IO(Http) ! Http.CloseAll
   }
@@ -62,5 +63,9 @@ class ServerInitializer(val config: Config) extends LazyLogging {
     Try(closure).recover {
       case ex: Throwable => logger.error("Exception ignored while shutting down.", ex)
     }
+  }
+
+  private def createAgoraDao() {
+    
   }
 }

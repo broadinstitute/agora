@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/broadinstitute/agora.svg?branch=master)](https://travis-ci.com/broadinstitute/agora?branch=master)
+[![Build Status](https://travis-ci.org/broadinstitute/agora.svg?branch=master)](https://travis-ci.org/broadinstitute/agora?branch=master)
 [![Coverage Status](https://coveralls.io/repos/broadinstitute/agora/badge.svg?branch=master)](https://coveralls.io/r/broadinstitute/agora?branch=master)
 
 

@@ -2,6 +2,9 @@
 package org.broadinstitute.dsde.agora.server.dataaccess.mongo
 
 import com.mongodb.casbah.Imports._
+
+import com.mongodb.casbah.commons.MongoDBObject
+import com.mongodb.DBObject
 import com.mongodb.casbah.MongoCollection
 import com.mongodb.casbah.query.Imports
 import com.novus.salat._
@@ -16,17 +19,12 @@ object AgoraMongoDao {
   val CounterCollectionName = "counters"
   val CounterSequenceField = "seq"
   val KeySeparator = ":"
+
+  def EntityToMongoDbObject(entity: AgoraEntity): DBObject = grater[AgoraEntity].asDBObject(entity)
+  def MongoDbObjectToEntity(mongoDBObject: DBObject): AgoraEntity = grater[AgoraEntity].asObject(mongoDBObject)
 }
 
 class AgoraMongoDao(collection: MongoCollection) extends AgoraDao {
-
-  override def findPayloadByRegex(regex: String): Seq[AgoraEntity] = {
-    find("payload" $regex regex)
-  }
-
-  override def findByName(name: String): Seq[AgoraEntity] = {
-    find("metadata.name" $eq name)
-  }
 
   /**
    * On insert we query for the given namespace/name if it exists we increment the id and store a new one.
@@ -36,18 +34,18 @@ class AgoraMongoDao(collection: MongoCollection) extends AgoraDao {
   override def insert(entity: AgoraEntity): AgoraEntity = {
     //update the id
     val id = getNextId(entity)
-    entity.metadata.id = Option(id)
+    entity.id = Option(id)
 
     //insert the entity
-    val entityToInsert = grater[AgoraEntity].asDBObject(entity)
-    collection.insert(entityToInsert)
-    find(entityToInsert).head
+    val dbEntityToInsert = EntityToMongoDbObject(entity)
+    collection.insert(dbEntityToInsert)
+    findSingle(entity)
   }
 
   def getNextId(entity: AgoraEntity): Int = {
     //first check to see if we have a sequence
     val counterCollection = getCollection(collection.getDB, CounterCollectionName)
-    val counterId: String = entity.metadata.namespace + KeySeparator + entity.metadata.name
+    val counterId: String = entity.namespace + KeySeparator + entity.name
     val counterQuery = MongoDbIdField $eq counterId
 
     //if we don't have a sequence create one
@@ -64,10 +62,17 @@ class AgoraMongoDao(collection: MongoCollection) extends AgoraDao {
   }
 
   def find(query: Imports.DBObject) = {
-    (for (entity <- collection.find(query)) yield grater[AgoraEntity].asObject(entity)).toVector
+    (for (dbObject <- collection.find(query)) yield MongoDbObjectToEntity(dbObject)).toVector
   }
 
-  override def find(namespace: String, name: String, id: Int): AgoraEntity = {
-    find($and("metadata.namespace" $eq namespace, "metadata.name" $eq name, "metadata.id" $eq id)).head
+  override def find(entity: AgoraEntity): Seq[AgoraEntity] = find(EntityToMongoDbObject(entity))
+
+  override def findSingle(entity: AgoraEntity): AgoraEntity = {
+    val entityVector = find(EntityToMongoDbObject(entity))
+    entityVector.length match {
+      case 1 => entityVector.head
+      case 0 => throw new Exception("Found 0 documents matching: " + entity.toString)
+      case x if x > 1 => throw new Exception("Found >1 documents matching: " + entity.toString)
+    }
   }
 }

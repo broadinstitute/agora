@@ -4,7 +4,7 @@ import akka.actor.Props
 import com.gettyimages.spray.swagger.SwaggerHttpService
 import com.wordnik.swagger.model.ApiInfo
 import org.broadinstitute.dsde.agora.server.AgoraConfig
-import org.broadinstitute.dsde.agora.server.webservice.tasks.TasksService
+import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
 import org.broadinstitute.dsde.agora.server.webservice.util.StandardServiceHandlerProps
 import spray.routing._
 
@@ -21,9 +21,9 @@ class ApiServiceActor extends HttpServiceActor {
     def actorRefFactory = context
   }
 
-  val tasksService = new TasksService with ActorRefFactoryContext with StandardServiceHandlerProps
+  val methodsService = new MethodsService with ActorRefFactoryContext with StandardServiceHandlerProps
 
-  def possibleRoutes = tasksService.routes ~ swaggerService.routes ~
+  def possibleRoutes = methodsService.routes ~ swaggerService.routes ~
     get {
       pathSingleSlash {
           getFromResource("swagger/index.html")
@@ -33,7 +33,7 @@ class ApiServiceActor extends HttpServiceActor {
   def receive = runRoute(possibleRoutes)
 
   val swaggerService = new SwaggerHttpService {
-    override def apiTypes = Seq(typeOf[TasksService])
+    override def apiTypes = Seq(typeOf[MethodsService])
 
     override def apiVersion = AgoraConfig.SwaggerConfig.apiVersion
 

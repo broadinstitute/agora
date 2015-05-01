@@ -1,22 +1,22 @@
 package org.broadinstitute.dsde.agora.server.util
 
-import org.broadinstitute.dsde.agora.server.webservice.TasksQueryResponse
+import org.broadinstitute.dsde.agora.server.webservice.MethodsQueryResponse
 
 object AgoraTestUtil {
   val files: Map[String, String] = Map("cwlFile" -> "fake/file/url")
 
-  val taskMetadataMap = Map(
+  val methodsMetadataMap = Map(
     "author" -> "Dave Shiga", 
     "version" -> "1.0"
   )
 
   val testVaultId = "EAC779AD3F"
 
-  def testTask(vaultId: String) = {
-    TasksQueryResponse(
+  def testMethod(vaultId: String) = {
+    MethodsQueryResponse(
       vaultId,
       files,
-      taskMetadataMap
+      methodsMetadataMap
     )
   }
 }

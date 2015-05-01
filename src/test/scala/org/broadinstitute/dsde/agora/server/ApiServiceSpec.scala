@@ -1,10 +1,10 @@
 package org.broadinstitute.dsde.agora.server
 
 import org.broadinstitute.dsde.agora.server.util.AgoraTestUtil
-import org.broadinstitute.dsde.agora.server.webservice.{ApiJsonSupport, TasksQueryResponse}
-import org.broadinstitute.dsde.agora.server.webservice.tasks.TasksService
+import org.broadinstitute.dsde.agora.server.webservice.ApiJsonSupport._
+import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
-import ApiJsonSupport._
+import org.broadinstitute.dsde.agora.server.webservice.{ApiJsonSupport, MethodsQueryResponse}
 import org.scalatest.{FlatSpec, Matchers}
 import spray.routing.Directives
 import spray.testkit.ScalatestRouteTest
@@ -16,11 +16,11 @@ class ApiServiceSpec extends FlatSpec with Matchers with Directives with Scalate
     def actorRefFactory = system
   }
 
-  val tasksService = new TasksService with ActorRefFactoryContext with MockServiceHandlerProps
+  val methodsService = new MethodsService with ActorRefFactoryContext with MockServiceHandlerProps
 
-  "Agora" should "return information about a task/workflow, including metadata " in {
-    Get(ApiUtil.Tasks.withLeadingSlash + "/" + AgoraTestUtil.testVaultId) ~> tasksService.queryRoute ~> check {
-      responseAs[TasksQueryResponse] === AgoraTestUtil.testTask(AgoraTestUtil.testVaultId)
+  "Agora" should "return information about a method, including metadata " in {
+    Get(ApiUtil.Methods.withLeadingSlash + "/" + AgoraTestUtil.testVaultId) ~> methodsService.queryRoute ~> check {
+      responseAs[MethodsQueryResponse] === AgoraTestUtil.testMethod(AgoraTestUtil.testVaultId)
     }
   }
 }

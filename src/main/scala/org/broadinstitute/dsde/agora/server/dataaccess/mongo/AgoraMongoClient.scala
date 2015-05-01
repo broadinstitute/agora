@@ -5,11 +5,14 @@ import com.mongodb.casbah.{MongoClient, MongoCollection, MongoDB}
 
 object AgoraMongoClient {
 
-  def getDatabase(client: MongoClient, databaseName: String): MongoDB = {
-    client(databaseName)
+  val MethodsCollection = "methods"
+  val AgoraDatabase = "agora"
+
+  def getCollection(mongoDb: MongoDB, collectionName: String): MongoCollection = {
+    mongoDb(collectionName)
   }
 
-  def getCollection(mongoDB: MongoDB, collectionName: String): MongoCollection = {
-    mongoDB(collectionName)
+  def getMethodsCollection(client: MongoClient): MongoCollection = {
+    client(AgoraDatabase)(MethodsCollection)
   }
 }

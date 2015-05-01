@@ -13,6 +13,7 @@ RUN echo "deb http://dl.bintray.com/sbt/debian /" >> /etc/apt/sources.list.d/sbt
 RUN apt-get update && apt-get install -y --force-yes \
         curl \
         git \
+        mongodb \
         openjdk-7-jre-headless="$JAVA_DEBIAN_VERSION" \
         sbt \
         sudo \
@@ -26,16 +27,16 @@ RUN apt-get update && apt-get install -y --force-yes \
 EXPOSE 8000
 
 # Assumes Dockerfile lives in root of the git repo. Pull source files into container
-COPY build.sbt /usr/methodsrepo/build.sbt
-COPY assembly.sbt /usr/methodsrepo/assembly.sbt
-COPY project /usr/methodsrepo/project
-COPY src /usr/methodsrepo/src
+COPY build.sbt /usr/agora/build.sbt
+COPY assembly.sbt /usr/agora/assembly.sbt
+COPY project /usr/agora/project
+COPY src /usr/agora/src
 
 # Set the container's working directory
-WORKDIR /usr/methodsrepo
+WORKDIR /usr/agora
 
 # Build the web service application
-RUN sbt assembly
+RUN service mongodb start; sbt assembly
 
 # Start the webservice with default parameters
-ENTRYPOINT ["java", "-jar", "target/scala-2.11/methods-0.1-SNAPSHOT.jar"]
+ENTRYPOINT ["java", "-jar", "target/scala-2.11/agora-0.1-SNAPSHOT.jar"]

@@ -75,4 +75,9 @@ class AgoraMongoDao(collection: MongoCollection) extends AgoraDao {
       case x if x > 1 => throw new Exception("Found >1 documents matching: " + entity.toString)
     }
   }
+
+  override def findSingle(namespace: String, name: String, id: Int): AgoraEntity = {
+    val entity = AgoraEntity(namespace = Option(namespace), name = Option(name), id = Option(id))
+    findSingle(entity)
+  }
 }

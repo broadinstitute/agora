@@ -19,5 +19,5 @@ trait AgoraDao {
 
   def findSingle(entity: AgoraEntity): AgoraEntity
 
-  def find(namespace: String, name: String, id: Int): AgoraEntity
+  def findSingle(namespace: String, name: String, id: Int): AgoraEntity
 }

@@ -5,7 +5,7 @@ object ApiUtil {
 
   class ServiceRoute(val path: String) {
     def withLeadingSlash: String = {
-      "/" + path
+      "/methods/" + path
     }
   }
 

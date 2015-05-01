@@ -25,7 +25,7 @@ class ServerInitializer(val config: Config) extends LazyLogging {
   lazy val mongoDbHost = config.as[Option[String]]("mongodb.host").getOrElse("localhost")
   lazy val mongoDbPort = config.as[Option[Int]]("mongodb.port").getOrElse(27017)
   lazy val mongoDbUser = config.as[Option[String]]("mongodb.user")
-  lazy val mongoDbPassword = config.as[Option[String]]("monogdb.password")
+  lazy val mongoDbPassword = config.as[Option[String]]("mongodb.password")
 
   def startAllServices() {
     startWebServiceActors()

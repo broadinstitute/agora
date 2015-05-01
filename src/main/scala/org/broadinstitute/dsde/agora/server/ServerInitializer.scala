@@ -10,9 +10,9 @@ import com.typesafe.scalalogging.slf4j.LazyLogging
 import net.ceedubs.ficus.Ficus._
 import org.broadinstitute.dsde.agora.server.webservice.ApiServiceActor
 import spray.can.Http
-import scala.concurrent.duration._
-import scala.concurrent.Await
 
+import scala.concurrent.Await
+import scala.concurrent.duration._
 import scala.util.Try
 
 class ServerInitializer(val config: Config) extends LazyLogging {
@@ -22,8 +22,10 @@ class ServerInitializer(val config: Config) extends LazyLogging {
   lazy val webservicePort = config.as[Option[Int]]("webservice.port").getOrElse(8000)
   lazy val webserviceInterface = config.as[Option[String]]("webservice.interface").getOrElse("0.0.0.0")
 
-  lazy val mongodbHost = config.as[Option[String]]("mongodb.host").getOrElse("localhost")
+  lazy val mongoDbHost = config.as[Option[String]]("mongodb.host").getOrElse("localhost")
   lazy val mongoDbPort = config.as[Option[Int]]("mongodb.port").getOrElse(27017)
+  lazy val mongoDbUser = config.as[Option[String]]("mongodb.user")
+  lazy val mongoDbPassword = config.as[Option[String]]("monogdb.password")
 
   def startAllServices() {
     startWebServiceActors()

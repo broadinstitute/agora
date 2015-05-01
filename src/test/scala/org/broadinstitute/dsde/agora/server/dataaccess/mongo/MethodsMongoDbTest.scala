@@ -2,7 +2,6 @@ package org.broadinstitute.dsde.agora.server.dataaccess.mongo
 
 import java.util.Date
 
-import com.mongodb.casbah.MongoClient
 import com.mongodb.casbah.commons.MongoDBObject
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.AgoraMongoClient._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
@@ -22,7 +21,7 @@ class MethodsMongoDbTest extends FlatSpec with BeforeAndAfterAll {
 
   def fixture =
     new {
-      val methodsCollection = getMethodsCollection(MongoClient())
+      val methodsCollection = getMethodsCollection(getMongoClient)
       val agoraDao = new AgoraMongoDao(methodsCollection)
     }
 

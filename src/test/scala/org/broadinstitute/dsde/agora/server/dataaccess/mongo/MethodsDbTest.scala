@@ -2,12 +2,11 @@ package org.broadinstitute.dsde.agora.server.dataaccess.mongo
 
 import java.util.Date
 
-import com.mongodb.casbah.commons.MongoDBObject
-import org.broadinstitute.dsde.agora.server.dataaccess.mongo.AgoraMongoClient._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
+import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
 import org.scalatest.{BeforeAndAfterAll, FlatSpec}
 
-class MethodsMongoDbTest extends FlatSpec with BeforeAndAfterAll {
+class MethodsDbTest extends FlatSpec with BeforeAndAfterAll {
 
   val agoraTestMethod: AgoraEntity = new AgoraEntity(
     namespace = Option("broadinstitute"),
@@ -21,15 +20,8 @@ class MethodsMongoDbTest extends FlatSpec with BeforeAndAfterAll {
 
   def fixture =
     new {
-      val methodsCollection = getMethodsCollection(getMongoClient)
-      val agoraDao = new AgoraMongoDao(methodsCollection)
+      val agoraDao = AgoraDao.createAgoraDao
     }
-
-  override def beforeAll() = {
-    val testFixture = fixture
-    testFixture.methodsCollection.remove(MongoDBObject())
-    testFixture.methodsCollection.drop()
-  }
 
   "Agora" should "be able to store a method" in {
     val testFixture = fixture

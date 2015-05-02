@@ -29,13 +29,11 @@ trait MethodsService extends HttpService with PerRequestCreator {
     new ApiResponse(code = 500, message = "Internal Error")
   ))
   def queryRoute =
-    path(ApiUtil.Methods.path) {
-      parameters('namespace, 'name, 'id.as[Int]) { (namespace: String, name: String, id: Int)
-      =>
+    path(ApiUtil.Methods.path / Segment / Segment / Segment) { (namespace, name, id) =>
         get {
           requestContext =>
-            perRequest(requestContext, methodsQueryHandlerProps, ServiceMessages.Query(requestContext, namespace, name, id))
+            perRequest(requestContext, methodsQueryHandlerProps, ServiceMessages.Query(requestContext, namespace, name, id.toInt))
         }
       }
-    }
+
 }

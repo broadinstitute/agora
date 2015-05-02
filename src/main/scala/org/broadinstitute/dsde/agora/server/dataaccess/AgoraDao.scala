@@ -15,9 +15,9 @@ object AgoraDao {
 trait AgoraDao {
   def insert(entity: AgoraEntity): AgoraEntity
 
-  def findByName(name: String): Seq[AgoraEntity]
+  def find(entity: AgoraEntity): Seq[AgoraEntity]
 
-  def findPayloadByRegex(regex: String): Seq[AgoraEntity]
+  def findSingle(entity: AgoraEntity): AgoraEntity
 
-  def find(namespace: String, name: String, id: Int): AgoraEntity
+  def findSingle(namespace: String, name: String, id: Int): AgoraEntity
 }

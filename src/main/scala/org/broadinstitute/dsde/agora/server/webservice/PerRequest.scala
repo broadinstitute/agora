@@ -48,10 +48,9 @@ trait PerRequest extends Actor with Json4sSupport {
 
   override val supervisorStrategy =
     OneForOneStrategy() {
-      case e => {
+      case e =>
         complete(InternalServerError, e.getMessage)
         Stop
-      }
     }
 }
 

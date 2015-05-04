@@ -31,12 +31,20 @@ class ApiServiceSpec extends FlatSpec with Matchers with Directives with Scalate
   val documentation = "This is the documentation"
   val owner = "bob the builder"
   val payload = "echo 'hello world'"
-  val testMethod = AgoraEntity(namespace = Option(namespace), name = Option(name))
+  val testEntity = AgoraEntity(namespace = Option(namespace), name = Option(name))
+  val testAddRequest = new AgoraAddRequest(
+    namespace = namespace,
+    name = name,
+    synopsis = synopsis,
+    documentation = documentation,
+    owner = owner,
+    payload = payload
+  )
   
   "Agora" should "return information about a method, including metadata " in {
     val testFixture = fixture
 
-    val insertedEntity = testFixture.agoraDao.insert(testMethod)
+    val insertedEntity = testFixture.agoraDao.insert(testEntity)
 
     Get(ApiUtil.Methods.withLeadingSlash + "/" + namespace + "/" + name + "/" + insertedEntity.id.get) ~> methodsService.queryRoute ~> check {
       responseAs[AgoraEntity] === insertedEntity
@@ -46,9 +54,7 @@ class ApiServiceSpec extends FlatSpec with Matchers with Directives with Scalate
   "Agora" should "create and return a method" in {
     val testFixture = fixture
 
-    val agoraAddRequest = new AgoraAddRequest()
-    
-    Post(ApiUtil.Methods.withLeadingSlash, marshal(testMethod)) ~> methodsService.postRoute ~> check {
+    Post(ApiUtil.Methods.withLeadingSlash, marshal(testAddRequest)) ~> methodsService.postRoute ~> check {
       val response = responseAs[AgoraEntity]
       response.namespace === namespace
       response.name === name

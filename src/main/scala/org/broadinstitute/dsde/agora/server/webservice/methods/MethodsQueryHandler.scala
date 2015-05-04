@@ -4,6 +4,8 @@ import akka.actor.Actor
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages
+import org.broadinstitute.dsde.agora.server.webservice.PerRequest._
+import spray.http.StatusCodes._
 import spray.routing.RequestContext
 import com.novus.salat._
 import com.novus.salat.global._
@@ -23,7 +25,9 @@ class MethodsQueryHandler extends Actor {
   }
 
   def query(requestContext: RequestContext, namespace: String, name: String, id: Int): Unit = {
-    val method = AgoraDao.createAgoraDao.findSingle(namespace, name, id)
-    context.parent ! grater[AgoraEntity].toJSON(method)  
+    AgoraDao.createAgoraDao.findSingle(namespace, name, id) match {
+      case None => context.parent ! RequestComplete(NotFound, "Method: " + namespace + "/" + name + "/" + id + " not found")
+      case Some(method) => context.parent ! grater[AgoraEntity].toJSON(method)
+    }
   }
 }

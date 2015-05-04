@@ -28,7 +28,7 @@ class MethodsDbTest extends FlatSpec with BeforeAndAfterAll {
 
     testFixture.agoraDao.insert(agoraTestMethod)
     
-    val entity = testFixture.agoraDao.findSingle(agoraTestMethod)
+    val entity = testFixture.agoraDao.findSingle(agoraTestMethod).get
 
     assert(entity == agoraTestMethod)
   }
@@ -39,7 +39,7 @@ class MethodsDbTest extends FlatSpec with BeforeAndAfterAll {
     //NB: agoraTestMethod has already been stored.
     val queryEntity = new AgoraEntity(namespace = Option("broadinstitute"), name = Option("echo"), id = agoraTestMethod.id)
 
-    val entity = testFixture.agoraDao.findSingle(queryEntity)
+    val entity = testFixture.agoraDao.findSingle(queryEntity).get
 
     assert(entity == agoraTestMethod)
   }
@@ -52,9 +52,9 @@ class MethodsDbTest extends FlatSpec with BeforeAndAfterAll {
     val previousVersionEntity = agoraTestMethod.copy()
     previousVersionEntity.id = Option(agoraTestMethod.id.get - 1)
 
-    val entity1 = testFixture.agoraDao.findSingle(previousVersionEntity)
-    val entity2 = testFixture.agoraDao.findSingle(agoraTestMethod)
+    val entity1 = testFixture.agoraDao.findSingle(previousVersionEntity).get
+    val entity2 = testFixture.agoraDao.findSingle(agoraTestMethod).get
 
-    assert(entity1.id != entity2.id)
+    assert(entity1.id.get == entity2.id.get - 1)
   }
 }

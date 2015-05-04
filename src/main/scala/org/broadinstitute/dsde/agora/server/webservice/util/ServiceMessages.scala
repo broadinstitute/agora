@@ -1,5 +1,6 @@
 package org.broadinstitute.dsde.agora.server.webservice.util
 
+import org.broadinstitute.dsde.agora.server.model.AgoraAddRequest
 import spray.routing.RequestContext
 
 /**
@@ -7,4 +8,6 @@ import spray.routing.RequestContext
  */
 object ServiceMessages {
   case class Query(requestContext: RequestContext, namespace: String, name: String, id: Int)
+  
+  case class Add(requestContext: RequestContext, agoraAddRequest: AgoraAddRequest)
 }

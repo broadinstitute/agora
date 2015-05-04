@@ -26,13 +26,14 @@ object AgoraEntity {
     }
 
   def fromAgoraAddRequest(agoraAddRequest: AgoraAddRequest, createDate: Option[Date]) = {
-    new AgoraEntity(namespace = agoraAddRequest.namespace,
-                    name = agoraAddRequest.name,
-                    synopsis = agoraAddRequest.synopsis,
-                    documentation = agoraAddRequest.documentation,
-                    owner = agoraAddRequest.owner,
-                    createDate = createDate,
-                    payload = agoraAddRequest.payload)
+    new AgoraEntity(namespace = Option(agoraAddRequest.namespace),
+      name = Option(agoraAddRequest.name),
+      synopsis = Option(agoraAddRequest.synopsis),
+      documentation = Option(agoraAddRequest.documentation),
+      owner = Option(agoraAddRequest.owner),
+      createDate = createDate,
+      payload = Option(agoraAddRequest.payload)
+    )
   }
 
 }
@@ -41,7 +42,6 @@ object AgoraAddRequest {
   implicit val AgoraAddRequestUnmarshaller =
     Unmarshaller[AgoraAddRequest](`application/json`) {
       case HttpEntity.NonEmpty(contentType, data) ⇒ grater[AgoraAddRequest].fromJSON(data.asString)
-      case HttpEntity.Empty ⇒ new AgoraAddRequest()
     }
 
   implicit val AgoraAddRequestMarshaller =
@@ -71,15 +71,15 @@ case class AgoraEntity(@(ApiModelProperty@field)(required = true, value = "The n
 
 @ApiModel(value = "Request to add method")
 case class AgoraAddRequest(@(ApiModelProperty@field)(required = true, value = "The namespace to which the method belongs")
-                       namespace: Option[String] = None,
-                       @(ApiModelProperty@field)(required = true, value = "The method name ")
-                       name: Option[String] = None,
-                       @(ApiModelProperty@field)(required = true, value = "A short description of the method")
-                       synopsis: Option[String] = None,
-                       @(ApiModelProperty@field)(required = true, value = "Method documentation")
-                       documentation: Option[String] = None,
-                       @(ApiModelProperty@field)(required = true, value = "User who owns this method in the methods repo")
-                       owner: Option[String] = None, // TODO: remove (use authenticated user)
-                       @(ApiModelProperty@field)(required = true, value = "The method payload")
-                       payload: Option[String] = None
-                        )
+                           namespace: String,
+                           @(ApiModelProperty@field)(required = true, value = "The method name ")
+                           name: String,
+                           @(ApiModelProperty@field)(required = true, value = "A short description of the method")
+                           synopsis: String,
+                           @(ApiModelProperty@field)(required = true, value = "Method documentation")
+                           documentation: String,
+                           @(ApiModelProperty@field)(required = true, value = "User who owns this method in the methods repo")
+                           owner: String, // TODO: remove (use authenticated user)
+                           @(ApiModelProperty@field)(required = true, value = "The method payload")
+                           payload: String
+                            )

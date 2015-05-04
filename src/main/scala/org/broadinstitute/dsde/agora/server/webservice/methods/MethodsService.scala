@@ -53,7 +53,7 @@ trait MethodsService extends HttpService with PerRequestCreator {
     path(ApiUtil.Methods.path) {
       post {
         entity(as[AgoraAddRequest]) { agoraAddRequest =>
-            requestContext =>
+          requestContext =>
             perRequest(requestContext, methodsAddHandlerProps, ServiceMessages.Add(requestContext, agoraAddRequest))
         }
       }

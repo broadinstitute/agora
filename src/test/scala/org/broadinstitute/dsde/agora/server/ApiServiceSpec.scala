@@ -9,7 +9,7 @@ import org.scalatest.{FlatSpec, Matchers}
 import spray.routing.Directives
 import spray.testkit.ScalatestRouteTest
 import spray.httpx.marshalling._
-
+import spray.http.StatusCodes._
 
 class ApiServiceSpec extends FlatSpec with Matchers with Directives with ScalatestRouteTest {
   def actorRefFactory = system
@@ -30,7 +30,7 @@ class ApiServiceSpec extends FlatSpec with Matchers with Directives with Scalate
   val synopsis = "This is a test method"
   val documentation = "This is the documentation"
   val owner = "bob the builder"
-  val payload = "echo 'hello world'"
+  val payload = "task test {}"
   val testEntity = AgoraEntity(namespace = Option(namespace), name = Option(name))
   val testAddRequest = new AgoraAddRequest(
     namespace = namespace,
@@ -39,6 +39,16 @@ class ApiServiceSpec extends FlatSpec with Matchers with Directives with Scalate
     documentation = documentation,
     owner = owner,
     payload = payload
+  )
+
+  val badPayload = "task test {"
+  val testBadAddRequest = new AgoraAddRequest(
+    namespace = namespace,
+    name = name,
+    synopsis = synopsis,
+    documentation = documentation,
+    owner = owner,
+    payload = badPayload
   )
   
   "Agora" should "return information about a method, including metadata " in {
@@ -65,6 +75,15 @@ class ApiServiceSpec extends FlatSpec with Matchers with Directives with Scalate
       response.id === 1
       response.createDate != null
     }
-     
   }
+
+  "Agora" should "return a 400 bad request when posting a malformed payload" in {
+    val testFixture = fixture
+
+    Post(ApiUtil.Methods.withLeadingSlash, marshal(testBadAddRequest)) ~> methodsService.postRoute ~> check {
+      status === BadRequest
+      responseAs[String] != null
+    }
+  }
+
 }

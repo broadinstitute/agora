@@ -5,7 +5,7 @@ import com.gettyimages.spray.swagger.SwaggerHttpService
 import com.wordnik.swagger.model.ApiInfo
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
-import org.broadinstitute.dsde.agora.server.webservice.util.StandardServiceHandlerProps
+import org.broadinstitute.dsde.agora.server.webservice.util.ServiceHandlerProps
 import spray.routing._
 
 import scala.reflect.runtime.universe._
@@ -21,7 +21,7 @@ class ApiServiceActor extends HttpServiceActor {
     def actorRefFactory = context
   }
 
-  val methodsService = new MethodsService with ActorRefFactoryContext with StandardServiceHandlerProps
+  val methodsService = new MethodsService with ActorRefFactoryContext with ServiceHandlerProps
 
   def possibleRoutes = methodsService.routes ~ swaggerService.routes ~
     get {

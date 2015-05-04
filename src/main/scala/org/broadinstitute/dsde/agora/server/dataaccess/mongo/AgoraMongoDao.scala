@@ -39,7 +39,10 @@ class AgoraMongoDao(collection: MongoCollection) extends AgoraDao {
     //insert the entity
     val dbEntityToInsert = EntityToMongoDbObject(entity)
     collection.insert(dbEntityToInsert)
-    findSingle(entity)
+    findSingle(entity) match {
+      case None => throw new Exception("failed to find inserted entity?")
+      case foundEntity => foundEntity.get
+    }
   }
 
   def getNextId(entity: AgoraEntity): Int = {
@@ -67,16 +70,16 @@ class AgoraMongoDao(collection: MongoCollection) extends AgoraDao {
 
   override def find(entity: AgoraEntity): Seq[AgoraEntity] = find(EntityToMongoDbObject(entity))
 
-  override def findSingle(entity: AgoraEntity): AgoraEntity = {
+  override def findSingle(entity: AgoraEntity): Option[AgoraEntity] = {
     val entityVector = find(EntityToMongoDbObject(entity))
     entityVector.length match {
-      case 1 => entityVector.head
-      case 0 => throw new Exception("Found 0 documents matching: " + entity.toString)
+      case 1 => Some(entityVector.head)
+      case 0 => None
       case _ => throw new Exception("Found > 1 documents matching: " + entity.toString)
     }
   }
 
-  override def findSingle(namespace: String, name: String, id: Int): AgoraEntity = {
+  override def findSingle(namespace: String, name: String, id: Int): Option[AgoraEntity] = {
     val entity = AgoraEntity(namespace = Option(namespace), name = Option(name), id = Option(id))
     findSingle(entity)
   }

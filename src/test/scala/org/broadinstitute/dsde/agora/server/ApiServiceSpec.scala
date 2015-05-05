@@ -30,7 +30,21 @@ class ApiServiceSpec extends FlatSpec with Matchers with Directives with Scalate
   val synopsis = "This is a test method"
   val documentation = "This is the documentation"
   val owner = "bob the builder"
-  val payload = "task test {}"
+  val payload = """task wc {
+                  |  command {
+                  |    echo "${str}" | wc -c
+                  |  }
+                  |  output {
+                  |    int count = read_int("stdout") - 1
+                  |  }
+                  |}
+                  |
+                  |workflow wf {
+                  |  array[string] str_array
+                  |  scatter(s in str_array) {
+                  |    call wc{input: str=s}
+                  |  }
+                  |}""".stripMargin
   val testEntity = AgoraEntity(namespace = Option(namespace), name = Option(name))
   val testAddRequest = new AgoraAddRequest(
     namespace = namespace,

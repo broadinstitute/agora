@@ -1,6 +1,6 @@
 package org.broadinstitute.dsde.agora.server.webservice.methods
 
-import java.util.{Scanner, Date}
+import java.util.Date
 import akka.actor.Actor
 import com.novus.salat._
 import com.novus.salat.global._
@@ -8,12 +8,13 @@ import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
 import org.broadinstitute.dsde.agora.server.model.{AgoraAddRequest, AgoraEntity}
 import org.broadinstitute.dsde.agora.server.webservice.PerRequest.RequestComplete
 import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages
-import org.broadinstitute.wdl.WdlParser
+import cromwell.binding.WdlBinding
+import cromwell.parser.WdlParser.SyntaxError
 import spray.http.StatusCodes._
 import spray.routing.RequestContext
 
 /**
- * Created by dshiga on 5/4/15.
+ * Handles adding a method to the methods repository, including validation.
  */
 class MethodsAddHandler extends Actor {
 
@@ -25,16 +26,13 @@ class MethodsAddHandler extends Actor {
         validatePayload(agoraAddRequest)
         add(requestContext, agoraAddRequest)
       } catch {
-        case e: WdlParser.SyntaxError => context.parent ! RequestComplete(BadRequest, "Syntax error in payload: " + e.getMessage())
+        case e: SyntaxError => context.parent ! RequestComplete(BadRequest, "Syntax error in payload: " + e.getMessage())
       }
       context.stop(self)
   }
 
   private def validatePayload(agoraAddRequest: AgoraAddRequest): Unit = {
-    val wdlSource = new Scanner(agoraAddRequest.payload).useDelimiter("\\A").next();
-    val parser = new WdlParser();
-    val tokens = new WdlParser.TokenStream(parser.lex(wdlSource, "wdl string"));
-    val ast = parser.parse(tokens).toAst();
+    WdlBinding.getAst(agoraAddRequest.payload, agoraAddRequest.name)
   }
 
   private def add(requestContext: RequestContext, agoraAddRequest: AgoraAddRequest): Unit = {

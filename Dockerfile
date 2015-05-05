@@ -4,17 +4,19 @@
 FROM debian:jessie
 MAINTAINER DSDE <dsde-engineering@broadinstitute.org>
 
-# Set java environment variables
-ENV JAVA_VERSION 7u75
-ENV JAVA_DEBIAN_VERSION 7u75-2.5.4-2
+# Install necessary packages including java 8 jre and sbt
+RUN echo "deb http://dl.bintray.com/sbt/debian /" >> /etc/apt/sources.list.d/sbt.list && \
+    echo "deb http://ppa.launchpad.net/webupd8team/java/ubuntu trusty main" >> /etc/apt/sources.list.d/webupd8team-java.list && \
+    echo "deb-src http://ppa.launchpad.net/webupd8team/java/ubuntu trusty main" >> -a /etc/apt/sources.list.d/webupd8team-java.list && \
+    apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys EEA14886 && \
+    echo debconf shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections && \
+    echo debconf shared/accepted-oracle-license-v1-1 seen true | /usr/bin/debconf-set-selections
 
-# Install necessary packages including java 7 jre and sbt
-RUN echo "deb http://dl.bintray.com/sbt/debian /" >> /etc/apt/sources.list.d/sbt.list
 RUN apt-get update && apt-get install -y --force-yes \
         curl \
         git \
         mongodb \
-        openjdk-7-jre-headless="$JAVA_DEBIAN_VERSION" \
+        oracle-java8-installer \
         sbt \
         sudo \
         ssh \
@@ -27,6 +29,7 @@ RUN apt-get update && apt-get install -y --force-yes \
 EXPOSE 8000
 
 # Assumes Dockerfile lives in root of the git repo. Pull source files into container
+COPY lib /usr/agora/lib
 COPY build.sbt /usr/agora/build.sbt
 COPY assembly.sbt /usr/agora/assembly.sbt
 COPY project /usr/agora/project

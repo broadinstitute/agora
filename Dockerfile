@@ -15,7 +15,6 @@ RUN echo "deb http://dl.bintray.com/sbt/debian /" >> /etc/apt/sources.list.d/sbt
 RUN apt-get update && apt-get install -y --force-yes \
         curl \
         git \
-        mongodb \
         oracle-java8-installer \
         sbt \
         sudo \
@@ -39,7 +38,7 @@ COPY src /usr/agora/src
 WORKDIR /usr/agora
 
 # Build the web service application
-RUN service mongodb start; sbt assembly
+RUN sbt assembly
 
 # Start the webservice with default parameters
 ENTRYPOINT ["java", "-jar", "target/scala-2.11/agora-0.1-SNAPSHOT.jar"]

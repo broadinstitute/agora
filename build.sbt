@@ -14,7 +14,7 @@ libraryDependencies ++= Seq(
   "cglib" % "cglib-nodep" % "2.2",
   "io.spray" %% "spray-can" % sprayV,
   "io.spray" %% "spray-routing" % sprayV,
-  "io.spray" %% "spray-json" % "1.3.1",  // NB: Not at sprayV. 1.3.2 does not exist.
+  "io.spray" %% "spray-json" % "1.3.1", // NB: Not at sprayV. 1.3.2 does not exist.
   "io.spray" %% "spray-client" % sprayV,
   "com.typesafe.akka" %% "akka-actor" % "2.3.4",
   "ch.qos.logback" % "logback-classic" % "1.1.2",
@@ -26,12 +26,13 @@ libraryDependencies ++= Seq(
   "com.novus" %% "salat" % "1.9.9",
   //---------- Test libraries -------------------//
   "io.spray" %% "spray-testkit" % sprayV % Test,
-  "org.scalatest" %% "scalatest" % "2.2.4" % Test
+  "org.scalatest" %% "scalatest" % "2.2.4" % Test,
+  "com.github.simplyscala" %% "scalatest-embedmongo" % "0.2.2" % Test
 )
 
 releaseSettings
 
-shellPrompt := { state => "%s| %s> ".format(GitCommand.prompt.apply(state), version.value)}
+shellPrompt := { state => "%s| %s> ".format(GitCommand.prompt.apply(state), version.value) }
 
 jarName in assembly := "agora-" + version.value + ".jar"
 

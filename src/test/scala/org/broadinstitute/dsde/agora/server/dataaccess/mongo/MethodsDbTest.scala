@@ -8,30 +8,30 @@ import org.scalatest.{DoNotDiscover, FlatSpec}
 class MethodsDbTest extends FlatSpec with AgoraDbTest with AgoraTestData {
 
   "Agora" should "be able to store a method" in {
-    agoraDao.insert(testEntity)
+    agoraDao.insert(testEntity1)
 
-    val entity = agoraDao.findSingle(testEntity).get
+    val entity = agoraDao.findSingle(testEntity1).get
 
-    assert(entity == testEntity)
+    assert(entity == testEntity1)
   }
 
   "Agora" should "be able to query by namespace, name and version and get back a single entity" in {
     //NB: agoraTestMethod has already been stored.
-    val queryEntity = new AgoraEntity(namespace = Option(namespace), name = Option(name), id = testEntity.id)
+    val queryEntity = new AgoraEntity(namespace = Option(namespace1), name = Option(name1), id = testEntity1.id)
 
     val entity = agoraDao.findSingle(queryEntity).get
 
-    assert(entity == testEntity)
+    assert(entity == testEntity1)
   }
 
   "Agora" should "increment the id number if we insert the same namespace/name entity" in {
-    agoraDao.insert(testEntity)
+    agoraDao.insert(testEntity1)
 
-    val previousVersionEntity = testEntity.copy()
-    previousVersionEntity.id = Option(testEntity.id.get - 1)
+    val previousVersionEntity = testEntity1.copy()
+    previousVersionEntity.id = Option(testEntity1.id.get - 1)
 
     val entity1 = agoraDao.findSingle(previousVersionEntity).get
-    val entity2 = agoraDao.findSingle(testEntity).get
+    val entity2 = agoraDao.findSingle(testEntity1).get
 
     assert(entity1.id.get == entity2.id.get - 1)
   }

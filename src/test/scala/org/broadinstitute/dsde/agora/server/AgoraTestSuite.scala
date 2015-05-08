@@ -23,5 +23,7 @@ class AgoraTestSuite extends Suites(new ApiServiceSpec, new MethodsDbTest) with 
   override def afterAll() {
     println("Stopping embedded mongo db instance.")
     mongoStop(mongoProps)
+    println("Stopping Agora web services.")
+    Agora.stop()
   }
 }

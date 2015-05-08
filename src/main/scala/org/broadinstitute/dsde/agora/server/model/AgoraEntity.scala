@@ -49,38 +49,38 @@ object AgoraAddRequest {
 }
 
 @ApiModel(value = "Agora Method")
-case class AgoraEntity(@(ApiModelProperty@field)(required = true, value = "The namespace to which the method belongs")
+case class AgoraEntity(@(ApiModelProperty@field)(required = false, value = "The namespace to which the method belongs")
                        namespace: Option[String] = None,
-                       @(ApiModelProperty@field)(required = true, value = "The method name ")
+                       @(ApiModelProperty@field)(required = false, value = "The method name ")
                        name: Option[String] = None,
-                       @(ApiModelProperty@field)(required = true, value = "The method id")
+                       @(ApiModelProperty@field)(required = false, value = "The method id")
                        var id: Option[Int] = None,
-                       @(ApiModelProperty@field)(required = true, value = "A short description of the method")
+                       @(ApiModelProperty@field)(required = false, value = "A short description of the method")
                        synopsis: Option[String] = None,
-                       @(ApiModelProperty@field)(required = true, value = "Method documentation")
+                       @(ApiModelProperty@field)(required = false, value = "Method documentation")
                        documentation: Option[String] = None,
-                       @(ApiModelProperty@field)(required = true, value = "User who owns this method in the methods repo")
+                       @(ApiModelProperty@field)(required = false, value = "User who owns this method in the methods repo")
                        owner: Option[String] = None,
-                       @(ApiModelProperty@field)(required = true, value = "The date the method was inserted in the methods repo")
+                       @(ApiModelProperty@field)(required = false, value = "The date the method was inserted in the methods repo")
                        createDate: Option[Date] = None,
-                       @(ApiModelProperty@field)(required = true, value = "The method payload")
+                       @(ApiModelProperty@field)(required = false, value = "The method payload")
                        payload: Option[String] = None
                         )
 
 @ApiModel(value = "Agora Search")
-case class AgoraSearch(@(ApiModelProperty@field)(required = true, value = "The namespace to which the method belongs")
+case class AgoraSearch(@(ApiModelProperty@field)(required = false, value = "The namespace to which the method belongs")
                        namespace: Option[String] = None,
-                       @(ApiModelProperty@field)(required = true, value = "The method name ")
+                       @(ApiModelProperty@field)(required = false, value = "The method name ")
                        name: Option[String] = None,
-                       @(ApiModelProperty@field)(required = true, value = "The method id")
+                       @(ApiModelProperty@field)(required = false, value = "The method id")
                        var id: Option[Int] = None,
-                       @(ApiModelProperty@field)(required = true, value = "User who owns this method in the methods repo")
+                       @(ApiModelProperty@field)(required = false, value = "User who owns this method in the methods repo")
                        owner: Option[String] = None,
-                       @(ApiModelProperty@field)(required = true, value = "A short description of the method")
+                       @(ApiModelProperty@field)(required = false, value = "A short description of the method")
                        synopsis: Option[String] = None,
-                       @(ApiModelProperty@field)(required = true, value = "Method documentation")
+                       @(ApiModelProperty@field)(required = false, value = "Method documentation")
                        documentation: Option[String] = None,
-                       @(ApiModelProperty@field)(required = true, value = "The method payload")
+                       @(ApiModelProperty@field)(required = false, value = "The method payload")
                        payload: Option[String] = None
                       )
 

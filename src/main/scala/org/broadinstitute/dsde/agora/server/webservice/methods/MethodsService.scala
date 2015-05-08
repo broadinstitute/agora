@@ -40,16 +40,17 @@ trait MethodsService extends HttpService with PerRequestCreator {
     nickname = "methods",
     httpMethod = "GET",
     produces = "application/json",
-    response = classOf[Seq[AgoraEntity]],
+    response = classOf[AgoraEntity],
+    responseContainer="Seq",
     notes = "API is rapidly changing.")
   @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "namespace", required = true, dataType = "string", paramType = "path", value = "Namespace"),
-    new ApiImplicitParam(name = "name", required = true, dataType = "string", paramType = "path", value = "Name"),
-    new ApiImplicitParam(name = "id", required = true, dataType = "string", paramType = "path", value = "Id"),
-    new ApiImplicitParam(name = "synopsis", required = true, dataType = "string", paramType = "path", value = "Synopsis"),
-    new ApiImplicitParam(name = "documentation", required = true, dataType = "string", paramType = "path", value = "Documentation"),
-    new ApiImplicitParam(name = "owner", required = true, dataType = "string", paramType = "path", value = "Owner"),
-    new ApiImplicitParam(name = "payload", required = true, dataType = "string", paramType = "path", value = "Payload")
+    new ApiImplicitParam(name = "namespace", required = false, dataType = "string", paramType = "query", value = "Namespace"),
+    new ApiImplicitParam(name = "name", required = false, dataType = "string", paramType = "query", value = "Name"),
+    new ApiImplicitParam(name = "id", required = false, dataType = "string", paramType = "query", value = "Id"),
+    new ApiImplicitParam(name = "synopsis", required = false, dataType = "string", paramType = "query", value = "Synopsis"),
+    new ApiImplicitParam(name = "documentation", required = false, dataType = "string", paramType = "query", value = "Documentation"),
+    new ApiImplicitParam(name = "owner", required = false, dataType = "string", paramType = "query", value = "Owner"),
+    new ApiImplicitParam(name = "payload", required = false, dataType = "string", paramType = "query", value = "Payload")
   ))
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "Successful Request"),

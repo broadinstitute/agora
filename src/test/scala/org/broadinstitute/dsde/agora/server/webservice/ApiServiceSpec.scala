@@ -65,4 +65,10 @@ class ApiServiceSpec extends FlatSpec with Matchers with Directives with Scalate
     }
   }
 
+  "Agora" should "store 10kb of github markdown as method documentation and return it without alteration" in {
+    Post(ApiUtil.Methods.withLeadingSlash, marshal(testAddRequest)) ~> methodsService.postRoute ~> check {
+      val rawResponse = responseAs[String]
+      grater[AgoraEntity].fromJSON(rawResponse).documentation === bigDocumentation
+    }
+  }
 }

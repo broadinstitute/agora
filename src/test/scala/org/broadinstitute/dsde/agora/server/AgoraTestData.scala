@@ -3,13 +3,20 @@ package org.broadinstitute.dsde.agora.server
 import org.broadinstitute.dsde.agora.server.model.{AgoraAddRequest, AgoraEntity}
 
 trait AgoraTestData {
-
+  def getBigDocumentation: String = {
+    // Read contents of a test markdown file into a single string.
+    val markdown = io.Source.fromFile("src/test/resources/TESTMARKDOWN.md").getLines() mkString "\n"
+    markdown * 7  // NB: File is 1.6 Kb, so 7* that is >10kb, our minimal required storage amount.
+  }
+  
   val namespace1 = "broad"
   val namespace2 = "hellbender"
   val name1 = "testMethod1"
   val name2 = "testMethod2"
   val synopsis = "This is a test method"
   val documentation = "This is the documentation"
+  // NB: save io by storing output.
+  val bigDocumentation: String = getBigDocumentation
   val owner1 = "bob"
   val owner2 = "dave"
   val payload = """task wc {
@@ -51,5 +58,14 @@ trait AgoraTestData {
     documentation = documentation,
     owner = owner1,
     payload = badPayload
+  )
+
+  val testAddRequestBigDoc = new AgoraAddRequest(
+    namespace = namespace1,
+    name = name1,
+    synopsis = synopsis,
+    documentation = bigDocumentation,
+    owner = owner1,
+    payload = payload
   )
 }

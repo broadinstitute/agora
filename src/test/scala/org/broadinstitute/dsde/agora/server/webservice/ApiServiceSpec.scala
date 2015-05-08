@@ -32,14 +32,34 @@ class ApiServiceSpec extends FlatSpec with Matchers with Directives with Scalate
     }
   }
 
-  "Agora" should "return methods matching the query" in {
+  "Agora" should "return methods matching query by namespace and name" in {
     agoraDao.insert(testEntity2)
     agoraDao.insert(testEntity3)
     agoraDao.insert(testEntity4)
-    Get(ApiUtil.Methods.withLeadingSlash + "?namespace=" + namespace1 + "&name=" + name1) ~> methodsService.queryRoute ~> check {
+    agoraDao.insert(testEntity5)
+    agoraDao.insert(testEntity6)
+    agoraDao.insert(testEntity7)
+    Get(ApiUtil.Methods.withLeadingSlash + "?namespace=" + namespace1 + "&name=" + name2) ~> methodsService.queryRoute ~> check {
       val rawResponse = responseAs[String]
       val response = grater[AgoraEntity].fromJSONArray(rawResponse)
-      assert(response === Seq(testEntity1, testEntity4))
+      assert(response === Seq(testEntity3, testEntity4, testEntity5, testEntity6, testEntity7))
+    }
+  }
+
+  "Agora" should "return methods matching query by synopsis and documentation" in {
+    print(uriEncode(synopsis1))
+    Get(ApiUtil.Methods.withLeadingSlash + "?synopsis=" + uriEncode(synopsis1) + "&documentation=" + uriEncode(documentation1)) ~> methodsService.queryRoute ~> check {
+      val rawResponse = responseAs[String]
+      val response = grater[AgoraEntity].fromJSONArray(rawResponse)
+      assert(response === Seq(testEntity1, testEntity2, testEntity3, testEntity6, testEntity7))
+    }
+  }
+
+  "Agora" should "return methods matching query by owner and payload" in {
+    Get(ApiUtil.Methods.withLeadingSlash + "?owner=" + owner1 + "&payload=" + uriEncode(payload1)) ~> methodsService.queryRoute ~> check {
+      val rawResponse = responseAs[String]
+      val response = grater[AgoraEntity].fromJSONArray(rawResponse)
+      assert(response === Seq(testEntity1, testEntity2, testEntity3, testEntity4, testEntity5))
     }
   }
 
@@ -49,10 +69,10 @@ class ApiServiceSpec extends FlatSpec with Matchers with Directives with Scalate
       val response = grater[AgoraEntity].fromJSON(rawResponse)
       assert(response.namespace.get === namespace1)
       assert(response.name.get === name1)
-      assert(response.synopsis.get === synopsis)
-      assert(response.documentation.get === documentation)
+      assert(response.synopsis.get === synopsis1)
+      assert(response.documentation.get === documentation1)
       assert(response.owner.get === owner1)
-      assert(response.payload.get === payload)
+      assert(response.payload.get === payload1)
       assert(response.id.get !== None)
       assert(response.createDate.get != null)
     }
@@ -70,5 +90,9 @@ class ApiServiceSpec extends FlatSpec with Matchers with Directives with Scalate
       val rawResponse = responseAs[String]
       assert(grater[AgoraEntity].fromJSON(rawResponse).documentation.get === bigDocumentation)
     }
+  }
+
+  def uriEncode(uri: String): String = {
+    java.net.URLEncoder.encode(uri, "UTF-8")
   }
 }

@@ -1,6 +1,6 @@
 package org.broadinstitute.dsde.agora.server.webservice.util
 
-import org.broadinstitute.dsde.agora.server.model.{AgoraSearch, AgoraEntity, AgoraAddRequest}
+import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import spray.routing.RequestContext
 
 /**
@@ -9,7 +9,7 @@ import spray.routing.RequestContext
 object ServiceMessages {
   case class QueryByNamespaceNameId(requestContext: RequestContext, namespace: String, name: String, id: Int)
 
-  case class Query(requestContext: RequestContext, agoraSearch: AgoraSearch)
+  case class Query(requestContext: RequestContext, agoraSearch: AgoraEntity)
 
-  case class Add(requestContext: RequestContext, agoraAddRequest: AgoraAddRequest)
+  case class Add(requestContext: RequestContext, agoraAddRequest: AgoraEntity)
 }

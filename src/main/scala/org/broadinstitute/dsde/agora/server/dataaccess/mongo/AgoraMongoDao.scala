@@ -1,18 +1,18 @@
 
 package org.broadinstitute.dsde.agora.server.dataaccess.mongo
 
-import com.mongodb.casbah.Imports._
-
-import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb.DBObject
+import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.MongoCollection
+import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb.casbah.query.Imports
-import com.novus.salat._
-import com.novus.salat.global._
+import com.mongodb.util.JSON
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.AgoraMongoClient._
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.AgoraMongoDao._
+import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
+import spray.json._
 
 object AgoraMongoDao {
   val MongoDbIdField = "_id"
@@ -20,8 +20,9 @@ object AgoraMongoDao {
   val CounterSequenceField = "seq"
   val KeySeparator = ":"
 
-  def EntityToMongoDbObject(entity: AgoraEntity): DBObject = grater[AgoraEntity].asDBObject(entity)
-  def MongoDbObjectToEntity(mongoDBObject: DBObject): AgoraEntity = grater[AgoraEntity].asObject(mongoDBObject)
+  def EntityToMongoDbObject(entity: AgoraEntity): DBObject = JSON.parse(entity.toJson.toString()).asInstanceOf[DBObject]
+
+  def MongoDbObjectToEntity(mongoDBObject: DBObject): AgoraEntity = mongoDBObject.toString.parseJson.convertTo[AgoraEntity]
 }
 
 class AgoraMongoDao(collection: MongoCollection) extends AgoraDao {

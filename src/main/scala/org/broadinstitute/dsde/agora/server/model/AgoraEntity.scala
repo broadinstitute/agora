@@ -14,17 +14,6 @@ import spray.httpx.unmarshalling.Unmarshaller
 import scala.annotation.meta.field
 
 object AgoraEntity {
-  implicit val AgoraEntityUnmarshaller =
-    Unmarshaller[AgoraEntity](`application/json`) {
-      case HttpEntity.NonEmpty(contentType, data) ⇒ grater[AgoraEntity].fromJSON(data.asString)
-      case HttpEntity.Empty ⇒ new AgoraEntity()
-    }
-
-  implicit val AgoraEntityMarshaller =
-    Marshaller.of[AgoraEntity](`application/json`) { (value, contentType, context) =>
-      context.marshalTo(HttpEntity(contentType, grater[AgoraEntity].toCompactJSON(value)))
-    }
-
   def fromAgoraAddRequest(agoraAddRequest: AgoraAddRequest, createDate: Option[Date]) = {
     new AgoraEntity(namespace = Option(agoraAddRequest.namespace),
       name = Option(agoraAddRequest.name),
@@ -35,7 +24,16 @@ object AgoraEntity {
       payload = Option(agoraAddRequest.payload)
     )
   }
-
+  
+  def fromAgoraSearch(agoraSearch: AgoraSearch) = {
+    new AgoraEntity(namespace = agoraSearch.namespace,
+                    name = agoraSearch.name,
+                    id = agoraSearch.id,
+                    synopsis = agoraSearch.synopsis,
+                    documentation = agoraSearch.documentation,
+                    owner = agoraSearch.owner,
+                    payload = agoraSearch.payload)
+  }
 }
 
 object AgoraAddRequest {
@@ -68,6 +66,23 @@ case class AgoraEntity(@(ApiModelProperty@field)(required = true, value = "The n
                        @(ApiModelProperty@field)(required = true, value = "The method payload")
                        payload: Option[String] = None
                         )
+
+@ApiModel(value = "Agora Search")
+case class AgoraSearch(@(ApiModelProperty@field)(required = true, value = "The namespace to which the method belongs")
+                       namespace: Option[String] = None,
+                       @(ApiModelProperty@field)(required = true, value = "The method name ")
+                       name: Option[String] = None,
+                       @(ApiModelProperty@field)(required = true, value = "The method id")
+                       var id: Option[Int] = None,
+                       @(ApiModelProperty@field)(required = true, value = "User who owns this method in the methods repo")
+                       owner: Option[String] = None,
+                       @(ApiModelProperty@field)(required = true, value = "A short description of the method")
+                       synopsis: Option[String] = None,
+                       @(ApiModelProperty@field)(required = true, value = "Method documentation")
+                       documentation: Option[String] = None,
+                       @(ApiModelProperty@field)(required = true, value = "The method payload")
+                       payload: Option[String] = None
+                      )
 
 @ApiModel(value = "Request to add method")
 case class AgoraAddRequest(@(ApiModelProperty@field)(required = true, value = "The namespace to which the method belongs")

@@ -74,12 +74,12 @@ case class AgoraSearch(@(ApiModelProperty@field)(required = false, value = "The 
                        name: Option[String] = None,
                        @(ApiModelProperty@field)(required = false, value = "The method id")
                        var id: Option[Int] = None,
-                       @(ApiModelProperty@field)(required = false, value = "User who owns this method in the methods repo")
-                       owner: Option[String] = None,
                        @(ApiModelProperty@field)(required = false, value = "A short description of the method")
                        synopsis: Option[String] = None,
                        @(ApiModelProperty@field)(required = false, value = "Method documentation")
                        documentation: Option[String] = None,
+                       @(ApiModelProperty@field)(required = false, value = "User who owns this method in the methods repo")
+                       owner: Option[String] = None,
                        @(ApiModelProperty@field)(required = false, value = "The method payload")
                        payload: Option[String] = None
                       )

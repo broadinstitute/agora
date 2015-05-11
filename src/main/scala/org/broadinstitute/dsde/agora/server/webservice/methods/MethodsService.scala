@@ -1,15 +1,20 @@
 package org.broadinstitute.dsde.agora.server.webservice.methods
 
 import com.wordnik.swagger.annotations._
-import org.broadinstitute.dsde.agora.server.model.{AgoraSearch, AgoraAddRequest, AgoraEntity}
-import org.broadinstitute.dsde.agora.server.webservice.util.{ApiUtil, ServiceHandlerProps, ServiceMessages}
+import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.PerRequestCreator
+import org.broadinstitute.dsde.agora.server.webservice.util.{ApiUtil, ServiceHandlerProps, ServiceMessages}
+import org.joda.time.DateTime
 import spray.routing.HttpService
 
 @Api(value = "/methods", description = "Method Service", produces = "application/json", position = 1)
 trait MethodsService extends HttpService with PerRequestCreator {
-  this: ServiceHandlerProps => // Require a concrete ServiceHandlerProps creator to be mixed in
-  
+  this: ServiceHandlerProps =>
+  // Require a concrete ServiceHandlerProps creator to be mixed in
+
+  import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
+  import spray.httpx.SprayJsonSupport._
+
   val routes = queryByNamespaceNameIdRoute ~ queryRoute ~ postRoute
 
   @ApiOperation(value = "Get a method in the method repository matching namespace, name, and id",
@@ -41,7 +46,7 @@ trait MethodsService extends HttpService with PerRequestCreator {
     httpMethod = "GET",
     produces = "application/json",
     response = classOf[AgoraEntity],
-    responseContainer="Seq",
+    responseContainer = "Seq",
     notes = "API is rapidly changing.")
   @ApiImplicitParams(Array(
     new ApiImplicitParam(name = "namespace", required = false, dataType = "string", paramType = "query", value = "Namespace"),
@@ -59,10 +64,10 @@ trait MethodsService extends HttpService with PerRequestCreator {
   def queryRoute =
     path(ApiUtil.Methods.path) {
       get {
-        parameters('namespace?, 'name?, 'id.as[Int]?, 'synopsis?, 'documentation?, 'owner?, 'payload?).as(AgoraSearch) { agoraSearch =>
-        requestContext =>
-            perRequest(requestContext, methodsQueryHandlerProps, ServiceMessages.Query(requestContext, agoraSearch))
-          }
+        parameters("namespace".?, "name".?, "id".as[Int].?, "synopsis".?, "documentation".?, "owner".?, "createDate".as[DateTime].?, "payload".?).as(AgoraEntity) { agoraEntity =>
+          requestContext =>
+            perRequest(requestContext, methodsQueryHandlerProps, ServiceMessages.Query(requestContext, agoraEntity))
+        }
       }
     }
 
@@ -73,7 +78,7 @@ trait MethodsService extends HttpService with PerRequestCreator {
     response = classOf[AgoraEntity],
     notes = "API is rapidly changing.")
   @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "body", required = true, dataType = "org.broadinstitute.dsde.agora.server.model.AgoraAddRequest", paramType = "body", value = "Agora Add Request")  ))
+    new ApiImplicitParam(name = "body", required = true, dataType = "org.broadinstitute.dsde.agora.server.model.AgoraEntity", paramType = "body", value = "Agora Entity")))
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "Successful Request"),
     new ApiResponse(code = 400, message = "Malformed Input"),
@@ -82,9 +87,9 @@ trait MethodsService extends HttpService with PerRequestCreator {
   def postRoute =
     path(ApiUtil.Methods.path) {
       post {
-        entity(as[AgoraAddRequest]) { agoraAddRequest =>
+        entity(as[AgoraEntity]) { agoraEntity =>
           requestContext =>
-            perRequest(requestContext, methodsAddHandlerProps, ServiceMessages.Add(requestContext, agoraAddRequest))
+            perRequest(requestContext, methodsAddHandlerProps, ServiceMessages.Add(requestContext, agoraEntity))
         }
       }
     }

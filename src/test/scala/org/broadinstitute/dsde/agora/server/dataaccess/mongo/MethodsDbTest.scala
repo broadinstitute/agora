@@ -17,7 +17,7 @@ class MethodsDbTest extends FlatSpec with AgoraDbTest with AgoraTestData {
 
   "Agora" should "be able to query by namespace, name and version and get back a single entity" in {
     //NB: agoraTestMethod has already been stored.
-    val queryEntity = new AgoraEntity(namespace = Option(namespace1), name = Option(name1), id = testEntity1.id)
+    val queryEntity = new AgoraEntity(namespace = namespace1, name = name1, id = testEntity1.id)
 
     val entity = agoraDao.findSingle(queryEntity).get
 

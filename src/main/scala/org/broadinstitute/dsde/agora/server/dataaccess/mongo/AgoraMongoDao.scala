@@ -65,11 +65,14 @@ class AgoraMongoDao(collection: MongoCollection) extends AgoraDao {
     currentCount.get(CounterSequenceField).asInstanceOf[Int]
   }
 
-  def find(query: Imports.DBObject) = {
-    (for (dbObject <- collection.find(query)) yield MongoDbObjectToEntity(dbObject)).toVector
+  def find(query: Imports.DBObject, projection: Option[Imports.DBObject] = None) = {
+    (for (dbObject <- collection.find(query, projection.getOrElse(MongoDBObject()))) yield MongoDbObjectToEntity(dbObject)).toVector
   }
 
-  override def find(entity: AgoraEntity): Seq[AgoraEntity] = find(EntityToMongoDbObject(entity))
+  override def find(entity: AgoraEntity): Seq[AgoraEntity] = {
+    val excludedFields = MongoDBObject("payload" -> 0, "documentation" -> 0)
+    find(EntityToMongoDbObject(entity), Option(excludedFields))
+  }
 
   override def findSingle(entity: AgoraEntity): Option[AgoraEntity] = {
     val entityVector = find(EntityToMongoDbObject(entity))

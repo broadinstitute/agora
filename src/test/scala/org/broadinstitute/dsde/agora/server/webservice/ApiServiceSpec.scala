@@ -27,7 +27,8 @@ with AgoraTestData with AgoraDbTest {
 
     Get(ApiUtil.Methods.withLeadingSlash + "/" + namespace1.get + "/" + name1.get + "/"
       + insertedEntity.snapshotId.get) ~> methodsService.queryByNamespaceNameSnapshotIdRoute ~> check {
-      handleDeserializationErrors(entity.as[AgoraEntity], (entity: AgoraEntity) => assert(entity === insertedEntity))
+      val agoraEntity = handleDeserializationErrors(entity.as[AgoraEntity])
+      assert(agoraEntity === insertedEntity)
     }
   }
 
@@ -40,49 +41,38 @@ with AgoraTestData with AgoraDbTest {
     agoraDao.insert(testEntity7)
     Get(ApiUtil.Methods.withLeadingSlash + "?namespace=" + namespace1.get + "&name=" + name2.get) ~>
       methodsService.queryRoute ~> check {
-      handleDeserializationErrors(
-        entity.as[Seq[AgoraEntity]],
-        (entities: Seq[AgoraEntity]) =>
-          assert(entities === Seq(testEntity3, testEntity4, testEntity5, testEntity6, testEntity7))
-      )
+      val entities = handleDeserializationErrors(entity.as[Seq[AgoraEntity]])
+      assert(entities === brief(Seq(testEntity3, testEntity4, testEntity5, testEntity6, testEntity7)))
     }
   }
 
   "Agora" should "return methods matching query by synopsis and documentation" in {
     Get(ApiUtil.Methods.withLeadingSlash + "?synopsis=" + uriEncode(synopsis1.get) + "&documentation=" +
       uriEncode(documentation1.get)) ~> methodsService.queryRoute ~> check {
-      handleDeserializationErrors(
-        entity.as[Seq[AgoraEntity]],
-        (entities: Seq[AgoraEntity]) =>
-          assert(entities === Seq(testEntity1, testEntity2, testEntity3, testEntity6, testEntity7))
-      )
+      val entities = handleDeserializationErrors(entity.as[Seq[AgoraEntity]])
+      assert(entities === brief(Seq(testEntity1, testEntity2, testEntity3, testEntity6, testEntity7)))
     }
   }
 
   "Agora" should "return methods matching query by owner and payload" in {
     Get(ApiUtil.Methods.withLeadingSlash + "?owner=" + owner1.get + "&payload=" + uriEncode(payload1.get)) ~>
       methodsService.queryRoute ~> check {
-      handleDeserializationErrors(
-        entity.as[Seq[AgoraEntity]],
-        (entities: Seq[AgoraEntity]) =>
-          assert(entities === Seq(testEntity1, testEntity2, testEntity3, testEntity4, testEntity5))
-      )
+      val entities = handleDeserializationErrors(entity.as[Seq[AgoraEntity]])
+      assert(entities === brief(Seq(testEntity1, testEntity2, testEntity3, testEntity4, testEntity5)))
     }
   }
 
   "Agora" should "create and return a method" in {
     Post(ApiUtil.Methods.withLeadingSlash, testAgoraEntity) ~> methodsService.postRoute ~> check {
-      handleDeserializationErrors(entity.as[AgoraEntity], (entity: AgoraEntity) => {
-        assert(entity.namespace === namespace1)
-        assert(entity.name === name1)
-        assert(entity.synopsis === synopsis1)
-        assert(entity.documentation === documentation1)
-        assert(entity.owner === owner1)
-        assert(entity.payload === payload1)
-        assert(entity.snapshotId !== None)
-        assert(entity.createDate != null)
-      }
-      )
+      val agoraEntity = handleDeserializationErrors(entity.as[AgoraEntity])
+      assert(agoraEntity.namespace === namespace1)
+      assert(agoraEntity.name === name1)
+      assert(agoraEntity.synopsis === synopsis1)
+      assert(agoraEntity.documentation === documentation1)
+      assert(agoraEntity.owner === owner1)
+      assert(agoraEntity.payload === payload1)
+      assert(agoraEntity.snapshotId !== None)
+      assert(agoraEntity.createDate != null)
     }
   }
 
@@ -95,18 +85,28 @@ with AgoraTestData with AgoraDbTest {
 
   "Agora" should "store 10kb of github markdown as method documentation and return it without alteration" in {
     Post(ApiUtil.Methods.withLeadingSlash, testAgoraEntityBigDoc) ~> methodsService.postRoute ~> check {
-      handleDeserializationErrors(
-        entity.as[AgoraEntity],
-        (entity: AgoraEntity) => assert(entity.documentation.get === bigDocumentation)
-      )
+      val agoraEntity = handleDeserializationErrors(entity.as[AgoraEntity])
+      assert(agoraEntity.documentation === bigDocumentation)
     }
   }
 
-  def handleDeserializationErrors[T](deserialized: Deserialized[T], assertions: (T) => Unit) = {
-    if (deserialized.isRight) assertions else failTest(deserialized.left.get.toString)
+  def handleDeserializationErrors[T](deserialized: Deserialized[T]): T = {
+    if (deserialized.isRight) deserialized.right.get else failTest(deserialized.left.get.toString)
   }
 
   def uriEncode(uri: String): String = {
     java.net.URLEncoder.encode(uri, "UTF-8")
   }
+  
+  def brief(entities: Seq[AgoraEntity]): Seq[AgoraEntity] = {
+    entities.map(entity =>
+      AgoraEntity(namespace = entity.namespace,
+        name = entity.name,
+        snapshotId = entity.snapshotId,
+        synopsis = entity.synopsis,
+        owner = entity.owner
+      )
+    )
+  }
 }
+

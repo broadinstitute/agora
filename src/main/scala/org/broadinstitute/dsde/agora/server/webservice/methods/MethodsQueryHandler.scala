@@ -17,17 +17,17 @@ class MethodsQueryHandler extends Actor {
   implicit val system = context.system
 
   def receive = {
-    case ServiceMessages.QueryByNamespaceNameId(requestContext: RequestContext, namespace: String, name: String, id: Int) =>
-      query(requestContext, namespace, name, id)
+    case ServiceMessages.QueryByNamespaceNameSnapshotId(requestContext: RequestContext, namespace: String, name: String, snapshotId: Int) =>
+      query(requestContext, namespace, name, snapshotId)
       context.stop(self)
     case ServiceMessages.Query(requestContext: RequestContext, agoraSearch: AgoraEntity) =>
       query(requestContext, agoraSearch)
       context.stop(self)
   }
 
-  def query(requestContext: RequestContext, namespace: String, name: String, id: Int): Unit = {
-    AgoraDao.createAgoraDao.findSingle(namespace, name, id) match {
-      case None => context.parent ! RequestComplete(NotFound, "Method: " + namespace + "/" + name + "/" + id + " not found")
+  def query(requestContext: RequestContext, namespace: String, name: String, snapshotId: Int): Unit = {
+    AgoraDao.createAgoraDao.findSingle(namespace, name, snapshotId) match {
+      case None => context.parent ! RequestComplete(NotFound, "Method: " + namespace + "/" + name + "/" + snapshotId + " not found")
       case Some(method) => context.parent ! RequestComplete(method)
     }
   }

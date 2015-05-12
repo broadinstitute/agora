@@ -7,7 +7,7 @@ import spray.routing.RequestContext
  * Case classes representing messages to pass to service handler actors
  */
 object ServiceMessages {
-  case class QueryByNamespaceNameId(requestContext: RequestContext, namespace: String, name: String, id: Int)
+  case class QueryByNamespaceNameSnapshotId(requestContext: RequestContext, namespace: String, name: String, snapshotId: Int)
 
   case class Query(requestContext: RequestContext, agoraSearch: AgoraEntity)
 

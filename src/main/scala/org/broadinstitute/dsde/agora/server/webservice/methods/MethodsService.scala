@@ -15,9 +15,9 @@ trait MethodsService extends HttpService with PerRequestCreator {
   import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
   import spray.httpx.SprayJsonSupport._
 
-  val routes = queryByNamespaceNameIdRoute ~ queryRoute ~ postRoute
+  val routes = queryByNamespaceNameSnapshotIdRoute ~ queryRoute ~ postRoute
 
-  @ApiOperation(value = "Get a method in the method repository matching namespace, name, and id",
+  @ApiOperation(value = "Get a method in the method repository matching namespace, name, and snapshot id",
     nickname = "methods",
     httpMethod = "GET",
     produces = "application/json",
@@ -26,18 +26,18 @@ trait MethodsService extends HttpService with PerRequestCreator {
   @ApiImplicitParams(Array(
     new ApiImplicitParam(name = "namespace", required = true, dataType = "string", paramType = "path", value = "Namespace"),
     new ApiImplicitParam(name = "name", required = true, dataType = "string", paramType = "path", value = "Name"),
-    new ApiImplicitParam(name = "id", required = true, dataType = "string", paramType = "path", value = "Id")
+    new ApiImplicitParam(name = "snapshotId", required = true, dataType = "string", paramType = "path", value = "SnapshotId")
   ))
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "Successful Request"),
     new ApiResponse(code = 404, message = "Method Not Found"),
     new ApiResponse(code = 500, message = "Internal Error")
   ))
-  def queryByNamespaceNameIdRoute =
-    path(ApiUtil.Methods.path / Segment / Segment / Segment) { (namespace, name, id) =>
+  def queryByNamespaceNameSnapshotIdRoute =
+    path(ApiUtil.Methods.path / Segment / Segment / Segment) { (namespace, name, snapshotId) =>
       get {
         requestContext =>
-          perRequest(requestContext, methodsQueryHandlerProps, ServiceMessages.QueryByNamespaceNameId(requestContext, namespace, name, id.toInt))
+          perRequest(requestContext, methodsQueryHandlerProps, ServiceMessages.QueryByNamespaceNameSnapshotId(requestContext, namespace, name, snapshotId.toInt))
       }
     }
 
@@ -51,7 +51,7 @@ trait MethodsService extends HttpService with PerRequestCreator {
   @ApiImplicitParams(Array(
     new ApiImplicitParam(name = "namespace", required = false, dataType = "string", paramType = "query", value = "Namespace"),
     new ApiImplicitParam(name = "name", required = false, dataType = "string", paramType = "query", value = "Name"),
-    new ApiImplicitParam(name = "id", required = false, dataType = "string", paramType = "query", value = "Id"),
+    new ApiImplicitParam(name = "snapshotId", required = false, dataType = "string", paramType = "query", value = "SnapshotId"),
     new ApiImplicitParam(name = "synopsis", required = false, dataType = "string", paramType = "query", value = "Synopsis"),
     new ApiImplicitParam(name = "documentation", required = false, dataType = "string", paramType = "query", value = "Documentation"),
     new ApiImplicitParam(name = "owner", required = false, dataType = "string", paramType = "query", value = "Owner"),
@@ -64,7 +64,7 @@ trait MethodsService extends HttpService with PerRequestCreator {
   def queryRoute =
     path(ApiUtil.Methods.path) {
       get {
-        parameters("namespace".?, "name".?, "id".as[Int].?, "synopsis".?, "documentation".?, "owner".?, "createDate".as[DateTime].?, "payload".?).as(AgoraEntity) { agoraEntity =>
+        parameters("namespace".?, "name".?, "snapshotId".as[Int].?, "synopsis".?, "documentation".?, "owner".?, "createDate".as[DateTime].?, "payload".?).as(AgoraEntity) { agoraEntity =>
           requestContext =>
             perRequest(requestContext, methodsQueryHandlerProps, ServiceMessages.Query(requestContext, agoraEntity))
         }

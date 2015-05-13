@@ -15,7 +15,7 @@ class AgoraTestSuite extends Suites(new ApiServiceSpec, new MethodsDbTest) with 
 
   override def beforeAll() {
     println("Starting embedded mongo db instance.")
-    mongoProps = mongoStart(port = Agora.server.mongoDbPort)
+    mongoProps = mongoStart(port = AgoraConfig.mongoDbPort)
     println("Starting Agora web services.")
     Agora.start()
   }

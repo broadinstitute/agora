@@ -3,7 +3,7 @@ package org.broadinstitute.dsde.agora.server.webservice.methods
 import akka.actor.Actor
 import cromwell.binding.WdlBinding
 import cromwell.parser.WdlParser.SyntaxError
-import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
+import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.PerRequest.RequestComplete
@@ -35,7 +35,7 @@ class MethodsAddHandler extends Actor {
   }
 
   private def add(requestContext: RequestContext, agoraEntity: AgoraEntity): Unit = {
-    val method = AgoraDao.createAgoraDao.insert(agoraEntity)
+    val method = AgoraBusiness.insert(agoraEntity)
     context.parent ! RequestComplete(spray.http.StatusCodes.Created.intValue, method)
   }
 }

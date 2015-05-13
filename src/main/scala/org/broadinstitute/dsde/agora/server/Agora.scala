@@ -4,7 +4,7 @@ import com.typesafe.scalalogging.slf4j.LazyLogging
 
 object Agora extends LazyLogging {
   val server: ServerInitializer = {
-    new ServerInitializer(AgoraConfig.appConfig)
+    new ServerInitializer()
   }
 
   sys addShutdownHook stop()
@@ -15,7 +15,7 @@ object Agora extends LazyLogging {
 
   def start(): Unit = {
     server.startAllServices()
-    logger.info("Agora instance " + server.serverInstanceName + " initialized.")
+    logger.info("Agora instance " + AgoraConfig.serverInstanceName + " initialized.")
   }
 
   def stop() {

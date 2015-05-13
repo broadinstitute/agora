@@ -5,7 +5,7 @@ import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.PerRequest._
-import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages
+import org.broadinstitute.dsde.agora.server.webservice.util.{ApiUtil, ServiceMessages}
 import spray.http.StatusCodes._
 import spray.httpx.SprayJsonSupport._
 import spray.routing.RequestContext
@@ -33,7 +33,8 @@ class MethodsQueryHandler extends Actor {
   }
 
   def query(requestContext: RequestContext, agoraSearch: AgoraEntity): Unit = {
-    val entities = AgoraDao.createAgoraDao.find(agoraSearch)
+    val entities = AgoraDao.createAgoraDao.find(agoraSearch).map(entity => entity.copy(url = Option(ApiUtil.agoraUrl(entity))))
     context.parent ! RequestComplete(entities)
   }
+
 }

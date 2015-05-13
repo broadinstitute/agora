@@ -28,14 +28,14 @@ object AgoraMongoDao {
 class AgoraMongoDao(collection: MongoCollection) extends AgoraDao {
 
   /**
-   * On insert we query for the given namespace/name if it exists we increment the id and store a new one.
+   * On insert we query for the given namespace/name if it exists we increment the snapshotId and store a new one.
    * @param entity The entity to store.
    * @return The entity that was stored.
    */
   override def insert(entity: AgoraEntity): AgoraEntity = {
-    //update the id
+    //update the snapshotId
     val id = getNextId(entity)
-    entity.id = Option(id)
+    entity.snapshotId = Option(id)
 
     //insert the entity
     val dbEntityToInsert = EntityToMongoDbObject(entity)
@@ -80,8 +80,8 @@ class AgoraMongoDao(collection: MongoCollection) extends AgoraDao {
     }
   }
 
-  override def findSingle(namespace: String, name: String, id: Int): Option[AgoraEntity] = {
-    val entity = AgoraEntity(namespace = Option(namespace), name = Option(name), id = Option(id))
+  override def findSingle(namespace: String, name: String, snapshotId: Int): Option[AgoraEntity] = {
+    val entity = AgoraEntity(namespace = Option(namespace), name = Option(name), snapshotId = Option(snapshotId))
     findSingle(entity)
   }
 }

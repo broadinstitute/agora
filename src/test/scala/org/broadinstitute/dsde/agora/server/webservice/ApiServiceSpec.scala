@@ -26,7 +26,7 @@ with AgoraTestData with AgoraDbTest {
     val insertedEntity = agoraDao.insert(testEntity1)
 
     Get(ApiUtil.Methods.withLeadingSlash + "/" + namespace1.get + "/" + name1.get + "/"
-      + insertedEntity.id.get) ~> methodsService.queryByNamespaceNameIdRoute ~> check {
+      + insertedEntity.snapshotId.get) ~> methodsService.queryByNamespaceNameSnapshotIdRoute ~> check {
       handleDeserializationErrors(entity.as[AgoraEntity], (entity: AgoraEntity) => assert(entity === insertedEntity))
     }
   }
@@ -79,7 +79,7 @@ with AgoraTestData with AgoraDbTest {
         assert(entity.documentation === documentation1)
         assert(entity.owner === owner1)
         assert(entity.payload === payload1)
-        assert(entity.id !== None)
+        assert(entity.snapshotId !== None)
         assert(entity.createDate != null)
       }
       )

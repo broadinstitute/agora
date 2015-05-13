@@ -11,8 +11,8 @@ case class AgoraEntity(@(ApiModelProperty@field)(required = false, value = "The 
                        namespace: Option[String] = None,
                        @(ApiModelProperty@field)(required = false, value = "The method name ")
                        name: Option[String] = None,
-                       @(ApiModelProperty@field)(required = false, value = "The method id")
-                       var id: Option[Int] = None,
+                       @(ApiModelProperty@field)(required = false, value = "The method snapshot id")
+                       var snapshotId: Option[Int] = None,
                        @(ApiModelProperty@field)(required = false, value = "A short description of the method")
                        synopsis: Option[String] = None,
                        @(ApiModelProperty@field)(required = false, value = "Method documentation")

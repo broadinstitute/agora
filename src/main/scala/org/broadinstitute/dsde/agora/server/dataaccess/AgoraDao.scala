@@ -19,5 +19,5 @@ trait AgoraDao {
 
   def findSingle(entity: AgoraEntity): Option[AgoraEntity]
 
-  def findSingle(namespace: String, name: String, id: Int): Option[AgoraEntity]
+  def findSingle(namespace: String, name: String, snapshotId: Int): Option[AgoraEntity]
 }

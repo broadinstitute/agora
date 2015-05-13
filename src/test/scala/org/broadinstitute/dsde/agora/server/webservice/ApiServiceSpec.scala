@@ -104,7 +104,8 @@ with AgoraTestData with AgoraDbTest {
         name = entity.name,
         snapshotId = entity.snapshotId,
         synopsis = entity.synopsis,
-        owner = entity.owner
+        owner = entity.owner,
+        url = Option(ApiUtil.agoraUrl(entity))
       )
     )
   }

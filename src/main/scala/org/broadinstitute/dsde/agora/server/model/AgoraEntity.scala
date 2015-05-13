@@ -22,5 +22,7 @@ case class AgoraEntity(@(ApiModelProperty@field)(required = false, value = "The 
                        @(ApiModelProperty@field)(required = false, value = "The date the method was inserted in the methods repo")
                        createDate: Option[DateTime] = None,
                        @(ApiModelProperty@field)(required = false, value = "The method payload")
-                       payload: Option[String] = None
+                       payload: Option[String] = None,
+                       @(ApiModelProperty@field)(required = false, value = "URI for method details")
+                       url: Option[String] = None
                         )

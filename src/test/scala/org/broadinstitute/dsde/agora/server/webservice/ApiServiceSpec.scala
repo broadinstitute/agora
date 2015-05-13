@@ -29,6 +29,7 @@ with AgoraTestData with AgoraDbTest {
       + insertedEntity.snapshotId.get) ~> methodsService.queryByNamespaceNameSnapshotIdRoute ~> check {
       val agoraEntity = handleDeserializationErrors(entity.as[AgoraEntity])
       assert(agoraEntity === insertedEntity)
+      assert(status === OK)
     }
   }
 
@@ -43,6 +44,7 @@ with AgoraTestData with AgoraDbTest {
       methodsService.queryRoute ~> check {
       val entities = handleDeserializationErrors(entity.as[Seq[AgoraEntity]])
       assert(entities === brief(Seq(testEntity3, testEntity4, testEntity5, testEntity6, testEntity7)))
+      assert(status === OK)
     }
   }
 
@@ -51,6 +53,7 @@ with AgoraTestData with AgoraDbTest {
       uriEncode(documentation1.get)) ~> methodsService.queryRoute ~> check {
       val entities = handleDeserializationErrors(entity.as[Seq[AgoraEntity]])
       assert(entities === brief(Seq(testEntity1, testEntity2, testEntity3, testEntity6, testEntity7)))
+      assert(status === OK)
     }
   }
 
@@ -59,10 +62,11 @@ with AgoraTestData with AgoraDbTest {
       methodsService.queryRoute ~> check {
       val entities = handleDeserializationErrors(entity.as[Seq[AgoraEntity]])
       assert(entities === brief(Seq(testEntity1, testEntity2, testEntity3, testEntity4, testEntity5)))
+      assert(status === OK)
     }
   }
 
-  "Agora" should "create and return a method" in {
+  "Agora" should "create a method and return with a status of 201" in {
     Post(ApiUtil.Methods.withLeadingSlash, testAgoraEntity) ~> methodsService.postRoute ~> check {
       val agoraEntity = handleDeserializationErrors(entity.as[AgoraEntity])
       assert(agoraEntity.namespace === namespace1)
@@ -73,6 +77,7 @@ with AgoraTestData with AgoraDbTest {
       assert(agoraEntity.payload === payload1)
       assert(agoraEntity.snapshotId !== None)
       assert(agoraEntity.createDate != null)
+      assert(status === Created)
     }
   }
 
@@ -87,6 +92,7 @@ with AgoraTestData with AgoraDbTest {
     Post(ApiUtil.Methods.withLeadingSlash, testAgoraEntityBigDoc) ~> methodsService.postRoute ~> check {
       val agoraEntity = handleDeserializationErrors(entity.as[AgoraEntity])
       assert(agoraEntity.documentation === bigDocumentation)
+      assert(status === Created)
     }
   }
 

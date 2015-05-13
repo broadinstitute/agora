@@ -36,6 +36,6 @@ class MethodsAddHandler extends Actor {
 
   private def add(requestContext: RequestContext, agoraEntity: AgoraEntity): Unit = {
     val method = AgoraDao.createAgoraDao.insert(agoraEntity)
-    context.parent ! RequestComplete(method)
+    context.parent ! RequestComplete(spray.http.StatusCodes.Created.intValue, method)
   }
 }

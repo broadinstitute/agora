@@ -80,7 +80,7 @@ trait MethodsService extends HttpService with PerRequestCreator {
   @ApiImplicitParams(Array(
     new ApiImplicitParam(name = "body", required = true, dataType = "org.broadinstitute.dsde.agora.server.model.AgoraEntity", paramType = "body", value = "Agora Entity")))
   @ApiResponses(Array(
-    new ApiResponse(code = 200, message = "Successful Request"),
+    new ApiResponse(code = 201, message = "Method Successfully Added"),
     new ApiResponse(code = 400, message = "Malformed Input"),
     new ApiResponse(code = 500, message = "Internal Error")
   ))

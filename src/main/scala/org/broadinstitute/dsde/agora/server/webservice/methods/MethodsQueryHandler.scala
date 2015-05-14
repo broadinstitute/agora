@@ -1,7 +1,7 @@
 package org.broadinstitute.dsde.agora.server.webservice.methods
 
 import akka.actor.Actor
-import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
+import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.PerRequest._
@@ -26,14 +26,15 @@ class MethodsQueryHandler extends Actor {
   }
 
   def query(requestContext: RequestContext, namespace: String, name: String, snapshotId: Int): Unit = {
-    AgoraDao.createAgoraDao.findSingle(namespace, name, snapshotId) match {
+    AgoraBusiness.findSingle(namespace, name, snapshotId) match {
       case None => context.parent ! RequestComplete(NotFound, "Method: " + namespace + "/" + name + "/" + snapshotId + " not found")
       case Some(method) => context.parent ! RequestComplete(method)
     }
   }
 
   def query(requestContext: RequestContext, agoraSearch: AgoraEntity): Unit = {
-    val entities = AgoraDao.createAgoraDao.find(agoraSearch)
+    val entities = AgoraBusiness.find(agoraSearch)
     context.parent ! RequestComplete(entities)
   }
+
 }

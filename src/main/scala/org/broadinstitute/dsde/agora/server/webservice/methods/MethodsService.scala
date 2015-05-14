@@ -64,7 +64,7 @@ trait MethodsService extends HttpService with PerRequestCreator {
   def queryRoute =
     path(ApiUtil.Methods.path) {
       get {
-        parameters("namespace".?, "name".?, "snapshotId".as[Int].?, "synopsis".?, "documentation".?, "owner".?, "createDate".as[DateTime].?, "payload".?).as(AgoraEntity) { agoraEntity =>
+        parameters("namespace".?, "name".?, "snapshotId".as[Int].?, "synopsis".?, "documentation".?, "owner".?, "createDate".as[DateTime].?, "payload".?, "url".?).as(AgoraEntity) { agoraEntity =>
           requestContext =>
             perRequest(requestContext, methodsQueryHandlerProps, ServiceMessages.Query(requestContext, agoraEntity))
         }

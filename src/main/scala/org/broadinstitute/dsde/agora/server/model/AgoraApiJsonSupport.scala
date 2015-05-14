@@ -26,6 +26,6 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
     ISODateTimeFormat.dateTimeNoMillis()
   }
 
-  implicit val AgoraEntityFormat = jsonFormat8(AgoraEntity)
+  implicit val AgoraEntityFormat = jsonFormat9(AgoraEntity)
 
 }

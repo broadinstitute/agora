@@ -3,7 +3,7 @@ package org.broadinstitute.dsde.agora.server.dataaccess.mongo
 
 import com.mongodb.casbah.{MongoClient, MongoCollection, MongoDB}
 import com.mongodb.{MongoCredential, ServerAddress}
-import org.broadinstitute.dsde.agora.server.Agora
+import org.broadinstitute.dsde.agora.server.{AgoraConfig, Agora}
 
 object AgoraMongoClient {
 
@@ -19,10 +19,10 @@ object AgoraMongoClient {
   }
 
   def getMongoClient: MongoClient = {
-    val server = new ServerAddress(Agora.server.mongoDbHost, Agora.server.mongoDbPort)
+    val server = new ServerAddress(AgoraConfig.mongoDbHost, AgoraConfig.mongoDbPort)
 
-    val user: Option[String] = Agora.server.mongoDbUser
-    val password: Option[String] = Agora.server.mongoDbPassword
+    val user: Option[String] = AgoraConfig.mongoDbUser
+    val password: Option[String] = AgoraConfig.mongoDbPassword
 
     (user, password) match {
       case (Some(userName), Some(userPassword)) =>

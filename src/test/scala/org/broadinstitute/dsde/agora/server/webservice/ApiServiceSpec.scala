@@ -1,5 +1,6 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
+import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
@@ -14,7 +15,7 @@ import spray.testkit.ScalatestRouteTest
 
 @DoNotDiscover
 class ApiServiceSpec extends FlatSpec with Matchers with Directives with ScalatestRouteTest
-with AgoraTestData with AgoraDbTest {
+with AgoraTestData {
 
   trait ActorRefFactoryContext {
     def actorRefFactory = system
@@ -23,7 +24,7 @@ with AgoraTestData with AgoraDbTest {
   val methodsService = new MethodsService with ActorRefFactoryContext with ServiceHandlerProps
 
   "Agora" should "return information about a method, including metadata " in {
-    val insertedEntity = agoraDao.insert(testEntity1)
+    val insertedEntity = AgoraBusiness.insert(testEntity1)
 
     Get(ApiUtil.Methods.withLeadingSlash + "/" + namespace1.get + "/" + name1.get + "/"
       + insertedEntity.snapshotId.get) ~> methodsService.queryByNamespaceNameSnapshotIdRoute ~> check {
@@ -34,12 +35,12 @@ with AgoraTestData with AgoraDbTest {
   }
 
   "Agora" should "return methods matching query by namespace and name" in {
-    agoraDao.insert(testEntity2)
-    agoraDao.insert(testEntity3)
-    agoraDao.insert(testEntity4)
-    agoraDao.insert(testEntity5)
-    agoraDao.insert(testEntity6)
-    agoraDao.insert(testEntity7)
+    AgoraBusiness.insert(testEntity2)
+    AgoraBusiness.insert(testEntity3)
+    AgoraBusiness.insert(testEntity4)
+    AgoraBusiness.insert(testEntity5)
+    AgoraBusiness.insert(testEntity6)
+    AgoraBusiness.insert(testEntity7)
     Get(ApiUtil.Methods.withLeadingSlash + "?namespace=" + namespace1.get + "&name=" + name2.get) ~>
       methodsService.queryRoute ~> check {
       val entities = handleDeserializationErrors(entity.as[Seq[AgoraEntity]])
@@ -110,7 +111,8 @@ with AgoraTestData with AgoraDbTest {
         name = entity.name,
         snapshotId = entity.snapshotId,
         synopsis = entity.synopsis,
-        owner = entity.owner
+        owner = entity.owner,
+        url = Option(AgoraBusiness.agoraUrl(entity))
       )
     )
   }

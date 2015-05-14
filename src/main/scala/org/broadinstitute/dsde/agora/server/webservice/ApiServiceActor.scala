@@ -21,12 +21,12 @@ class ApiServiceActor extends HttpServiceActor {
     def actorRefFactory = context
   }
 
-  val methodsService = new MethodsService with ActorRefFactoryContext with ServiceHandlerProps
+  val methodsService = new MethodsService with ActorRefFactoryContext with ServiceHandlerProps with AgoraOpenAMDirectives
 
   def possibleRoutes = methodsService.routes ~ swaggerService.routes ~
     get {
       pathSingleSlash {
-          getFromResource("swagger/index.html")
+        getFromResource("swagger/index.html")
       } ~ getFromResourceDirectory("swagger/") ~ getFromResourceDirectory("META-INF/resources/webjars/swagger-ui/2.0.24/")
     }
 

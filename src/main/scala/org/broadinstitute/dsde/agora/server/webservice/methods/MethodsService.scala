@@ -2,19 +2,20 @@ package org.broadinstitute.dsde.agora.server.webservice.methods
 
 import com.wordnik.swagger.annotations._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
-import org.broadinstitute.dsde.agora.server.webservice.PerRequestCreator
 import org.broadinstitute.dsde.agora.server.webservice.util.{ApiUtil, ServiceHandlerProps, ServiceMessages}
+import org.broadinstitute.dsde.agora.server.webservice.{AgoraDirectives, PerRequestCreator}
 import org.joda.time.DateTime
 import spray.routing.HttpService
 
 @Api(value = "/methods", description = "Method Service", produces = "application/json", position = 1)
-trait MethodsService extends HttpService with PerRequestCreator {
+trait MethodsService extends HttpService with PerRequestCreator with AgoraDirectives {
   this: ServiceHandlerProps =>
   // Require a concrete ServiceHandlerProps creator to be mixed in
 
   import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
   import spray.httpx.SprayJsonSupport._
 
+  private implicit val ec = actorRefFactory.dispatcher
   val routes = queryByNamespaceNameSnapshotIdRoute ~ queryRoute ~ postRoute
 
   @ApiOperation(value = "Get a method in the method repository matching namespace, name, and snapshot id",
@@ -87,12 +88,13 @@ trait MethodsService extends HttpService with PerRequestCreator {
   def postRoute =
     path(ApiUtil.Methods.path) {
       post {
-        entity(as[AgoraEntity]) { agoraEntity =>
-          requestContext =>
-            perRequest(requestContext, methodsAddHandlerProps, ServiceMessages.Add(requestContext, agoraEntity))
+        commonNameFromCookie() { commonName =>
+          entity(as[AgoraEntity]) { agoraEntity =>
+            requestContext =>
+              val entityWithOwner = agoraEntity.copy(owner = Option(commonName))
+              perRequest(requestContext, methodsAddHandlerProps, ServiceMessages.Add(requestContext, entityWithOwner))
+          }
         }
       }
     }
-
-
 }

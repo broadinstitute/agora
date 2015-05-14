@@ -35,12 +35,12 @@ class AgoraMongoDao(collection: MongoCollection) extends AgoraDao {
   override def insert(entity: AgoraEntity): AgoraEntity = {
     //update the snapshotId
     val id = getNextId(entity)
-    entity.snapshotId = Option(id)
+    val entityWithId = entity.copy(snapshotId = Option(id))
 
     //insert the entity
-    val dbEntityToInsert = EntityToMongoDbObject(entity)
+    val dbEntityToInsert = EntityToMongoDbObject(entityWithId)
     collection.insert(dbEntityToInsert)
-    findSingle(entity) match {
+    findSingle(entityWithId) match {
       case None => throw new Exception("failed to find inserted entity?")
       case foundEntity => foundEntity.get
     }

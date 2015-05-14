@@ -1,12 +1,12 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
+import org.broadinstitute.dsde.agora.server.AgoraTestData
 import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
 import org.broadinstitute.dsde.agora.server.webservice.util.{ApiUtil, ServiceHandlerProps}
-import org.broadinstitute.dsde.agora.server.{AgoraDbTest, AgoraTestData}
-import org.scalatest.{DoNotDiscover, FlatSpec, Matchers}
+import org.scalatest._
 import spray.http.StatusCodes._
 import spray.httpx.SprayJsonSupport._
 import spray.httpx.unmarshalling._
@@ -15,96 +15,125 @@ import spray.testkit.ScalatestRouteTest
 
 @DoNotDiscover
 class ApiServiceSpec extends FlatSpec with Matchers with Directives with ScalatestRouteTest
-with AgoraTestData {
+with AgoraTestData with BeforeAndAfterAll {
 
   trait ActorRefFactoryContext {
     def actorRefFactory = system
   }
 
-  val methodsService = new MethodsService with ActorRefFactoryContext with ServiceHandlerProps
+  var testEntity1WithId: AgoraEntity = null
+  var testEntity2WithId: AgoraEntity = null
+  var testEntity3WithId: AgoraEntity = null
+  var testEntity4WithId: AgoraEntity = null
+  var testEntity5WithId: AgoraEntity = null
+  var testEntity6WithId: AgoraEntity = null
+  var testEntity7WithId: AgoraEntity = null
+
+  override def beforeAll() = {
+    testEntity1WithId = AgoraBusiness.insert(testEntity1)
+    testEntity2WithId = AgoraBusiness.insert(testEntity2)
+    testEntity3WithId = AgoraBusiness.insert(testEntity3)
+    testEntity4WithId = AgoraBusiness.insert(testEntity4)
+    testEntity5WithId = AgoraBusiness.insert(testEntity5)
+    testEntity6WithId = AgoraBusiness.insert(testEntity6)
+    testEntity7WithId = AgoraBusiness.insert(testEntity7)
+  }
+
+  val methodsService = new MethodsService with ActorRefFactoryContext with ServiceHandlerProps with AgoraOpenAMMockDirectives
 
   "Agora" should "return information about a method, including metadata " in {
-    val insertedEntity = AgoraBusiness.insert(testEntity1)
-
     Get(ApiUtil.Methods.withLeadingSlash + "/" + namespace1.get + "/" + name1.get + "/"
-      + insertedEntity.snapshotId.get) ~> methodsService.queryByNamespaceNameSnapshotIdRoute ~> check {
-      val agoraEntity = handleDeserializationErrors(entity.as[AgoraEntity])
-      assert(agoraEntity === insertedEntity)
+      + testEntity1WithId.snapshotId.get) ~> methodsService.queryByNamespaceNameSnapshotIdRoute ~> check {
+      handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => assert(entity === testEntity1WithId))
       assert(status === OK)
     }
   }
 
   "Agora" should "return methods matching query by namespace and name" in {
-    AgoraBusiness.insert(testEntity2)
-    AgoraBusiness.insert(testEntity3)
-    AgoraBusiness.insert(testEntity4)
-    AgoraBusiness.insert(testEntity5)
-    AgoraBusiness.insert(testEntity6)
-    AgoraBusiness.insert(testEntity7)
     Get(ApiUtil.Methods.withLeadingSlash + "?namespace=" + namespace1.get + "&name=" + name2.get) ~>
       methodsService.queryRoute ~> check {
-      val entities = handleDeserializationErrors(entity.as[Seq[AgoraEntity]])
-      assert(entities === brief(Seq(testEntity3, testEntity4, testEntity5, testEntity6, testEntity7)))
+      handleError(
+        entity.as[Seq[AgoraEntity]],
+        (entities: Seq[AgoraEntity]) =>
+          assert(entities === brief(Seq(testEntity3WithId, testEntity4WithId, testEntity5WithId, testEntity6WithId, testEntity7WithId)))
+      )
       assert(status === OK)
     }
   }
 
   "Agora" should "return methods matching query by synopsis and documentation" in {
     Get(ApiUtil.Methods.withLeadingSlash + "?synopsis=" + uriEncode(synopsis1.get) + "&documentation=" +
-      uriEncode(documentation1.get)) ~> methodsService.queryRoute ~> check {
-      val entities = handleDeserializationErrors(entity.as[Seq[AgoraEntity]])
-      assert(entities === brief(Seq(testEntity1, testEntity2, testEntity3, testEntity6, testEntity7)))
-      assert(status === OK)
-    }
+      uriEncode(documentation1.get)) ~>
+      methodsService.queryRoute ~>
+      check {
+        handleError(
+          entity.as[Seq[AgoraEntity]],
+          (entities: Seq[AgoraEntity]) =>
+            assert(entities === brief(Seq(testEntity1WithId, testEntity2WithId, testEntity3WithId, testEntity6WithId, testEntity7WithId)))
+        )
+        assert(status === OK)
+      }
   }
 
   "Agora" should "return methods matching query by owner and payload" in {
     Get(ApiUtil.Methods.withLeadingSlash + "?owner=" + owner1.get + "&payload=" + uriEncode(payload1.get)) ~>
-      methodsService.queryRoute ~> check {
-      val entities = handleDeserializationErrors(entity.as[Seq[AgoraEntity]])
-      assert(entities === brief(Seq(testEntity1, testEntity2, testEntity3, testEntity4, testEntity5)))
-      assert(status === OK)
-    }
+      methodsService.queryRoute ~>
+      check {
+        handleError(
+          entity.as[Seq[AgoraEntity]],
+          (entities: Seq[AgoraEntity]) =>
+            assert(entities === brief(Seq(testEntity1WithId, testEntity2WithId, testEntity3WithId, testEntity4WithId, testEntity5WithId)))
+        )
+      }
   }
 
   "Agora" should "create a method and return with a status of 201" in {
-    Post(ApiUtil.Methods.withLeadingSlash, testAgoraEntity) ~> methodsService.postRoute ~> check {
-      val agoraEntity = handleDeserializationErrors(entity.as[AgoraEntity])
-      assert(agoraEntity.namespace === namespace1)
-      assert(agoraEntity.name === name1)
-      assert(agoraEntity.synopsis === synopsis1)
-      assert(agoraEntity.documentation === documentation1)
-      assert(agoraEntity.owner === owner1)
-      assert(agoraEntity.payload === payload1)
-      assert(agoraEntity.snapshotId !== None)
-      assert(agoraEntity.createDate != null)
+    Post(ApiUtil.Methods.withLeadingSlash, testAgoraEntity) ~>
+      methodsService.postRoute ~> check {
+      handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => {
+        assert(entity.namespace === namespace1)
+        assert(entity.name === name1)
+        assert(entity.synopsis === synopsis1)
+        assert(entity.documentation === documentation1)
+        assert(entity.owner === agoraCIOwner)
+        assert(entity.payload === payload1)
+        assert(entity.snapshotId !== None)
+      })
       assert(status === Created)
     }
   }
 
   "Agora" should "return a 400 bad request when posting a malformed payload" in {
-    Post(ApiUtil.Methods.withLeadingSlash, testBadAgoraEntity) ~> methodsService.postRoute ~> check {
+    Post(ApiUtil.Methods.withLeadingSlash, testBadAgoraEntity) ~>
+      methodsService.postRoute ~> check {
       assert(status === BadRequest)
       assert(responseAs[String] != null)
     }
   }
 
   "Agora" should "store 10kb of github markdown as method documentation and return it without alteration" in {
-    Post(ApiUtil.Methods.withLeadingSlash, testAgoraEntityBigDoc) ~> methodsService.postRoute ~> check {
-      val agoraEntity = handleDeserializationErrors(entity.as[AgoraEntity])
-      assert(agoraEntity.documentation === bigDocumentation)
+    Post(ApiUtil.Methods.withLeadingSlash, testAgoraEntityBigDoc) ~>
+      methodsService.postRoute ~> check {
+      handleError(
+        entity.as[AgoraEntity],
+        (entity: AgoraEntity) => assert(entity.documentation.get === bigDocumentation.get)
+      )
       assert(status === Created)
     }
   }
 
-  def handleDeserializationErrors[T](deserialized: Deserialized[T]): T = {
-    if (deserialized.isRight) deserialized.right.get else failTest(deserialized.left.get.toString)
+  def handleError[T](deserialized: Deserialized[T], assertions: (T) => Unit) = {
+    if (status.isSuccess) {
+      if (deserialized.isRight) assertions(deserialized.right.get) else failTest(deserialized.left.get.toString)
+    } else {
+      failTest(response.message.toString)
+    }
   }
 
   def uriEncode(uri: String): String = {
     java.net.URLEncoder.encode(uri, "UTF-8")
   }
-  
+
   def brief(entities: Seq[AgoraEntity]): Seq[AgoraEntity] = {
     entities.map(entity =>
       AgoraEntity(namespace = entity.namespace,

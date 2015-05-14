@@ -28,7 +28,6 @@ RUN apt-get update && apt-get install -y --force-yes \
 EXPOSE 8000
 
 # Assumes Dockerfile lives in root of the git repo. Pull source files into container
-COPY lib /usr/agora/lib
 COPY build.sbt /usr/agora/build.sbt
 COPY assembly.sbt /usr/agora/assembly.sbt
 COPY project /usr/agora/project

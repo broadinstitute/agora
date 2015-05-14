@@ -8,6 +8,7 @@ import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.PerRequest.RequestComplete
 import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages
+import org.joda.time.DateTime
 import spray.http.StatusCodes._
 import spray.httpx.SprayJsonSupport._
 import spray.routing.RequestContext
@@ -35,7 +36,7 @@ class MethodsAddHandler extends Actor {
   }
 
   private def add(requestContext: RequestContext, agoraEntity: AgoraEntity): Unit = {
-    val method = AgoraBusiness.insert(agoraEntity)
+    val method = AgoraBusiness.insert(agoraEntity.copy(createDate = Option(new DateTime())))
     context.parent ! RequestComplete(spray.http.StatusCodes.Created.intValue, method)
   }
 }

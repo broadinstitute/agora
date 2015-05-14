@@ -98,6 +98,7 @@ with AgoraTestData with BeforeAndAfterAll {
         assert(entity.owner === agoraCIOwner)
         assert(entity.payload === payload1)
         assert(entity.snapshotId !== None)
+        assert(entity.createDate !== None)
       })
       assert(status === Created)
     }

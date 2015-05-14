@@ -4,9 +4,6 @@ import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 
-/**
- * Created by dshiga on 5/13/15.
- */
 object AgoraBusiness {
 
   def agoraUrl(entity: AgoraEntity): String = {
@@ -18,7 +15,8 @@ object AgoraBusiness {
   }
 
   def insert(agoraEntity: AgoraEntity): AgoraEntity = {
-    AgoraDao.createAgoraDao.insert(agoraEntity).copy(url = Option(agoraUrl(agoraEntity)))
+    val entityWithId = AgoraDao.createAgoraDao.insert(agoraEntity)
+    entityWithId.copy(url = Option(agoraUrl(entityWithId)))
   }
 
   def find(agoraSearch: AgoraEntity): Seq[AgoraEntity] = {

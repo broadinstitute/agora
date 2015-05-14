@@ -10,6 +10,12 @@ scalaVersion := "2.11.6"
 
 val sprayV = "1.3.2"
 
+val artifactory = "https://artifactory.broadinstitute.org/artifactory/"
+
+resolvers += "artifactory-releases" at artifactory + "libs-release"
+
+resolvers += "artifactory-snapshots" at artifactory + "libs-snapshot"
+
 libraryDependencies ++= Seq(
   "cglib" % "cglib-nodep" % "2.2",
   "io.spray" %% "spray-can" % sprayV,
@@ -23,6 +29,8 @@ libraryDependencies ++= Seq(
   "org.webjars" % "swagger-ui" % "2.0.24",
   "com.gettyimages" %% "spray-swagger" % "0.5.0",
   "org.mongodb" %% "casbah" % "2.8.1",
+  "org.broadinstitute.dsde.vault" %% "vault-common" % "0.1-15-bf74315",
+  "org.broadinstitute" %% "cromwell" % "0.1-SNAPSHOT",
   //---------- Test libraries -------------------//
   "io.spray" %% "spray-testkit" % sprayV % Test,
   "org.scalatest" %% "scalatest" % "2.2.4" % Test,
@@ -66,4 +74,3 @@ val customMergeStrategy: String => MergeStrategy = {
 }
 
 mergeStrategy in assembly := customMergeStrategy
-

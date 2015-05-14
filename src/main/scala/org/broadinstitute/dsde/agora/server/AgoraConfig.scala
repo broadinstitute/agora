@@ -6,7 +6,7 @@ import net.ceedubs.ficus.Ficus._
 import com.typesafe.config.{Config, ConfigFactory}
 
 object AgoraConfig {
-  private val config: Config = ConfigFactory.load() 
+  private val config: Config = ConfigFactory.load()
   private val agoraConfig: Config = ConfigFactory.parseFile(new File("/etc/agora.conf"))
 
   private val appConfig = agoraConfig.withFallback(config)

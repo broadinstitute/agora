@@ -6,9 +6,10 @@ trait AgoraTestData {
   def getBigDocumentation: String = {
     // Read contents of a test markdown file into a single string.
     val markdown = io.Source.fromFile("src/test/resources/TESTMARKDOWN.md").getLines() mkString "\n"
-    markdown * 7  // NB: File is 1.6 Kb, so 7* that is >10kb, our minimal required storage amount.
+    markdown * 7 // NB: File is 1.6 Kb, so 7* that is >10kb, our minimal required storage amount.
   }
 
+  val agoraCIOwner = Option("agora-test")
   val namespace1 = Option("broad")
   val namespace2 = Option("hellbender")
   val name1 = Option("testMethod1")
@@ -21,21 +22,43 @@ trait AgoraTestData {
   val bigDocumentation: Option[String] = Option(getBigDocumentation)
   val owner1 = Option("bob")
   val owner2 = Option("dave")
-  val payload1 = Option("""task wc {
-                   |  command {
-                   |    echo "${str}" | wc -c
-                   |  }
-                   |  output {
-                   |    int count = read_int("stdout") - 1
-                   |  }
-                   |}
-                   |
-                   |workflow wf {
-                   |  array[string] str_array
-                   |  scatter(s in str_array) {
-                   |    call wc{input: str=s}
-                   |  }
-                   |}""".stripMargin)
+  val payload1 = Option( """task grep {
+                           |  command {
+                           |    grep ${pattern} ${flags?} ${File file_name}
+                           |  }
+                           |  output {
+                           |    File out = "stdout"
+                           |  }
+                           |  runtime {
+                           |    memory: "2MB"
+                           |    cores: 1
+                           |    disk: "3MB"
+                           |  }
+                           |}
+                           |
+                           |task wc {
+                           |  command {
+                           |    wc -l ${sep=' ' File files+} | tail -1 | cut -d' ' -f 2
+                           |  }
+                           |  output {
+                           |    Int count = read_int("stdout")
+                           |  }
+                           |}
+                           |
+                           |workflow scatter_gather_grep_wc {
+                           |  Array[File] input_files
+                           |  scatter(f in input_files) {
+                           |    call grep {
+                           |      input: file_name = f
+                           |    }
+                           |  }
+                           |  call wc {
+                           |    input: files = grep.out
+                           |  }
+                           |}
+                           |
+                           |
+                           | """.stripMargin)
   val payload2 = Option("task test {}")
   val badPayload = Option("task test {")
 

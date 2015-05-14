@@ -7,7 +7,14 @@ import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 object AgoraBusiness {
 
   def agoraUrl(entity: AgoraEntity): String = {
-    AgoraConfig.methodsUrl + entity.namespace.get + "/" + entity.name.get + "/" + entity.snapshotId.get
+    hasNamespaceNameId(entity) match {
+      case true => AgoraConfig.methodsUrl + entity.namespace.get + "/" + entity.name.get + "/" + entity.snapshotId.get
+      case false => ""
+    }
+  }
+
+  def hasNamespaceNameId(entity: AgoraEntity): Boolean = {
+    entity.namespace.exists(_.trim.nonEmpty) && entity.name.exists(_.trim.nonEmpty) && entity.snapshotId.nonEmpty
   }
 
   def addUrl(entity: AgoraEntity): AgoraEntity = {

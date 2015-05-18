@@ -49,7 +49,7 @@ class AgoraMongoDao(collection: MongoCollection) extends AgoraDao {
   def getNextId(entity: AgoraEntity): Int = {
     //first check to see if we have a sequence
     val counterCollection = getCollection(collection.getDB, CounterCollectionName)
-    val counterId: String = entity.namespace + KeySeparator + entity.name
+    val counterId: String = entity.namespace.get + KeySeparator + entity.name.get
     val counterQuery = MongoDbIdField $eq counterId
 
     //if we don't have a sequence create one

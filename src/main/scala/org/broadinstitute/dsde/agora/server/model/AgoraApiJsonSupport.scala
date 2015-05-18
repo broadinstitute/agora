@@ -1,9 +1,11 @@
 
 package org.broadinstitute.dsde.agora.server.model
 
+import org.broadinstitute.dsde.agora.server.webservice.validation.AgoraValidation
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import spray.json._
+import spray.httpx.SprayJsonSupport._
 
 import scala.language.implicitConversions
 
@@ -29,4 +31,18 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
   implicit val AgoraEntityFormat = jsonFormat9(AgoraEntity)
 
   implicit val AgoraErrorFormat = jsonFormat1(AgoraError)
+
+  implicit object AgoraValidationFormat extends RootJsonFormat[AgoraValidation] {
+    override def write(validation: AgoraValidation) = {
+      Map("error" -> validation.messages).toJson
+    }
+
+    override def read(json: JsValue): AgoraValidation = json match {
+      case x: JsObject => {
+        val messages = x.fields("error").convertTo[Seq[String]]
+        AgoraValidation(messages)
+      }
+      case _ => throw new DeserializationException("only string supported")
+    }
+  }
 }

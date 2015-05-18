@@ -3,6 +3,7 @@ package org.broadinstitute.dsde.agora.server.webservice.methods
 import com.wordnik.swagger.annotations._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.util.{ApiUtil, ServiceHandlerProps, ServiceMessages}
+import org.broadinstitute.dsde.agora.server.webservice.validation.{AgoraValidationRejection, AgoraValidation}
 import org.broadinstitute.dsde.agora.server.webservice.{AgoraDirectives, PerRequestCreator}
 import org.joda.time.DateTime
 import spray.routing.HttpService
@@ -90,9 +91,15 @@ trait MethodsService extends HttpService with PerRequestCreator with AgoraDirect
       post {
         commonNameFromCookie() { commonName =>
           entity(as[AgoraEntity]) { agoraEntity =>
-            requestContext =>
-              val entityWithOwner = agoraEntity.copy(owner = Option(commonName))
-              perRequest(requestContext, methodsAddHandlerProps, ServiceMessages.Add(requestContext, entityWithOwner))
+            val validation = AgoraValidation.validateMetadata(agoraEntity) 
+            validation.valid match {
+              case false => reject(AgoraValidationRejection(validation))
+              case true => {
+                requestContext =>
+                  val entityWithOwner = agoraEntity.copy(owner = Option(commonName))
+                  perRequest(requestContext, methodsAddHandlerProps, ServiceMessages.Add(requestContext, entityWithOwner))
+              }
+            }
           }
         }
       }

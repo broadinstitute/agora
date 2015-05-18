@@ -23,4 +23,15 @@ class AgoraBusinessTest extends FlatSpec with Matchers {
     assert(AgoraBusiness.agoraUrl(entity) === "http://localhost:8000/methods/broad/test/12")
   }
 
+  "Agora" should "not find a method payload when resolving a WDL import statement if the method has not been added" in {
+    val importString = "methods://broad.nonexistent.5400"
+    assert(AgoraBusiness.importResolver(importString) === "")
+  }
+
+  "Agora" should "throw an exception when trying to resolve a WDL import that is improperly formatted" in {
+    val importString = "methods:broad.nonexistent.5400"
+    intercept[Exception] {
+      AgoraBusiness.importResolver(importString)
+    }
+  }
 }

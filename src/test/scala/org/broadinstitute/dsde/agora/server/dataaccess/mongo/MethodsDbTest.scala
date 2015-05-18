@@ -35,4 +35,9 @@ class MethodsDbTest extends FlatSpec with AgoraDbTest with AgoraTestData {
 
     assert(entity1.snapshotId.get == entity2.snapshotId.get - 1)
   }
+
+  "Agora" should "not find an entity if it doesn't exist" in {
+    val entity = agoraDao.findSingle(testAgoraEntityNonExistent)
+    assert(entity.isEmpty)
+  }
 }

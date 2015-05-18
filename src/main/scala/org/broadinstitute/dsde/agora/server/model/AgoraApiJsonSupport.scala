@@ -30,6 +30,8 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
 
   implicit val AgoraEntityFormat = jsonFormat9(AgoraEntity)
 
+  implicit val AgoraEntityProjectionFormat = jsonFormat2(AgoraEntityProjection)
+
   implicit val AgoraErrorFormat = jsonFormat1(AgoraError)
 
   implicit object AgoraValidationFormat extends RootJsonFormat[AgoraValidation] {

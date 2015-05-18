@@ -1,9 +1,9 @@
 package org.broadinstitute.dsde.agora.server.webservice.methods
 
 import com.wordnik.swagger.annotations._
-import org.broadinstitute.dsde.agora.server.model.AgoraEntity
+import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection}
 import org.broadinstitute.dsde.agora.server.webservice.util.{ApiUtil, ServiceHandlerProps, ServiceMessages}
-import org.broadinstitute.dsde.agora.server.webservice.validation.{AgoraValidationRejection, AgoraValidation}
+import org.broadinstitute.dsde.agora.server.webservice.validation.{AgoraValidation, AgoraValidationRejection}
 import org.broadinstitute.dsde.agora.server.webservice.{AgoraDirectives, PerRequestCreator}
 import org.joda.time.DateTime
 import spray.routing.HttpService
@@ -17,6 +17,7 @@ trait MethodsService extends HttpService with PerRequestCreator with AgoraDirect
   import spray.httpx.SprayJsonSupport._
 
   private implicit val ec = actorRefFactory.dispatcher
+
   val routes = queryByNamespaceNameSnapshotIdRoute ~ queryRoute ~ postRoute
 
   @ApiOperation(value = "Get a method in the method repository matching namespace, name, and snapshot id",
@@ -57,7 +58,9 @@ trait MethodsService extends HttpService with PerRequestCreator with AgoraDirect
     new ApiImplicitParam(name = "synopsis", required = false, dataType = "string", paramType = "query", value = "Synopsis"),
     new ApiImplicitParam(name = "documentation", required = false, dataType = "string", paramType = "query", value = "Documentation"),
     new ApiImplicitParam(name = "owner", required = false, dataType = "string", paramType = "query", value = "Owner"),
-    new ApiImplicitParam(name = "payload", required = false, dataType = "string", paramType = "query", value = "Payload")
+    new ApiImplicitParam(name = "payload", required = false, dataType = "string", paramType = "query", value = "Payload"),
+    new ApiImplicitParam(name = "excludedField", required = false, allowMultiple = true, dataType = "string", value = "Excluded Field"),
+    new ApiImplicitParam(name = "includedField", required = false, allowMultiple = true, dataType = "string", value = "Included Field")
   ))
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "Successful Request"),
@@ -66,9 +69,18 @@ trait MethodsService extends HttpService with PerRequestCreator with AgoraDirect
   def queryRoute =
     path(ApiUtil.Methods.path) {
       get {
-        parameters("namespace".?, "name".?, "snapshotId".as[Int].?, "synopsis".?, "documentation".?, "owner".?, "createDate".as[DateTime].?, "payload".?, "url".?).as(AgoraEntity) { agoraEntity =>
-          requestContext =>
-            perRequest(requestContext, methodsQueryHandlerProps, ServiceMessages.Query(requestContext, agoraEntity))
+        parameters("namespace".?, "name".?, "snapshotId".as[Int].?, "synopsis".?, "documentation".?, "owner".?, "createDate".as[DateTime].?, "payload".?, "url".?).as(AgoraEntity) {
+          agoraEntity => {
+            parameterMultiMap { params =>
+              requestContext =>
+                val agoraProjection = new AgoraEntityProjection(params.getOrElse("includedField", Seq.empty[String]), params.getOrElse("excludedField", Seq.empty[String]))
+                val agoraProjectionOption = agoraProjection.totalFields match {
+                  case 0 => None
+                  case _ => Some(agoraProjection)
+                }
+                perRequest(requestContext, methodsQueryHandlerProps, ServiceMessages.Query(requestContext, agoraEntity, agoraProjectionOption))
+            }
+          }
         }
       }
     }
@@ -94,11 +106,10 @@ trait MethodsService extends HttpService with PerRequestCreator with AgoraDirect
             val validation = AgoraValidation.validateMetadata(agoraEntity) 
             validation.valid match {
               case false => reject(AgoraValidationRejection(validation))
-              case true => {
+              case true =>
                 requestContext =>
                   val entityWithOwner = agoraEntity.copy(owner = Option(commonName))
                   perRequest(requestContext, methodsAddHandlerProps, ServiceMessages.Add(requestContext, entityWithOwner))
-              }
             }
           }
         }

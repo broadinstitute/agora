@@ -8,21 +8,20 @@ import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
 import org.broadinstitute.dsde.agora.server.webservice.util.{ApiUtil, ServiceHandlerProps}
 import org.broadinstitute.dsde.agora.server.webservice.validation.AgoraValidationRejection
 import org.scalatest._
+import spray.http.MediaTypes._
 import spray.http.StatusCodes._
 import spray.httpx.SprayJsonSupport._
 import spray.httpx.unmarshalling._
-import spray.routing.{RejectionHandler, Directives}
+import spray.routing.{Directives, RejectionHandler}
 import spray.testkit.ScalatestRouteTest
-import spray.http.MediaTypes._
 
 @DoNotDiscover
 class ApiServiceSpec extends FlatSpec with Matchers with Directives with ScalatestRouteTest
 with AgoraTestData with BeforeAndAfterAll {
-
   val wrapWithRejectionHandler = handleRejections(RejectionHandler {
     case AgoraValidationRejection(validation) :: _ => complete(BadRequest, validation)
   })
-  
+
   trait ActorRefFactoryContext {
     def actorRefFactory = system
   }
@@ -49,6 +48,14 @@ with AgoraTestData with BeforeAndAfterAll {
   }
 
   val methodsService = new MethodsService with ActorRefFactoryContext with ServiceHandlerProps with AgoraOpenAMMockDirectives
+
+  def handleError[T](deserialized: Deserialized[T], assertions: (T) => Unit) = {
+    if (status.isSuccess) {
+      if (deserialized.isRight) assertions(deserialized.right.get) else failTest(deserialized.left.get.toString)
+    } else {
+      failTest(response.message.toString)
+    }
+  }
 
   "Agora" should "return information about a method, including metadata " in {
     Get(ApiUtil.Methods.withLeadingSlash + "/" + namespace1.get + "/" + name1.get + "/"
@@ -91,6 +98,7 @@ with AgoraTestData with BeforeAndAfterAll {
         assert(status === OK)
       }
   }
+
 
   "Agora" should "return methods matching query by owner and payload" in {
     Get(ApiUtil.Methods.withLeadingSlash + "?owner=" + owner1.get + "&payload=" + uriEncode(payload1.get)) ~>
@@ -193,11 +201,40 @@ with AgoraTestData with BeforeAndAfterAll {
     }
   }
 
-  def handleError[T](deserialized: Deserialized[T], assertions: (T) => Unit) = {
-    if (status.isSuccess) {
-      if (deserialized.isRight) assertions(deserialized.right.get) else failTest(deserialized.left.get.toString)
-    } else {
-      failTest(response.message.toString)
+  "Agora" should "return only included fields in the entity" in {
+    Get(ApiUtil.Methods.withLeadingSlash + "?namespace=" + namespace1.get + "&name=" + name2.get + "&includedField=name&includedField=snapshotId") ~>
+      methodsService.queryRoute ~> check {
+      handleError(
+        entity.as[Seq[AgoraEntity]],
+        (entities: Seq[AgoraEntity]) =>
+          assert(entities === includeProjection(Seq(testEntity3WithId, testEntity4WithId, testEntity5WithId, testEntity6WithId, testEntity7WithId)))
+      )
+      assert(status === OK)
+    }
+  }
+
+  "Agora" should "not return excluded fields in the entity" in {
+    Get(ApiUtil.Methods.withLeadingSlash
+      + "?namespace=" + namespace1.get
+      + "&name=" + name2.get
+      + "&excludedField=synopsis&excludedField=documentation&excludedField=createDate&excludedField=payload") ~>
+      methodsService.queryRoute ~> check {
+      handleError(
+        entity.as[Seq[AgoraEntity]],
+        (entities: Seq[AgoraEntity]) =>
+          assert(entities === excludeProjection(Seq(testEntity3WithId, testEntity4WithId, testEntity5WithId, testEntity6WithId, testEntity7WithId)))
+      )
+      assert(status === OK)
+    }
+  }
+
+  "Agora" should "fail case class validation if you supply a required field as an excluded field" in {
+    Get(ApiUtil.Methods.withLeadingSlash
+      + "?namespace=" + namespace1.get
+      + "&name=" + name2.get
+      + "&excludedField=namespace") ~>
+      methodsService.queryRoute ~> check {
+      assert(status === InternalServerError)
     }
   }
 
@@ -212,6 +249,29 @@ with AgoraTestData with BeforeAndAfterAll {
         snapshotId = entity.snapshotId,
         synopsis = entity.synopsis,
         owner = entity.owner,
+        url = Option(AgoraBusiness.agoraUrl(entity))
+      )
+    )
+  }
+
+  def excludeProjection(entities: Seq[AgoraEntity]): Seq[AgoraEntity] = {
+    entities.map(entity =>
+      AgoraEntity(
+        namespace = entity.namespace,
+        name = entity.name,
+        snapshotId = entity.snapshotId,
+        owner = entity.owner,
+        url = Option(AgoraBusiness.agoraUrl(entity))
+      )
+    )
+  }
+
+  def includeProjection(entities: Seq[AgoraEntity]): Seq[AgoraEntity] = {
+    entities.map(entity =>
+      AgoraEntity(
+        namespace = entity.namespace,
+        name = entity.name,
+        snapshotId = entity.snapshotId,
         url = Option(AgoraBusiness.agoraUrl(entity))
       )
     )

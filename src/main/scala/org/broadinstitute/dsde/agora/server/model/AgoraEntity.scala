@@ -2,6 +2,7 @@
 package org.broadinstitute.dsde.agora.server.model
 
 import com.wordnik.swagger.annotations.{ApiModel, ApiModelProperty}
+import org.broadinstitute.dsde.agora.server.model.AgoraProjectionDefaults._
 import org.joda.time.DateTime
 
 import scala.annotation.meta.field
@@ -26,3 +27,14 @@ case class AgoraEntity(@(ApiModelProperty@field)(required = false, value = "The 
                        @(ApiModelProperty@field)(required = false, value = "URI for method details")
                        url: Option[String] = None
                         )
+
+object AgoraProjectionDefaults {
+  val RequiredProjectionFields = Seq[String]("namespace", "name", "snapshotId")
+}
+
+case class AgoraEntityProjection(includedFields: Seq[String], excludedFields: Seq[String]) {
+  require(excludedFields.intersect(RequiredProjectionFields).isEmpty)
+  require(includedFields.isEmpty || excludedFields.isEmpty)
+
+  def totalFields = includedFields.size + excludedFields.size
+}

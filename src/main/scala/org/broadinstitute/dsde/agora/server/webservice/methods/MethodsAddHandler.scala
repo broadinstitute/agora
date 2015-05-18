@@ -5,7 +5,7 @@ import cromwell.binding.WdlBinding
 import cromwell.parser.WdlParser.SyntaxError
 import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
-import org.broadinstitute.dsde.agora.server.model.AgoraEntity
+import org.broadinstitute.dsde.agora.server.model.{AgoraError, AgoraEntity}
 import org.broadinstitute.dsde.agora.server.webservice.PerRequest.RequestComplete
 import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages
 import org.joda.time.DateTime
@@ -26,7 +26,7 @@ class MethodsAddHandler extends Actor {
         validatePayload(agoraAddRequest)
         add(requestContext, agoraAddRequest)
       } catch {
-        case e: SyntaxError => context.parent ! RequestComplete(BadRequest, "Syntax error in payload: " + e.getMessage)
+        case e: SyntaxError => context.parent ! RequestComplete(BadRequest, AgoraError("Syntax error in payload: " + e.getMessage))
       }
       context.stop(self)
   }

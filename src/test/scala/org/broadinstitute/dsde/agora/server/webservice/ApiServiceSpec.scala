@@ -12,6 +12,7 @@ import spray.httpx.SprayJsonSupport._
 import spray.httpx.unmarshalling._
 import spray.routing.Directives
 import spray.testkit.ScalatestRouteTest
+import spray.http.MediaTypes._
 
 @DoNotDiscover
 class ApiServiceSpec extends FlatSpec with Matchers with Directives with ScalatestRouteTest
@@ -46,6 +47,14 @@ with AgoraTestData with BeforeAndAfterAll {
       + testEntity1WithId.snapshotId.get) ~> methodsService.queryByNamespaceNameSnapshotIdRoute ~> check {
       handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => assert(entity === testEntity1WithId))
       assert(status === OK)
+    }
+  }
+
+  "Agora" should "return status 404, mediaType json when nothing matches query by namespace, name, snapshotId" in {
+    Get(ApiUtil.Methods.withLeadingSlash + "/foofoofoofoo/foofoofoo/99999"
+    ) ~> methodsService.queryByNamespaceNameSnapshotIdRoute ~> check {
+      assert(status === NotFound)
+      assert(mediaType === `application/json`)
     }
   }
 

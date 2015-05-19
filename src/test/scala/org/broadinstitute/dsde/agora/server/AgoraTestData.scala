@@ -14,10 +14,16 @@ trait AgoraTestData {
   val namespace2 = Option("hellbender")
   val name1 = Option("testMethod1")
   val name2 = Option("testMethod2")
+  val nameNonExistent = Option("nonexistent")
   val synopsis1 = Option("This is a test method")
   val synopsis2 = Option("This is another test method")
   val documentation1 = Option("This is the documentation")
   val documentation2 = Option("This is documentation for another method")
+
+  val nameWc = Option("wc")
+  val synopsisWc = Option("wc -- word, line, character, and byte count")
+  val documentationWc = Option("This is the documentation for wc")
+
   // NB: save io by storing output.
   val bigDocumentation: Option[String] = Option(getBigDocumentation)
   val owner1 = Option("bob")
@@ -60,7 +66,81 @@ trait AgoraTestData {
                            |
                            | """.stripMargin)
   val payload2 = Option("task test {}")
+  val payloadWcTask = Option("""
+                           |task wc {
+                           |  command {
+                           |    wc -l ${sep=' ' File files+} | tail -1 | cut -d' ' -f 2
+                           |  }
+                           |  output {
+                           |    Int count = read_int("stdout")
+                           |  }
+                           |}
+                           |
+                           | """.stripMargin)
+  val payloadReferencingExternalMethod = Option( """
+                           |import "methods://broad.wc.1"
+                           |
+                           |task grep {
+                           |  command {
+                           |    grep ${pattern} ${flags?} ${File file_name}
+                           |  }
+                           |  output {
+                           |    File out = "stdout"
+                           |  }
+                           |  runtime {
+                           |    memory: "2MB"
+                           |    cores: 1
+                           |    disk: "3MB"
+                           |  }
+                           |}
+                           |
+                           |workflow scatter_gather_grep_wc {
+                           |  Array[File] input_files
+                           |  scatter(f in input_files) {
+                           |    call grep {
+                           |      input: file_name = f
+                           |    }
+                           |  }
+                           |  call wc {
+                           |    input: files = grep.out
+                           |  }
+                           |}
+                           | """.stripMargin)
   val badPayload = Option("task test {")
+  val badPayloadInvalidImport = Option("""
+                           |import "invalid_syntax_for_tool"
+                           |import "broad.wc.1"
+                           |
+                           |workflow scatter_gather_grep_wc {
+                           |  Array[File] input_files
+                           |  scatter(f in input_files) {
+                           |    call grep {
+                           |      input: file_name = f
+                           |    }
+                           |  }
+                           |  call wc {
+                           |    input: files = grep.out
+                           |  }
+                           |}
+                           |
+                           | """.stripMargin)
+  val badPayloadNonExistentImport = Option("""
+                           |import "methods://broad.non_existent_grep.1"
+                           |import "broad.wc.1"
+                           |
+                           |workflow scatter_gather_grep_wc {
+                           |  Array[File] input_files
+                           |  scatter(f in input_files) {
+                           |    call grep {
+                           |      input: file_name = f
+                           |    }
+                           |  }
+                           |  call wc {
+                           |    input: files = grep.out
+                           |  }
+                           |}
+                           |
+                           | """.stripMargin)
 
   val testEntity1 = AgoraEntity(namespace = namespace1,
     name = name1,
@@ -111,6 +191,13 @@ trait AgoraTestData {
     owner = owner1,
     payload = payload2)
 
+  val testEntityTaskWc = AgoraEntity(namespace = namespace1,
+    name = nameWc,
+    synopsis = synopsisWc,
+    documentation = documentationWc,
+    owner = owner1,
+    payload = payloadWcTask)
+
   val testAgoraEntity = new AgoraEntity(
     namespace = namespace1,
     name = name1,
@@ -129,6 +216,33 @@ trait AgoraTestData {
     payload = badPayload
   )
 
+  val testBadAgoraEntityInvalidWdlImportFormat = new AgoraEntity(
+    namespace = namespace1,
+    name = name1,
+    synopsis = synopsis1,
+    documentation = documentation1,
+    owner = owner1,
+    payload = badPayloadInvalidImport
+  )
+
+  val testBadAgoraEntityNonExistentWdlImportFormat = new AgoraEntity(
+    namespace = namespace1,
+    name = name1,
+    synopsis = synopsis1,
+    documentation = documentation1,
+    owner = owner1,
+    payload = badPayloadNonExistentImport
+  )
+
+  val testEntityWorkflowWithExistentWdlImport = new AgoraEntity(
+    namespace = namespace1,
+    name = name1,
+    synopsis = synopsis1,
+    documentation = documentation1,
+    owner = owner1,
+    payload = payloadReferencingExternalMethod
+  )
+
   val testAgoraEntityBigDoc = new AgoraEntity(
     namespace = namespace1,
     name = name1,
@@ -137,4 +251,14 @@ trait AgoraTestData {
     owner = owner1,
     payload = payload1
   )
+
+  val testAgoraEntityNonExistent = new AgoraEntity(
+    namespace = namespace1,
+    name = nameNonExistent,
+    synopsis = synopsis1,
+    documentation = documentation1,
+    owner = owner1,
+    payload = payload1
+  )
+
 }

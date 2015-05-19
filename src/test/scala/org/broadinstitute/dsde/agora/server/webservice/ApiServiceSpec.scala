@@ -34,6 +34,7 @@ with AgoraTestData with BeforeAndAfterAll {
   var testEntity5WithId: AgoraEntity = null
   var testEntity6WithId: AgoraEntity = null
   var testEntity7WithId: AgoraEntity = null
+  var testEntityTaskWcWithId: AgoraEntity = null
 
   override def beforeAll() = {
     testEntity1WithId = AgoraBusiness.insert(testEntity1)
@@ -43,6 +44,8 @@ with AgoraTestData with BeforeAndAfterAll {
     testEntity5WithId = AgoraBusiness.insert(testEntity5)
     testEntity6WithId = AgoraBusiness.insert(testEntity6)
     testEntity7WithId = AgoraBusiness.insert(testEntity7)
+
+    testEntityTaskWcWithId = AgoraBusiness.insert(testEntityTaskWc)
   }
 
   val methodsService = new MethodsService with ActorRefFactoryContext with ServiceHandlerProps with AgoraOpenAMMockDirectives
@@ -136,6 +139,46 @@ with AgoraTestData with BeforeAndAfterAll {
       val responseStr = responseAs[String]
       assert(responseStr.contains("Namespace") === true)
       assert(responseStr.contains("Name") === true)
+    }
+  }
+
+  "Agora" should "return a 400 bad request when posting a WDL with an invalid import statement" in {
+    Post(ApiUtil.Methods.withLeadingSlash, testBadAgoraEntityInvalidWdlImportFormat) ~>
+      methodsService.postRoute ~> check {
+      assert(status === BadRequest)
+      assert(responseAs[String] != null)
+    }
+  }
+
+  "Agora" should "return a 400 bad request when posting a WDL with an import statement that references a non-existent method" in {
+    Post(ApiUtil.Methods.withLeadingSlash, testBadAgoraEntityNonExistentWdlImportFormat) ~>
+      methodsService.postRoute ~> check {
+      assert(status === BadRequest)
+      assert(responseAs[String] != null)
+    }
+  }
+
+  // Temporarily disabling this test until such time as WDL supports referential validation via import.
+  ignore should "create a method and return with a status of 201 when the WDL contains an import to an existent method" in {
+    // Verifying that the pre-loaded task exists...
+    Get(ApiUtil.Methods.withLeadingSlash + "/" + testEntityTaskWcWithId.namespace.get + "/" + testEntityTaskWcWithId.name.get + "/"
+      + testEntityTaskWcWithId.snapshotId.get) ~> methodsService.queryByNamespaceNameSnapshotIdRoute ~> check {
+      handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => assert(entity === testEntityTaskWcWithId))
+      assert(status === OK)
+    }
+    Post(ApiUtil.Methods.withLeadingSlash, testEntityWorkflowWithExistentWdlImport) ~>
+      methodsService.postRoute ~> check {
+      handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => {
+        assert(entity.namespace === namespace1)
+        assert(entity.name === name1)
+        assert(entity.synopsis === synopsis1)
+        assert(entity.documentation === documentation1)
+        assert(entity.owner === agoraCIOwner)
+        assert(entity.payload === payloadReferencingExternalMethod)
+        assert(entity.snapshotId !== None)
+        assert(entity.createDate !== None)
+      })
+      assert(status === Created)
     }
   }
 

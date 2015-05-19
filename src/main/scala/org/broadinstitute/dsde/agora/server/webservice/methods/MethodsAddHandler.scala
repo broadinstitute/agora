@@ -33,6 +33,7 @@ class MethodsAddHandler extends Actor {
 
   private def validatePayload(agoraEntity: AgoraEntity): Unit = {
     WdlBinding.getAst(agoraEntity.payload.get, agoraEntity.name.get)
+//    WdlBinding.process(agoraEntity.payload.get, agoraEntity.name.get, AgoraBusiness.importResolver)
   }
 
   private def add(requestContext: RequestContext, agoraEntity: AgoraEntity): Unit = {

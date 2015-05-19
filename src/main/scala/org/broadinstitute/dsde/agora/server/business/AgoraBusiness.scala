@@ -1,5 +1,6 @@
 package org.broadinstitute.dsde.agora.server.business
 
+import cromwell.parser.WdlParser
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
@@ -38,4 +39,17 @@ object AgoraBusiness {
     AgoraDao.createAgoraDao.findSingle(entity).map(entity => entity.copy(url = Option(agoraUrl(entity))))
   }
 
+  /**
+   * Used by cromwell to retrieve the WDL for tasks or workflows that have been pushed into the methods repository
+   * @param importString A string encoding the namespace, name and version of the method to look up (looks like: "methods://broad.grep.3")
+   * @return The payload of the method, if found, otherwise an empty string.
+   */
+  // Looks like "methods://broad.grep.3"
+  def importResolver(importString: String) : String = {
+    val importStringPattern = """^methods\:\/\/(\S+)\.(\S+).(\d+)""".r
+    importString match {
+      case importStringPattern(namespace, name, snapshotId) => AgoraBusiness.findSingle(namespace, name, snapshotId.toInt).getOrElse(new AgoraEntity()).payload.getOrElse("")
+      case _ => throw new WdlParser.SyntaxError("Unrecognized import statement format: " + importStringPattern)
+    }
+  }
 }

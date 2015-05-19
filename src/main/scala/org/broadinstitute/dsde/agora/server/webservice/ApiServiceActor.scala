@@ -4,9 +4,13 @@ import akka.actor.Props
 import com.gettyimages.spray.swagger.SwaggerHttpService
 import com.wordnik.swagger.model.ApiInfo
 import org.broadinstitute.dsde.agora.server.AgoraConfig
+import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
 import org.broadinstitute.dsde.agora.server.webservice.util.ServiceHandlerProps
+import org.broadinstitute.dsde.agora.server.webservice.validation.AgoraValidationRejection
 import spray.routing._
+import spray.http.StatusCodes._
+import spray.httpx.SprayJsonSupport._
 
 import scala.reflect.runtime.universe._
 
@@ -31,6 +35,10 @@ class ApiServiceActor extends HttpServiceActor {
     }
 
   def receive = runRoute(possibleRoutes)
+
+  implicit val rejectionHandler = RejectionHandler {
+    case AgoraValidationRejection(validation) :: _ => complete(BadRequest, validation)
+  }
 
   val swaggerService = new SwaggerHttpService {
     override def apiTypes = Seq(typeOf[MethodsService])

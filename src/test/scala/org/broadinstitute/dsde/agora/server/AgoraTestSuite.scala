@@ -4,14 +4,22 @@ import com.github.simplyscala.{MongoEmbedDatabase, MongodProps}
 import org.broadinstitute.dsde.agora.server.business.AgoraBusinessTest
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.MethodsDbTest
+import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupportTest
 import org.broadinstitute.dsde.agora.server.webservice.ApiServiceSpec
+import org.broadinstitute.dsde.agora.server.webservice.validation.AgoraValidationTest
 import org.scalatest.{BeforeAndAfterAll, Suites}
 
 trait AgoraDbTest {
   val agoraDao = AgoraDao.createAgoraDao
 }
 
-class AgoraTestSuite extends Suites(new ApiServiceSpec, new MethodsDbTest, new AgoraBusinessTest) with BeforeAndAfterAll with MongoEmbedDatabase {
+class AgoraTestSuite extends Suites(
+  new ApiServiceSpec,
+  new MethodsDbTest,
+  new AgoraBusinessTest,
+  new AgoraValidationTest,
+  new AgoraApiJsonSupportTest) with BeforeAndAfterAll with MongoEmbedDatabase {
+
   var mongoProps: MongodProps = null
 
   override def beforeAll() {

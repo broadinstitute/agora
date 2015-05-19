@@ -6,11 +6,12 @@ import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
 import org.broadinstitute.dsde.agora.server.webservice.util.{ApiUtil, ServiceHandlerProps}
+import org.broadinstitute.dsde.agora.server.webservice.validation.AgoraValidationRejection
 import org.scalatest._
 import spray.http.StatusCodes._
 import spray.httpx.SprayJsonSupport._
 import spray.httpx.unmarshalling._
-import spray.routing.Directives
+import spray.routing.{RejectionHandler, Directives}
 import spray.testkit.ScalatestRouteTest
 import spray.http.MediaTypes._
 
@@ -18,6 +19,10 @@ import spray.http.MediaTypes._
 class ApiServiceSpec extends FlatSpec with Matchers with Directives with ScalatestRouteTest
 with AgoraTestData with BeforeAndAfterAll {
 
+  val wrapWithRejectionHandler = handleRejections(RejectionHandler {
+    case AgoraValidationRejection(validation) :: _ => complete(BadRequest, validation)
+  })
+  
   trait ActorRefFactoryContext {
     def actorRefFactory = system
   }
@@ -118,6 +123,19 @@ with AgoraTestData with BeforeAndAfterAll {
       methodsService.postRoute ~> check {
       assert(status === BadRequest)
       assert(responseAs[String] != null)
+    }
+  }
+
+  "Agora" should "return a 400 bad request with validation errors when metadata is invalid" in {
+    val entity = AgoraEntity(namespace = Option(""), name = Option(""), payload = Option("task test {}"))
+    Post(ApiUtil.Methods.withLeadingSlash, entity) ~>
+      wrapWithRejectionHandler {
+        methodsService.postRoute
+      } ~> check {
+      assert(status === BadRequest)
+      val responseStr = responseAs[String]
+      assert(responseStr.contains("Namespace") === true)
+      assert(responseStr.contains("Name") === true)
     }
   }
 

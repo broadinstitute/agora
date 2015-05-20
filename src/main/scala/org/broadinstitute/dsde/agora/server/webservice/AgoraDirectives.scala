@@ -13,4 +13,6 @@ import scala.concurrent.ExecutionContext
  */
 trait AgoraDirectives {
   def commonNameFromCookie(magnet: ImplicitMagnet[ExecutionContext]): Directive1[String]
+
+  def usernameFromCookie(magnet: ImplicitMagnet[ExecutionContext]): Directive1[String]
 }

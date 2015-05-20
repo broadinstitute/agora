@@ -11,7 +11,8 @@ import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.AgoraMongoClient._
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.AgoraMongoDao._
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
-import org.broadinstitute.dsde.agora.server.model.AgoraEntity
+import org.broadinstitute.dsde.agora.server.model.AgoraProjectionDefaults._
+import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection}
 import spray.json._
 
 object AgoraMongoDao {
@@ -19,6 +20,7 @@ object AgoraMongoDao {
   val CounterCollectionName = "counters"
   val CounterSequenceField = "seq"
   val KeySeparator = ":"
+  val DefaultFindProjection = Option(new AgoraEntityProjection(Seq.empty[String], Seq[String]("payload", "documentation")))
 
   def EntityToMongoDbObject(entity: AgoraEntity): DBObject = JSON.parse(entity.toJson.toString()).asInstanceOf[DBObject]
 
@@ -53,7 +55,7 @@ class AgoraMongoDao(collection: MongoCollection) extends AgoraDao {
     val counterQuery = MongoDbIdField $eq counterId
 
     //if we don't have a sequence create one
-    if (counterCollection.findOne(counterQuery) == None) {
+    if (counterCollection.findOne(counterQuery).isEmpty) {
       counterCollection.insert(MongoDBObject(MongoDbIdField -> counterId, CounterSequenceField -> 0))
     }
 
@@ -65,21 +67,39 @@ class AgoraMongoDao(collection: MongoCollection) extends AgoraDao {
     currentCount.get(CounterSequenceField).asInstanceOf[Int]
   }
 
-  def find(query: Imports.DBObject, projection: Option[Imports.DBObject] = None) = {
-    (for (dbObject <- collection.find(query, projection.getOrElse(MongoDBObject()))) yield MongoDbObjectToEntity(dbObject)).toVector
-  }
-
-  override def find(entity: AgoraEntity): Seq[AgoraEntity] = {
-    val excludedFields = MongoDBObject("payload" -> 0, "documentation" -> 0)
-    find(EntityToMongoDbObject(entity), Option(excludedFields))
-  }
-
   override def findSingle(entity: AgoraEntity): Option[AgoraEntity] = {
-    val entityVector = find(EntityToMongoDbObject(entity))
+    val entityVector = find(EntityToMongoDbObject(entity), None)
     entityVector.length match {
       case 1 => Some(entityVector.head)
       case 0 => None
       case _ => throw new Exception("Found > 1 documents matching: " + entity.toString)
+    }
+  }
+
+  override def find(entity: AgoraEntity, projectionOpt: Option[AgoraEntityProjection]): Seq[AgoraEntity] = {
+    projectionOpt match {
+      case Some(projection) => find(EntityToMongoDbObject(entity), projectionOpt)
+      case None => find(EntityToMongoDbObject(entity), DefaultFindProjection)
+    }
+  }
+
+  def find(query: Imports.DBObject, projection: Option[AgoraEntityProjection]) = {
+    (for (dbObject <- collection.find(query, projectionToDBProjections(projection))) yield MongoDbObjectToEntity(dbObject)).toVector
+  }
+
+  def projectionToDBProjections(projectionOpt: Option[AgoraEntityProjection]): Imports.DBObject = {
+    projectionOpt match {
+      case Some(projection) =>
+        val builder = MongoDBObject.newBuilder
+        projection.excludedFields.foreach(field => builder += field -> 0)
+
+        //we can't currently mix excluded and included fields This is a limitation of mongo.
+        if (projection.excludedFields.isEmpty) {
+          projection.includedFields.foreach(field => builder += field -> 1)
+          RequiredProjectionFields.foreach(field => builder += field -> 1)
+        }
+        builder.result()
+      case None => MongoDBObject()
     }
   }
 

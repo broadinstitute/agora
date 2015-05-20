@@ -3,7 +3,7 @@ package org.broadinstitute.dsde.agora.server.business
 import cromwell.parser.WdlParser
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
-import org.broadinstitute.dsde.agora.server.model.AgoraEntity
+import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection}
 
 object AgoraBusiness {
 
@@ -27,8 +27,8 @@ object AgoraBusiness {
     entityWithId.copy(url = Option(agoraUrl(entityWithId)))
   }
 
-  def find(agoraSearch: AgoraEntity): Seq[AgoraEntity] = {
-    AgoraDao.createAgoraDao.find(agoraSearch).map(entity => entity.copy(url = Option(agoraUrl(entity))))
+  def find(agoraSearch: AgoraEntity, agoraProjection: Option[AgoraEntityProjection]): Seq[AgoraEntity] = {
+    AgoraDao.createAgoraDao.find(agoraSearch, agoraProjection).map(entity => entity.copy(url = Option(agoraUrl(entity))))
   }
 
   def findSingle(namespace: String, name: String, snapshotId: Int): Option[AgoraEntity] = {

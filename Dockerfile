@@ -40,4 +40,5 @@ WORKDIR /usr/agora
 RUN sbt assembly
 
 # Start the webservice with default parameters
-ENTRYPOINT ["java", "-jar", "target/scala-2.11/agora-0.1-SNAPSHOT.jar"]
+# This is an interim solution to get around us not using application.conf. Without this change we would not be able to use vault common for openam configuration.
+ENTRYPOINT ["java", "-Dconfig.resource=agora.conf", "-cp", "/etc:target/scala-2.11/agora-0.1-SNAPSHOT.jar", "org.broadinstitute.dsde.agora.server.Agora"]

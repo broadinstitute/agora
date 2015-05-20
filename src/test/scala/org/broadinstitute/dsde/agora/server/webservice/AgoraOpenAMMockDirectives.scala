@@ -19,4 +19,13 @@ trait AgoraOpenAMMockDirectives extends AgoraDirectives {
     } yield usernameCN.cn.head
     onSuccess(userNameFuture)
   }
+
+  def usernameFromCookie(magnet: ImplicitMagnet[ExecutionContext]): Directive1[String] = {
+    implicit val ec = magnet.value
+    val userNameFuture = for {
+      usernameCN <- Future(new UsernameCNResponse("agora-test", Seq("agora-test")))
+    } yield usernameCN.username
+    onSuccess(userNameFuture)
+  }
+
 }

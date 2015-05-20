@@ -101,7 +101,7 @@ trait MethodsService extends HttpService with PerRequestCreator with AgoraDirect
   def postRoute =
     path(ApiUtil.Methods.path) {
       post {
-        commonNameFromCookie() { commonName =>
+        usernameFromCookie() { commonName =>
           entity(as[AgoraEntity]) { agoraEntity =>
             val validation = AgoraValidation.validateMetadata(agoraEntity) 
             validation.valid match {

@@ -25,7 +25,6 @@ class AgoraTestSuite extends Suites(
   override def beforeAll() {
     println("Starting embedded mongo db instance.")
     mongoProps = mongoStart(port = AgoraConfig.mongoDbPort)
-    AgoraMongoClient.getMongoClient.dropDatabase("local")
     AgoraMongoClient.getMongoClient.dropDatabase("agora")
     println("Starting Agora web services.")
     Agora.start()

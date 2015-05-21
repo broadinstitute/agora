@@ -3,7 +3,7 @@ package org.broadinstitute.dsde.agora.server
 import com.github.simplyscala.{MongoEmbedDatabase, MongodProps}
 import org.broadinstitute.dsde.agora.server.business.AgoraBusinessTest
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
-import org.broadinstitute.dsde.agora.server.dataaccess.mongo.MethodsDbTest
+import org.broadinstitute.dsde.agora.server.dataaccess.mongo.{AgoraMongoClient, MethodsDbTest}
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupportTest
 import org.broadinstitute.dsde.agora.server.webservice.ApiServiceSpec
 import org.broadinstitute.dsde.agora.server.webservice.validation.AgoraValidationTest
@@ -25,6 +25,8 @@ class AgoraTestSuite extends Suites(
   override def beforeAll() {
     println("Starting embedded mongo db instance.")
     mongoProps = mongoStart(port = AgoraConfig.mongoDbPort)
+    AgoraMongoClient.getMongoClient.dropDatabase("local")
+    AgoraMongoClient.getMongoClient.dropDatabase("agora")
     println("Starting Agora web services.")
     Agora.start()
   }

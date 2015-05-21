@@ -72,13 +72,20 @@ trait MethodsService extends HttpService with PerRequestCreator with AgoraDirect
         parameters("namespace".?, "name".?, "snapshotId".as[Int].?, "synopsis".?, "documentation".?, "owner".?, "createDate".as[DateTime].?, "payload".?, "url".?).as(AgoraEntity) {
           agoraEntity => {
             parameterMultiMap { params =>
-              requestContext =>
-                val agoraProjection = new AgoraEntityProjection(params.getOrElse("includedField", Seq.empty[String]), params.getOrElse("excludedField", Seq.empty[String]))
-                val agoraProjectionOption = agoraProjection.totalFields match {
-                  case 0 => None
-                  case _ => Some(agoraProjection)
-                }
-                perRequest(requestContext, methodsQueryHandlerProps, ServiceMessages.Query(requestContext, agoraEntity, agoraProjectionOption))
+              val includeFields = params.getOrElse("includedField", Seq.empty[String])
+              val excludeFields = params.getOrElse("excludedField", Seq.empty[String])
+              val validation = AgoraValidation.validateIncludeExcludeFields(includeFields, excludeFields)
+              validation.valid match {
+                case false => reject(AgoraValidationRejection(validation))
+                case true =>
+                  requestContext =>
+                    val agoraProjection = new AgoraEntityProjection(includeFields, excludeFields)
+                    val agoraProjectionOption = agoraProjection.totalFields match {
+                      case 0 => None
+                      case _ => Some(agoraProjection)
+                    }
+                    perRequest(requestContext, methodsQueryHandlerProps, ServiceMessages.Query(requestContext, agoraEntity, agoraProjectionOption))
+              }
             }
           }
         }

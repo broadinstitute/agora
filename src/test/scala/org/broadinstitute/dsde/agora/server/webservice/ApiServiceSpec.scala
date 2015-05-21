@@ -228,13 +228,27 @@ with AgoraTestData with BeforeAndAfterAll {
     }
   }
 
-  "Agora" should "fail case class validation if you supply a required field as an excluded field" in {
+  "Agora" should "reject the request if you specify required field as an excluded field" in {
     Get(ApiUtil.Methods.withLeadingSlash
       + "?namespace=" + namespace1.get
       + "&name=" + name2.get
-      + "&excludedField=namespace") ~>
-      methodsService.queryRoute ~> check {
-      assert(status === InternalServerError)
+      + "&excludedField=namespace&excludedField=snapshotId") ~>
+      wrapWithRejectionHandler {
+        methodsService.queryRoute
+      } ~> check {
+      assert(status === BadRequest)
+    }
+  }
+
+  "Agora" should "reject the request if you specify both excludedField and includedField" in {
+    Get(ApiUtil.Methods.withLeadingSlash
+      + "?namespace=" + namespace1.get
+      + "&name=" + name2.get
+      + "&excludedField=synopsis&includedField=documentation") ~>
+      wrapWithRejectionHandler {
+        methodsService.queryRoute
+      } ~> check {
+      assert(status === BadRequest)
     }
   }
 

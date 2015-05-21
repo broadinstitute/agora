@@ -79,7 +79,7 @@ with AgoraTestData with BeforeAndAfterAll {
       handleError(
         entity.as[Seq[AgoraEntity]],
         (entities: Seq[AgoraEntity]) =>
-          assert(entities === brief(Seq(testEntity3WithId, testEntity4WithId, testEntity5WithId, testEntity6WithId, testEntity7WithId)))
+          assert(entities.diff(brief(Seq(testEntity3WithId, testEntity4WithId, testEntity5WithId, testEntity6WithId, testEntity7WithId))).isEmpty)
       )
       assert(status === OK)
     }
@@ -93,7 +93,7 @@ with AgoraTestData with BeforeAndAfterAll {
         handleError(
           entity.as[Seq[AgoraEntity]],
           (entities: Seq[AgoraEntity]) =>
-            assert(entities === brief(Seq(testEntity1WithId, testEntity2WithId, testEntity3WithId, testEntity6WithId, testEntity7WithId)))
+            assert(entities.diff(brief(Seq(testEntity1WithId, testEntity2WithId, testEntity3WithId, testEntity6WithId, testEntity7WithId))).isEmpty)
         )
         assert(status === OK)
       }
@@ -107,7 +107,7 @@ with AgoraTestData with BeforeAndAfterAll {
         handleError(
           entity.as[Seq[AgoraEntity]],
           (entities: Seq[AgoraEntity]) =>
-            assert(entities === brief(Seq(testEntity1WithId, testEntity2WithId, testEntity3WithId, testEntity4WithId, testEntity5WithId)))
+            assert(entities.diff(brief(Seq(testEntity1WithId, testEntity2WithId, testEntity3WithId, testEntity4WithId, testEntity5WithId))).isEmpty)
         )
       }
   }
@@ -207,7 +207,7 @@ with AgoraTestData with BeforeAndAfterAll {
       handleError(
         entity.as[Seq[AgoraEntity]],
         (entities: Seq[AgoraEntity]) =>
-          assert(entities === includeProjection(Seq(testEntity3WithId, testEntity4WithId, testEntity5WithId, testEntity6WithId, testEntity7WithId)))
+          assert(entities.diff(includeProjection(Seq(testEntity3WithId, testEntity4WithId, testEntity5WithId, testEntity6WithId, testEntity7WithId))).isEmpty)
       )
       assert(status === OK)
     }
@@ -222,7 +222,7 @@ with AgoraTestData with BeforeAndAfterAll {
       handleError(
         entity.as[Seq[AgoraEntity]],
         (entities: Seq[AgoraEntity]) =>
-          assert(entities === excludeProjection(Seq(testEntity3WithId, testEntity4WithId, testEntity5WithId, testEntity6WithId, testEntity7WithId)))
+          assert(entities.diff(excludeProjection(Seq(testEntity3WithId, testEntity4WithId, testEntity5WithId, testEntity6WithId, testEntity7WithId))).isEmpty)
       )
       assert(status === OK)
     }

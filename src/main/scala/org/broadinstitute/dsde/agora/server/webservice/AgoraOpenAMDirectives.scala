@@ -1,6 +1,7 @@
 
 package org.broadinstitute.dsde.agora.server.webservice
 
+import org.broadinstitute.dsde.agora.server.webservice.util.AgoraOpenAMClient
 import org.broadinstitute.dsde.vault.common.directives.OpenAMDirectives
 import org.broadinstitute.dsde.vault.common.directives.OpenAMDirectives._
 import org.broadinstitute.dsde.vault.common.openam.{OpenAMClient, OpenAMConfig}
@@ -25,10 +26,11 @@ trait AgoraOpenAMDirectives extends AgoraDirectives {
   }
 
   def usernameFromToken(token: String)(implicit ec: ExecutionContext): Directive1[String] = {
-    val userNameFuture = for {
+    val userInfoFuture = for {
       id <- OpenAMClient.lookupIdFromSession(OpenAMConfig.deploymentUri, token)
-      usernameCN <- OpenAMClient.lookupUsernameCN(OpenAMConfig.deploymentUri, token, id.id, id.realm)
-    } yield usernameCN.username
-    onSuccess(userNameFuture)
+      userInfo <- AgoraOpenAMClient.lookupUserInfo(OpenAMConfig.deploymentUri, token, id.id, id.realm)
+    } yield userInfo.mail.head
+    onSuccess(userInfoFuture)
   }
+
 }

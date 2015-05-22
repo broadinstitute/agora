@@ -1,11 +1,11 @@
 
 package org.broadinstitute.dsde.agora.server.model
 
+import org.broadinstitute.dsde.agora.server.webservice.util.AgoraOpenAMClient.UserInfoResponse
 import org.broadinstitute.dsde.agora.server.webservice.validation.AgoraValidation
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import spray.json._
-import spray.httpx.SprayJsonSupport._
 
 import scala.language.implicitConversions
 
@@ -47,4 +47,6 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
       case _ => throw new DeserializationException("only string supported")
     }
   }
+
+  implicit val UserInfoResponseFormat = jsonFormat3(UserInfoResponse)
 }

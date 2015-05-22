@@ -38,7 +38,7 @@ WORKDIR /usr/agora
 
 # Build the web service application
 RUN sbt test
-COPY application.conf src/main/resources
+COPY application.conf src/main/resources/application.conf
 RUN sbt assembly
 
 # Start the webservice with default parameters

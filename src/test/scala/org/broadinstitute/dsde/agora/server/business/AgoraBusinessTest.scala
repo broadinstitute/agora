@@ -2,10 +2,8 @@ package org.broadinstitute.dsde.agora.server.business
 
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.scalatest.{Matchers, FlatSpec, DoNotDiscover}
+import org.broadinstitute.dsde.agora.server.AgoraConfig
 
-/**
- * Created by dshiga on 5/14/15.
- */
 @DoNotDiscover
 class AgoraBusinessTest extends FlatSpec with Matchers {
 
@@ -20,7 +18,7 @@ class AgoraBusinessTest extends FlatSpec with Matchers {
 
   "Agora" should "return a URL given an entity with a namespace, name, and id" in {
     val entity = AgoraEntity(namespace = Option("broad"), name = Option("test"), snapshotId = Option(12))
-    assert(AgoraBusiness.agoraUrl(entity) === "http://localhost:8000/methods/broad/test/12")
+    assert(AgoraBusiness.agoraUrl(entity) === AgoraConfig.methodsUrl + "broad/test/12")
   }
 
   "Agora" should "not find a method payload when resolving a WDL import statement if the method has not been added" in {

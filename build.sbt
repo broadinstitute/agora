@@ -74,3 +74,5 @@ val customMergeStrategy: String => MergeStrategy = {
 }
 
 mergeStrategy in assembly := customMergeStrategy
+
+test in assembly := {}

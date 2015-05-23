@@ -4,7 +4,7 @@
 FROM debian:jessie
 MAINTAINER DSDE <dsde-engineering@broadinstitute.org>
 
-# Install necessary packages including java 8 jre and sbt
+# Install necessary packages including java 8 jre and sbt and clean up apt caches
 RUN echo "deb http://dl.bintray.com/sbt/debian /" >> /etc/apt/sources.list.d/sbt.list && \
     echo "deb http://ppa.launchpad.net/webupd8team/java/ubuntu trusty main" >> /etc/apt/sources.list.d/webupd8team-java.list && \
     echo "deb-src http://ppa.launchpad.net/webupd8team/java/ubuntu trusty main" >> -a /etc/apt/sources.list.d/webupd8team-java.list && \
@@ -12,17 +12,13 @@ RUN echo "deb http://dl.bintray.com/sbt/debian /" >> /etc/apt/sources.list.d/sbt
     echo debconf shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections && \
     echo debconf shared/accepted-oracle-license-v1-1 seen true | /usr/bin/debconf-set-selections
 
-RUN apt-get update && apt-get install -y --force-yes \
-        curl \
-        git \
+RUN apt-get update && \
+    apt-get --no-install-recommends install -y --force-yes \
         oracle-java8-installer \
-        sbt \
-        sudo \
-        ssh \
-        unzip \
-        vim \
-        wget \
-        zip
+        sbt && \
+    apt-get clean autoclean && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/{apt,dpkg,cache,log}/ /var/cache/oracle-jdk8-installer 
 
 # Expose the port used by the webservice
 EXPOSE 8000
@@ -31,15 +27,22 @@ EXPOSE 8000
 COPY build.sbt /usr/agora/build.sbt
 COPY assembly.sbt /usr/agora/assembly.sbt
 COPY project /usr/agora/project
-COPY src /usr/agora/src
+COPY application.conf /usr/agora/application.conf
 
-# Set the container's working directory
 WORKDIR /usr/agora
 
-# Build the web service application
-RUN sbt test
-COPY application.conf src/main/resources/application.conf
-RUN sbt assembly
+# Run update before we pull down the source so we can cache dependencies and not re-download every time the src changes
+RUN sbt update
+
+COPY src /usr/agora/src
+
+# Run the tests then copy in the application.conf file and build the jar. Then copy the jar in to the work directory and
+# do some clean up in order to minimize image size.
+RUN sbt test && \
+    cp application.conf src/main/resources/application.conf && \
+    sbt assembly && \
+    cp /usr/agora/target/scala-2.11/agora-0.1-SNAPSHOT.jar /usr/agora && \
+    rm -rf /root/.embedmongo /root/.ivy2 /root/.sbt /usr/agora/target /usr/agora/src /usr/agora/build.sbt /usr/agora/assembly.sbt
 
 # Start the webservice with default parameters
-ENTRYPOINT ["java", "-jar", "target/scala-2.11/agora-0.1-SNAPSHOT.jar"]
+ENTRYPOINT ["java", "-jar", "agora-0.1-SNAPSHOT.jar"]

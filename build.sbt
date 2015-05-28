@@ -18,23 +18,24 @@ resolvers += "artifactory-snapshots" at artifactory + "libs-snapshot"
 
 libraryDependencies ++= Seq(
   "cglib" % "cglib-nodep" % "2.2",
-  "io.spray" %% "spray-can" % sprayV,
-  "io.spray" %% "spray-routing" % sprayV,
-  "io.spray" %% "spray-json" % "1.3.1", // NB: Not at sprayV. 1.3.2 does not exist.
-  "io.spray" %% "spray-client" % sprayV,
-  "com.typesafe.akka" %% "akka-actor" % "2.3.4",
-  "ch.qos.logback" % "logback-classic" % "1.1.2",
-  "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2",
-  "net.ceedubs" %% "ficus" % "1.1.2",
-  "org.webjars" % "swagger-ui" % "2.0.24",
+  "ch.qos.logback" % "logback-classic" % "1.1.3",
   "com.gettyimages" %% "spray-swagger" % "0.5.0",
-  "org.mongodb" %% "casbah" % "2.8.1",
-  "org.broadinstitute.dsde.vault" %% "vault-common" % "0.1-15-bf74315",
+  "com.typesafe.akka" %% "akka-actor" % "2.3.4",
+  "com.typesafe.akka" %% "akka-slf4j" % "2.3.11",
+  "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2",
+  "io.spray" %% "spray-can" % sprayV,
+  "io.spray" %% "spray-client" % sprayV,
+  "io.spray" %% "spray-json" % "1.3.1", // NB: Not at sprayV. 1.3.2 does not exist.
+  "io.spray" %% "spray-routing" % sprayV,
+  "net.ceedubs" %% "ficus" % "1.1.2",
   "org.broadinstitute" %% "cromwell" % "0.1-SNAPSHOT",
+  "org.broadinstitute.dsde.vault" %% "vault-common" % "0.1-15-bf74315",
+  "org.mongodb" %% "casbah" % "2.8.1",
+  "org.webjars" % "swagger-ui" % "2.0.24",
   //---------- Test libraries -------------------//
+  "com.github.simplyscala" %% "scalatest-embedmongo" % "0.2.2" % Test,
   "io.spray" %% "spray-testkit" % sprayV % Test,
-  "org.scalatest" %% "scalatest" % "2.2.4" % Test,
-  "com.github.simplyscala" %% "scalatest-embedmongo" % "0.2.2" % Test
+  "org.scalatest" %% "scalatest" % "2.2.4" % Test
 )
 
 releaseSettings

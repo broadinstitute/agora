@@ -3,7 +3,7 @@ package org.broadinstitute.dsde.agora.server.business
 import cromwell.parser.WdlParser
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
-import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection}
+import org.broadinstitute.dsde.agora.server.model.{AgoraEntityType, AgoraEntity, AgoraEntityProjection}
 
 object AgoraBusiness {
 
@@ -23,20 +23,20 @@ object AgoraBusiness {
   }
 
   def insert(agoraEntity: AgoraEntity): AgoraEntity = {
-    val entityWithId = AgoraDao.createAgoraDao.insert(agoraEntity)
+    val entityWithId = AgoraDao.createAgoraDao(agoraEntity.entityType).insert(agoraEntity)
     entityWithId.copy(url = Option(agoraUrl(entityWithId)))
   }
 
   def find(agoraSearch: AgoraEntity, agoraProjection: Option[AgoraEntityProjection]): Seq[AgoraEntity] = {
-    AgoraDao.createAgoraDao.find(agoraSearch, agoraProjection).map(entity => entity.copy(url = Option(agoraUrl(entity))))
+    AgoraDao.createAgoraDao(agoraSearch.entityType).find(agoraSearch, agoraProjection).map(entity => entity.copy(url = Option(agoraUrl(entity))))
   }
 
-  def findSingle(namespace: String, name: String, snapshotId: Int): Option[AgoraEntity] = {
-    AgoraDao.createAgoraDao.findSingle(namespace, name, snapshotId).map(entity => entity.copy(url = Option(agoraUrl(entity))))
+  def findSingle(namespace: String, name: String, snapshotId: Int, entityTypes: Seq[AgoraEntityType.EntityType]): Option[AgoraEntity] = {
+    AgoraDao.createAgoraDao(entityTypes).findSingle(namespace, name, snapshotId).map(entity => entity.copy(url = Option(agoraUrl(entity))))
   }
 
   def findSingle(entity: AgoraEntity): Option[AgoraEntity] = {
-    AgoraDao.createAgoraDao.findSingle(entity).map(entity => entity.copy(url = Option(agoraUrl(entity))))
+    AgoraDao.createAgoraDao(entity.entityType).findSingle(entity).map(entity => entity.copy(url = Option(agoraUrl(entity))))
   }
 
   /**
@@ -48,7 +48,9 @@ object AgoraBusiness {
   def importResolver(importString: String) : String = {
     val importStringPattern = """^methods\:\/\/(\S+)\.(\S+).(\d+)""".r
     importString match {
-      case importStringPattern(namespace, name, snapshotId) => AgoraBusiness.findSingle(namespace, name, snapshotId.toInt).getOrElse(new AgoraEntity()).payload.getOrElse("")
+      case importStringPattern(namespace, name, snapshotId) =>
+        AgoraBusiness.findSingle(namespace, name, snapshotId.toInt, Seq(AgoraEntityType.Task, AgoraEntityType.Workflow))
+          .getOrElse(new AgoraEntity(entityType = Option(AgoraEntityType.Task))).payload.getOrElse("")
       case _ => throw new WdlParser.SyntaxError("Unrecognized import statement format: " + importStringPattern)
     }
   }

@@ -27,7 +27,17 @@ object AgoraMongoDao {
   def MongoDbObjectToEntity(mongoDBObject: DBObject): AgoraEntity = mongoDBObject.toString.parseJson.convertTo[AgoraEntity]
 }
 
-class AgoraMongoDao(collection: MongoCollection) extends AgoraDao {
+/**
+ * The data access object for agora's mongo database. If more than one collection is specified we will query all
+ * collections. However, only a single collection is allowed for doing insert operations.
+ * @param collections The collections to query. In order to insert a single colleciton must be specified.
+ */
+class AgoraMongoDao(collections: Seq[MongoCollection]) extends AgoraDao {
+
+  def assureSingleCollection: MongoCollection = {
+    if (collections.size != 1) throw new IllegalArgumentException("Multiple collections defined. Only a single collection is supported for this operation")
+    else collections.head
+  }
 
   /**
    * On insert we query for the given namespace/name if it exists we increment the snapshotId and store a new one.
@@ -35,6 +45,7 @@ class AgoraMongoDao(collection: MongoCollection) extends AgoraDao {
    * @return The entity that was stored.
    */
   override def insert(entity: AgoraEntity): AgoraEntity = {
+    val collection = assureSingleCollection
     //update the snapshotId
     val id = getNextId(entity)
     val entityWithId = entity.copy(snapshotId = Option(id))
@@ -49,6 +60,7 @@ class AgoraMongoDao(collection: MongoCollection) extends AgoraDao {
   }
 
   def getNextId(entity: AgoraEntity): Int = {
+    val collection = assureSingleCollection
     //first check to see if we have a sequence
     val counterCollection = getCollection(collection.getDB, CounterCollectionName)
     val counterId: String = entity.namespace.get + KeySeparator + entity.name.get
@@ -84,7 +96,13 @@ class AgoraMongoDao(collection: MongoCollection) extends AgoraDao {
   }
 
   def find(query: Imports.DBObject, projection: Option[AgoraEntityProjection]) = {
-    (for (dbObject <- collection.find(query, projectionToDBProjections(projection))) yield MongoDbObjectToEntity(dbObject)).toVector
+    collections.flatMap {
+      collection =>
+        collection.find(query, projectionToDBProjections(projection)).map {
+          dbObject =>
+            MongoDbObjectToEntity(dbObject)
+        }
+    }
   }
 
   def projectionToDBProjections(projectionOpt: Option[AgoraEntityProjection]): Imports.DBObject = {

@@ -1,6 +1,6 @@
 package org.broadinstitute.dsde.agora.server.dataaccess.mongo
 
-import org.broadinstitute.dsde.agora.server.model.AgoraEntity
+import org.broadinstitute.dsde.agora.server.model.{AgoraEntityType, AgoraEntity}
 import org.broadinstitute.dsde.agora.server.{AgoraDbTest, AgoraTestData}
 import org.scalatest.{DoNotDiscover, FlatSpec}
 
@@ -17,7 +17,7 @@ class MethodsDbTest extends FlatSpec with AgoraDbTest with AgoraTestData {
 
   "Agora" should "be able to query by namespace, name and snapshot id (version) and get back a single entity" in {
     val entityWithId = agoraDao.insert(testEntity1)
-    val queryEntity = new AgoraEntity(namespace = namespace1, name = name1, snapshotId = entityWithId.snapshotId)
+    val queryEntity = new AgoraEntity(namespace = namespace1, name = name1, snapshotId = entityWithId.snapshotId, entityType = Option(AgoraEntityType.Workflow))
 
     val entity = agoraDao.findSingle(queryEntity).get
 

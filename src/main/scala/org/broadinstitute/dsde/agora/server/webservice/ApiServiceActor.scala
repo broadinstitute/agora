@@ -6,7 +6,6 @@ import com.wordnik.swagger.model.ApiInfo
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
-import org.broadinstitute.dsde.agora.server.webservice.util.ServiceHandlerProps
 import org.broadinstitute.dsde.agora.server.webservice.validation.AgoraValidationRejection
 import spray.routing._
 import spray.http.StatusCodes._
@@ -25,7 +24,7 @@ class ApiServiceActor extends HttpServiceActor {
     def actorRefFactory = context
   }
 
-  val methodsService = new MethodsService with ActorRefFactoryContext with ServiceHandlerProps with AgoraOpenAMDirectives
+  val methodsService = new MethodsService with ActorRefFactoryContext with AgoraOpenAMDirectives
 
   def possibleRoutes = methodsService.routes ~ swaggerService.routes ~
     get {

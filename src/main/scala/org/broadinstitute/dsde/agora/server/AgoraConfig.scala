@@ -14,6 +14,8 @@ object AgoraConfig {
   private lazy val baseUrl = scheme + "://" + host + ":" + port + "/"
   lazy val methodsRoute = config.as[Option[String]]("methods.route").getOrElse("methods")
   lazy val methodsUrl = baseUrl + methodsRoute + "/"
+  lazy val configurationsRoute = config.as[Option[String]]("configurations.route").getOrElse("configurations")
+  lazy val configurationsUrl = baseUrl + configurationsRoute +"/"
   lazy val webserviceInterface = config.as[Option[String]]("webservice.interface").getOrElse("0.0.0.0")
 
   lazy val mongoDbHost = config.as[Option[String]]("mongodb.host").getOrElse("localhost")

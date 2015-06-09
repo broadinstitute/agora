@@ -3,6 +3,8 @@ package org.broadinstitute.dsde.agora.server
 
 import com.typesafe.config.{Config, ConfigFactory}
 import net.ceedubs.ficus.Ficus._
+import org.broadinstitute.dsde.agora.server.model.AgoraEntityType
+import org.broadinstitute.dsde.agora.server.model.AgoraEntityType.EntityType
 
 object AgoraConfig {
   private val config: Config = ConfigFactory.load()
@@ -38,4 +40,11 @@ object AgoraConfig {
     lazy val apiDocs = swagger.getString("apiDocs")
   }
 
+  def urlFromType(entityType: Option[EntityType]): String = {
+    entityType match {
+      case Some(AgoraEntityType.Task) | Some(AgoraEntityType.Workflow) => methodsUrl
+      case Some(AgoraEntityType.Configuration) => configurationsUrl
+      case _ => baseUrl
+    }
+  }
 }

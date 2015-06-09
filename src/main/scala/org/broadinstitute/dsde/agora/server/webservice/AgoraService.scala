@@ -59,9 +59,10 @@ trait AgoraService extends HttpService with PerRequestCreator with AgoraDirectiv
             parameterMultiMap { params =>
               val includeFields = params.getOrElse("includedField", Seq.empty[String])
               val excludeFields = params.getOrElse("excludedField", Seq.empty[String])
-              val validation = AgoraValidation.validateIncludeExcludeFields(includeFields, excludeFields)
-              validation.valid match {
-                case false => reject(AgoraValidationRejection(validation))
+              val parameterValidation = AgoraValidation.validateParameters(includeFields, excludeFields)
+              val entityValidation = AgoraValidation.validateEntityType(agoraEntity.entityType, path)
+              parameterValidation.valid && entityValidation.valid match {
+                case false => reject(AgoraValidationRejection(Seq(parameterValidation, entityValidation)))
                 case true =>
                   requestContext =>
                     val agoraProjection = new AgoraEntityProjection(includeFields, excludeFields)
@@ -69,10 +70,17 @@ trait AgoraService extends HttpService with PerRequestCreator with AgoraDirectiv
                       case 0 => None
                       case _ => Some(agoraProjection)
                     }
+
+                    //if an entity type is specified we should search only on that type. If a type is not specified
+                    //we need to search for all valid types for the given path
+                    val searchTypes: Seq[AgoraEntityType.EntityType] = agoraEntity.entityType match {
+                      case Some(entityType) => Seq(entityType)
+                      case None => AgoraEntityType.byPath(path)
+                    }
                     perRequest(
                       requestContext,
                       queryHandlerProps,
-                      ServiceMessages.Query(requestContext, agoraEntity, agoraProjectionOption)
+                      ServiceMessages.Query(requestContext, agoraEntity, agoraProjectionOption, searchTypes)
                     )
               }
             }
@@ -86,9 +94,10 @@ trait AgoraService extends HttpService with PerRequestCreator with AgoraDirectiv
       post {
         usernameFromCookie() { commonName =>
           entity(as[AgoraEntity]) { agoraEntity =>
-            val validation = AgoraValidation.validateMetadata(agoraEntity)
-            validation.valid match {
-              case false => reject(AgoraValidationRejection(validation))
+            val metadataValidation = AgoraValidation.validateMetadata(agoraEntity)
+            val entityValidation = AgoraValidation.validateEntityType(agoraEntity.entityType, path)
+            metadataValidation.valid && entityValidation.valid match {
+              case false => reject(AgoraValidationRejection(Seq(metadataValidation, entityValidation)))
               case true =>
                 requestContext =>
                   val entityWithOwner = agoraEntity.copy(owner = Option(commonName))

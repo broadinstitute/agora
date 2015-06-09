@@ -16,7 +16,8 @@ object ServiceMessages {
 
   case class Query(requestContext: RequestContext,
                    agoraSearch: AgoraEntity,
-                   agoraProjection: Option[AgoraEntityProjection])
+                   agoraProjection: Option[AgoraEntityProjection],
+                   entityTypes: Seq[AgoraEntityType.EntityType])
 
   case class Add(requestContext: RequestContext,
                  agoraAddRequest: AgoraEntity)

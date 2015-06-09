@@ -43,7 +43,7 @@ class ApiServiceActor extends HttpServiceActor {
   }
 
   val swaggerService = new SwaggerHttpService {
-    override def apiTypes = Seq(typeOf[MethodsService])
+    override def apiTypes = Seq(typeOf[MethodsService], typeOf[ConfigurationsService])
 
     override def apiVersion = AgoraConfig.SwaggerConfig.apiVersion
 

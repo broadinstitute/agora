@@ -5,6 +5,7 @@ import com.gettyimages.spray.swagger.SwaggerHttpService
 import com.wordnik.swagger.model.ApiInfo
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
+import org.broadinstitute.dsde.agora.server.webservice.configurations.ConfigurationsService
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
 import org.broadinstitute.dsde.agora.server.webservice.validation.AgoraValidationRejection
 import spray.routing._
@@ -26,7 +27,9 @@ class ApiServiceActor extends HttpServiceActor {
 
   val methodsService = new MethodsService with ActorRefFactoryContext with AgoraOpenAMDirectives
 
-  def possibleRoutes = methodsService.routes ~ swaggerService.routes ~
+  val configurationsService = new ConfigurationsService with ActorRefFactoryContext with AgoraOpenAMDirectives
+
+  def possibleRoutes = methodsService.routes ~ configurationsService.routes ~ swaggerService.routes ~
     get {
       pathSingleSlash {
         getFromResource("swagger/index.html")

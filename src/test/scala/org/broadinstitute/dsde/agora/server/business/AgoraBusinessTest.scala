@@ -1,6 +1,6 @@
 package org.broadinstitute.dsde.agora.server.business
 
-import org.broadinstitute.dsde.agora.server.model.AgoraEntity
+import org.broadinstitute.dsde.agora.server.model.{AgoraEntityType, AgoraEntity}
 import org.scalatest.{Matchers, FlatSpec, DoNotDiscover}
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 
@@ -8,16 +8,16 @@ import org.broadinstitute.dsde.agora.server.AgoraConfig
 class AgoraBusinessTest extends FlatSpec with Matchers {
 
   "Agora" should "return an empty URL if entity namespace, name, or snapshotId are missing" in {
-    val noNamespace = AgoraEntity(name = Option("test"), snapshotId = Option(12))
-    val blankName = AgoraEntity(namespace = Option("broad"), name = Option("   "), snapshotId = Option(12))
-    val noSnapshotId = AgoraEntity(namespace = Option("broad"), name = Option("test"))
+    val noNamespace = AgoraEntity(name = Option("test"), snapshotId = Option(12), entityType = Option(AgoraEntityType.Task))
+    val blankName = AgoraEntity(namespace = Option("broad"), name = Option("   "), snapshotId = Option(12), entityType = Option(AgoraEntityType.Task))
+    val noSnapshotId = AgoraEntity(namespace = Option("broad"), name = Option("test"), entityType = Option(AgoraEntityType.Task))
     assert(AgoraBusiness.agoraUrl(noNamespace) === "")
     assert(AgoraBusiness.agoraUrl(blankName) === "")
     assert(AgoraBusiness.agoraUrl(noSnapshotId) === "")
   }
 
   "Agora" should "return a URL given an entity with a namespace, name, and id" in {
-    val entity = AgoraEntity(namespace = Option("broad"), name = Option("test"), snapshotId = Option(12))
+    val entity = AgoraEntity(namespace = Option("broad"), name = Option("test"), snapshotId = Option(12), entityType = Option(AgoraEntityType.Task))
     assert(AgoraBusiness.agoraUrl(entity) === AgoraConfig.methodsUrl + "broad/test/12")
   }
 

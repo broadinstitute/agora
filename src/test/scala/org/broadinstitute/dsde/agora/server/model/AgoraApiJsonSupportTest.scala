@@ -5,9 +5,6 @@ import org.broadinstitute.dsde.agora.server.webservice.validation.AgoraValidatio
 import org.scalatest.{DoNotDiscover, FlatSpec}
 import spray.json._
 
-/**
- * Created by dshiga on 5/18/15.
- */
 @DoNotDiscover
 class AgoraApiJsonSupportTest extends FlatSpec with DefaultJsonProtocol {
 
@@ -15,8 +12,8 @@ class AgoraApiJsonSupportTest extends FlatSpec with DefaultJsonProtocol {
     val validation = AgoraValidation(Seq("test1", "test2"))
     val json = AgoraValidationFormat.write(validation)
     val error = json.asJsObject.fields("error")
-    assert(error.toString.contains("test1") === true)
-    assert(error.toString.contains("test2") === true)
+    assert(error.toString().contains("test1") === true)
+    assert(error.toString().contains("test2") === true)
   }
 
   "Agora" should "convert JSON to AgoraValidation" in {

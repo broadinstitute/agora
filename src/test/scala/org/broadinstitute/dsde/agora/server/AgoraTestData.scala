@@ -1,6 +1,6 @@
 package org.broadinstitute.dsde.agora.server
 
-import org.broadinstitute.dsde.agora.server.model.AgoraEntity
+import org.broadinstitute.dsde.agora.server.model.{AgoraEntityType, AgoraEntity}
 
 trait AgoraTestData {
   def getBigDocumentation: String = {
@@ -17,6 +17,7 @@ trait AgoraTestData {
   val nameNonExistent = Option("nonexistent")
   val synopsis1 = Option("This is a test method")
   val synopsis2 = Option("This is another test method")
+  val synopsis3 = Option("This is a test configuration")
   val documentation1 = Option("This is the documentation")
   val documentation2 = Option("This is documentation for another method")
 
@@ -142,61 +143,94 @@ trait AgoraTestData {
                            |
                            | """.stripMargin)
 
+  val taskConfigPayload = Option("""{
+                                   |  "method": {
+                                   |    "name": "method",
+                                   |    "namespace": "method_ns",
+                                   |    "version": "1"
+                                   |  },
+                                   |  "name": "first",
+                                   |  "workspaceName": {
+                                   |    "namespace": "foo",
+                                   |    "name": "bar"
+                                   |  },
+                                   |  "outputs": {
+                                   |
+                                   |  },
+                                   |  "inputs": {
+                                   |    "p": "hi"
+                                   |  },
+                                   |  "rootEntityType": "sample",
+                                   |  "prerequisites": {
+                                   |
+                                   |  },
+                                   |  "namespace": "ns"
+                                   |}""".stripMargin)
+
   val testEntity1 = AgoraEntity(namespace = namespace1,
     name = name1,
     synopsis = synopsis1,
     documentation = documentation1,
     owner = owner1,
-    payload = payload1)
+    payload = payload1,
+    entityType = Option(AgoraEntityType.Workflow))
 
   val testEntity2 = AgoraEntity(namespace = namespace2,
     name = name1,
     synopsis = synopsis1,
     documentation = documentation1,
     owner = owner1,
-    payload = payload1)
+    payload = payload1,
+    entityType = Option(AgoraEntityType.Workflow))
 
   val testEntity3 = AgoraEntity(namespace = namespace1,
     name = name2,
     synopsis = synopsis1,
     documentation = documentation1,
     owner = owner1,
-    payload = payload1)
+    payload = payload1,
+    entityType = Option(AgoraEntityType.Workflow))
 
   val testEntity4 = AgoraEntity(namespace = namespace1,
     name = name2,
     synopsis = synopsis2,
     documentation = documentation1,
     owner = owner1,
-    payload = payload1)
+    payload = payload1,
+    entityType = Option(AgoraEntityType.Workflow))
 
   val testEntity5 = AgoraEntity(namespace = namespace1,
     name = name2,
     synopsis = synopsis1,
     documentation = documentation2,
     owner = owner1,
-    payload = payload1)
+    payload = payload1,
+    entityType = Option(AgoraEntityType.Workflow))
 
   val testEntity6 = AgoraEntity(namespace = namespace1,
     name = name2,
     synopsis = synopsis1,
     documentation = documentation1,
     owner = owner2,
-    payload = payload1)
+    payload = payload1,
+    entityType = Option(AgoraEntityType.Workflow))
 
   val testEntity7 = AgoraEntity(namespace = namespace1,
     name = name2,
     synopsis = synopsis1,
     documentation = documentation1,
     owner = owner1,
-    payload = payload2)
+    payload = payload2,
+    entityType = Option(AgoraEntityType.Task))
 
   val testEntityTaskWc = AgoraEntity(namespace = namespace1,
     name = nameWc,
     synopsis = synopsisWc,
     documentation = documentationWc,
     owner = owner1,
-    payload = payloadWcTask)
+    payload = payloadWcTask,
+    entityType = Option(AgoraEntityType.Task)
+  )
 
   val testAgoraEntity = new AgoraEntity(
     namespace = namespace1,
@@ -204,7 +238,8 @@ trait AgoraTestData {
     synopsis = synopsis1,
     documentation = documentation1,
     owner = owner1,
-    payload = payload1
+    payload = payload1,
+    entityType = Option(AgoraEntityType.Workflow)
   )
 
   val testBadAgoraEntity = new AgoraEntity(
@@ -213,7 +248,8 @@ trait AgoraTestData {
     synopsis = synopsis1,
     documentation = documentation1,
     owner = owner1,
-    payload = badPayload
+    payload = badPayload,
+    entityType = Option(AgoraEntityType.Task)
   )
 
   val testBadAgoraEntityInvalidWdlImportFormat = new AgoraEntity(
@@ -222,7 +258,8 @@ trait AgoraTestData {
     synopsis = synopsis1,
     documentation = documentation1,
     owner = owner1,
-    payload = badPayloadInvalidImport
+    payload = badPayloadInvalidImport,
+    entityType = Option(AgoraEntityType.Workflow)
   )
 
   val testBadAgoraEntityNonExistentWdlImportFormat = new AgoraEntity(
@@ -231,7 +268,8 @@ trait AgoraTestData {
     synopsis = synopsis1,
     documentation = documentation1,
     owner = owner1,
-    payload = badPayloadNonExistentImport
+    payload = badPayloadNonExistentImport,
+    entityType = Option(AgoraEntityType.Workflow)
   )
 
   val testEntityWorkflowWithExistentWdlImport = new AgoraEntity(
@@ -240,7 +278,8 @@ trait AgoraTestData {
     synopsis = synopsis1,
     documentation = documentation1,
     owner = owner1,
-    payload = payloadReferencingExternalMethod
+    payload = payloadReferencingExternalMethod,
+    entityType = Option(AgoraEntityType.Workflow)
   )
 
   val testAgoraEntityBigDoc = new AgoraEntity(
@@ -249,7 +288,8 @@ trait AgoraTestData {
     synopsis = synopsis1,
     documentation = bigDocumentation,
     owner = owner1,
-    payload = payload1
+    payload = payload1,
+    entityType = Option(AgoraEntityType.Workflow)
   )
 
   val testAgoraEntityNonExistent = new AgoraEntity(
@@ -258,7 +298,16 @@ trait AgoraTestData {
     synopsis = synopsis1,
     documentation = documentation1,
     owner = owner1,
-    payload = payload1
+    payload = payload1,
+    entityType = Option(AgoraEntityType.Workflow)
   )
-
+  val testAgoraConfigurationEntity = new AgoraEntity(
+    namespace = namespace1,
+    name = name1,
+    synopsis = synopsis3,
+    documentation = documentation1,
+    owner = owner1,
+    payload = taskConfigPayload,
+    entityType = Option(AgoraEntityType.Configuration)
+  )
 }

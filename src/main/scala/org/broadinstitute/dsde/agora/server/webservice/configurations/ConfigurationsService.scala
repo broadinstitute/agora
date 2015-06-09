@@ -1,16 +1,16 @@
-package org.broadinstitute.dsde.agora.server.webservice.methods
+
+package org.broadinstitute.dsde.agora.server.webservice.configurations
 
 import com.wordnik.swagger.annotations._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.AgoraService
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
 
-@Api(value = "/methods", description = "Method Service", produces = "application/json", position = 1)
-trait MethodsService extends AgoraService {
-  override def path = ApiUtil.Methods.path
+trait ConfigurationsService extends AgoraService {
+  override def path = ApiUtil.Configurations.path
 
-  @ApiOperation(value = "Get a method in the methods repository matching namespace, name, and snapshot id",
-    nickname = "methods",
+  @ApiOperation(value = "Get a task configuration in the task configuration repository matching namespace, name, and snapshot id",
+    nickname = "configurations",
     httpMethod = "GET",
     produces = "application/json",
     response = classOf[AgoraEntity],
@@ -22,13 +22,13 @@ trait MethodsService extends AgoraService {
   ))
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "Successful Request"),
-    new ApiResponse(code = 404, message = "Method Not Found"),
+    new ApiResponse(code = 404, message = "Task Configuration Not Found"),
     new ApiResponse(code = 500, message = "Internal Error")
   ))
   override def queryByNamespaceNameSnapshotIdRoute = super.queryByNamespaceNameSnapshotIdRoute
 
-  @ApiOperation(value = "Query for method in the methods repository",
-    nickname = "methods",
+  @ApiOperation(value = "Query for task configuration in the task configuration repository",
+    nickname = "configurations",
     httpMethod = "GET",
     produces = "application/json",
     response = classOf[AgoraEntity],
@@ -51,7 +51,7 @@ trait MethodsService extends AgoraService {
   ))
   override def queryRoute = super.queryRoute
 
-  @ApiOperation(value = "Add a method to the methods repository",
+  @ApiOperation(value = "Add a task configuration to the task configuration repository",
     nickname = "add",
     httpMethod = "POST",
     produces = "application/json",
@@ -60,7 +60,7 @@ trait MethodsService extends AgoraService {
   @ApiImplicitParams(Array(
     new ApiImplicitParam(name = "body", required = true, dataType = "org.broadinstitute.dsde.agora.server.model.AgoraEntity", paramType = "body", value = "Agora Entity")))
   @ApiResponses(Array(
-    new ApiResponse(code = 201, message = "Method Successfully Added"),
+    new ApiResponse(code = 201, message = "Task Configuration Successfully Added"),
     new ApiResponse(code = 400, message = "Malformed Input"),
     new ApiResponse(code = 500, message = "Internal Error")
   ))

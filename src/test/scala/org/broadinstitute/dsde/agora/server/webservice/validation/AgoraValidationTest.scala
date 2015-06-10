@@ -1,5 +1,6 @@
 package org.broadinstitute.dsde.agora.server.webservice.validation
 
+import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntityType, AgoraProjectionDefaults, AgoraEntity}
 import org.scalatest.{DoNotDiscover, FlatSpec}
 
@@ -40,21 +41,25 @@ class AgoraValidationTest extends FlatSpec {
   }
 
   "Agora" should "reject projection with both exclude and include fields" in {
-    val validation = AgoraValidation.validateIncludeExcludeFields(Seq("foo"), Seq("bar"))
+    val validation = AgoraValidation.validateParameters(Seq("foo"), Seq("bar"))
     assert(validation.valid === false)
     assert(validation.messages.size === 1)
   }
   
   "Agora" should "reject projection that excludes required fields" in {
-    val validation = AgoraValidation.validateIncludeExcludeFields(Seq.empty[String], AgoraProjectionDefaults.RequiredProjectionFields)
+    val validation = AgoraValidation.validateParameters(Seq.empty[String], AgoraProjectionDefaults.RequiredProjectionFields)
     assert(validation.valid === false)
-    assert(validation.messages.size === 3)
+    assert(validation.messages.size === 4)
   }
 
   "Agora" should "accept projection that doesn't violate any validation rules" in {
-    val validation = AgoraValidation.validateIncludeExcludeFields(Seq("foo"), Seq.empty[String])
+    val validation = AgoraValidation.validateParameters(Seq("foo"), Seq.empty[String])
     assert(validation.valid === true)
   }
 
-
+  "Agora" should "not allow a query for a task to be run on the configurations endpoint " in {
+    val validation = AgoraValidation.validateEntityType(Option(AgoraEntityType.Workflow), AgoraConfig.configurationsRoute)
+    assert(validation.valid === false)
+    assert(validation.messages.size === 1)
+  }
 }

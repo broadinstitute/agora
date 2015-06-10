@@ -25,25 +25,26 @@ case class AgoraEntity(@(ApiModelProperty@field)(required = false, value = "The 
                        namespace: Option[String] = None,
                        @(ApiModelProperty@field)(required = false, value = "The method name ")
                        name: Option[String] = None,
-                       @(ApiModelProperty@field)(required = false, value = "The method snapshot id")
+                       @(ApiModelProperty@field)(required = false, value = "The method snapshot id", hidden = true)
                        snapshotId: Option[Int] = None,
                        @(ApiModelProperty@field)(required = false, value = "A short description of the method")
                        synopsis: Option[String] = None,
                        @(ApiModelProperty@field)(required = false, value = "Method documentation")
                        documentation: Option[String] = None,
-                       @(ApiModelProperty@field)(required = false, value = "User who owns this method in the methods repo")
+                       @(ApiModelProperty@field)(required = false, value = "User who owns this method in the methods repo", hidden = true)
                        owner: Option[String] = None,
-                       @(ApiModelProperty@field)(required = false, value = "The date the method was inserted in the methods repo")
+                       @(ApiModelProperty@field)(required = false, value = "The date the method was inserted in the methods repo", hidden = true)
                        createDate: Option[DateTime] = None,
                        @(ApiModelProperty@field)(required = false, value = "The method payload")
                        payload: Option[String] = None,
-                       @(ApiModelProperty@field)(required = false, value = "URI for method details")
+                       @(ApiModelProperty@field)(required = false, value = "URI for method details", hidden = true)
                        url: Option[String] = None,
-                       entityType: Option[AgoraEntityType.EntityType]= None
+                       @(ApiModelProperty@field)(dataType = "string", required = false, value = "The type of the entity (Task, Workflow, Configuration)", allowableValues = "Task,Workflow,Configuration")
+                       entityType: Option[AgoraEntityType.EntityType] = None
                         )
 
 object AgoraProjectionDefaults {
-  val RequiredProjectionFields = Seq[String]("namespace", "name", "snapshotId")
+  val RequiredProjectionFields = Seq[String]("namespace", "name", "snapshotId", "entityType")
 }
 
 case class AgoraEntityProjection(includedFields: Seq[String], excludedFields: Seq[String]) {

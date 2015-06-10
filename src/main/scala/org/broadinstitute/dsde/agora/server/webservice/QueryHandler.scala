@@ -26,20 +26,32 @@ class QueryHandler extends Actor {
     ) =>
       query(requestContext, namespace, name, snapshotId, entityType)
       context.stop(self)
-    case ServiceMessages.Query(requestContext: RequestContext, agoraSearch: AgoraEntity, agoraProjection: Option[AgoraEntityProjection]) =>
-      query(requestContext, agoraSearch, agoraProjection)
+
+    case ServiceMessages.Query(
+    requestContext: RequestContext,
+    agoraSearch: AgoraEntity,
+    agoraProjection: Option[AgoraEntityProjection],
+    entityTypes: Seq[AgoraEntityType.EntityType]
+    ) =>
+      query(requestContext, agoraSearch, agoraProjection, entityTypes)
       context.stop(self)
   }
 
-  def query(requestContext: RequestContext, namespace: String, name: String, snapshotId: Int, entityType: Seq[AgoraEntityType.EntityType]): Unit = {
-    AgoraBusiness.findSingle(namespace, name, snapshotId, entityType) match {
+  def query(requestContext: RequestContext,
+            namespace: String, name: String,
+            snapshotId: Int,
+            entityTypes: Seq[AgoraEntityType.EntityType]): Unit = {
+    AgoraBusiness.findSingle(namespace, name, snapshotId, entityTypes) match {
       case None => context.parent ! RequestComplete(NotFound, AgoraError(s"Entity: $namespace/$name/$snapshotId not found"))
       case Some(method) => context.parent ! RequestComplete(method)
     }
   }
 
-  def query(requestContext: RequestContext, agoraSearch: AgoraEntity, agoraProjection: Option[AgoraEntityProjection]): Unit = {
-    val entities = AgoraBusiness.find(agoraSearch, agoraProjection)
+  def query(requestContext: RequestContext,
+            agoraSearch: AgoraEntity,
+            agoraProjection: Option[AgoraEntityProjection],
+            entityTypes: Seq[AgoraEntityType.EntityType]): Unit = {
+    val entities = AgoraBusiness.find(agoraSearch, agoraProjection, entityTypes)
     context.parent ! RequestComplete(entities)
   }
 

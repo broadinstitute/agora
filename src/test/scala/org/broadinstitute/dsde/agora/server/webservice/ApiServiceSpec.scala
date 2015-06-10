@@ -1,5 +1,6 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
+import akka.actor.ActorRefFactory
 import org.broadinstitute.dsde.agora.server.AgoraTestData
 import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
 import org.broadinstitute.dsde.agora.server.webservice.configurations.ConfigurationsService
@@ -98,6 +99,7 @@ class ApiServiceSpec extends FlatSpec with Directives with ScalatestRouteTest wi
         namespace = entity.namespace,
         name = entity.name,
         snapshotId = entity.snapshotId,
+        entityType = entity.entityType,
         url = Option(AgoraBusiness.agoraUrl(entity))
       )
     )

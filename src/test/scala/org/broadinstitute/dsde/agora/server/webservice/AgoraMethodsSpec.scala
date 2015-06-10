@@ -116,4 +116,13 @@ class AgoraMethodsSpec extends ApiServiceSpec {
       assert(status === Created)
     }
   }
+
+  "Agora" should "not allow you to post a new configuration to the methods route" in {
+    Post(ApiUtil.Methods.withLeadingSlash, testAgoraConfigurationEntity) ~>
+      wrapWithRejectionHandler {
+        methodsService.postRoute
+      } ~> check {
+      assert(status === BadRequest)
+    }
+  }
 }

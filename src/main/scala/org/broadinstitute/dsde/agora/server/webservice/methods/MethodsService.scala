@@ -42,6 +42,7 @@ trait MethodsService extends AgoraService {
     new ApiImplicitParam(name = "documentation", required = false, dataType = "string", paramType = "query", value = "Documentation"),
     new ApiImplicitParam(name = "owner", required = false, dataType = "string", paramType = "query", value = "Owner"),
     new ApiImplicitParam(name = "payload", required = false, dataType = "string", paramType = "query", value = "Payload"),
+    new ApiImplicitParam(name = "entityType", required = false, dataType = "string", paramType = "query", value = "EntityType", allowableValues = "Task,Workflow"),
     new ApiImplicitParam(name = "excludedField", required = false, allowMultiple = true, dataType = "string", paramType = "query", value = "Excluded Field"),
     new ApiImplicitParam(name = "includedField", required = false, allowMultiple = true, dataType = "string", paramType = "query", value = "Included Field")
   ))

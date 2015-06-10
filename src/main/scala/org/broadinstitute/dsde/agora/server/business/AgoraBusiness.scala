@@ -9,7 +9,7 @@ object AgoraBusiness {
 
   def agoraUrl(entity: AgoraEntity): String = {
     hasNamespaceNameId(entity) match {
-      case true => AgoraConfig.methodsUrl + entity.namespace.get + "/" + entity.name.get + "/" + entity.snapshotId.get
+      case true => AgoraConfig.urlFromType(entity.entityType) + entity.namespace.get + "/" + entity.name.get + "/" + entity.snapshotId.get
       case false => ""
     }
   }
@@ -27,11 +27,16 @@ object AgoraBusiness {
     entityWithId.copy(url = Option(agoraUrl(entityWithId)))
   }
 
-  def find(agoraSearch: AgoraEntity, agoraProjection: Option[AgoraEntityProjection]): Seq[AgoraEntity] = {
-    AgoraDao.createAgoraDao(agoraSearch.entityType).find(agoraSearch, agoraProjection).map(entity => entity.copy(url = Option(agoraUrl(entity))))
+  def find(agoraSearch: AgoraEntity,
+           agoraProjection: Option[AgoraEntityProjection],
+           entityTypes: Seq[AgoraEntityType.EntityType]): Seq[AgoraEntity] = {
+    AgoraDao.createAgoraDao(entityTypes).find(agoraSearch, agoraProjection).map(entity => entity.copy(url = Option(agoraUrl(entity))))
   }
 
-  def findSingle(namespace: String, name: String, snapshotId: Int, entityTypes: Seq[AgoraEntityType.EntityType]): Option[AgoraEntity] = {
+  def findSingle(namespace: String,
+                 name: String,
+                 snapshotId: Int,
+                 entityTypes: Seq[AgoraEntityType.EntityType]): Option[AgoraEntity] = {
     AgoraDao.createAgoraDao(entityTypes).findSingle(namespace, name, snapshotId).map(entity => entity.copy(url = Option(agoraUrl(entity))))
   }
 

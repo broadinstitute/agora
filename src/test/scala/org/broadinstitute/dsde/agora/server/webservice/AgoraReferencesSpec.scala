@@ -11,7 +11,7 @@ import spray.httpx.unmarshalling._
 
 @DoNotDiscover
 class AgoraReferencesSpec extends ApiServiceSpec {
-  "Agora" should "return a 400 bad request when posting a WDL with an invalid import statement" in {
+  ignore should "return a 400 bad request when posting a WDL with an invalid import statement" in {
     Post(ApiUtil.Methods.withLeadingSlash, testBadAgoraEntityInvalidWdlImportFormat) ~>
       methodsService.postRoute ~> check {
       assert(status === BadRequest)
@@ -19,7 +19,7 @@ class AgoraReferencesSpec extends ApiServiceSpec {
     }
   }
 
-  "Agora" should "return a 400 bad request when posting a WDL with an import statement that references a non-existent method" in {
+  ignore should "return a 400 bad request when posting a WDL with an import statement that references a non-existent method" in {
     Post(ApiUtil.Methods.withLeadingSlash, testBadAgoraEntityNonExistentWdlImportFormat) ~>
       methodsService.postRoute ~> check {
       assert(status === BadRequest)

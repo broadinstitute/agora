@@ -28,7 +28,7 @@ libraryDependencies ++= Seq(
   "io.spray" %% "spray-json" % "1.3.1", // NB: Not at sprayV. 1.3.2 does not exist.
   "io.spray" %% "spray-routing" % sprayV,
   "net.ceedubs" %% "ficus" % "1.1.2",
-  "org.broadinstitute" %% "cromwell" % "0.1-SNAPSHOT",
+  "org.broadinstitute" %% "cromwell" % "0.1-SNAPSHOT" excludeAll ExclusionRule(organization = "com.gettyimages"),
   "org.broadinstitute.dsde.vault" %% "vault-common" % "0.1-15-bf74315",
   "org.mongodb" %% "casbah" % "2.8.1",
   "org.webjars" % "swagger-ui" % "2.0.24",

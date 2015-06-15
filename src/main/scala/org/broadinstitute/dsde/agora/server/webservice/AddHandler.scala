@@ -1,11 +1,11 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.actor.Actor
-import cromwell.binding.WdlBinding
+import cromwell.binding.WdlNamespace
 import cromwell.parser.WdlParser.SyntaxError
 import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
-import org.broadinstitute.dsde.agora.server.model.{AgoraEntityType, AgoraEntity, AgoraError}
+import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType, AgoraError}
 import org.broadinstitute.dsde.agora.server.webservice.PerRequest.RequestComplete
 import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages
 import org.joda.time.DateTime
@@ -34,9 +34,9 @@ class AddHandler extends Actor {
   private def validatePayload(agoraEntity: AgoraEntity): Unit = {
     agoraEntity.entityType.get match {
       case AgoraEntityType.Task =>
-        WdlBinding.getAst(agoraEntity.payload.get, agoraEntity.name.get)
+        WdlNamespace.load(agoraEntity.payload.get)
       case AgoraEntityType.Workflow =>
-        WdlBinding.getAst(agoraEntity.payload.get, agoraEntity.name.get)
+        WdlNamespace.load(agoraEntity.payload.get)
       case AgoraEntityType.Configuration =>
       //add config validation here
     }

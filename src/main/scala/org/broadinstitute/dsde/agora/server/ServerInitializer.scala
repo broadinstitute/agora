@@ -6,7 +6,7 @@ import akka.io.Tcp.CommandFailed
 import akka.pattern.ask
 import akka.util.Timeout
 import com.typesafe.scalalogging.slf4j.LazyLogging
-import org.broadinstitute.dsde.agora.server.business.AuthorizationProvider
+import org.broadinstitute.dsde.agora.server.dataaccess.acls.AuthorizationProvider
 import org.broadinstitute.dsde.agora.server.webservice.ApiServiceActor
 import spray.can.Http
 

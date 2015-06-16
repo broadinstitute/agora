@@ -1,8 +1,8 @@
 
-package org.broadinstitute.dsde.agora.server.acls
+package org.broadinstitute.dsde.agora.server.dataaccess.acls
 
-import org.broadinstitute.dsde.agora.server.business.{AgoraPermissions, AgoraBusiness}
-import org.broadinstitute.dsde.agora.server.business.AgoraPermissions._
+import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
+import AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.dataaccess.authorization.TestAuthorizationProvider
 import org.broadinstitute.dsde.agora.server.model.AgoraEntityType
 import org.broadinstitute.dsde.agora.server.webservice.ApiServiceSpec
@@ -66,16 +66,28 @@ class AgoraAuthorizationTest extends ApiServiceSpec {
   "Agora" should "only return methods that have read permissions " in {
     val agoraBusiness = new AgoraBusiness()
 
-    TestAuthorizationProvider.addLocalPermissions(TestAuthorizationProvider.getUniqueIdentifier(testEntity1WithId), AgoraPermissions(Nothing))
     val entities = agoraBusiness.find(testEntity1WithId, None, Seq(AgoraEntityType.Workflow, AgoraEntityType.Task), agoraCIOwner.get)
-    val authorizedEntities = TestAuthorizationProvider.authorizationsForEntities(entities, agoraCIOwner.get)
-    val noEntities = TestAuthorizationProvider.filterByReadPermissions(authorizedEntities)
+
+    val entity = agoraBusiness.findSingle(testEntity1WithId.namespace.get,
+      testEntity1WithId.name.get,
+      testEntity1WithId.snapshotId.get,
+      Seq(testEntity1WithId.entityType.get),
+      agoraCIOwner.get)
+    
+    TestAuthorizationProvider.addLocalPermissions(TestAuthorizationProvider.getUniqueIdentifier(testEntity1WithId), AgoraPermissions(Nothing))
+    val noEntities = TestAuthorizationProvider.filterByReadPermissions(entities, agoraCIOwner.get)
     assert(noEntities.size === 0)
 
+    TestAuthorizationProvider.addLocalPermissions(TestAuthorizationProvider.getUniqueIdentifier(testEntity1WithId), AgoraPermissions(Nothing))
+    val noEntity = TestAuthorizationProvider.filterByReadPermissions(entity, agoraCIOwner.get)
+    assert(noEntity === None)
+
     TestAuthorizationProvider.addLocalPermissions(TestAuthorizationProvider.getUniqueIdentifier(testEntity1WithId), AgoraPermissions(Read))
-    val foundEntities = agoraBusiness.find(testEntity1WithId, None, Seq(AgoraEntityType.Workflow, AgoraEntityType.Task), agoraCIOwner.get)
-    val authorizedEntities2 = TestAuthorizationProvider.authorizationsForEntities(foundEntities, agoraCIOwner.get)
-    val oneEntity = TestAuthorizationProvider.filterByReadPermissions(authorizedEntities2)
+    val oneEntity = TestAuthorizationProvider.filterByReadPermissions(entities, agoraCIOwner.get)
     assert(oneEntity.size === 1)
+
+    TestAuthorizationProvider.addLocalPermissions(TestAuthorizationProvider.getUniqueIdentifier(testEntity1WithId), AgoraPermissions(Read))
+    val someEntity = TestAuthorizationProvider.filterByReadPermissions(entity, agoraCIOwner.get)
+    assert(someEntity === Some(testEntity1WithId))
   }
 }

@@ -26,6 +26,10 @@ object AgoraConfig {
   lazy val mongoDbPassword = config.as[Option[String]]("mongodb.password")
   lazy val mongoDbDatabase = config.as[Option[String]]("mongodb.db").getOrElse("agora")
 
+  lazy val gcsProjectId = config.as[String]("gcs.project.id")
+  lazy val gcsServiceAccountUserEmail = config.as[String]("gcs.service.account.email")
+  lazy val gcServiceAccountP12KeyFile = config.as[String]("gcs.service.account.p12.key.file")
+
   //Config Settings
   object SwaggerConfig {
     private val swagger = config.getConfig("swagger")

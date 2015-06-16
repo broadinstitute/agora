@@ -3,6 +3,7 @@ package org.broadinstitute.dsde.agora.server.webservice.validation
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntityType, AgoraProjectionDefaults, AgoraEntity}
 
 object AgoraValidation {
+  // TODO for DSDEEPB-457: validate that namespace meets DNS requirements shown here: https://cloud.google.com/storage/docs/bucket-naming#requirements
   def validateMetadata(entity: AgoraEntity): AgoraValidation = {
     var validation = AgoraValidation()
     if (!entity.namespace.exists(_.trim.nonEmpty)) {

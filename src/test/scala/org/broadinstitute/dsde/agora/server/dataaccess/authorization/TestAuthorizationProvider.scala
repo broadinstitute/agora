@@ -1,8 +1,8 @@
 
 package org.broadinstitute.dsde.agora.server.dataaccess.authorization
 
-import org.broadinstitute.dsde.agora.server.business.AgoraPermissions._
-import org.broadinstitute.dsde.agora.server.business.{AuthorizationProvider, AgoraPermissions, AuthorizedAgoraEntity}
+import org.broadinstitute.dsde.agora.server.dataaccess.acls.{AuthorizedAgoraEntity, AuthorizationProvider, AgoraPermissions}
+import AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 
 import scala.collection.mutable

@@ -1,8 +1,8 @@
-package org.broadinstitute.dsde.agora.server.acls
+package org.broadinstitute.dsde.agora.server.dataaccess.acls
 
+import org.broadinstitute.dsde.agora.server.dataaccess.acls.gcs.{RoleTranslator, GcsObjectRole, GcsBucketRole, GcsRole}
 import org.scalatest.{Matchers, FlatSpec, DoNotDiscover}
-import org.broadinstitute.dsde.agora.server.business.AgoraPermissions
-import org.broadinstitute.dsde.agora.server.business.AgoraPermissions._
+import AgoraPermissions._
 
 @DoNotDiscover
 class RoleTranslatorTest extends FlatSpec with Matchers {
@@ -43,7 +43,7 @@ class RoleTranslatorTest extends FlatSpec with Matchers {
 
   "RoleTranslator" should "translate object NOTHING -> no method permissions" in {
     val objectRole = GcsObjectRole(GcsRole.Nothing)
-    val methodPermissions = RoleTranslator.gcsObjectToMethodPermissions(objectRole)
+    val methodPermissions = RoleTranslator.gcsObjectToEntityPermissions(objectRole)
     assert(methodPermissions.canRead === false)
     assert(methodPermissions.canWrite === false)
     assert(methodPermissions.canRedact === false)
@@ -52,7 +52,7 @@ class RoleTranslatorTest extends FlatSpec with Matchers {
 
   "RoleTranslator" should "translate object READER -> method read" in {
     val objectRole = GcsObjectRole(GcsRole.Reader)
-    val methodPermissions = RoleTranslator.gcsObjectToMethodPermissions(objectRole)
+    val methodPermissions = RoleTranslator.gcsObjectToEntityPermissions(objectRole)
     assert(methodPermissions.canRead === true)
     assert(methodPermissions.canWrite === false)
     assert(methodPermissions.canRedact === false)
@@ -61,7 +61,7 @@ class RoleTranslatorTest extends FlatSpec with Matchers {
 
   "RoleTranslator" should "translate object OWNER -> method read, manage" in {
     val objectRole = GcsObjectRole(GcsRole.Owner)
-    val methodPermissions = RoleTranslator.gcsObjectToMethodPermissions(objectRole)
+    val methodPermissions = RoleTranslator.gcsObjectToEntityPermissions(objectRole)
     assert(methodPermissions.canRead === true)
     assert(methodPermissions.canWrite === false)
     assert(methodPermissions.canRedact === false)

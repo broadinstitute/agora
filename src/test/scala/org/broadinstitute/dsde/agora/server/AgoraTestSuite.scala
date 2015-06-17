@@ -2,6 +2,7 @@ package org.broadinstitute.dsde.agora.server
 
 import com.github.simplyscala.{MongoEmbedDatabase, MongodProps}
 import com.mongodb.casbah.MongoClient
+import org.broadinstitute.dsde.agora.server.acls.AclTranslatorTest
 import org.broadinstitute.dsde.agora.server.business.{AgoraAccessControlTest, AgoraBusiness, AgoraBusinessTest}
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.{AgoraMongoClient, MethodsDbTest}
@@ -24,7 +25,8 @@ class AgoraTestSuite extends Suites(
   new AgoraBusinessTest,
   new AgoraValidationTest,
   new AgoraApiJsonSupportTest,
-  new AgoraAccessControlTest) with AgoraTestData with BeforeAndAfterAll with MongoEmbedDatabase {
+  new AgoraAccessControlTest,
+  new AclTranslatorTest) with AgoraTestData with BeforeAndAfterAll with MongoEmbedDatabase {
 
   var mongoProps: MongodProps = null
 

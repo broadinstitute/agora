@@ -3,7 +3,7 @@ package org.broadinstitute.dsde.agora.server.webservice
 import akka.actor.Actor
 import cromwell.binding.WdlNamespace
 import cromwell.parser.WdlParser.SyntaxError
-import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
+import org.broadinstitute.dsde.agora.server.business.{AuthorizationProvider, AgoraBusiness}
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType, AgoraError}
 import org.broadinstitute.dsde.agora.server.webservice.PerRequest.RequestComplete
@@ -16,15 +16,17 @@ import spray.routing.RequestContext
 /**
  * Handles adding a method to the methods repository, including validation.
  */
-class AddHandler extends Actor {
+class AddHandler(authorizationProvider: AuthorizationProvider) extends Actor {
 
   implicit val system = context.system
 
+  val agoraBusiness = new AgoraBusiness(authorizationProvider)
+
   def receive = {
-    case ServiceMessages.Add(requestContext: RequestContext, agoraAddRequest: AgoraEntity) =>
+    case ServiceMessages.Add(requestContext: RequestContext, agoraAddRequest: AgoraEntity, username: String) =>
       try {
         validatePayload(agoraAddRequest)
-        add(requestContext, agoraAddRequest)
+        add(requestContext, agoraAddRequest, username)
       } catch {
         case e: SyntaxError => context.parent ! RequestComplete(BadRequest, AgoraError("Syntax error in payload: " + e.getMessage))
       }
@@ -42,8 +44,8 @@ class AddHandler extends Actor {
     }
   }
 
-  private def add(requestContext: RequestContext, agoraEntity: AgoraEntity): Unit = {
-    val method = AgoraBusiness.insert(agoraEntity.copy(createDate = Option(new DateTime())))
+  private def add(requestContext: RequestContext, agoraEntity: AgoraEntity, username: String): Unit = {
+    val method = agoraBusiness.insert(agoraEntity.copy(createDate = Option(new DateTime())), username)
     context.parent ! RequestComplete(spray.http.StatusCodes.Created.intValue, method)
   }
 }

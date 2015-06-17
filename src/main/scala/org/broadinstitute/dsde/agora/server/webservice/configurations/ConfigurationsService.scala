@@ -2,12 +2,13 @@
 package org.broadinstitute.dsde.agora.server.webservice.configurations
 
 import com.wordnik.swagger.annotations._
+import org.broadinstitute.dsde.agora.server.business.AuthorizationProvider
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.AgoraService
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
 
 @Api(value = "/configurations", description = "Configuration Service", produces = "application/json", position = 1)
-trait ConfigurationsService extends AgoraService {
+abstract class ConfigurationsService(authorizationProvider: AuthorizationProvider) extends AgoraService(authorizationProvider) {
   override def path = ApiUtil.Configurations.path
 
   @ApiOperation(value = "Get a task configuration in the task configuration repository matching namespace, name, and snapshot id",

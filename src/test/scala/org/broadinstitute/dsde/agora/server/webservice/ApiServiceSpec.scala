@@ -1,25 +1,24 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
-import akka.actor.ActorRefFactory
 import org.broadinstitute.dsde.agora.server.AgoraTestData
 import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
+import org.broadinstitute.dsde.agora.server.dataaccess.authorization.{TestAuthorizationProvider, TestAuthorizationProvider$}
+import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
 import org.broadinstitute.dsde.agora.server.webservice.configurations.ConfigurationsService
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
 import org.broadinstitute.dsde.agora.server.webservice.validation.AgoraValidationRejection
-import org.scalatest._
+import org.scalatest.{DoNotDiscover, _}
+import spray.http.StatusCodes._
+import spray.httpx.unmarshalling._
 import spray.routing.{Directives, RejectionHandler}
 import spray.testkit.ScalatestRouteTest
-import org.broadinstitute.dsde.agora.server.model.AgoraEntity
-import org.scalatest.DoNotDiscover
-import spray.http.StatusCodes._
-
-import spray.httpx.unmarshalling._
 
 @DoNotDiscover
 class ApiServiceSpec extends FlatSpec with Directives with ScalatestRouteTest with AgoraTestData with BeforeAndAfterAll {
-
   import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
   import spray.httpx.SprayJsonSupport._
+
+  val agoraBusiness = new AgoraBusiness(TestAuthorizationProvider)
 
   val wrapWithRejectionHandler = handleRejections(RejectionHandler {
     case AgoraValidationRejection(validation) :: _ => complete(BadRequest, validation)
@@ -40,20 +39,20 @@ class ApiServiceSpec extends FlatSpec with Directives with ScalatestRouteTest wi
   var testConfigurationEntityWithId: AgoraEntity = null
 
   override def beforeAll() = {
-    testEntity1WithId = AgoraBusiness.findSingle(testEntity1).get
-    testEntity2WithId = AgoraBusiness.findSingle(testEntity2).get
-    testEntity3WithId = AgoraBusiness.findSingle(testEntity3).get
-    testEntity4WithId = AgoraBusiness.findSingle(testEntity4).get
-    testEntity5WithId = AgoraBusiness.findSingle(testEntity5).get
-    testEntity6WithId = AgoraBusiness.findSingle(testEntity6).get
-    testEntity7WithId = AgoraBusiness.findSingle(testEntity7).get
+    testEntity1WithId = agoraBusiness.findSingle(testEntity1, agoraCIOwner.get).get
+    testEntity2WithId = agoraBusiness.findSingle(testEntity2, agoraCIOwner.get).get
+    testEntity3WithId = agoraBusiness.findSingle(testEntity3, agoraCIOwner.get).get
+    testEntity4WithId = agoraBusiness.findSingle(testEntity4, agoraCIOwner.get).get
+    testEntity5WithId = agoraBusiness.findSingle(testEntity5, agoraCIOwner.get).get
+    testEntity6WithId = agoraBusiness.findSingle(testEntity6, agoraCIOwner.get).get
+    testEntity7WithId = agoraBusiness.findSingle(testEntity7, agoraCIOwner.get).get
 
-    testEntityTaskWcWithId = AgoraBusiness.findSingle(testEntityTaskWc).get
-    testConfigurationEntityWithId = AgoraBusiness.findSingle(testAgoraConfigurationEntity).get
+    testEntityTaskWcWithId = agoraBusiness.findSingle(testEntityTaskWc, agoraCIOwner.get).get
+    testConfigurationEntityWithId = agoraBusiness.findSingle(testAgoraConfigurationEntity, agoraCIOwner.get).get
   }
 
-  val methodsService = new MethodsService with ActorRefFactoryContext with AgoraOpenAMMockDirectives
-  val configurationsService = new ConfigurationsService with ActorRefFactoryContext with AgoraOpenAMMockDirectives
+  val methodsService = new MethodsService(TestAuthorizationProvider) with ActorRefFactoryContext with AgoraOpenAMMockDirectives
+  val configurationsService = new ConfigurationsService(TestAuthorizationProvider) with ActorRefFactoryContext with AgoraOpenAMMockDirectives
 
   def handleError[T](deserialized: Deserialized[T], assertions: (T) => Unit) = {
     if (status.isSuccess) {
@@ -74,7 +73,7 @@ class ApiServiceSpec extends FlatSpec with Directives with ScalatestRouteTest wi
         snapshotId = entity.snapshotId,
         synopsis = entity.synopsis,
         owner = entity.owner,
-        url = Option(AgoraBusiness.agoraUrl(entity)),
+        url = Option(agoraBusiness.agoraUrl(entity)),
         entityType = entity.entityType
       )
     )
@@ -87,7 +86,7 @@ class ApiServiceSpec extends FlatSpec with Directives with ScalatestRouteTest wi
         name = entity.name,
         snapshotId = entity.snapshotId,
         owner = entity.owner,
-        url = Option(AgoraBusiness.agoraUrl(entity)),
+        url = Option(agoraBusiness.agoraUrl(entity)),
         entityType = entity.entityType
       )
     )
@@ -100,7 +99,7 @@ class ApiServiceSpec extends FlatSpec with Directives with ScalatestRouteTest wi
         name = entity.name,
         snapshotId = entity.snapshotId,
         entityType = entity.entityType,
-        url = Option(AgoraBusiness.agoraUrl(entity))
+        url = Option(agoraBusiness.agoraUrl(entity))
       )
     )
   }

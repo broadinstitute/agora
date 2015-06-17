@@ -22,7 +22,10 @@ object AgoraMongoDao {
   val KeySeparator = ":"
   val DefaultFindProjection = Option(new AgoraEntityProjection(Seq.empty[String], Seq[String]("payload", "documentation")))
 
-  def EntityToMongoDbObject(entity: AgoraEntity): DBObject = JSON.parse(entity.toJson.toString()).asInstanceOf[DBObject]
+  def EntityToMongoDbObject(entity: AgoraEntity): DBObject = {
+    //we need to remove url if it exists since we don't store it in the document
+    JSON.parse(entity.copy(url = None).toJson.toString()).asInstanceOf[DBObject]
+  }
 
   def MongoDbObjectToEntity(mongoDBObject: DBObject): AgoraEntity = mongoDBObject.toString.parseJson.convertTo[AgoraEntity]
 }

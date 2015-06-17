@@ -6,6 +6,7 @@ import akka.io.Tcp.CommandFailed
 import akka.pattern.ask
 import akka.util.Timeout
 import com.typesafe.scalalogging.slf4j.LazyLogging
+import org.broadinstitute.dsde.agora.server.business.AuthorizationProvider
 import org.broadinstitute.dsde.agora.server.webservice.ApiServiceActor
 import spray.can.Http
 
@@ -16,17 +17,17 @@ import scala.util.Try
 class ServerInitializer extends LazyLogging {
   implicit val actorSystem = ActorSystem("agora")
 
-  def startAllServices() {
-    startWebServiceActors()
+  def startAllServices(authorizationProvider: AuthorizationProvider) {
+    startWebServiceActors(authorizationProvider)
   }
 
   def stopAllServices() {
     stopAndCatchExceptions(stopWebServiceActors())
   }
 
-  private def startWebServiceActors() = {
+  private def startWebServiceActors(authorizationProvider: AuthorizationProvider) = {
     implicit val timeout = Timeout(5.seconds)
-    val service = actorSystem.actorOf(ApiServiceActor.props, "agora-actor")
+    val service = actorSystem.actorOf(ApiServiceActor.props(authorizationProvider), "agora-actor")
     Await.result(IO(Http) ? Http.Bind(service, interface = AgoraConfig.webserviceInterface, port = AgoraConfig.port), timeout.duration) match {
       case CommandFailed(b: Http.Bind) =>
         logger.error(s"Unable to bind to port ${AgoraConfig.port} on interface ${AgoraConfig.webserviceInterface}")
@@ -35,7 +36,7 @@ class ServerInitializer extends LazyLogging {
       case _ =>
     }
   }
-  
+
   private def stopWebServiceActors() {
     IO(Http) ! Http.CloseAll
   }

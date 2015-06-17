@@ -1,12 +1,13 @@
 package org.broadinstitute.dsde.agora.server.webservice.methods
 
 import com.wordnik.swagger.annotations._
+import org.broadinstitute.dsde.agora.server.business.AuthorizationProvider
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.AgoraService
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
 
 @Api(value = "/methods", description = "Method Service", produces = "application/json", position = 1)
-trait MethodsService extends AgoraService {
+abstract class MethodsService(authorizationProvider: AuthorizationProvider) extends AgoraService(authorizationProvider) {
   override def path = ApiUtil.Methods.path
 
   @ApiOperation(value = "Get a method in the methods repository matching namespace, name, and snapshot id",

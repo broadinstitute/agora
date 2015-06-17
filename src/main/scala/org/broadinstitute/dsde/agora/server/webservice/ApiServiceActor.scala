@@ -4,30 +4,33 @@ import akka.actor.Props
 import com.gettyimages.spray.swagger.SwaggerHttpService
 import com.wordnik.swagger.model.ApiInfo
 import org.broadinstitute.dsde.agora.server.AgoraConfig
-import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
+import org.broadinstitute.dsde.agora.server.business.AuthorizationProvider
 import org.broadinstitute.dsde.agora.server.webservice.configurations.ConfigurationsService
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
 import org.broadinstitute.dsde.agora.server.webservice.validation.AgoraValidationRejection
-import spray.routing._
 import spray.http.StatusCodes._
-import spray.httpx.SprayJsonSupport._
+import spray.routing._
 
 import scala.reflect.runtime.universe._
 
 object ApiServiceActor {
-  def props: Props = Props(classOf[ApiServiceActor])
+  def props(authorizationProvider: AuthorizationProvider): Props = Props(classOf[ApiServiceActor], authorizationProvider)
 }
 
-class ApiServiceActor extends HttpServiceActor {
+class ApiServiceActor(authorization: AuthorizationProvider) extends HttpServiceActor {
+
+  import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
+  import spray.httpx.SprayJsonSupport._
+
   override def actorRefFactory = context
 
   trait ActorRefFactoryContext {
     def actorRefFactory = context
   }
 
-  val methodsService = new MethodsService with ActorRefFactoryContext with AgoraOpenAMDirectives
+  val methodsService = new MethodsService(authorization) with ActorRefFactoryContext with AgoraOpenAMDirectives
 
-  val configurationsService = new ConfigurationsService with ActorRefFactoryContext with AgoraOpenAMDirectives
+  val configurationsService = new ConfigurationsService(authorization) with ActorRefFactoryContext with AgoraOpenAMDirectives
 
   def possibleRoutes = methodsService.routes ~ configurationsService.routes ~ swaggerService.routes ~
     get {

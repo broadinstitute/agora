@@ -3,10 +3,9 @@ package org.broadinstitute.dsde.agora.server.business
 import cromwell.parser.WdlParser
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
-import org.broadinstitute.dsde.agora.server.model.{AgoraEntityType, AgoraEntity, AgoraEntityProjection}
+import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection, AgoraEntityType}
 
-object AgoraBusiness {
-
+class AgoraBusiness(authorizationProvider: AuthorizationProvider) {
   def agoraUrl(entity: AgoraEntity): String = {
     hasNamespaceNameId(entity) match {
       case true => AgoraConfig.urlFromType(entity.entityType) + entity.namespace.get + "/" + entity.name.get + "/" + entity.snapshotId.get
@@ -22,26 +21,51 @@ object AgoraBusiness {
     entity.copy(url = Option(agoraUrl(entity)))
   }
 
-  def insert(agoraEntity: AgoraEntity): AgoraEntity = {
+  def insert(agoraEntity: AgoraEntity, username: String): AgoraEntity = {
     val entityWithId = AgoraDao.createAgoraDao(agoraEntity.entityType).insert(agoraEntity)
     entityWithId.copy(url = Option(agoraUrl(entityWithId)))
   }
 
+  def filterByReadPermissions(authEntities: Seq[AuthorizedAgoraEntity]): Seq[AgoraEntity] = {
+    authEntities.flatMap(authEntity => filterByReadPermissions(authEntity))
+  }
+
+  def filterByReadPermissions(authEntity: AuthorizedAgoraEntity): Option[AgoraEntity] = {
+    if (authEntity.authorization.canRead) Some(authEntity.entity) else None
+  }
+
   def find(agoraSearch: AgoraEntity,
            agoraProjection: Option[AgoraEntityProjection],
-           entityTypes: Seq[AgoraEntityType.EntityType]): Seq[AgoraEntity] = {
-    AgoraDao.createAgoraDao(entityTypes).find(agoraSearch, agoraProjection).map(entity => entity.copy(url = Option(agoraUrl(entity))))
+           entityTypes: Seq[AgoraEntityType.EntityType],
+           username: String): Seq[AgoraEntity] = {
+    val entities = AgoraDao.createAgoraDao(entityTypes).find(agoraSearch, agoraProjection).map(
+      entity => entity.copy(url = Option(agoraUrl(entity)))
+    )
+    filterByReadPermissions(authorizationProvider.authorizationsForEntities(entities, username))
   }
 
   def findSingle(namespace: String,
                  name: String,
                  snapshotId: Int,
-                 entityTypes: Seq[AgoraEntityType.EntityType]): Option[AgoraEntity] = {
-    AgoraDao.createAgoraDao(entityTypes).findSingle(namespace, name, snapshotId).map(entity => entity.copy(url = Option(agoraUrl(entity))))
+                 entityTypes: Seq[AgoraEntityType.EntityType],
+                 username: String): Option[AgoraEntity] = {
+    val optEntity = AgoraDao.createAgoraDao(entityTypes).findSingle(namespace, name, snapshotId)
+    optEntity match {
+      case Some(foundEntity) => filterByReadPermissions(authorizationProvider.authorizationsForEntity(
+        foundEntity.copy(url = Option(agoraUrl(foundEntity))), username)
+      )
+      case None => None
+    }
   }
 
-  def findSingle(entity: AgoraEntity): Option[AgoraEntity] = {
-    AgoraDao.createAgoraDao(entity.entityType).findSingle(entity).map(entity => entity.copy(url = Option(agoraUrl(entity))))
+  def findSingle(entity: AgoraEntity, username: String): Option[AgoraEntity] = {
+    val optEntity = AgoraDao.createAgoraDao(entity.entityType).findSingle(entity)
+    optEntity match {
+      case Some(foundEntity) => filterByReadPermissions(authorizationProvider.authorizationsForEntity(
+        foundEntity.copy(url = Option(agoraUrl(foundEntity))), username)
+      )
+      case None => None
+    }
   }
 
   /**
@@ -50,11 +74,11 @@ object AgoraBusiness {
    * @return The payload of the method, if found, otherwise an empty string.
    */
   // Looks like "methods://broad.grep.3"
-  def importResolver(importString: String) : String = {
+  def importResolver(importString: String, username: String): String = {
     val importStringPattern = """^methods\:\/\/(\S+)\.(\S+).(\d+)""".r
     importString match {
       case importStringPattern(namespace, name, snapshotId) =>
-        AgoraBusiness.findSingle(namespace, name, snapshotId.toInt, Seq(AgoraEntityType.Task, AgoraEntityType.Workflow))
+        findSingle(namespace, name, snapshotId.toInt, Seq(AgoraEntityType.Task, AgoraEntityType.Workflow), username)
           .getOrElse(new AgoraEntity(entityType = Option(AgoraEntityType.Task))).payload.getOrElse("")
       case _ => throw new WdlParser.SyntaxError("Unrecognized import statement format: " + importStringPattern)
     }

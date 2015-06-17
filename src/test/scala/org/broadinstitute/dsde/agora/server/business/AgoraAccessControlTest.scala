@@ -7,22 +7,22 @@ import org.scalatest.{DoNotDiscover, FlatSpec, Matchers}
 @DoNotDiscover
 class AgoraAccessControlTest extends FlatSpec with Matchers {
   "Agora" should "return true if someone has read access and we ask if they have read access " in {
-    val acl = AgoraAcl(Read)
+    val acl = AgoraPermissions(Read)
     assert(acl.canRead === true)
   }
 
   "Agora" should "return true if someone has read and write access and we ask if they have read access " in {
-    val acl = AgoraAcl(ReadWrite)
+    val acl = AgoraPermissions(ReadWrite)
     assert(acl.canRead === true)
   }
 
   "Agora" should "return false if someone has read access and we ask if they have write access " in {
-    val acl = AgoraAcl(Read)
+    val acl = AgoraPermissions(Read)
     assert(acl.canWrite === false)
   }
 
   "Agora" should "return true for all permissions if they have full access" in {
-    val acl = AgoraAcl(All)
+    val acl = AgoraPermissions(All)
     assert(acl.canRead === true)
     assert(acl.canWrite === true)
     assert(acl.canCreate === true)
@@ -31,7 +31,7 @@ class AgoraAccessControlTest extends FlatSpec with Matchers {
   }
 
   "Agora" should "be able to construct an ACL using var arg permissions" in {
-    val acl = new AgoraAcl(Read, Write, Redact)
+    val acl = new AgoraPermissions(Read, Write, Redact)
     assert(acl.canRead === true)
     assert(acl.canWrite === true)
     assert(acl.canRedact === true)
@@ -40,7 +40,7 @@ class AgoraAccessControlTest extends FlatSpec with Matchers {
   }
 
   "Agora" should "be able to remove permissions from an ACL using var arg permissions" in {
-    val acl = new AgoraAcl(All)
+    val acl = new AgoraPermissions(All)
     val newAcl = acl.removePermissions(Write, Create)
     assert(newAcl.canRead === true)
     assert(newAcl.canWrite === false)
@@ -50,7 +50,7 @@ class AgoraAccessControlTest extends FlatSpec with Matchers {
   }
 
   "Agora" should "be able to add permissions from an ACL using var arg permissions" in {
-    val acl = new AgoraAcl(Read)
+    val acl = new AgoraPermissions(Read)
     val newAcl = acl.addPermissions(Write, Create)
     assert(newAcl.canRead === true)
     assert(newAcl.canWrite === true)

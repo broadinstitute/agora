@@ -4,6 +4,7 @@ package org.broadinstitute.dsde.agora.server.business
 import org.broadinstitute.dsde.agora.server.business.AgoraPermissions._
 
 object AgoraPermissions {
+  val Nothing = 0
   val Read = 1 << 0
   val Write = 1 << 1
   val Create = 1 << 2
@@ -13,17 +14,17 @@ object AgoraPermissions {
   val All = Read | Write | Create | Redact | Manage
 }
 
-case class AgoraAcl(permissions: Int) {
+case class AgoraPermissions(permissions: Int) {
   def this(varPermissions: Int*) {
     this(varPermissions.foldLeft(0) { (perm1, perm2) => perm1 | perm2 })
   }
 
-  def removePermissions(varPermissions: Int*): AgoraAcl = {
-    AgoraAcl(varPermissions.foldLeft(permissions) { (perm1, perm2) => perm1 & ~perm2 })
+  def removePermissions(varPermissions: Int*) = {
+    AgoraPermissions(varPermissions.foldLeft(permissions) { (perm1, perm2) => perm1 & ~perm2 })
   }
 
   def addPermissions(varPermissions: Int*) = {
-    AgoraAcl(varPermissions.foldLeft(permissions) { (perm1, perm2) => perm1 | perm2 })
+    AgoraPermissions(varPermissions.foldLeft(permissions) { (perm1, perm2) => perm1 | perm2 })
   }
 
   def canRead: Boolean = (permissions & Read) != 0

@@ -14,12 +14,16 @@ object TestAuthorizationProvider extends AuthorizationProvider {
 
   def addLocalPermissions(entityId: String, authorization: AgoraPermissions) = localPermissions.put(entityId, authorization)
 
-  override def authorizationsForEntity(agoraEntity: AgoraEntity, username: String): AuthorizedAgoraEntity = {
-    AuthorizedAgoraEntity(agoraEntity, localPermissions.getOrElse(getUniqueIdentifier(agoraEntity), AgoraPermissions(All)))
+  override def authorizationsForEntity(agoraEntity: Option[AgoraEntity], username: String): AuthorizedAgoraEntity = {
+    agoraEntity match {
+      case Some(agoraEntity) => AuthorizedAgoraEntity(Some(agoraEntity), localPermissions.getOrElse(getUniqueIdentifier(agoraEntity), AgoraPermissions(All)))
+      case None => AuthorizedAgoraEntity(None, AgoraPermissions(Nothing))
+    }
+    
   }
 
   override def authorizationsForEntities(agoraEntities: Seq[AgoraEntity], username: String): Seq[AuthorizedAgoraEntity] = {
-    agoraEntities.map { entity => AuthorizedAgoraEntity(entity, localPermissions.getOrElse(getUniqueIdentifier(entity), AgoraPermissions(All))) }
+    agoraEntities.map { entity => AuthorizedAgoraEntity(Some(entity), localPermissions.getOrElse(getUniqueIdentifier(entity), AgoraPermissions(All))) }
   }
 
   def getUniqueIdentifier(entity: AgoraEntity): String = entity.namespace + ":" + entity.name + ":" + entity.snapshotId

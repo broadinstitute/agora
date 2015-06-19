@@ -16,7 +16,7 @@ import spray.routing.RequestContext
 class QueryHandler(authorizationProvider: AuthorizationProvider) extends Actor {
   implicit val system = context.system
 
-  val agoraBusiness = new AgoraBusiness(authorizationProvider)
+  val agoraBusiness = new AgoraBusiness()
 
   def receive = {
     case ServiceMessages.QueryByNamespaceNameSnapshotId(
@@ -46,9 +46,10 @@ class QueryHandler(authorizationProvider: AuthorizationProvider) extends Actor {
             snapshotId: Int,
             entityTypes: Seq[AgoraEntityType.EntityType],
             username: String): Unit = {
-    agoraBusiness.findSingle(namespace, name, snapshotId, entityTypes, username: String) match {
+    val entity = agoraBusiness.findSingle(namespace, name, snapshotId, entityTypes, username: String)
+    authorizationProvider.filterByReadPermissions(authorizationProvider.authorizationsForEntity(entity, username)) match {
       case None => context.parent ! RequestComplete(NotFound, AgoraError(s"Entity: $namespace/$name/$snapshotId not found"))
-      case Some(method) => context.parent ! RequestComplete(method)
+      case Some(entity) => context.parent ! RequestComplete(entity)
     }
   }
 
@@ -58,6 +59,7 @@ class QueryHandler(authorizationProvider: AuthorizationProvider) extends Actor {
             entityTypes: Seq[AgoraEntityType.EntityType],
             username: String): Unit = {
     val entities = agoraBusiness.find(agoraSearch, agoraProjection, entityTypes, username)
+    authorizationProvider.filterByReadPermissions(authorizationProvider.authorizationsForEntities(entities, username))
     context.parent ! RequestComplete(entities)
   }
 

@@ -20,7 +20,7 @@ class AddHandler(authorizationProvider: AuthorizationProvider) extends Actor {
 
   implicit val system = context.system
 
-  val agoraBusiness = new AgoraBusiness(authorizationProvider)
+  val agoraBusiness = new AgoraBusiness()
 
   def receive = {
     case ServiceMessages.Add(requestContext: RequestContext, agoraAddRequest: AgoraEntity, username: String) =>
@@ -45,6 +45,10 @@ class AddHandler(authorizationProvider: AuthorizationProvider) extends Actor {
   }
 
   private def add(requestContext: RequestContext, agoraEntity: AgoraEntity, username: String): Unit = {
+    val authorizedEntity = authorizationProvider.authorizationsForEntity(Some(agoraEntity), username)
+    if (!authorizedEntity.authorization.canCreate) {
+      context.parent ! RequestComplete(BadRequest, AgoraError("You don't have permission to create items in " + agoraEntity.namespace))
+    }
     val method = agoraBusiness.insert(agoraEntity.copy(createDate = Option(new DateTime())), username)
     context.parent ! RequestComplete(spray.http.StatusCodes.Created.intValue, method)
   }

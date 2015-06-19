@@ -2,8 +2,8 @@ package org.broadinstitute.dsde.agora.server.webservice
 
 import org.broadinstitute.dsde.agora.server.AgoraTestData
 import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
-import org.broadinstitute.dsde.agora.server.dataaccess.authorization.{TestAuthorizationProvider, TestAuthorizationProvider$}
-import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
+import org.broadinstitute.dsde.agora.server.dataaccess.authorization.TestAuthorizationProvider
+import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.configurations.ConfigurationsService
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
 import org.broadinstitute.dsde.agora.server.webservice.validation.AgoraValidationRejection
@@ -18,7 +18,7 @@ class ApiServiceSpec extends FlatSpec with Directives with ScalatestRouteTest wi
   import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
   import spray.httpx.SprayJsonSupport._
 
-  val agoraBusiness = new AgoraBusiness(TestAuthorizationProvider)
+  val agoraBusiness = new AgoraBusiness()
 
   val wrapWithRejectionHandler = handleRejections(RejectionHandler {
     case AgoraValidationRejection(validation) :: _ => complete(BadRequest, validation)

@@ -64,14 +64,18 @@ class AgoraAuthorizationTest extends ApiServiceSpec {
   }
 
   "Agora" should "only return methods that have read permissions " in {
-    val agoraBusiness = new AgoraBusiness(TestAuthorizationProvider)
+    val agoraBusiness = new AgoraBusiness()
 
     TestAuthorizationProvider.addLocalPermissions(TestAuthorizationProvider.getUniqueIdentifier(testEntity1WithId), AgoraPermissions(Nothing))
-    val noEntities = agoraBusiness.find(testEntity1WithId, None, Seq(AgoraEntityType.Workflow, AgoraEntityType.Task), agoraCIOwner.get)
+    val entities = agoraBusiness.find(testEntity1WithId, None, Seq(AgoraEntityType.Workflow, AgoraEntityType.Task), agoraCIOwner.get)
+    val authorizedEntities = TestAuthorizationProvider.authorizationsForEntities(entities, agoraCIOwner.get)
+    val noEntities = TestAuthorizationProvider.filterByReadPermissions(authorizedEntities)
     assert(noEntities.size === 0)
 
     TestAuthorizationProvider.addLocalPermissions(TestAuthorizationProvider.getUniqueIdentifier(testEntity1WithId), AgoraPermissions(Read))
-    val foundEntitites = agoraBusiness.find(testEntity1WithId, None, Seq(AgoraEntityType.Workflow, AgoraEntityType.Task), agoraCIOwner.get)
-    assert(foundEntitites.size === 1)
+    val foundEntities = agoraBusiness.find(testEntity1WithId, None, Seq(AgoraEntityType.Workflow, AgoraEntityType.Task), agoraCIOwner.get)
+    val authorizedEntities2 = TestAuthorizationProvider.authorizationsForEntities(foundEntities, agoraCIOwner.get)
+    val oneEntity = TestAuthorizationProvider.filterByReadPermissions(authorizedEntities2)
+    assert(oneEntity.size === 1)
   }
 }

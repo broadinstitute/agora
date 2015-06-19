@@ -5,7 +5,7 @@ import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection, AgoraEntityType}
 
-class AgoraBusiness(authorizationProvider: AuthorizationProvider) {
+class AgoraBusiness {
   def agoraUrl(entity: AgoraEntity): String = {
     hasNamespaceNameId(entity) match {
       case true => AgoraConfig.urlFromType(entity.entityType) + entity.namespace.get + "/" + entity.name.get + "/" + entity.snapshotId.get
@@ -26,22 +26,13 @@ class AgoraBusiness(authorizationProvider: AuthorizationProvider) {
     entityWithId.copy(url = Option(agoraUrl(entityWithId)))
   }
 
-  def filterByReadPermissions(authEntities: Seq[AuthorizedAgoraEntity]): Seq[AgoraEntity] = {
-    authEntities.flatMap(authEntity => filterByReadPermissions(authEntity))
-  }
-
-  def filterByReadPermissions(authEntity: AuthorizedAgoraEntity): Option[AgoraEntity] = {
-    if (authEntity.authorization.canRead) Some(authEntity.entity) else None
-  }
-
   def find(agoraSearch: AgoraEntity,
            agoraProjection: Option[AgoraEntityProjection],
            entityTypes: Seq[AgoraEntityType.EntityType],
            username: String): Seq[AgoraEntity] = {
-    val entities = AgoraDao.createAgoraDao(entityTypes).find(agoraSearch, agoraProjection).map(
+    AgoraDao.createAgoraDao(entityTypes).find(agoraSearch, agoraProjection).map(
       entity => entity.copy(url = Option(agoraUrl(entity)))
     )
-    filterByReadPermissions(authorizationProvider.authorizationsForEntities(entities, username))
   }
 
   def findSingle(namespace: String,
@@ -51,8 +42,7 @@ class AgoraBusiness(authorizationProvider: AuthorizationProvider) {
                  username: String): Option[AgoraEntity] = {
     val optEntity = AgoraDao.createAgoraDao(entityTypes).findSingle(namespace, name, snapshotId)
     optEntity match {
-      case Some(foundEntity) => filterByReadPermissions(authorizationProvider.authorizationsForEntity(
-        foundEntity.copy(url = Option(agoraUrl(foundEntity))), username)
+      case Some(foundEntity) => Some(foundEntity.copy(url = Option(agoraUrl(foundEntity)))
       )
       case None => None
     }
@@ -61,8 +51,7 @@ class AgoraBusiness(authorizationProvider: AuthorizationProvider) {
   def findSingle(entity: AgoraEntity, username: String): Option[AgoraEntity] = {
     val optEntity = AgoraDao.createAgoraDao(entity.entityType).findSingle(entity)
     optEntity match {
-      case Some(foundEntity) => filterByReadPermissions(authorizationProvider.authorizationsForEntity(
-        foundEntity.copy(url = Option(agoraUrl(foundEntity))), username)
+      case Some(foundEntity) => Some(foundEntity.copy(url = Option(agoraUrl(foundEntity)))
       )
       case None => None
     }

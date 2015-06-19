@@ -6,14 +6,14 @@ import org.broadinstitute.dsde.agora.server.business.{AuthorizationProvider, Ago
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 
 object GcsAuthorizationProvider extends AuthorizationProvider {
-  override def authorizationsForEntity(agoraEntity: AgoraEntity, username: String): AuthorizedAgoraEntity = {
+  override def authorizationsForEntity(agoraEntity: Option[AgoraEntity], username: String): AuthorizedAgoraEntity = {
     //TODO call google here and do GACL -> AgAcl translation
     AuthorizedAgoraEntity(agoraEntity, AgoraPermissions(All))
   }
 
   def authorizationsForEntities(agoraEntities: Seq[AgoraEntity], username: String): Seq[AuthorizedAgoraEntity] = {
     //TODO call google here and do GACL -> AgAcl translation
-    agoraEntities.map { entity => AuthorizedAgoraEntity(entity, AgoraPermissions(All)) }
+    agoraEntities.map { entity => AuthorizedAgoraEntity(Some(entity), AgoraPermissions(All)) }
   }
 }
 

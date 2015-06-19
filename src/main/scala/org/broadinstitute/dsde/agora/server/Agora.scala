@@ -1,20 +1,22 @@
 package org.broadinstitute.dsde.agora.server
 
 import com.typesafe.scalalogging.slf4j.LazyLogging
+import org.broadinstitute.dsde.agora.server.business.AuthorizationProvider
+import org.broadinstitute.dsde.agora.server.dataaccess.gcs.GcsAuthorizationProvider
 
-object Agora extends LazyLogging {
-  val server: ServerInitializer = {
-    new ServerInitializer()
+object ProductionAgora extends Agora(GcsAuthorizationProvider) with App {
+  override def main(args: Array[String]) {
+    start(GcsAuthorizationProvider)
   }
+}
+
+class Agora(authorizationProvider: AuthorizationProvider) extends LazyLogging with App {
+  lazy val server: ServerInitializer = new ServerInitializer()
 
   sys addShutdownHook stop()
 
-  def main(args: Array[String]) {
-    start()
-  }
-
-  def start(): Unit = {
-    server.startAllServices()
+  def start(authorizationProvider: AuthorizationProvider): Unit = {
+    server.startAllServices(authorizationProvider)
     logger.info("Agora instance " + AgoraConfig.serverInstanceName + " initialized.")
   }
 

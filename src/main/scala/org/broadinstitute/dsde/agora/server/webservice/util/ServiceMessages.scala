@@ -12,14 +12,17 @@ object ServiceMessages {
                                             namespace: String,
                                             name: String,
                                             snapshotId: Int,
-                                            entityType: Seq[AgoraEntityType.EntityType])
+                                            entityType: Seq[AgoraEntityType.EntityType],
+                                            username: String)
 
   case class Query(requestContext: RequestContext,
                    agoraSearch: AgoraEntity,
                    agoraProjection: Option[AgoraEntityProjection],
-                   entityTypes: Seq[AgoraEntityType.EntityType])
+                   entityTypes: Seq[AgoraEntityType.EntityType],
+                   username: String)
 
   case class Add(requestContext: RequestContext,
-                 agoraAddRequest: AgoraEntity)
+                 agoraAddRequest: AgoraEntity,
+                 username: String)
 
 }

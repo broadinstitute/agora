@@ -2,9 +2,10 @@ package org.broadinstitute.dsde.agora.server
 
 import com.github.simplyscala.{MongoEmbedDatabase, MongodProps}
 import com.mongodb.casbah.MongoClient
-import org.broadinstitute.dsde.agora.server.acls.RoleTranslatorTest
-import org.broadinstitute.dsde.agora.server.business.{AgoraAccessControlTest, AgoraBusiness, AgoraBusinessTest}
+import org.broadinstitute.dsde.agora.server.acls.{AgoraAuthorizationTest, RoleTranslatorTest}
+import org.broadinstitute.dsde.agora.server.business.{AgoraPermissions, AgoraBusiness, AgoraBusinessTest}
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
+import org.broadinstitute.dsde.agora.server.dataaccess.authorization.TestAuthorizationProvider
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.{AgoraMongoClient, MethodsDbTest}
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupportTest
 import org.broadinstitute.dsde.agora.server.webservice._
@@ -25,33 +26,34 @@ class AgoraTestSuite extends Suites(
   new AgoraBusinessTest,
   new AgoraValidationTest,
   new AgoraApiJsonSupportTest,
-  new AgoraAccessControlTest,
+  new AgoraAuthorizationTest,
   new RoleTranslatorTest) with AgoraTestData with BeforeAndAfterAll with MongoEmbedDatabase {
 
+  val agora = new Agora(TestAuthorizationProvider)
+  val agoraBusiness = new AgoraBusiness(TestAuthorizationProvider)
   var mongoProps: MongodProps = null
 
   override def beforeAll() {
     println("Starting embedded mongo db instance.")
     mongoProps = mongoStart(port = AgoraConfig.mongoDbPort)
     println("Starting Agora web services.")
-    Agora.start()
 
-    AgoraBusiness.insert(testEntity1)
-    AgoraBusiness.insert(testEntity2)
-    AgoraBusiness.insert(testEntity3)
-    AgoraBusiness.insert(testEntity4)
-    AgoraBusiness.insert(testEntity5)
-    AgoraBusiness.insert(testEntity6)
-    AgoraBusiness.insert(testEntity7)
-
-    AgoraBusiness.insert(testEntityTaskWc)
-    AgoraBusiness.insert(testAgoraConfigurationEntity)
+    agora.start(TestAuthorizationProvider)
+    agoraBusiness.insert(testEntity1, agoraCIOwner.get)
+    agoraBusiness.insert(testEntity2, agoraCIOwner.get)
+    agoraBusiness.insert(testEntity3, agoraCIOwner.get)
+    agoraBusiness.insert(testEntity4, agoraCIOwner.get)
+    agoraBusiness.insert(testEntity5, agoraCIOwner.get)
+    agoraBusiness.insert(testEntity6, agoraCIOwner.get)
+    agoraBusiness.insert(testEntity7, agoraCIOwner.get)
+    agoraBusiness.insert(testEntityTaskWc, agoraCIOwner.get)
+    agoraBusiness.insert(testAgoraConfigurationEntity, agoraCIOwner.get)
   }
 
   override def afterAll() {
     println("Stopping embedded mongo db instance.")
     mongoStop(mongoProps)
     println("Stopping Agora web services.")
-    Agora.stop()
+    agora.stop()
   }
 }

@@ -3,8 +3,8 @@ package org.broadinstitute.dsde.agora.server.dataaccess.mongo
 
 import com.mongodb.casbah.{MongoClient, MongoCollection, MongoDB}
 import com.mongodb.{MongoCredential, ServerAddress}
+import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.model.AgoraEntityType
-import org.broadinstitute.dsde.agora.server.{AgoraConfig, Agora}
 
 object AgoraMongoClient {
 

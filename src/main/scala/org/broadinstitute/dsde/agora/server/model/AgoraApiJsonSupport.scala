@@ -48,6 +48,25 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
     }
   }
 
+  implicit object UserInfoResponseFormat extends RootJsonFormat[UserInfoResponse] {
+    override def write(userInfo: UserInfoResponse) = {
+      JsObject("username" -> JsString(userInfo.username), "cn" -> userInfo.cn.toJson, "mail" -> userInfo.mail.toJson)
+    }
+
+    override def read(json: JsValue): UserInfoResponse = json match {
+      case x: JsObject =>
+        val username = x.fields("username").convertTo[String]
+        val cn = x.fields("cn").convertTo[Seq[String]]
+        val mailJson = x.fields.get("mail")
+        val mail = mailJson match {
+          case Some(mailJson) => mailJson.convertTo[Seq[String]]
+          case None => Seq.empty[String]
+        }
+        UserInfoResponse(username, cn, mail)
+      case _ => throw new DeserializationException("only string supported")
+    }
+  }
+
   private val parserISO: DateTimeFormatter = {
     ISODateTimeFormat.dateTimeNoMillis()
   }
@@ -57,6 +76,4 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
   implicit val AgoraEntityProjectionFormat = jsonFormat2(AgoraEntityProjection)
 
   implicit val AgoraErrorFormat = jsonFormat1(AgoraError)
-
-  implicit val UserInfoResponseFormat = jsonFormat3(UserInfoResponse)
 }

@@ -1,14 +1,13 @@
 package org.broadinstitute.dsde.agora.server.business
 
 import org.broadinstitute.dsde.agora.server.{AgoraTestData, AgoraConfig}
-import org.broadinstitute.dsde.agora.server.dataaccess.authorization.{TestAuthorizationProvider, TestAuthorizationProvider$}
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
 import org.scalatest.{DoNotDiscover, FlatSpec, Matchers}
 
 @DoNotDiscover
 class AgoraBusinessTest extends FlatSpec with Matchers with AgoraTestData {
 
-  val agoraBusiness = new AgoraBusiness(TestAuthorizationProvider)
+  val agoraBusiness = new AgoraBusiness()
 
   "Agora" should "return an empty URL if entity namespace, name, or snapshotId are missing" in {
     val noNamespace = AgoraEntity(name = Option("test"), snapshotId = Option(12), entityType = Option(AgoraEntityType.Task))

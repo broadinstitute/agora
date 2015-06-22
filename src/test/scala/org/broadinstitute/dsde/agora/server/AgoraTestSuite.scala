@@ -3,7 +3,7 @@ package org.broadinstitute.dsde.agora.server
 import com.github.simplyscala.{MongoEmbedDatabase, MongodProps}
 import com.mongodb.casbah.MongoClient
 import org.broadinstitute.dsde.agora.server.acls.{AgoraAuthorizationTest, RoleTranslatorTest}
-import org.broadinstitute.dsde.agora.server.business.{AgoraPermissions, AgoraBusiness, AgoraBusinessTest}
+import org.broadinstitute.dsde.agora.server.business.{AgoraBusiness, AgoraBusinessTest}
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
 import org.broadinstitute.dsde.agora.server.dataaccess.authorization.TestAuthorizationProvider
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.{AgoraMongoClient, MethodsDbTest}
@@ -30,7 +30,7 @@ class AgoraTestSuite extends Suites(
   new RoleTranslatorTest) with AgoraTestData with BeforeAndAfterAll with MongoEmbedDatabase {
 
   val agora = new Agora(TestAuthorizationProvider)
-  val agoraBusiness = new AgoraBusiness(TestAuthorizationProvider)
+  val agoraBusiness = new AgoraBusiness()
   var mongoProps: MongodProps = null
 
   override def beforeAll() {

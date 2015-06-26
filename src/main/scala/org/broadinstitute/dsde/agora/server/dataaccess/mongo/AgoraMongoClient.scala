@@ -11,9 +11,8 @@ object AgoraMongoClient {
   val TasksCollection = "tasks"
   val WorkflowsCollection = "workflows"
   val ConfigurationsCollection = "configurations"
-  val AgoraDatabase = AgoraConfig.mongoDB 
+  val AgoraDatabase = "agora"
 
-  
   def getCollection(mongoDb: MongoDB, collectionName: String): MongoCollection = {
     mongoDb(collectionName)
   }

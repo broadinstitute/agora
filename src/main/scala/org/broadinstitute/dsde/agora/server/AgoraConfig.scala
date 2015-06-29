@@ -24,6 +24,7 @@ object AgoraConfig {
   lazy val mongoDbPort = config.as[Option[Int]]("mongodb.port").getOrElse(27017)
   lazy val mongoDbUser = config.as[Option[String]]("mongodb.user")
   lazy val mongoDbPassword = config.as[Option[String]]("mongodb.password")
+  lazy val mongoDbDatabase = config.as[Option[String]]("mongodb.db").getOrElse("agora")
 
   //Config Settings
   object SwaggerConfig {

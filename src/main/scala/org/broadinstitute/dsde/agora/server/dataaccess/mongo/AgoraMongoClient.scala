@@ -11,22 +11,22 @@ object AgoraMongoClient {
   val TasksCollection = "tasks"
   val WorkflowsCollection = "workflows"
   val ConfigurationsCollection = "configurations"
-  val AgoraDatabase = "agora"
 
+      
   def getCollection(mongoDb: MongoDB, collectionName: String): MongoCollection = {
     mongoDb(collectionName)
   }
 
   def getTasksCollection(client: MongoClient): MongoCollection = {
-    client(AgoraDatabase)(TasksCollection)
+    client(AgoraConfig.mongoDbDatabase)(TasksCollection)
   }
 
   def getWorkflowsCollection(client: MongoClient): MongoCollection = {
-    client(AgoraDatabase)(WorkflowsCollection)
+    client(AgoraConfig.mongoDbDatabase)(WorkflowsCollection)
   }
 
   def getConfigurationsCollection(client: MongoClient): MongoCollection = {
-    client(AgoraDatabase)(ConfigurationsCollection)
+    client(AgoraConfig.mongoDbDatabase)(ConfigurationsCollection)
   }
 
 
@@ -49,11 +49,12 @@ object AgoraMongoClient {
     val user: Option[String] = AgoraConfig.mongoDbUser
     val password: Option[String] = AgoraConfig.mongoDbPassword
 
+
     (user, password) match {
       case (Some(userName), Some(userPassword)) =>
         val credentials = MongoCredential.createMongoCRCredential(
           userName,
-          AgoraDatabase,
+          AgoraConfig.mongoDbDatabase,
           userPassword.toCharArray
         )
         MongoClient(server, List(credentials))

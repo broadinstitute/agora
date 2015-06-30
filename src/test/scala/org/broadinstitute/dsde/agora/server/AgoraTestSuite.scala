@@ -6,9 +6,8 @@ import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
 import org.broadinstitute.dsde.agora.server.dataaccess.acls.{AgoraAuthorizationTest, RoleTranslatorTest}
 import org.broadinstitute.dsde.agora.server.dataaccess.authorization.TestAuthorizationProvider
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.{AgoraMongoClient, MethodsDbTest}
-import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupportTest
+import org.broadinstitute.dsde.agora.server.model.{AgoraApiJsonSupportTest, AgoraEntityTest}
 import org.broadinstitute.dsde.agora.server.webservice._
-import org.broadinstitute.dsde.agora.server.webservice.validation.AgoraValidationTest
 import org.scalatest.{BeforeAndAfterAll, Suites}
 
 trait AgoraDbTest {
@@ -23,8 +22,8 @@ class AgoraTestSuite extends Suites(
   new AgoraConfigurationsSpec,
   new MethodsDbTest,
   new AgoraBusinessTest,
-  new AgoraValidationTest,
   new AgoraApiJsonSupportTest,
+  new AgoraEntityTest,
   new AgoraAuthorizationTest,
   new RoleTranslatorTest) with AgoraTestData with BeforeAndAfterAll with MongoEmbedDatabase {
 

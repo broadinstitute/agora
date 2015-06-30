@@ -42,8 +42,15 @@ class AgoraBusiness {
                  username: String): Option[AgoraEntity] = {
     val optEntity = AgoraDao.createAgoraDao(entityTypes).findSingle(namespace, name, snapshotId)
     optEntity match {
-      case Some(foundEntity) => Some(foundEntity.copy(url = Option(agoraUrl(foundEntity)))
-      )
+      case Some(foundEntity) => Some(foundEntity.copy(url = Option(agoraUrl(foundEntity))))
+      case None => None
+    }
+  }
+
+  def findSingle(entity: AgoraEntity, entityTypes: Seq[AgoraEntityType.EntityType], username: String) = {
+    val optEntity = AgoraDao.createAgoraDao(entityTypes).findSingle(entity)
+    optEntity match {
+      case Some(foundEntity) => Some(foundEntity.copy(url = Option(agoraUrl(foundEntity))))
       case None => None
     }
   }
@@ -51,8 +58,7 @@ class AgoraBusiness {
   def findSingle(entity: AgoraEntity, username: String): Option[AgoraEntity] = {
     val optEntity = AgoraDao.createAgoraDao(entity.entityType).findSingle(entity)
     optEntity match {
-      case Some(foundEntity) => Some(foundEntity.copy(url = Option(agoraUrl(foundEntity)))
-      )
+      case Some(foundEntity) => Some(foundEntity.copy(url = Option(agoraUrl(foundEntity))))
       case None => None
     }
   }
@@ -68,7 +74,7 @@ class AgoraBusiness {
     importString match {
       case importStringPattern(namespace, name, snapshotId) =>
         findSingle(namespace, name, snapshotId.toInt, Seq(AgoraEntityType.Task, AgoraEntityType.Workflow), username)
-          .getOrElse(new AgoraEntity(entityType = Option(AgoraEntityType.Task))).payload.getOrElse("")
+          .getOrElse(AgoraEntity(entityType = Option(AgoraEntityType.Task))).payload.getOrElse("")
       case _ => throw new WdlParser.SyntaxError("Unrecognized import statement format: " + importStringPattern)
     }
   }

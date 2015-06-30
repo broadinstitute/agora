@@ -8,6 +8,7 @@ import org.scalatest.DoNotDiscover
 import spray.http.StatusCodes._
 import spray.httpx.SprayJsonSupport._
 import spray.httpx.unmarshalling._
+import spray.routing.ValidationRejection
 
 @DoNotDiscover
 class AgoraProjectionsSpec extends ApiServiceSpec {
@@ -44,9 +45,9 @@ class AgoraProjectionsSpec extends ApiServiceSpec {
       + "?namespace=" + namespace1.get
       + "&name=" + name2.get
       + "&excludedField=namespace&excludedField=snapshotId") ~>
-      wrapWithRejectionHandler {
-        methodsService.queryRoute
-      } ~> check {
+    wrapWithExceptionHandler {
+      methodsService.queryRoute
+    } ~> check {
       assert(status === BadRequest)
     }
   }
@@ -56,9 +57,9 @@ class AgoraProjectionsSpec extends ApiServiceSpec {
       + "?namespace=" + namespace1.get
       + "&name=" + name2.get
       + "&excludedField=synopsis&includedField=documentation") ~>
-      wrapWithRejectionHandler {
-        methodsService.queryRoute
-      } ~> check {
+    wrapWithExceptionHandler{
+      methodsService.queryRoute
+    } ~> check {
       assert(status === BadRequest)
     }
   }

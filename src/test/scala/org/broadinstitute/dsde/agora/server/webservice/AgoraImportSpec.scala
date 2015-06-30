@@ -46,7 +46,7 @@ class AgoraImportSpec extends ApiServiceSpec {
         assert(entity.name === name1)
         assert(entity.synopsis === synopsis1)
         assert(entity.documentation === documentation1)
-        assert(entity.owner === agoraCIOwner)
+        assert(entity.owner === owner1)
         assert(entity.payload === payloadReferencingExternalMethod)
         assert(entity.snapshotId !== None)
         assert(entity.createDate !== None)

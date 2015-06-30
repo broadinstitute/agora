@@ -1,7 +1,5 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
-import java.util.concurrent.TimeoutException
-
 import akka.actor.Actor
 import org.broadinstitute.dsde.agora.server.dataaccess.acls.{AuthorizationProvider, ClientServiceFailure}
 import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
@@ -23,13 +21,11 @@ class QueryHandler(authorizationProvider: AuthorizationProvider) extends Actor {
 
   def receive = {
     case QuerySingle(requestContext: RequestContext,
-                     namespace: String,
-                     name: String,
-                     snapshotId: Int,
-                     entityType: Seq[AgoraEntityType.EntityType],
+                     entity: AgoraEntity,
+                     entityTypes: Seq[AgoraEntityType.EntityType],
                      username: String,
                      onlyPayload: Boolean) =>
-      query(requestContext, namespace, name, snapshotId, entityType, username, onlyPayload)
+      query(requestContext, entity, entityTypes, username, onlyPayload)
       context.stop(self)
 
     case Query(requestContext: RequestContext,
@@ -42,20 +38,19 @@ class QueryHandler(authorizationProvider: AuthorizationProvider) extends Actor {
   }
 
   def query(requestContext: RequestContext,
-            namespace: String, name: String,
-            snapshotId: Int,
+            entity: AgoraEntity,
             entityTypes: Seq[AgoraEntityType.EntityType],
             username: String,
             onlyPayload: Boolean): Unit = {
-    val entity = agoraBusiness.findSingle(namespace, name, snapshotId, entityTypes, username: String)
-    entity match {
+    val foundEntity = agoraBusiness.findSingle(entity, entityTypes, username: String)
+    foundEntity match {
       case Some(agoraEntity) =>
         if (authorizationProvider.isAuthorizedForRead(agoraEntity, username)) {
           if (onlyPayload) context.parent ! RequestComplete(agoraEntity.payload)
           else context.parent ! RequestComplete(agoraEntity)
         }
-        else context.parent ! RequestComplete(NotFound, AgoraError(s"Entity: $namespace/$name/$snapshotId not found"))
-      case None => context.parent ! RequestComplete(NotFound, AgoraError(s"Entity: $namespace/$name/$snapshotId not found"))
+        else context.parent ! RequestComplete(NotFound, AgoraError(s"Entity: $entity not found"))
+      case None => context.parent ! RequestComplete(NotFound, AgoraError(s"Entity: $entity not found"))
     }
   }
 
@@ -65,7 +60,7 @@ class QueryHandler(authorizationProvider: AuthorizationProvider) extends Actor {
             entityTypes: Seq[AgoraEntityType.EntityType],
             username: String): Unit = {
     val entities = agoraBusiness.find(agoraSearch, agoraProjection, entityTypes, username)
-      context.parent ! RequestComplete(authorizationProvider.filterByReadPermissions(entities, username))
+    context.parent ! RequestComplete(authorizationProvider.filterByReadPermissions(entities, username))
   }
 
 }

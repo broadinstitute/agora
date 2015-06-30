@@ -5,10 +5,14 @@ import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
 import org.scalatest.DoNotDiscover
+import spray.http.{HttpCharset, ContentType, HttpEntity}
 import spray.http.MediaTypes._
 import spray.http.StatusCodes._
+import spray.httpx.marshalling._
 import spray.httpx.SprayJsonSupport._
 import spray.httpx.unmarshalling._
+import spray.routing.ValidationRejection
+import spray.json._
 
 @DoNotDiscover
 class AgoraMethodsSpec extends ApiServiceSpec {
@@ -81,11 +85,11 @@ class AgoraMethodsSpec extends ApiServiceSpec {
     Post(ApiUtil.Methods.withLeadingSlash, testAgoraEntity) ~>
       methodsService.postRoute ~> check {
       handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => {
-        assert(entity.namespace === namespace1)
+        assert(entity.namespace === namespace3)
         assert(entity.name === name1)
         assert(entity.synopsis === synopsis1)
         assert(entity.documentation === documentation1)
-        assert(entity.owner === agoraCIOwner)
+        assert(entity.owner === owner1)
         assert(entity.payload === payload1)
         assert(entity.snapshotId !== None)
         assert(entity.createDate !== None)
@@ -103,35 +107,53 @@ class AgoraMethodsSpec extends ApiServiceSpec {
   }
 
   "Agora" should "return a 400 bad request with validation errors when metadata is invalid" in {
-    val entity = AgoraEntity(namespace = Option(""), name = Option(""), payload = Option("task test {}"), entityType = Option(AgoraEntityType.Task))
+    val entityJSON = s"""{
+                         |  "namespace": "  ",
+                         |  "name": "  ",
+                         |  "synopsis": " ",
+                         |  "documentation": "",
+                         |  "payload": "",
+                         |  "entityType": "Task"
+                         |}""".stripMargin
+
+    val entity = HttpEntity(
+      contentType = ContentType(`application/json`),
+      string = entityJSON)
+
     Post(ApiUtil.Methods.withLeadingSlash, entity) ~>
       wrapWithRejectionHandler {
         methodsService.postRoute
       } ~> check {
       assert(status === BadRequest)
-      val responseStr = responseAs[String]
-      assert(responseStr.contains("Namespace") === true)
-      assert(responseStr.contains("Name") === true)
     }
   }
 
   "Agora" should "store 10kb of github markdown as method documentation and return it without alteration" in {
-    Post(ApiUtil.Methods.withLeadingSlash, testAgoraEntityBigDoc) ~>
-      methodsService.postRoute ~> check {
-      handleError(
-        entity.as[AgoraEntity],
-        (entity: AgoraEntity) => assert(entity.documentation.get === bigDocumentation.get)
-      )
-      assert(status === Created)
+    val entityJSON = s"""{
+                        |  "namespace": "$namespace1",
+                        |  "name": "$name1",
+                        |  "synopsis": "",
+                        |  "documentation": "$getBigDocumentation",
+                        |  "payload": "",
+                        |  "entityType": "Task"
+                        |}""".stripMargin
+
+    val entity = HttpEntity(
+      contentType = ContentType(`application/json`),
+      string = entityJSON)
+
+    Post(ApiUtil.Methods.withLeadingSlash, entity) ~>
+      wrapWithRejectionHandler {
+        methodsService.postRoute
+      } ~> check {
+        assert(status === BadRequest)
     }
   }
 
   "Agora" should "not allow you to post a new configuration to the methods route" in {
     Post(ApiUtil.Methods.withLeadingSlash, testAgoraConfigurationEntity) ~>
-      wrapWithRejectionHandler {
-        methodsService.postRoute
-      } ~> check {
-      assert(status === BadRequest)
+      methodsService.postRoute ~> check {
+      rejection === ValidationRejection
     }
   }
 }

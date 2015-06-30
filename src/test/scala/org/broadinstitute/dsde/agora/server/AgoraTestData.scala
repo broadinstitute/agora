@@ -12,14 +12,21 @@ trait AgoraTestData {
   val agoraCIOwner = Option("agora-test")
   val namespace1 = Option("broad")
   val namespace2 = Option("hellbender")
+  val namespace3 = Option("GATK")
   val name1 = Option("testMethod1")
   val name2 = Option("testMethod2")
   val nameNonExistent = Option("nonexistent")
+  val snapshotId1 = Option(1)
   val synopsis1 = Option("This is a test method")
   val synopsis2 = Option("This is another test method")
   val synopsis3 = Option("This is a test configuration")
   val documentation1 = Option("This is the documentation")
   val documentation2 = Option("This is documentation for another method")
+
+  val badNamespace = Option("    ")
+  val badName = Option("   ")
+  val badId = Option(-10)
+  val badSynopsis = Option("a" * 81)
 
   val nameWc = Option("wc")
   val synopsisWc = Option("wc -- word, line, character, and byte count")
@@ -233,7 +240,7 @@ trait AgoraTestData {
   )
 
   val testAgoraEntity = new AgoraEntity(
-    namespace = namespace1,
+    namespace = namespace3,
     name = name1,
     synopsis = synopsis1,
     documentation = documentation1,
@@ -282,16 +289,6 @@ trait AgoraTestData {
     entityType = Option(AgoraEntityType.Workflow)
   )
 
-  val testAgoraEntityBigDoc = new AgoraEntity(
-    namespace = namespace1,
-    name = name1,
-    synopsis = synopsis1,
-    documentation = bigDocumentation,
-    owner = owner1,
-    payload = payload1,
-    entityType = Option(AgoraEntityType.Workflow)
-  )
-
   val testAgoraEntityNonExistent = new AgoraEntity(
     namespace = namespace1,
     name = nameNonExistent,
@@ -303,6 +300,16 @@ trait AgoraTestData {
   )
   val testAgoraConfigurationEntity = new AgoraEntity(
     namespace = namespace1,
+    name = name1,
+    synopsis = synopsis3,
+    documentation = documentation1,
+    owner = owner1,
+    payload = taskConfigPayload,
+    entityType = Option(AgoraEntityType.Configuration)
+  )
+
+  val testAgoraConfigurationEntity2 = new AgoraEntity(
+    namespace = namespace2,
     name = name1,
     synopsis = synopsis3,
     documentation = documentation1,

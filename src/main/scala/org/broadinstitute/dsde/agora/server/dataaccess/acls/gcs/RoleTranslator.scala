@@ -11,7 +11,7 @@ object RoleTranslator {
       case GcsBucketRole(Owner) => new AgoraPermissions(Read, Write, Create, Redact, Manage)
       case GcsBucketRole(Writer) => new AgoraPermissions(Read, Write, Create, Redact)
       case GcsBucketRole(Reader) => AgoraPermissions(Read)
-      case _ => AgoraPermissions(AgoraPermissions.Nothing) 
+      case _ => AgoraPermissions(AgoraPermissions.Nothing)
     }
   }
 

@@ -33,7 +33,7 @@ class ServerInitializer extends LazyLogging {
         logger.error(s"Unable to bind to port ${AgoraConfig.port} on interface ${AgoraConfig.webserviceInterface}")
         actorSystem.shutdown()
         stopAndExit()
-      case _ =>
+      case _ => logger.info("Actor system started.")
     }
   }
 

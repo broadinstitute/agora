@@ -7,6 +7,12 @@ import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.AgoraService
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
 
+/**
+ * The ConfigurationsService is a light wrapper around AgoraService.
+ *
+ * This file defines a configurations path and Swagger annotations.
+ */
+
 @Api(value = "/configurations", description = "Configuration Service", produces = "application/json", position = 1)
 abstract class ConfigurationsService(authorizationProvider: AuthorizationProvider) extends AgoraService(authorizationProvider) {
   override def path = ApiUtil.Configurations.path
@@ -27,7 +33,7 @@ abstract class ConfigurationsService(authorizationProvider: AuthorizationProvide
     new ApiResponse(code = 404, message = "Task Configuration Not Found"),
     new ApiResponse(code = 500, message = "Internal Error")
   ))
-  override def queryByNamespaceNameSnapshotIdRoute = super.queryByNamespaceNameSnapshotIdRoute
+  override def querySingleRoute = super.querySingleRoute
 
   @ApiOperation(value = "Query for task configuration in the task configuration repository",
     nickname = "configurations",

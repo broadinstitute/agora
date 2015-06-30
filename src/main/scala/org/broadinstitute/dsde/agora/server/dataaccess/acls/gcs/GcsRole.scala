@@ -1,6 +1,6 @@
-package org.broadinstitute.dsde.agora.server.acls
+package org.broadinstitute.dsde.agora.server.dataaccess.acls.gcs
 
-import org.broadinstitute.dsde.agora.server.acls.GcsRole._
+import org.broadinstitute.dsde.agora.server.dataaccess.acls.gcs.GcsRole._
 
 object GcsRole {
   val Reader = "READER"

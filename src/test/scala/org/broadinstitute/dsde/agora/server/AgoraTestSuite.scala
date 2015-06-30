@@ -2,7 +2,7 @@ package org.broadinstitute.dsde.agora.server
 
 import com.github.simplyscala.{MongoEmbedDatabase, MongodProps}
 import com.mongodb.casbah.MongoClient
-import org.broadinstitute.dsde.agora.server.acls.{AgoraAuthorizationTest, RoleTranslatorTest}
+import org.broadinstitute.dsde.agora.server.dataaccess.acls.{AgoraAuthorizationTest, RoleTranslatorTest}
 import org.broadinstitute.dsde.agora.server.business.{AgoraBusiness, AgoraBusinessTest}
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
 import org.broadinstitute.dsde.agora.server.dataaccess.authorization.TestAuthorizationProvider

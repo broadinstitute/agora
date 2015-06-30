@@ -1,7 +1,10 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
+import java.util.concurrent.TimeoutException
+
 import akka.actor.Actor
-import org.broadinstitute.dsde.agora.server.business.{AuthorizationProvider, AgoraBusiness}
+import org.broadinstitute.dsde.agora.server.dataaccess.acls.{AuthorizationProvider, ClientServiceFailure}
+import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection, AgoraEntityType, AgoraError}
 import org.broadinstitute.dsde.agora.server.webservice.PerRequest._
@@ -47,9 +50,15 @@ class QueryHandler(authorizationProvider: AuthorizationProvider) extends Actor {
             entityTypes: Seq[AgoraEntityType.EntityType],
             username: String): Unit = {
     val entity = agoraBusiness.findSingle(namespace, name, snapshotId, entityTypes, username: String)
-    authorizationProvider.filterByReadPermissions(authorizationProvider.authorizationsForEntity(entity, username)) match {
-      case None => context.parent ! RequestComplete(NotFound, AgoraError(s"Entity: $namespace/$name/$snapshotId not found"))
-      case Some(entity) => context.parent ! RequestComplete(entity)
+    try {
+      authorizationProvider.filterByReadPermissions(entity, username) match {
+        case None => context.parent ! RequestComplete(NotFound, AgoraError(s"Entity: $namespace/$name/$snapshotId not found"))
+        case Some(result) => context.parent ! RequestComplete(result)
+      }
+    }
+    catch {
+      case clientServiceFailure: ClientServiceFailure => context.parent ! RequestComplete(InternalServerError, "Error encountered in entity authorization")
+      case timeoutException: TimeoutException => context.parent! RequestComplete(InternalServerError, "Timeout exception encountered during entity authorization")
     }
   }
 
@@ -59,8 +68,13 @@ class QueryHandler(authorizationProvider: AuthorizationProvider) extends Actor {
             entityTypes: Seq[AgoraEntityType.EntityType],
             username: String): Unit = {
     val entities = agoraBusiness.find(agoraSearch, agoraProjection, entityTypes, username)
-    authorizationProvider.filterByReadPermissions(authorizationProvider.authorizationsForEntities(entities, username))
-    context.parent ! RequestComplete(entities)
+    try {
+      context.parent ! RequestComplete(authorizationProvider.filterByReadPermissions(entities, username))
+    }
+    catch {
+      case clientServiceFailure: ClientServiceFailure => context.parent ! RequestComplete(InternalServerError, "Error encountered in entity authorization")
+      case timeoutException: TimeoutException => context.parent! RequestComplete(InternalServerError, "Timeout exception encountered during entity authorization")
+    }
   }
 
 }

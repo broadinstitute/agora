@@ -1,8 +1,8 @@
-package org.broadinstitute.dsde.agora.server.acls
+package org.broadinstitute.dsde.agora.server.dataaccess.acls.gcs
 
-import org.broadinstitute.dsde.agora.server.business.AgoraPermissions
-import org.broadinstitute.dsde.agora.server.business.AgoraPermissions._
-import org.broadinstitute.dsde.agora.server.acls.GcsRole._
+import org.broadinstitute.dsde.agora.server.dataaccess.acls.AgoraPermissions
+import org.broadinstitute.dsde.agora.server.dataaccess.acls.AgoraPermissions._
+import org.broadinstitute.dsde.agora.server.dataaccess.acls.gcs.GcsRole._
 
 object RoleTranslator {
 
@@ -15,7 +15,7 @@ object RoleTranslator {
     }
   }
 
-  def gcsObjectToMethodPermissions(objectRole: GcsObjectRole): AgoraPermissions = {
+  def gcsObjectToEntityPermissions(objectRole: GcsObjectRole): AgoraPermissions = {
     objectRole match {
       case GcsObjectRole(Owner) => new AgoraPermissions(Read, Manage)
       case GcsObjectRole(Reader) => AgoraPermissions(Read)

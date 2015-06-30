@@ -2,7 +2,7 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.actor.Props
-import org.broadinstitute.dsde.agora.server.business.AuthorizationProvider
+import org.broadinstitute.dsde.agora.server.dataaccess.acls.AuthorizationProvider
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection, AgoraEntityType}
 import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages
 import org.broadinstitute.dsde.agora.server.webservice.validation.{AgoraValidation, AgoraValidationRejection}

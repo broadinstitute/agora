@@ -1,7 +1,7 @@
 package org.broadinstitute.dsde.agora.server.webservice.methods
 
 import com.wordnik.swagger.annotations._
-import org.broadinstitute.dsde.agora.server.business.AuthorizationProvider
+import org.broadinstitute.dsde.agora.server.dataaccess.acls.AuthorizationProvider
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.AgoraService
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil

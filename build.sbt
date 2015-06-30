@@ -20,6 +20,8 @@ libraryDependencies ++= Seq(
   "cglib" % "cglib-nodep" % "2.2",
   "ch.qos.logback" % "logback-classic" % "1.1.3",
   "com.gettyimages" %% "spray-swagger" % "0.5.0",
+  "com.google.api-client" % "google-api-client" % "1.20.0" excludeAll ExclusionRule(organization = "com.google.guava"),
+  "com.google.apis" % "google-api-services-storage" % "v1-rev35-1.20.0",
   "com.typesafe.akka" %% "akka-actor" % "2.3.4",
   "com.typesafe.akka" %% "akka-slf4j" % "2.3.11",
   "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2",
@@ -62,6 +64,8 @@ val customMergeStrategy: String => MergeStrategy = {
       case "plexus" :: xs =>
         MergeStrategy.discard
       case "spring.tooling" :: xs =>
+        MergeStrategy.discard
+      case "com.google.guava" :: xs =>
         MergeStrategy.discard
       case "services" :: xs =>
         MergeStrategy.filterDistinctLines

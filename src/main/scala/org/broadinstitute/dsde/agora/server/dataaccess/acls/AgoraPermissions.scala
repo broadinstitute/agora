@@ -1,7 +1,7 @@
 
-package org.broadinstitute.dsde.agora.server.business
+package org.broadinstitute.dsde.agora.server.dataaccess.acls
 
-import org.broadinstitute.dsde.agora.server.business.AgoraPermissions._
+import org.broadinstitute.dsde.agora.server.dataaccess.acls.AgoraPermissions._
 
 object AgoraPermissions {
   val Nothing = 0

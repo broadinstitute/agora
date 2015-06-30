@@ -40,8 +40,7 @@ case class AgoraEntity(@(ApiModelProperty@field)(required = false, value = "The 
                        @(ApiModelProperty@field)(required = false, value = "URI for method details", hidden = true)
                        url: Option[String] = None,
                        @(ApiModelProperty@field)(dataType = "string", required = false, value = "The type of the entity (Task, Workflow, Configuration)", allowableValues = "Task,Workflow,Configuration")
-                       entityType: Option[AgoraEntityType.EntityType] = None
-                        )
+                       entityType: Option[AgoraEntityType.EntityType] = None)
 
 object AgoraProjectionDefaults {
   val RequiredProjectionFields = Seq[String]("namespace", "name", "snapshotId", "entityType")

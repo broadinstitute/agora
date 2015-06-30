@@ -29,6 +29,8 @@ $ sbt test
 
 Assuming you have already built as per the instructions above, create a file called "/etc/agora.conf", with the appropriate configuration information populated.
 An example, with defaults, can found in ```src/main/resources/reference.conf```.
+Move application.conf to ```src/main/resources/```
+Start a mongo database.
 Finally, run the following command to start the server:
 
 ```

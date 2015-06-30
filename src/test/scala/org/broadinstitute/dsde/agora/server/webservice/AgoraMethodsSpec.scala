@@ -15,15 +15,24 @@ class AgoraMethodsSpec extends ApiServiceSpec {
 
   "Agora" should "return information about a method, including metadata " in {
     Get(ApiUtil.Methods.withLeadingSlash + "/" + namespace1.get + "/" + name1.get + "/"
-      + testEntity1WithId.snapshotId.get) ~> methodsService.queryByNamespaceNameSnapshotIdRoute ~> check {
+      + testEntity1WithId.snapshotId.get) ~> methodsService.querySingleRoute ~> check {
       handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => assert(entity === testEntity1WithId))
       assert(status === OK)
     }
   }
 
+  "Agora" should "return only payload in plain/text when parameter is set " in {
+    Get(ApiUtil.Methods.withLeadingSlash + "/" + namespace1.get + "/" + name1.get + "/"
+      + testEntity1WithId.snapshotId.get +"?onlyPayload=true") ~> methodsService.querySingleRoute ~>
+    check {
+      assert(status === OK)
+      assert(mediaType === `text/plain`)
+    }
+  }
+
   "Agora" should "return status 404, mediaType json when nothing matches query by namespace, name, snapshotId" in {
     Get(ApiUtil.Methods.withLeadingSlash + "/foofoofoofoo/foofoofoo/99999"
-    ) ~> methodsService.queryByNamespaceNameSnapshotIdRoute ~> check {
+    ) ~> methodsService.querySingleRoute ~> check {
       assert(status === NotFound)
       assert(mediaType === `application/json`)
     }

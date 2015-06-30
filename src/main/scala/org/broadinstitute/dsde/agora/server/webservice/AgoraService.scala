@@ -1,12 +1,17 @@
 
 package org.broadinstitute.dsde.agora.server.webservice
 
+
+
+import scala.util.Try
 import akka.actor.Props
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection, AgoraEntityType}
 import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages
 import org.broadinstitute.dsde.agora.server.webservice.validation.{AgoraValidation, AgoraValidationRejection}
 import org.joda.time.DateTime
-import spray.routing.HttpService
+import spray.routing.{RequestContext, UnacceptedResponseContentTypeRejection, HttpService}
+import spray.http.MediaTypes._
+import spray.http.{StatusCodes, RequestProcessingException, ContentType}
 
 trait AgoraService extends HttpService with PerRequestCreator with AgoraDirectives {
 
@@ -17,29 +22,47 @@ trait AgoraService extends HttpService with PerRequestCreator with AgoraDirectiv
 
   def path: String
 
-  def routes = queryByNamespaceNameSnapshotIdRoute ~ queryRoute ~ postRoute
+  def routes = querySingleRoute ~ queryRoute ~ postRoute
 
   def queryHandlerProps = Props(new QueryHandler())
 
   def addHandlerProps = Props(new AddHandler())
 
-  def queryByNamespaceNameSnapshotIdRoute =
-    path(path / Segment / Segment / Segment) { (namespace, name, snapshotId) =>
-      get {
+  // Route: GET http://root.com/<namespace>/<name>/<snapshotId>
+  // Route: GET http://root.com/<namespace>/<name>/<snapshotId>?onlyPayload=True
+  def querySingleRoute =
+
+    matchPath { (namespace, name, snapshotId) =>
+      extractOnlyParameter { (only) =>
+        val onlyBool = extractBool(only)
         requestContext =>
-          perRequest(
-            requestContext,
-            queryHandlerProps,
-            ServiceMessages.QueryByNamespaceNameSnapshotId(requestContext,
-              namespace,
-              name,
-              snapshotId.toInt,
-              AgoraEntityType.byPath(path)
-            )
-          )
+          completeWithPerRequest(requestContext, namespace,
+                                 name, snapshotId, onlyBool)
       }
     }
 
+  val matchPath = get & path(path / Segment / Segment / IntNumber)
+  val extractOnlyParameter = extract(_.request.uri.query.get("onlyPayload"))
+
+    def extractBool(x: Option[String]): Boolean = {
+      x match {
+        case Some(x) => Try(x.toBoolean).getOrElse(false)
+        case None => false
+      }
+    }
+
+    def completeWithPerRequest(context: RequestContext,
+                               namespace: String,
+                               name: String,
+                               snapshotId: Int,
+                               onlyPayload: Boolean): Unit = {
+
+      val _path = AgoraEntityType.byPath(path)
+      val message = ServiceMessages.QuerySingle(context, namespace, name, snapshotId, _path, onlyPayload)
+      perRequest(context, queryHandlerProps, message)
+    }
+
+  // Route: GET http://root.com/methods?
   def queryRoute =
     path(path) {
       get {
@@ -89,6 +112,7 @@ trait AgoraService extends HttpService with PerRequestCreator with AgoraDirectiv
       }
     }
 
+  // Route: POST http://root.com/methods
   def postRoute =
     path(path) {
       post {

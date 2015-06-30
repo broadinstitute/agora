@@ -17,21 +17,22 @@ class QueryHandler extends Actor {
   implicit val system = context.system
 
   def receive = {
-    case ServiceMessages.QueryByNamespaceNameSnapshotId(
-    requestContext: RequestContext,
-    namespace: String,
-    name: String,
-    snapshotId: Int,
-    entityType: Seq[AgoraEntityType.EntityType]
+    case ServiceMessages.QuerySingle(
+          requestContext: RequestContext,
+          namespace: String,
+          name: String,
+          snapshotId: Int,
+          entityType: Seq[AgoraEntityType.EntityType],
+          onlyPayload: Boolean
     ) =>
-      query(requestContext, namespace, name, snapshotId, entityType)
+      query(requestContext, namespace, name, snapshotId, entityType, onlyPayload)
       context.stop(self)
 
     case ServiceMessages.Query(
-    requestContext: RequestContext,
-    agoraSearch: AgoraEntity,
-    agoraProjection: Option[AgoraEntityProjection],
-    entityTypes: Seq[AgoraEntityType.EntityType]
+          requestContext: RequestContext,
+          agoraSearch: AgoraEntity,
+          agoraProjection: Option[AgoraEntityProjection],
+          entityTypes: Seq[AgoraEntityType.EntityType]
     ) =>
       query(requestContext, agoraSearch, agoraProjection, entityTypes)
       context.stop(self)
@@ -40,11 +41,17 @@ class QueryHandler extends Actor {
   def query(requestContext: RequestContext,
             namespace: String, name: String,
             snapshotId: Int,
-            entityTypes: Seq[AgoraEntityType.EntityType]): Unit = {
+            entityTypes: Seq[AgoraEntityType.EntityType],
+            onlyPayload: Boolean): Unit = {
+
     AgoraBusiness.findSingle(namespace, name, snapshotId, entityTypes) match {
-      case None => context.parent ! RequestComplete(NotFound, AgoraError(s"Entity: $namespace/$name/$snapshotId not found"))
-      case Some(method) => context.parent ! RequestComplete(method)
+      case None => context.parent ! RequestComplete(NotFound,
+                                                    AgoraError(s"Entity: $namespace/$name/$snapshotId not found"))
+      case Some(method) =>
+        if (onlyPayload) {context.parent ! RequestComplete(method.payload)}
+        else {context.parent ! RequestComplete(method)}
     }
+
   }
 
   def query(requestContext: RequestContext,

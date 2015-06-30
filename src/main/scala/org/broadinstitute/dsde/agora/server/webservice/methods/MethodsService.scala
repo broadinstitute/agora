@@ -12,20 +12,22 @@ trait MethodsService extends AgoraService {
   @ApiOperation(value = "Get a method in the methods repository matching namespace, name, and snapshot id",
     nickname = "methods",
     httpMethod = "GET",
-    produces = "application/json",
+    produces = "application/json,text/plain",
     response = classOf[AgoraEntity],
     notes = "API is rapidly changing.")
   @ApiImplicitParams(Array(
     new ApiImplicitParam(name = "namespace", required = true, dataType = "string", paramType = "path", value = "Namespace"),
     new ApiImplicitParam(name = "name", required = true, dataType = "string", paramType = "path", value = "Name"),
-    new ApiImplicitParam(name = "snapshotId", required = true, dataType = "string", paramType = "path", value = "SnapshotId")
+    new ApiImplicitParam(name = "snapshotId", required = true, dataType = "string", paramType = "path", value = "SnapshotId"),
+    new ApiImplicitParam(name = "onlyPayload", required = false, allowMultiple = false, dataType = "string", paramType = "query", value = "OnlyPayload",
+      allowableValues = "true,false")
   ))
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "Successful Request"),
     new ApiResponse(code = 404, message = "Method Not Found"),
     new ApiResponse(code = 500, message = "Internal Error")
   ))
-  override def queryByNamespaceNameSnapshotIdRoute = super.queryByNamespaceNameSnapshotIdRoute
+  override def querySingleRoute = super.querySingleRoute
 
   @ApiOperation(value = "Query for method in the methods repository",
     nickname = "methods",

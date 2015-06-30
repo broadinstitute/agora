@@ -26,7 +26,7 @@ trait ConfigurationsService extends AgoraService {
     new ApiResponse(code = 404, message = "Task Configuration Not Found"),
     new ApiResponse(code = 500, message = "Internal Error")
   ))
-  override def queryByNamespaceNameSnapshotIdRoute = super.queryByNamespaceNameSnapshotIdRoute
+  override def querySingleRoute = super.querySingleRoute
 
   @ApiOperation(value = "Query for task configuration in the task configuration repository",
     nickname = "configurations",

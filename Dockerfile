@@ -38,7 +38,6 @@ COPY src /usr/agora/src
 # Run the tests then copy in the application.conf file and build the jar. Then copy the jar in to the work directory and
 # do some clean up in order to minimize image size.
 RUN sbt test && \
-    cp application.conf src/main/resources/application.conf && \
     sbt assembly && \
     cp /usr/agora/target/scala-2.11/agora-0.1-SNAPSHOT.jar /usr/agora && \
     rm -rf /root/.embedmongo /root/.ivy2 /root/.sbt /usr/agora/target /usr/agora/src /usr/agora/build.sbt /usr/agora/assembly.sbt

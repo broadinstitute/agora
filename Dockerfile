@@ -27,7 +27,6 @@ EXPOSE 8000
 COPY build.sbt /usr/agora/build.sbt
 COPY assembly.sbt /usr/agora/assembly.sbt
 COPY project /usr/agora/project
-COPY application.conf /usr/agora/application.conf
 
 WORKDIR /usr/agora
 
@@ -44,5 +43,5 @@ RUN sbt test && \
     cp /usr/agora/target/scala-2.11/agora-0.1-SNAPSHOT.jar /usr/agora && \
     rm -rf /root/.embedmongo /root/.ivy2 /root/.sbt /usr/agora/target /usr/agora/src /usr/agora/build.sbt /usr/agora/assembly.sbt
 
-# Start the webservice with default parameters
-ENTRYPOINT ["java", "-jar", "agora-0.1-SNAPSHOT.jar"]
+# Start the webservice with default parameters do not use default config
+ENTRYPOINT ["java", "-Dconfig.file=/etc/agora.conf" ,"-jar", "agora-0.1-SNAPSHOT.jar"]

@@ -75,6 +75,8 @@ val customMergeStrategy: String => MergeStrategy = {
     }
   case "asm-license.txt" | "overview.html" =>
     MergeStrategy.discard
+  case "logback.xml" =>
+    MergeStrategy.first
   case _ => MergeStrategy.deduplicate
 }
 

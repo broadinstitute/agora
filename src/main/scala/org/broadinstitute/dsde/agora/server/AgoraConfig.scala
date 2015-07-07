@@ -13,7 +13,9 @@ object AgoraConfig {
   private lazy val scheme = config.as[Option[String]]("webservice.scheme").getOrElse("http")
   private lazy val host = config.as[Option[String]]("webservice.host").getOrElse("localhost")
   lazy val port = config.as[Option[Int]]("webservice.port").getOrElse(8000)
-  private lazy val baseUrl = scheme + "://" + host + ":" + port + "/"
+  private lazy val embeddedUrlPort = config.as[Option[Int]]("embeddedUrl.port")
+  private lazy val embeddedUrlPortStr = embeddedUrlPort match { case None => "" case x: Some[Int] => ":" + x.get }
+  private lazy val baseUrl = scheme + "://" + host + embeddedUrlPortStr + "/"
   lazy val methodsRoute = config.as[Option[String]]("methods.route").getOrElse("methods")
   lazy val methodsUrl = baseUrl + methodsRoute + "/"
   lazy val configurationsRoute = config.as[Option[String]]("configurations.route").getOrElse("configurations")

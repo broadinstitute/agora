@@ -1,17 +1,13 @@
 
 package org.broadinstitute.dsde.agora.server.webservice
 
-
-
-import scala.util.Try
 import akka.actor.Props
 import org.broadinstitute.dsde.agora.server.dataaccess.acls.AuthorizationProvider
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection, AgoraEntityType}
-import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages
+import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages._
 import org.broadinstitute.dsde.agora.server.webservice.validation.{AgoraValidation, AgoraValidationRejection}
 import org.joda.time.DateTime
 import spray.routing.{RequestContext, HttpService}
-
 
 /**
  * AgoraService defines routes for ApiServiceActor.
@@ -25,6 +21,7 @@ abstract class AgoraService(authorizationProvider: AuthorizationProvider) extend
 
   import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
   import spray.httpx.SprayJsonSupport._
+  import RouteUtil._
 
   def path: String
 
@@ -37,40 +34,30 @@ abstract class AgoraService(authorizationProvider: AuthorizationProvider) extend
   // Route: GET http://root.com/<namespace>/<name>/<snapshotId>
   // Route: GET http://root.com/<namespace>/<name>/<snapshotId>?onlyPayload=True
   def querySingleRoute =
-
-  // Route logic
     matchPath { (namespace, name, snapshotId) =>
       usernameFromCookie() { (username) =>
         extractOnlyParameter { (only) =>
-          val onlyBool = extractBool(only)
           requestContext =>
-            completeWithPerRequest(requestContext, namespace, name, snapshotId, username, onlyBool)
+            completeWithPerRequest(requestContext, namespace, name,
+                                   snapshotId, username, extractBool(only))
         }
       }
     }
 
-  // Route helpers
-    val matchPath = get & path(path / Segment / Segment / IntNumber)
-    val extractOnlyParameter = extract(_.request.uri.query.get("onlyPayload"))
+  val matchPath = get & path(path / Segment / Segment / IntNumber)
+  val extractOnlyParameter = extract(_.request.uri.query.get("onlyPayload"))
 
-    def extractBool(x: Option[String]): Boolean = {
-      x match {
-        case Some(x) => Try(x.toBoolean).getOrElse(false)
-        case None => false
-      }
-    }
+  def completeWithPerRequest(context: RequestContext,
+                             namespace: String,
+                             name: String,
+                             snapshotId: Int,
+                             username: String,
+                             onlyPayload: Boolean): Unit = {
 
-    def completeWithPerRequest(context: RequestContext,
-                               namespace: String,
-                               name: String,
-                               snapshotId: Int,
-                               username: String,
-                               onlyPayload: Boolean): Unit = {
-
-      val _path = AgoraEntityType.byPath(path)
-      val message = ServiceMessages.QuerySingle(context, namespace, name, snapshotId, _path, username, onlyPayload)
-      perRequest(context, queryHandlerProps, message)
-    }
+    val entityType = AgoraEntityType.byPath(path)
+    val message = QuerySingle(context, namespace, name, snapshotId, entityType, username, onlyPayload)
+    perRequest(context, queryHandlerProps, message)
+  }
 
   // Route: GET http://root.com/methods?
   def queryRoute =
@@ -114,7 +101,7 @@ abstract class AgoraService(authorizationProvider: AuthorizationProvider) extend
                       perRequest(
                         requestContext,
                         queryHandlerProps,
-                        ServiceMessages.Query(requestContext, agoraEntity, agoraProjectionOption, searchTypes, userName)
+                        Query(requestContext, agoraEntity, agoraProjectionOption, searchTypes, userName)
                       )
                 }
               }
@@ -140,7 +127,7 @@ abstract class AgoraService(authorizationProvider: AuthorizationProvider) extend
                   perRequest(
                     requestContext,
                     addHandlerProps,
-                    ServiceMessages.Add(requestContext, entityWithOwner, userName)
+                    Add(requestContext, entityWithOwner, userName)
                   )
             }
           }
@@ -148,3 +135,17 @@ abstract class AgoraService(authorizationProvider: AuthorizationProvider) extend
       }
     }
 }
+
+object RouteUtil {
+  import scala.util.Try
+
+  def extractBool(x: Option[String]): Boolean = {
+    x match {
+      case Some(x) => Try(x.toBoolean).getOrElse(false)
+      case None => false
+    }
+  }
+
+}
+
+

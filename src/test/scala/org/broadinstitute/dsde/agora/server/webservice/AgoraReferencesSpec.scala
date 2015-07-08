@@ -31,7 +31,7 @@ class AgoraReferencesSpec extends ApiServiceSpec {
   ignore should "create a method and return with a status of 201 when the WDL contains an import to an existent method" in {
     // Verifying that the pre-loaded task exists...
     Get(ApiUtil.Methods.withLeadingSlash + "/" + testEntityTaskWcWithId.namespace.get + "/" + testEntityTaskWcWithId.name.get + "/"
-      + testEntityTaskWcWithId.snapshotId.get) ~> methodsService.queryByNamespaceNameSnapshotIdRoute ~> check {
+      + testEntityTaskWcWithId.snapshotId.get) ~> methodsService.querySingleRoute ~> check {
       handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => assert(entity === testEntityTaskWcWithId))
       assert(status === OK)
     }

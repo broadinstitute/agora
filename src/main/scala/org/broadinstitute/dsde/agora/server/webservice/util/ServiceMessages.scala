@@ -8,12 +8,13 @@ import spray.routing.RequestContext
  */
 object ServiceMessages {
 
-  case class QueryByNamespaceNameSnapshotId(requestContext: RequestContext,
-                                            namespace: String,
-                                            name: String,
-                                            snapshotId: Int,
-                                            entityType: Seq[AgoraEntityType.EntityType],
-                                            username: String)
+  case class QuerySingle(requestContext: RequestContext,
+                         namespace: String,
+                         name: String,
+                         snapshotId: Int,
+                         entityType: Seq[AgoraEntityType.EntityType],
+                         username: String,
+                         onlyPayload: Boolean)
 
   case class Query(requestContext: RequestContext,
                    agoraSearch: AgoraEntity,

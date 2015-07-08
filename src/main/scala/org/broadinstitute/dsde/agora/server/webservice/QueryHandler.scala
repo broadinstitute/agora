@@ -22,23 +22,22 @@ class QueryHandler(authorizationProvider: AuthorizationProvider) extends Actor {
   val agoraBusiness = new AgoraBusiness()
 
   def receive = {
-    case ServiceMessages.QueryByNamespaceNameSnapshotId(
-    requestContext: RequestContext,
-    namespace: String,
-    name: String,
-    snapshotId: Int,
-    entityType: Seq[AgoraEntityType.EntityType],
-    username: String
+    case ServiceMessages.QuerySingle( requestContext: RequestContext,
+                                      namespace: String,
+                                      name: String,
+                                      snapshotId: Int,
+                                      entityType: Seq[AgoraEntityType.EntityType],
+                                      username: String,
+                                      onlyPayload: Boolean
     ) =>
-      query(requestContext, namespace, name, snapshotId, entityType, username)
+      query(requestContext, namespace, name, snapshotId, entityType, username, onlyPayload)
       context.stop(self)
 
-    case ServiceMessages.Query(
-    requestContext: RequestContext,
-    agoraSearch: AgoraEntity,
-    agoraProjection: Option[AgoraEntityProjection],
-    entityTypes: Seq[AgoraEntityType.EntityType],
-    username: String
+    case ServiceMessages.Query( requestContext: RequestContext,
+                                agoraSearch: AgoraEntity,
+                                agoraProjection: Option[AgoraEntityProjection],
+                                entityTypes: Seq[AgoraEntityType.EntityType],
+                                username: String
     ) =>
       query(requestContext, agoraSearch, agoraProjection, entityTypes, username)
       context.stop(self)
@@ -48,12 +47,15 @@ class QueryHandler(authorizationProvider: AuthorizationProvider) extends Actor {
             namespace: String, name: String,
             snapshotId: Int,
             entityTypes: Seq[AgoraEntityType.EntityType],
-            username: String): Unit = {
+            username: String,
+            onlyPayload: Boolean): Unit = {
     val entity = agoraBusiness.findSingle(namespace, name, snapshotId, entityTypes, username: String)
     try {
       authorizationProvider.filterByReadPermissions(entity, username) match {
         case None => context.parent ! RequestComplete(NotFound, AgoraError(s"Entity: $namespace/$name/$snapshotId not found"))
-        case Some(result) => context.parent ! RequestComplete(result)
+        case Some(result) =>
+          if (onlyPayload) {context.parent ! RequestComplete(result.payload)}
+          else {context.parent ! RequestComplete(result)}
       }
     }
     catch {

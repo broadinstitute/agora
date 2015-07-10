@@ -20,7 +20,7 @@ trait AgoraDbTest {
 class AgoraTestSuite extends Suites(
   new AgoraMethodsSpec,
   new AgoraProjectionsSpec,
-  new AgoraReferencesSpec,
+  new AgoraImportSpec,
   new AgoraConfigurationsSpec,
   new MethodsDbTest,
   new AgoraBusinessTest,

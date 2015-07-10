@@ -30,7 +30,7 @@ object GcsAuthorizationProvider extends AuthorizationProvider with LazyLogging {
   val removeEtagHeaders: HttpResponse => HttpResponse =
     r => r.withHeaders(r.headers.filter(!_.name.startsWith("ETag")))
 
-  val pipeline = addCredentials(OAuth2BearerToken(GoogleCredentialHandler.accessToken)) ~> sendReceive ~> removeEtagHeaders
+  def pipeline = addCredentials(OAuth2BearerToken(GoogleCredentialHandler.accessToken)) ~> sendReceive ~> removeEtagHeaders
 
   private case class GoogleResponse(entity: AgoraEntity, response: HttpResponse)
 

@@ -8,7 +8,7 @@ object GcsApiJsonSupport extends DefaultJsonProtocol with SprayJsonSupport {
 
   implicit val ProjectTeamFormat = jsonFormat2(ProjectTeam)
 
-  implicit val GoogleAccessControlsFormat = jsonFormat13(GoogleAccessControls)
+  implicit val GoogleAccessControlsFormat = jsonFormat13(GoogleAccessControls.apply)
 
   implicit val OwnerFormat = jsonFormat2(Owner)
 
@@ -28,5 +28,9 @@ object GcsApiJsonSupport extends DefaultJsonProtocol with SprayJsonSupport {
 
   implicit val LifecycleFormat = jsonFormat1(Lifecycle)
 
+  implicit val MetadataFormat = jsonFormat2(Metadata)
+
   implicit val BucketResourceFormat = jsonFormat14(BucketResource)
+
+  implicit val ObjectResourceFormat = jsonFormat22(ObjectResource)
 }

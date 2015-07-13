@@ -3,7 +3,7 @@ package org.broadinstitute.dsde.agora.server.dataaccess.acls
 
 import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
 import AgoraPermissions._
-import org.broadinstitute.dsde.agora.server.dataaccess.authorization.TestAuthorizationProvider
+import org.broadinstitute.dsde.agora.server.dataaccess.authorization.TestAuthorizationProvider._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntityType
 import org.broadinstitute.dsde.agora.server.webservice.ApiServiceSpec
 import org.scalatest.DoNotDiscover
@@ -63,31 +63,55 @@ class AgoraAuthorizationTest extends ApiServiceSpec {
     assert(newAuthorization.canManage === false)
   }
 
-  "Agora" should "only return methods that have read permissions " in {
+  "Agora" should "only authorize users with permissions in local permisison storage" in {
     val agoraBusiness = new AgoraBusiness()
 
+    val agoraEntity = agoraBusiness.findSingle(testEntity1WithId.namespace.get,
+                                          testEntity1WithId.name.get,
+                                          testEntity1WithId.snapshotId.get,
+                                          Seq(testEntity1WithId.entityType.get),
+                                          agoraCIOwner.get)
+
+    agoraEntity match {
+      case Some(entity) => {
+
+        //default permission is full authorization with testAuth
+        assert(isAuthorizedForRead(entity, owner2.get) === true)
+        assert(isAuthorizedForCreation(entity, owner2.get) === true)
+
+        //Remove owner1's permissions
+        addEntityPermission(hash(entity, owner1.get), AgoraPermissions(Nothing))
+        addNamespacePermission(hash(entity, owner1.get), AgoraPermissions(Nothing))
+
+        assert(isAuthorizedForRead(entity, owner1.get) === false)
+        assert(isAuthorizedForCreation(entity, owner1.get) === false)
+
+        //Add owner1's permissions
+        createEntityAuthorizations(entity, owner1.get)
+
+        assert(isAuthorizedForRead(entity, owner1.get) === true)
+        assert(isAuthorizedForCreation(entity, owner1.get) === true)
+      }
+    }
+
+  }
+
+  "Agora" should "only return entities that can be read by user" in {
+
+    val agoraBusiness = new AgoraBusiness()
     val entities = agoraBusiness.find(testEntity1WithId, None, Seq(AgoraEntityType.Workflow, AgoraEntityType.Task), agoraCIOwner.get)
 
-    val entity = agoraBusiness.findSingle(testEntity1WithId.namespace.get,
-      testEntity1WithId.name.get,
-      testEntity1WithId.snapshotId.get,
-      Seq(testEntity1WithId.entityType.get),
-      agoraCIOwner.get)
-    
-    TestAuthorizationProvider.addLocalPermissions(TestAuthorizationProvider.getUniqueIdentifier(testEntity1WithId), AgoraPermissions(Nothing))
-    val noEntities = TestAuthorizationProvider.filterByReadPermissions(entities, agoraCIOwner.get)
+    // Without agoraCIOwner's permissions
+    addEntityPermission(hash(testEntity1WithId, agoraCIOwner.get), AgoraPermissions(Nothing))
+    val noEntities = filterByReadPermissions(entities, agoraCIOwner.get)
     assert(noEntities.size === 0)
+    assert(noEntities === Nil)
 
-    TestAuthorizationProvider.addLocalPermissions(TestAuthorizationProvider.getUniqueIdentifier(testEntity1WithId), AgoraPermissions(Nothing))
-    val noEntity = TestAuthorizationProvider.filterByReadPermissions(entity, agoraCIOwner.get)
-    assert(noEntity === None)
-
-    TestAuthorizationProvider.addLocalPermissions(TestAuthorizationProvider.getUniqueIdentifier(testEntity1WithId), AgoraPermissions(Read))
-    val oneEntity = TestAuthorizationProvider.filterByReadPermissions(entities, agoraCIOwner.get)
+    // With agoraCIOwner's permissions
+    createEntityAuthorizations(testEntity1WithId, agoraCIOwner.get)
+    val oneEntity = filterByReadPermissions(entities, agoraCIOwner.get)
     assert(oneEntity.size === 1)
-
-    TestAuthorizationProvider.addLocalPermissions(TestAuthorizationProvider.getUniqueIdentifier(testEntity1WithId), AgoraPermissions(Read))
-    val someEntity = TestAuthorizationProvider.filterByReadPermissions(entity, agoraCIOwner.get)
-    assert(someEntity === Some(testEntity1WithId))
+    assert(oneEntity === entities)
   }
+
 }

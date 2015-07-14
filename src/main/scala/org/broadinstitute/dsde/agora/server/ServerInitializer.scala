@@ -26,10 +26,9 @@ class ServerInitializer extends LazyLogging {
   }
 
   private def startWebServiceActors(authorizationProvider: AuthorizationProvider) = {
-    implicit val timeout = Timeout(5.seconds)
-    val bindTimeout = 120.seconds
+    implicit val bindTimeout: Timeout = 120.seconds
     val service = actorSystem.actorOf(ApiServiceActor.props(authorizationProvider), "agora-actor")
-    Await.result(IO(Http) ? Http.Bind(service, interface = AgoraConfig.webserviceInterface, port = AgoraConfig.port), bindTimeout) match {
+    Await.result(IO(Http) ? Http.Bind(service, interface = AgoraConfig.webserviceInterface, port = AgoraConfig.port), bindTimeout.duration) match {
       case CommandFailed(b: Http.Bind) =>
         logger.error(s"Unable to bind to port ${AgoraConfig.port} on interface ${AgoraConfig.webserviceInterface}")
         actorSystem.shutdown()

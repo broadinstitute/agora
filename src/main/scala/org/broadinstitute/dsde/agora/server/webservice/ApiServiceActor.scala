@@ -4,6 +4,7 @@ import akka.actor.Props
 import com.gettyimages.spray.swagger.SwaggerHttpService
 import com.wordnik.swagger.model.ApiInfo
 import org.broadinstitute.dsde.agora.server.AgoraConfig
+import org.broadinstitute.dsde.agora.server.business.AgoraAuthorizationException
 import org.broadinstitute.dsde.agora.server.dataaccess.acls.AuthorizationProvider
 import org.broadinstitute.dsde.agora.server.webservice.configurations.ConfigurationsService
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService

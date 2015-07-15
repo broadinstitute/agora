@@ -2,6 +2,7 @@ package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.actor.SupervisorStrategy.Stop
 import akka.actor.{OneForOneStrategy, _}
+import org.broadinstitute.dsde.agora.server.business.AgoraAuthorizationException
 import org.broadinstitute.dsde.agora.server.webservice.PerRequest._
 import spray.http.HttpHeader
 import spray.http.StatusCodes._
@@ -53,6 +54,10 @@ trait PerRequest extends Actor {
 
   override val supervisorStrategy =
     OneForOneStrategy() {
+      case authException: AgoraAuthorizationException =>
+        system.log.info("Authorization exception processing request:" + r.request.uri)
+        r.complete(Unauthorized, authException.getMessage)
+        Stop
       case e =>
         system.log.error(e, "error processing request: " + r.request.uri)
         r.complete(InternalServerError, e.getMessage)

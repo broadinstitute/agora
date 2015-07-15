@@ -2,7 +2,9 @@
 package org.broadinstitute.dsde.agora.server.model
 
 import com.wordnik.swagger.annotations.{ApiModel, ApiModelProperty}
+import cromwell.binding.WdlNamespace
 import org.broadinstitute.dsde.agora.server.AgoraConfig
+import org.broadinstitute.dsde.agora.server.business.MethodImportResolver
 import org.joda.time.DateTime
 import scalaz._
 import scalaz.Scalaz._
@@ -127,6 +129,14 @@ case class AgoraEntity(@(ApiModelProperty@field)(required = false, value = "The 
   AgoraEntity.validate(this) match {
     case Success(_) => this
     case Failure(errors) => throw new IllegalArgumentException(s"Entity is not valid: Errors: $errors")
+  }
+
+  def agoraUrl: String = {
+    AgoraConfig.urlFromType(entityType) + namespace.get + "/" + name.get + "/" + snapshotId.get
+  }
+
+  def addUrl(): AgoraEntity = {
+    copy(url = Option(agoraUrl))
   }
 }
 

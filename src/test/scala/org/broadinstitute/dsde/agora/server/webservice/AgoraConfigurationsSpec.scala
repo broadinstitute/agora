@@ -5,7 +5,7 @@ import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
 import org.scalatest.DoNotDiscover
-import spray.http.StatusCodes._
+import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import spray.httpx.SprayJsonSupport._
 import spray.httpx.unmarshalling._
 import spray.routing.ValidationRejection

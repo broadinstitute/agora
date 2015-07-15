@@ -3,10 +3,12 @@ package org.broadinstitute.dsde.agora.server.dataaccess.acls
 
 import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
 import AgoraPermissions._
+import org.broadinstitute.dsde.agora.server.dataaccess.authorization.TestAuthorizationProvider
 import org.broadinstitute.dsde.agora.server.dataaccess.authorization.TestAuthorizationProvider._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntityType
 import org.broadinstitute.dsde.agora.server.webservice.ApiServiceSpec
 import org.scalatest.DoNotDiscover
+import org.broadinstitute.dsde.agora.server.AgoraTestData._
 
 @DoNotDiscover
 class AgoraAuthorizationTest extends ApiServiceSpec {
@@ -63,8 +65,8 @@ class AgoraAuthorizationTest extends ApiServiceSpec {
     assert(newAuthorization.canManage === false)
   }
 
-  "Agora" should "only authorize users with permissions in local permisison storage" in {
-    val agoraBusiness = new AgoraBusiness()
+  "Agora" should "only authorize users with permissions in local permission storage" in {
+    val agoraBusiness = new AgoraBusiness(TestAuthorizationProvider)
 
     val agoraEntity = agoraBusiness.findSingle(testEntity1WithId.namespace.get,
                                           testEntity1WithId.name.get,
@@ -73,8 +75,7 @@ class AgoraAuthorizationTest extends ApiServiceSpec {
                                           agoraCIOwner.get)
 
     agoraEntity match {
-      case Some(entity) => {
-
+      case Some(entity) =>
         //default permission is full authorization with testAuth
         assert(isAuthorizedForRead(entity, owner2.get) === true)
         assert(isAuthorizedForCreation(entity, owner2.get) === true)
@@ -91,14 +92,14 @@ class AgoraAuthorizationTest extends ApiServiceSpec {
 
         assert(isAuthorizedForRead(entity, owner1.get) === true)
         assert(isAuthorizedForCreation(entity, owner1.get) === true)
-      }
+      case None =>
     }
 
   }
 
   "Agora" should "only return entities that can be read by user" in {
 
-    val agoraBusiness = new AgoraBusiness()
+    val agoraBusiness = new AgoraBusiness(TestAuthorizationProvider)
     val entities = agoraBusiness.find(testEntity1WithId, None, Seq(AgoraEntityType.Workflow, AgoraEntityType.Task), agoraCIOwner.get)
 
     // Without agoraCIOwner's permissions

@@ -2,6 +2,8 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
 import cromwell.parser.WdlParser.SyntaxError
+import org.broadinstitute.dsde.agora.server.AgoraTestData._
+import org.broadinstitute.dsde.agora.server.business.{ImportResolverHelper, MethodImportResolver}
 import org.broadinstitute.dsde.agora.server.dataaccess.authorization.TestAuthorizationProvider
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
@@ -11,8 +13,6 @@ import org.scalatest.Matchers._
 import spray.http.StatusCodes._
 import spray.httpx.SprayJsonSupport._
 import spray.httpx.unmarshalling._
-
-import scala.Predef.assert
 
 @DoNotDiscover
 class AgoraImportSpec extends ApiServiceSpec {
@@ -106,7 +106,7 @@ class AgoraImportSpec extends ApiServiceSpec {
     val uri = "methods://foo.bar.22"
     val resolver = MethodImportResolver(agoraCIOwner.get, agoraBusiness, TestAuthorizationProvider)
     val thrown = the[SyntaxError] thrownBy resolver.importResolver(uri)
-    assert(thrown.getMessage.contains("Can't resolve import") === true)   
+    assert(thrown.getMessage.contains("Can't resolve import") === true)
   }
 
   "MethodImportResolver" should "return payload if method is found" in {

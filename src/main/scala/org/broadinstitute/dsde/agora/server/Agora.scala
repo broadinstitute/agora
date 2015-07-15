@@ -6,7 +6,7 @@ import org.broadinstitute.dsde.agora.server.dataaccess.acls.gcs.GcsAuthorization
 
 object ProductionAgora extends Agora(GcsAuthorizationProvider) with App {
   override def main(args: Array[String]) {
-    start(GcsAuthorizationProvider)
+    start()
   }
 }
 
@@ -15,7 +15,7 @@ class Agora(authorizationProvider: AuthorizationProvider) extends LazyLogging wi
 
   sys addShutdownHook stop()
 
-  def start(authorizationProvider: AuthorizationProvider): Unit = {
+  def start() {
     server.startAllServices(authorizationProvider)
     logger.info("Agora instance " + AgoraConfig.serverInstanceName + " initialized.")
   }

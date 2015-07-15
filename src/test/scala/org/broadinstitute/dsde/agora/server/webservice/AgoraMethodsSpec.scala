@@ -1,18 +1,17 @@
 
 package org.broadinstitute.dsde.agora.server.webservice
 
+import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
-import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
+import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
 import org.scalatest.DoNotDiscover
-import spray.http.{HttpCharset, ContentType, HttpEntity}
 import spray.http.MediaTypes._
 import spray.http.StatusCodes._
-import spray.httpx.marshalling._
+import spray.http.{ContentType, HttpEntity}
 import spray.httpx.SprayJsonSupport._
 import spray.httpx.unmarshalling._
 import spray.routing.ValidationRejection
-import spray.json._
 
 @DoNotDiscover
 class AgoraMethodsSpec extends ApiServiceSpec {
@@ -27,11 +26,11 @@ class AgoraMethodsSpec extends ApiServiceSpec {
 
   "Agora" should "return only payload in plain/text when parameter is set " in {
     Get(ApiUtil.Methods.withLeadingSlash + "/" + namespace1.get + "/" + name1.get + "/"
-      + testEntity1WithId.snapshotId.get +"?onlyPayload=true") ~> methodsService.querySingleRoute ~>
-    check {
-      assert(status === OK)
-      assert(mediaType === `text/plain`)
-    }
+      + testEntity1WithId.snapshotId.get + "?onlyPayload=true") ~> methodsService.querySingleRoute ~>
+      check {
+        assert(status === OK)
+        assert(mediaType === `text/plain`)
+      }
   }
 
   "Agora" should "return status 404, mediaType json when nothing matches query by namespace, name, snapshotId" in {
@@ -108,13 +107,13 @@ class AgoraMethodsSpec extends ApiServiceSpec {
 
   "Agora" should "return a 400 bad request with validation errors when metadata is invalid" in {
     val entityJSON = s"""{
-                         |  "namespace": "  ",
-                         |  "name": "  ",
-                         |  "synopsis": " ",
-                         |  "documentation": "",
-                         |  "payload": "",
-                         |  "entityType": "Task"
-                         |}""".stripMargin
+                        | "namespace": "  ",
+                        | "name": "  ",
+                        | "synopsis": " ",
+                        | "documentation": "",
+                        | "payload": "",
+                        | "entityType": "Task"
+                        |}""".stripMargin
 
     val entity = HttpEntity(
       contentType = ContentType(`application/json`),
@@ -130,13 +129,13 @@ class AgoraMethodsSpec extends ApiServiceSpec {
 
   "Agora" should "store 10kb of github markdown as method documentation and return it without alteration" in {
     val entityJSON = s"""{
-                        |  "namespace": "$namespace1",
-                        |  "name": "$name1",
-                        |  "synopsis": "",
-                        |  "documentation": "$getBigDocumentation",
-                        |  "payload": "",
-                        |  "entityType": "Task"
-                        |}""".stripMargin
+                        | "namespace": "$namespace1",
+                                                     | "name": "$name1",
+                                                                        | "synopsis": "",
+                                                                        | "documentation": "$getBigDocumentation",
+                                                                                                                  | "payload": "",
+                                                                                                                  | "entityType": "Task"
+                                                                                                                  |}""".stripMargin
 
     val entity = HttpEntity(
       contentType = ContentType(`application/json`),
@@ -146,7 +145,7 @@ class AgoraMethodsSpec extends ApiServiceSpec {
       wrapWithRejectionHandler {
         methodsService.postRoute
       } ~> check {
-        assert(status === BadRequest)
+      assert(status === BadRequest)
     }
   }
 

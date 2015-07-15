@@ -84,3 +84,15 @@ val customMergeStrategy: String => MergeStrategy = {
 mergeStrategy in assembly := customMergeStrategy
 
 test in assembly := {}
+
+val integrationTest = inputKey[Unit]("Runs the Agora integration tests.")
+
+integrationTest := {
+  (testOnly in Test).toTask(" org.broadinstitute.dsde.agora.server.AgoraIntegrationTestSuite").value
+}
+
+val unitTest = inputKey[Unit]("Runs the Agora unit tests.")
+
+unitTest := {
+  (testOnly in Test).toTask(" org.broadinstitute.dsde.agora.server.AgoraUnitTestSuite").value
+}

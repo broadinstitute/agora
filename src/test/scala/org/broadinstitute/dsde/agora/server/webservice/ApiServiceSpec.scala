@@ -1,6 +1,6 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
-import org.broadinstitute.dsde.agora.server.AgoraTestData
+import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
 import org.broadinstitute.dsde.agora.server.dataaccess.authorization.TestAuthorizationProvider
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
@@ -13,11 +13,11 @@ import spray.routing.{MalformedRequestContentRejection, ExceptionHandler, Direct
 import spray.testkit.ScalatestRouteTest
 
 @DoNotDiscover
-class ApiServiceSpec extends FlatSpec with Directives with ScalatestRouteTest with AgoraTestData with BeforeAndAfterAll {
+class ApiServiceSpec extends FlatSpec with Directives with ScalatestRouteTest with BeforeAndAfterAll {
   import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
   import spray.httpx.SprayJsonSupport._
 
-  val agoraBusiness = new AgoraBusiness()
+  val agoraBusiness = new AgoraBusiness(TestAuthorizationProvider)
 
   val wrapWithExceptionHandler = handleExceptions(ExceptionHandler {
     case e: IllegalArgumentException => complete(BadRequest, e.getMessage)
@@ -76,7 +76,8 @@ class ApiServiceSpec extends FlatSpec with Directives with ScalatestRouteTest wi
         snapshotId = entity.snapshotId,
         synopsis = entity.synopsis,
         owner = entity.owner,
-        url = Option(agoraBusiness.agoraUrl(entity)),
+        url = entity.url,
+        createDate = entity.createDate,
         entityType = entity.entityType
       )
     )
@@ -89,7 +90,7 @@ class ApiServiceSpec extends FlatSpec with Directives with ScalatestRouteTest wi
         name = entity.name,
         snapshotId = entity.snapshotId,
         owner = entity.owner,
-        url = Option(agoraBusiness.agoraUrl(entity)),
+        url = Option(entity.agoraUrl),
         entityType = entity.entityType
       )
     )
@@ -102,7 +103,7 @@ class ApiServiceSpec extends FlatSpec with Directives with ScalatestRouteTest wi
         name = entity.name,
         snapshotId = entity.snapshotId,
         entityType = entity.entityType,
-        url = Option(agoraBusiness.agoraUrl(entity))
+        url = Option(entity.agoraUrl)
       )
     )
   }

@@ -1,10 +1,9 @@
 package org.broadinstitute.dsde.agora.server
 
 import com.github.simplyscala.{MongoEmbedDatabase, MongodProps}
-import com.mongodb.casbah.MongoClient
-import org.broadinstitute.dsde.agora.server.dataaccess.acls.{AgoraAuthorizationTest, RoleTranslatorTest}
 import org.broadinstitute.dsde.agora.server.business.{AgoraBusiness, AgoraBusinessTest}
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
+import org.broadinstitute.dsde.agora.server.dataaccess.acls.{AgoraAuthorizationTest, RoleTranslatorTest}
 import org.broadinstitute.dsde.agora.server.dataaccess.authorization.TestAuthorizationProvider
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.{AgoraMongoClient, MethodsDbTest}
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupportTest
@@ -13,7 +12,7 @@ import org.broadinstitute.dsde.agora.server.webservice.validation.AgoraValidatio
 import org.scalatest.{BeforeAndAfterAll, Suites}
 
 trait AgoraDbTest {
-  val mongoTestCollection = AgoraMongoClient.getCollection(MongoClient().getDB("agora"), "test")
+  val mongoTestCollection = AgoraMongoClient.getCollection("test")
   val agoraDao = AgoraDao.createAgoraDao(mongoTestCollection)
 }
 

@@ -17,7 +17,6 @@ import spray.json._
 
 object AgoraMongoDao {
   val MongoDbIdField = "_id"
-  val CounterCollectionName = "counters"
   val CounterSequenceField = "seq"
   val KeySeparator = ":"
   val DefaultFindProjection = Option(new AgoraEntityProjection(Seq.empty[String], Seq[String]("payload", "documentation")))
@@ -63,9 +62,8 @@ class AgoraMongoDao(collections: Seq[MongoCollection]) extends AgoraDao {
   }
 
   def getNextId(entity: AgoraEntity): Int = {
-    val collection = assureSingleCollection
     //first check to see if we have a sequence
-    val counterCollection = getCollection(collection.getDB, CounterCollectionName)
+    val counterCollection = getCountersCollection
     val counterId: String = entity.namespace.get + KeySeparator + entity.name.get
     val counterQuery = MongoDbIdField $eq counterId
 

@@ -3,25 +3,20 @@ package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.actor.Props
 import org.broadinstitute.dsde.agora.server.dataaccess.acls.AuthorizationProvider
-import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection, AgoraEntityType}
-import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages._
-import org.broadinstitute.dsde.agora.server.webservice.validation.{AgoraValidation, AgoraValidationRejection}
-import org.joda.time.DateTime
-import spray.routing.{RequestContext, HttpService}
+import org.broadinstitute.dsde.agora.server.model.AgoraEntity
+import org.broadinstitute.dsde.agora.server.webservice.routes.RouteHelpers
+import spray.routing.{HttpService}
+import spray.httpx.SprayJsonSupport._
+import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 
 /**
  * AgoraService defines routes for ApiServiceActor.
  *
  * Concrete implementaions are MethodsService and ConfigurationsService.
- *
- * @param authorizationProvider
  */
-abstract class AgoraService(authorizationProvider: AuthorizationProvider) extends HttpService with PerRequestCreator with AgoraDirectives {
-  private implicit val executionContext = actorRefFactory.dispatcher
+abstract class AgoraService(authorizationProvider: AuthorizationProvider) extends HttpService with RouteHelpers {
 
-  import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
-  import spray.httpx.SprayJsonSupport._
-  import RouteUtil._
+  private implicit val executionContext = actorRefFactory.dispatcher
 
   def path: String
 
@@ -31,120 +26,44 @@ abstract class AgoraService(authorizationProvider: AuthorizationProvider) extend
 
   def addHandlerProps = Props(classOf[AddHandler], authorizationProvider)
 
-  // Route: GET http://root.com/<namespace>/<name>/<snapshotId>
-  // Route: GET http://root.com/<namespace>/<name>/<snapshotId>?onlyPayload=True
+  // GET http://root.com/methods/<namespace>/<name>/<snapshotId>?onlyPayload=true
+  // GET http://root.com/configurations/<namespace>/<name>/<snapshotId>
   def querySingleRoute =
-    matchPath { (namespace, name, snapshotId) =>
+    matchQuerySingleRoute(path) { (namespace, name, snapshotId) =>
       usernameFromCookie() { (username) =>
-        extractOnlyParameter { (only) =>
+        extractOnlyPayloadParameter { (onlyPayload) =>
           requestContext =>
-            completeWithPerRequest(requestContext, namespace, name,
-                                   snapshotId, username, extractBool(only))
+            val entity = AgoraEntity(Option(namespace), Option(name), Option(snapshotId))
+            completeWithPerRequest(requestContext, entity, username, toBool(onlyPayload), path, queryHandlerProps)
         }
       }
     }
 
-  val matchPath = get & path(path / Segment / Segment / IntNumber)
-  val extractOnlyParameter = extract(_.request.uri.query.get("onlyPayload"))
-
-  def completeWithPerRequest(context: RequestContext,
-                             namespace: String,
-                             name: String,
-                             snapshotId: Int,
-                             username: String,
-                             onlyPayload: Boolean): Unit = {
-
-    val entityType = AgoraEntityType.byPath(path)
-    val message = QuerySingle(context, namespace, name, snapshotId, entityType, username, onlyPayload)
-    perRequest(context, queryHandlerProps, message)
-  }
-
-  // Route: GET http://root.com/methods?
+  // GET http://root.com/methods?
+  // GET http://root.com/configurations?
   def queryRoute =
-    path(path) {
-      get {
-        usernameFromCookie() { userName =>
-          parameters(
-            "namespace".?,
-            "name".?,
-            "snapshotId".as[Int].?,
-            "synopsis".?,
-            "documentation".?,
-            "owner".?,
-            "createDate".as[DateTime].?,
-            "payload".?,
-            "url".?,
-            "entityType".as[AgoraEntityType.EntityType].?
-          ).as(AgoraEntity) {
-            agoraEntity => {
-              parameterMultiMap { params =>
-                val includeFields = params.getOrElse("includedField", Seq.empty[String])
-                val excludeFields = params.getOrElse("excludedField", Seq.empty[String])
-                val parameterValidation = AgoraValidation.validateParameters(includeFields, excludeFields)
-                val entityValidation = AgoraValidation.validateEntityType(agoraEntity.entityType, path)
-                parameterValidation.valid && entityValidation.valid match {
-                  case false => reject(AgoraValidationRejection(Seq(parameterValidation, entityValidation)))
-                  case true =>
-                    requestContext =>
-                      val agoraProjection = new AgoraEntityProjection(includeFields, excludeFields)
-                      val agoraProjectionOption = agoraProjection.totalFields match {
-                        case 0 => None
-                        case _ => Some(agoraProjection)
-                      }
-
-                      //if an entity type is specified we should search only on that type. If a type is not specified
-                      //we need to search for all valid types for the given path
-                      val searchTypes: Seq[AgoraEntityType.EntityType] = agoraEntity.entityType match {
-                        case Some(entityType) => Seq(entityType)
-                        case None => AgoraEntityType.byPath(path)
-                      }
-                      perRequest(
-                        requestContext,
-                        queryHandlerProps,
-                        Query(requestContext, agoraEntity, agoraProjectionOption, searchTypes, userName)
-                      )
-                }
-              }
-            }
+    matchQueryRoute(path) {
+      usernameFromCookie() { username =>
+        parameterMultiMap { params =>
+          validateEntityType(params, path) {
+            requestContext => completeWithPerRequest(requestContext, params, username, path, queryHandlerProps)
           }
         }
       }
     }
 
-  // Route: POST http://root.com/methods
+  // POST http://root.com/methods
+  // POST http://root.com/configurations
   def postRoute =
-    path(path) {
-      post {
-        usernameFromCookie() { userName =>
-          entity(as[AgoraEntity]) { agoraEntity =>
-            val metadataValidation = AgoraValidation.validateMetadata(agoraEntity)
-            val entityValidation = AgoraValidation.validateEntityType(agoraEntity.entityType, path)
-            metadataValidation.valid && entityValidation.valid match {
-              case false => reject(AgoraValidationRejection(Seq(metadataValidation, entityValidation)))
-              case true =>
-                requestContext =>
-                  val entityWithOwner = agoraEntity.copy(owner = Option(userName))
-                  perRequest(
-                    requestContext,
-                    addHandlerProps,
-                    Add(requestContext, entityWithOwner, userName)
-                  )
-            }
+    postPath(path) {
+      usernameFromCookie() { username =>
+        entity(as[AgoraEntity]) { agoraEntity =>
+          validateEntityType(agoraEntity, path) {
+            requestContext => completeWithPerRequest(requestContext, agoraEntity, username, addHandlerProps)
           }
         }
       }
     }
-}
-
-object RouteUtil {
-  import scala.util.Try
-
-  def extractBool(x: Option[String]): Boolean = {
-    x match {
-      case Some(x) => Try(x.toBoolean).getOrElse(false)
-      case None => false
-    }
-  }
 
 }
 

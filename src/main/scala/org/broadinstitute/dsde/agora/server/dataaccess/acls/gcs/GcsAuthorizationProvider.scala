@@ -2,9 +2,10 @@
 package org.broadinstitute.dsde.agora.server.dataaccess.acls.gcs
 
 import akka.actor._
+import org.broadinstitute.dsde.agora.server.webservice.util.GoogleCredentialHandler
 import scala.concurrent.{Future, Await, Promise}
 import com.typesafe.scalalogging.slf4j.LazyLogging
-import org.broadinstitute.dsde.agora.server.{AgoraConfig, GoogleCredentialHandler}
+import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.dataaccess.acls._
 import AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.model._

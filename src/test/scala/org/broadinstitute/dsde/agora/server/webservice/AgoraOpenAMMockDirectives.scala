@@ -1,6 +1,7 @@
 
 package org.broadinstitute.dsde.agora.server.webservice
 
+import org.broadinstitute.dsde.agora.server.webservice.routes.AgoraDirectives
 import org.broadinstitute.dsde.vault.common.openam.OpenAMResponse.UsernameCNResponse
 import org.broadinstitute.dsde.vault.common.util.ImplicitMagnet
 import spray.routing.Directives._

@@ -6,11 +6,10 @@ import org.broadinstitute.dsde.agora.server.dataaccess.authorization.TestAuthori
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.configurations.ConfigurationsService
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
-import org.broadinstitute.dsde.agora.server.webservice.validation.AgoraValidationRejection
 import org.scalatest.{DoNotDiscover, _}
 import spray.http.StatusCodes._
 import spray.httpx.unmarshalling._
-import spray.routing.{Directives, RejectionHandler}
+import spray.routing.{MalformedRequestContentRejection, ExceptionHandler, Directives, RejectionHandler}
 import spray.testkit.ScalatestRouteTest
 
 @DoNotDiscover
@@ -20,8 +19,12 @@ class ApiServiceSpec extends FlatSpec with Directives with ScalatestRouteTest wi
 
   val agoraBusiness = new AgoraBusiness()
 
+  val wrapWithExceptionHandler = handleExceptions(ExceptionHandler {
+    case e: IllegalArgumentException => complete(BadRequest, e.getMessage)
+  })
+
   val wrapWithRejectionHandler = handleRejections(RejectionHandler {
-    case AgoraValidationRejection(validation) :: _ => complete(BadRequest, validation)
+    case MalformedRequestContentRejection(message, cause) :: _ => complete(BadRequest, message)
   })
 
   trait ActorRefFactoryContext {

@@ -33,6 +33,7 @@ libraryDependencies ++= Seq(
   "org.broadinstitute" %% "cromwell" % "0.1-SNAPSHOT" excludeAll ExclusionRule(organization = "com.gettyimages"),
   "org.broadinstitute.dsde.vault" %% "vault-common" % "0.1-15-bf74315",
   "org.mongodb" %% "casbah" % "2.8.1",
+  "org.scalaz" %% "scalaz-core" % "7.1.3",
   "org.webjars" % "swagger-ui" % "2.0.24",
   //---------- Test libraries -------------------//
   "com.github.simplyscala" %% "scalatest-embedmongo" % "0.2.2" % Test,

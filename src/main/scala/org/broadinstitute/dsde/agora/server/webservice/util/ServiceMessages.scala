@@ -9,9 +9,7 @@ import spray.routing.RequestContext
 object ServiceMessages {
 
   case class QuerySingle(requestContext: RequestContext,
-                         namespace: String,
-                         name: String,
-                         snapshotId: Int,
+                         entity: AgoraEntity,
                          entityType: Seq[AgoraEntityType.EntityType],
                          username: String,
                          onlyPayload: Boolean)

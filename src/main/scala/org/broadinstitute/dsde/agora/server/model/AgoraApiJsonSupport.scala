@@ -2,7 +2,6 @@
 package org.broadinstitute.dsde.agora.server.model
 
 import org.broadinstitute.dsde.agora.server.webservice.util.AgoraOpenAMClient.UserInfoResponse
-import org.broadinstitute.dsde.agora.server.webservice.validation.AgoraValidation
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import spray.json._
@@ -22,19 +21,6 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
 
     override def read(json: JsValue): DateTime = json match {
       case JsString(s) => parserISO.parseDateTime(s)
-      case _ => throw new DeserializationException("only string supported")
-    }
-  }
-
-  implicit object AgoraValidationFormat extends RootJsonFormat[AgoraValidation] {
-    override def write(validation: AgoraValidation) = {
-      Map("error" -> validation.messages).toJson
-    }
-
-    override def read(json: JsValue): AgoraValidation = json match {
-      case x: JsObject =>
-        val messages = x.fields("error").convertTo[Seq[String]]
-        AgoraValidation(messages)
       case _ => throw new DeserializationException("only string supported")
     }
   }
@@ -71,9 +57,9 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
     ISODateTimeFormat.dateTimeNoMillis()
   }
 
-  implicit val AgoraEntityFormat = jsonFormat10(AgoraEntity)
+  implicit val AgoraEntityFormat = jsonFormat10(AgoraEntity.apply)
 
-  implicit val AgoraEntityProjectionFormat = jsonFormat2(AgoraEntityProjection)
+  implicit val AgoraEntityProjectionFormat = jsonFormat2(AgoraEntityProjection.apply)
 
   implicit val AgoraErrorFormat = jsonFormat1(AgoraError)
 }

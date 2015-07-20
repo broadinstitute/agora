@@ -11,7 +11,7 @@ import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.AgoraMongoClient._
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.AgoraMongoDao._
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
-import org.broadinstitute.dsde.agora.server.model.AgoraProjectionDefaults._
+import org.broadinstitute.dsde.agora.server.model.AgoraEntityProjection._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection}
 import spray.json._
 

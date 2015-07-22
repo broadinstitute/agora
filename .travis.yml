@@ -4,4 +4,6 @@ scala:
 jdk:
   - oraclejdk8
 script: sbt clean coverage test
-after_success: sbt coveralls
+after_success:
+  - sed -i 's,http://cobertura.sourceforge.net/xml/coverage-04.dtd,https://raw.githubusercontent.com/cobertura/cobertura/master/cobertura/src/site/htdocs/xml/coverage-04.dtd,g' target/scala-2.11/coverage-report/cobertura.xml
+  - sbt coveralls

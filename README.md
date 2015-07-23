@@ -22,7 +22,13 @@ $ sbt package
 You can additionally run unit test through:
 
 ```
-$ sbt test
+$ sbt unitTest
+```
+
+and integration test using:
+
+```
+$ sbt integrationTest
 ```
 
 ## Running Your Own Agora Web Service

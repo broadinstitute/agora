@@ -4,8 +4,7 @@ package org.broadinstitute.dsde.agora.server.dataaccess.acls
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
 import org.broadinstitute.dsde.agora.server.dataaccess.acls.AgoraPermissions._
-import org.broadinstitute.dsde.agora.server.dataaccess.authorization.TestAuthorizationProvider
-import org.broadinstitute.dsde.agora.server.dataaccess.authorization.TestAuthorizationProvider._
+import MockAuthorizationProvider._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntityType
 import org.broadinstitute.dsde.agora.server.webservice.ApiServiceSpec
 import org.scalatest.DoNotDiscover
@@ -66,7 +65,7 @@ class AgoraAuthorizationTest extends ApiServiceSpec {
   }
 
   "Agora" should "only authorize users with permissions in local permission storage" in {
-    val agoraBusiness = new AgoraBusiness(TestAuthorizationProvider)
+    val agoraBusiness = new AgoraBusiness(MockAuthorizationProvider)
 
     val agoraEntity = agoraBusiness.findSingle(testEntity1WithId.namespace.get,
                                                testEntity1WithId.name.get,
@@ -94,7 +93,7 @@ class AgoraAuthorizationTest extends ApiServiceSpec {
 
   "Agora" should "only return entities that can be read by user" in {
 
-    val agoraBusiness = new AgoraBusiness(TestAuthorizationProvider)
+    val agoraBusiness = new AgoraBusiness(MockAuthorizationProvider)
     val entities = agoraBusiness.find(testEntity1WithId, None, Seq(AgoraEntityType.Workflow, AgoraEntityType.Task), agoraCIOwner.get)
 
     // Without agoraCIOwner's permissions

@@ -1,15 +1,14 @@
 
-package org.broadinstitute.dsde.agora.server.dataaccess.authorization
+package org.broadinstitute.dsde.agora.server.dataaccess.acls
 
 import org.broadinstitute.dsde.agora.server.dataaccess.acls.AgoraPermissions._
-import org.broadinstitute.dsde.agora.server.dataaccess.acls.{AgoraPermissions, AuthorizationProvider}
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 
 import scala.collection.mutable
 
 //Test authorization implementation. Add authorizations directly to the hash map for lookup.
 // If no local permissions exist, full authorization is granted.
-object TestAuthorizationProvider extends AuthorizationProvider {
+object MockAuthorizationProvider extends AuthorizationProvider {
 
   // local permission storage.
   val entityPermissions = new mutable.HashMap[String, AgoraPermissions]()

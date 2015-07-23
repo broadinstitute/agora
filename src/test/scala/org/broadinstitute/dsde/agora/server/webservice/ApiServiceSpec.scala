@@ -2,7 +2,7 @@ package org.broadinstitute.dsde.agora.server.webservice
 
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
-import org.broadinstitute.dsde.agora.server.dataaccess.authorization.TestAuthorizationProvider
+import org.broadinstitute.dsde.agora.server.dataaccess.acls.MockAuthorizationProvider
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.configurations.ConfigurationsService
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
@@ -15,7 +15,7 @@ import spray.testkit.ScalatestRouteTest
 @DoNotDiscover
 class ApiServiceSpec extends FlatSpec with Directives with ScalatestRouteTest with BeforeAndAfterAll {
 
-  val agoraBusiness = new AgoraBusiness(TestAuthorizationProvider)
+  val agoraBusiness = new AgoraBusiness(MockAuthorizationProvider)
 
   val wrapWithExceptionHandler = handleExceptions(ExceptionHandler {
     case e: IllegalArgumentException => complete(BadRequest, e.getMessage)
@@ -58,8 +58,8 @@ class ApiServiceSpec extends FlatSpec with Directives with ScalatestRouteTest wi
       agoraCIOwner.get).head
   }
 
-  val methodsService = new MethodsService(TestAuthorizationProvider) with ActorRefFactoryContext with AgoraOpenAMMockDirectives
-  val configurationsService = new ConfigurationsService(TestAuthorizationProvider) with ActorRefFactoryContext with AgoraOpenAMMockDirectives
+  val methodsService = new MethodsService(MockAuthorizationProvider) with ActorRefFactoryContext with AgoraOpenAMMockDirectives
+  val configurationsService = new ConfigurationsService(MockAuthorizationProvider) with ActorRefFactoryContext with AgoraOpenAMMockDirectives
 
   def handleError[T](deserialized: Deserialized[T], assertions: (T) => Unit) = {
     if (status.isSuccess) {

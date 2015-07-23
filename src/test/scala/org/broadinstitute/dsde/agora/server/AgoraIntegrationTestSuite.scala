@@ -1,15 +1,15 @@
 
 package org.broadinstitute.dsde.agora.server
 
+import org.broadinstitute.dsde.agora.server.dataaccess.acls.GcsAuthorizationSpec
 import org.broadinstitute.dsde.agora.server.dataaccess.acls.gcs.GcsAuthorizationProvider
-import org.broadinstitute.dsde.agora.server.dataaccess.authorization.GcsAuthorizationSpec
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.EmbeddedMongo
 import org.scalatest.{BeforeAndAfterAll, Suites}
 
 class AgoraIntegrationTestSuite extends Suites(
   new GcsAuthorizationSpec) with BeforeAndAfterAll {
-  val agora = new Agora(GcsAuthorizationProvider)
-
+  val agora = new Agora(AgoraConfig.DevEnvironment)     // Integration Tests use the dev environment settings
+                                                        // AgoraOpenAMDirectives, GcsAuthorizationProvider, non-embedded Mongo
   override def beforeAll() {
     println(s"Starting Agora web services ($suiteName)")
     agora.start()

@@ -4,11 +4,11 @@ import akka.actor.Props
 import com.gettyimages.spray.swagger.SwaggerHttpService
 import com.wordnik.swagger.model.ApiInfo
 import org.broadinstitute.dsde.agora.server.AgoraConfig
-import org.broadinstitute.dsde.agora.server.business.AgoraAuthorizationException
-import org.broadinstitute.dsde.agora.server.dataaccess.acls.AuthorizationProvider
+import org.broadinstitute.dsde.agora.server.dataaccess.acls.{MockAuthorizationProvider, AuthorizationProvider}
+import org.broadinstitute.dsde.agora.server.dataaccess.acls.gcs.GcsAuthorizationProvider
 import org.broadinstitute.dsde.agora.server.webservice.configurations.ConfigurationsService
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
-import org.broadinstitute.dsde.agora.server.webservice.routes.AgoraOpenAMDirectives
+import org.broadinstitute.dsde.agora.server.webservice.routes.{MockAgoraDirectives, AgoraOpenAMDirectives}
 import spray.http.StatusCodes._
 import spray.routing._
 import spray.util.LoggingContext
@@ -16,10 +16,10 @@ import spray.util.LoggingContext
 import scala.reflect.runtime.universe._
 
 object ApiServiceActor {
-  def props(authorizationProvider: AuthorizationProvider): Props = Props(classOf[ApiServiceActor], authorizationProvider)
+  def props(environment: String): Props = Props(classOf[ApiServiceActor], environment)
 }
 
-class ApiServiceActor(authorization: AuthorizationProvider) extends HttpServiceActor {
+class ApiServiceActor(environment: String) extends HttpServiceActor {
 
   override def actorRefFactory = context
 
@@ -27,8 +27,22 @@ class ApiServiceActor(authorization: AuthorizationProvider) extends HttpServiceA
     def actorRefFactory = context
   }
 
-  val methodsService = new MethodsService(authorization) with ActorRefFactoryContext with AgoraOpenAMDirectives
-  val configurationsService = new ConfigurationsService(authorization) with ActorRefFactoryContext with AgoraOpenAMDirectives
+  val methodsService = AgoraConfig.useOpenAMAuthentication(environment) match {
+    case true => new MethodsService(authorizationProvider()) with ActorRefFactoryContext with AgoraOpenAMDirectives
+    case _    => new MethodsService(authorizationProvider()) with ActorRefFactoryContext with MockAgoraDirectives
+  }
+
+  val configurationsService = AgoraConfig.useOpenAMAuthentication(environment) match {
+    case true => new ConfigurationsService(authorizationProvider()) with ActorRefFactoryContext with AgoraOpenAMDirectives
+    case _    => new ConfigurationsService(authorizationProvider()) with ActorRefFactoryContext with MockAgoraDirectives
+  }
+
+  def authorizationProvider() : AuthorizationProvider = {
+    AgoraConfig.useGcsAuthorizationProvider(environment) match {
+      case true => GcsAuthorizationProvider
+      case _    => MockAuthorizationProvider
+    }
+  }
 
   def possibleRoutes = methodsService.routes ~ configurationsService.routes ~ swaggerService.routes ~
     get {

@@ -1,5 +1,5 @@
 
-package org.broadinstitute.dsde.agora.server.dataaccess.authorization
+package org.broadinstitute.dsde.agora.server.dataaccess.acls
 
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.AgoraIntegrationTestData._

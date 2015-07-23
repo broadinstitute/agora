@@ -6,7 +6,7 @@ import akka.io.Tcp.CommandFailed
 import akka.pattern.ask
 import akka.util.Timeout
 import com.typesafe.scalalogging.slf4j.LazyLogging
-import org.broadinstitute.dsde.agora.server.dataaccess.acls.AuthorizationProvider
+import org.broadinstitute.dsde.agora.server.dataaccess.mongo.EmbeddedMongo
 import org.broadinstitute.dsde.agora.server.webservice.ApiServiceActor
 import spray.can.Http
 
@@ -14,20 +14,26 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.util.Try
 
-class ServerInitializer extends LazyLogging {
+class ServerInitializer(environment: String) extends LazyLogging {
   implicit val actorSystem = ActorSystem("agora")
 
-  def startAllServices(authorizationProvider: AuthorizationProvider) {
-    startWebServiceActors(authorizationProvider)
+  def startAllServices() {
+    if (!AgoraConfig.useStandaloneMongoDb(environment)) {
+      EmbeddedMongo.startMongo()
+    }
+    startWebServiceActors(environment)
   }
 
   def stopAllServices() {
+    if (!AgoraConfig.useStandaloneMongoDb(environment)) {
+      EmbeddedMongo.stopMongo()
+    }
     stopAndCatchExceptions(stopWebServiceActors())
   }
 
-  private def startWebServiceActors(authorizationProvider: AuthorizationProvider) = {
+  private def startWebServiceActors(environment: String) = {
     implicit val bindTimeout: Timeout = 120.seconds
-    val service = actorSystem.actorOf(ApiServiceActor.props(authorizationProvider), "agora-actor")
+    val service = actorSystem.actorOf(ApiServiceActor.props(environment), "agora-actor")
     Await.result(IO(Http) ? Http.Bind(service, interface = AgoraConfig.webserviceInterface, port = AgoraConfig.port), bindTimeout.duration) match {
       case CommandFailed(b: Http.Bind) =>
         logger.error(s"Unable to bind to port ${AgoraConfig.port} on interface ${AgoraConfig.webserviceInterface}")

@@ -5,7 +5,7 @@ import cromwell.parser.WdlParser.SyntaxError
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.business.{ImportResolverHelper, MethodImportResolver}
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraEntityNotFoundException
-import org.broadinstitute.dsde.agora.server.dataaccess.authorization.TestAuthorizationProvider
+import org.broadinstitute.dsde.agora.server.dataaccess.acls.MockAuthorizationProvider
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
@@ -100,14 +100,14 @@ class AgoraImportSpec extends ApiServiceSpec {
 
   "MethodImportResolver" should "reject import if scheme != methods://" in {
     val uri = "blah://"
-    val resolver = MethodImportResolver(agoraCIOwner.get, agoraBusiness, TestAuthorizationProvider)
+    val resolver = MethodImportResolver(agoraCIOwner.get, agoraBusiness, MockAuthorizationProvider)
     val thrown = the[SyntaxError] thrownBy resolver.importResolver(uri)
     assert(thrown.getMessage.contains("start with") === true)
   }
 
   "MethodImportResolver" should "throw an AgoraEntityNotFoundException if method not found" in {
     val uri = "methods://foo.bar.22"
-    val resolver = MethodImportResolver(agoraCIOwner.get, agoraBusiness, TestAuthorizationProvider)
+    val resolver = MethodImportResolver(agoraCIOwner.get, agoraBusiness, MockAuthorizationProvider)
     val thrown = intercept[AgoraEntityNotFoundException] {
       resolver.importResolver(uri)
     }
@@ -119,7 +119,7 @@ class AgoraImportSpec extends ApiServiceSpec {
     val name = testEntityTaskWcWithId.name.get
     val id = testEntityTaskWcWithId.snapshotId.get
     val uri = s"methods://$namespace.$name.$id"
-    val resolver = MethodImportResolver(agoraCIOwner.get, agoraBusiness, TestAuthorizationProvider)
+    val resolver = MethodImportResolver(agoraCIOwner.get, agoraBusiness, MockAuthorizationProvider)
     val payload = resolver.importResolver(uri)
     assert(payload.contains("wc") === true)
   }

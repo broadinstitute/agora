@@ -1,3 +1,5 @@
+resolvers += Resolver.url("fix-sbt-plugin-releases", url("http://dl.bintray.com/sbt/sbt-plugin-releases"))(Resolver.ivyStylePatterns)
+
 addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "0.6.4")
 
 addSbtPlugin("com.github.gseitz" % "sbt-release" % "0.8.3")

@@ -4,6 +4,7 @@ package org.broadinstitute.dsde.agora.server.webservice
 import cromwell.parser.WdlParser.SyntaxError
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.business.{ImportResolverHelper, MethodImportResolver}
+import org.broadinstitute.dsde.agora.server.dataaccess.AgoraEntityNotFoundException
 import org.broadinstitute.dsde.agora.server.dataaccess.authorization.TestAuthorizationProvider
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
@@ -24,10 +25,10 @@ class AgoraImportSpec extends ApiServiceSpec {
     }
   }
 
-  "MethodsService" should "return a 400 bad request when posting a WDL with an import statement that references a non-existent method" in {
+  "MethodsService" should "return a 404 bad request when posting a WDL with an import statement that references a non-existent method" in {
     Post(ApiUtil.Methods.withLeadingSlash, testBadAgoraEntityNonExistentWdlImportFormat) ~>
       methodsService.postRoute ~> check {
-      assert(status === BadRequest)
+      assert(status === NotFound)
       assert(responseAs[String] != null)
     }
   }
@@ -36,7 +37,7 @@ class AgoraImportSpec extends ApiServiceSpec {
     // Verifying that the pre-loaded task exists...
     Get(ApiUtil.Methods.withLeadingSlash + "/" + testEntityTaskWcWithId.namespace.get + "/" + testEntityTaskWcWithId.name.get + "/"
       + testEntityTaskWcWithId.snapshotId.get) ~> methodsService.querySingleRoute ~> check {
-      handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => assert(entity === testEntityTaskWcWithId))
+      handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => assert(brief(entity) === testEntityTaskWcWithId))
       assert(status === OK)
     }
     Post(ApiUtil.Methods.withLeadingSlash, testEntityWorkflowWithExistentWdlImport) ~>
@@ -79,9 +80,11 @@ class AgoraImportSpec extends ApiServiceSpec {
     noException should be thrownBy ImportResolverHelper.validateUri("methods://foo.bar.2")
   }
 
-  "ImportResolverHelper.resolve" should "return None if method does not exist" in {
-    val method = ImportResolverHelper.resolve("methods://foo.bar.1", agoraBusiness, agoraCIOwner.get)
-    assert(method === None)
+  "ImportResolverHelper.resolve" should "return throw an AgoraEntityNotFoundException if method does not exist" in {
+    val thrown = intercept[AgoraEntityNotFoundException] {
+      ImportResolverHelper.resolve("methods://foo.bar.1", agoraBusiness, agoraCIOwner.get)
+    }
+    assert(thrown != null)
   }
 
   "ImportResolverHelper.resolve" should "return the method if it exists" in {
@@ -90,9 +93,9 @@ class AgoraImportSpec extends ApiServiceSpec {
     val id = testEntityTaskWcWithId.snapshotId.get
     val method = ImportResolverHelper.resolve(s"methods://$namespace.$name.$id", agoraBusiness, agoraCIOwner.get)
     assert(method !== None)
-    assert(method.get.namespace.get === namespace)
-    assert(method.get.name.get === name)
-    assert(method.get.snapshotId.get === id)
+    assert(method.namespace.get === namespace)
+    assert(method.name.get === name)
+    assert(method.snapshotId.get === id)
   }
 
   "MethodImportResolver" should "reject import if scheme != methods://" in {
@@ -102,11 +105,13 @@ class AgoraImportSpec extends ApiServiceSpec {
     assert(thrown.getMessage.contains("start with") === true)
   }
 
-  "MethodImportResolver" should "reject import if method not found" in {
+  "MethodImportResolver" should "throw an AgoraEntityNotFoundException if method not found" in {
     val uri = "methods://foo.bar.22"
     val resolver = MethodImportResolver(agoraCIOwner.get, agoraBusiness, TestAuthorizationProvider)
-    val thrown = the[SyntaxError] thrownBy resolver.importResolver(uri)
-    assert(thrown.getMessage.contains("Can't resolve import") === true)
+    val thrown = intercept[AgoraEntityNotFoundException] {
+      resolver.importResolver(uri)
+    }
+    assert(thrown != null)
   }
 
   "MethodImportResolver" should "return payload if method is found" in {

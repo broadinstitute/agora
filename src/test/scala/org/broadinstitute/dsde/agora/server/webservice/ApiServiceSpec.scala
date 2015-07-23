@@ -9,13 +9,11 @@ import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
 import org.scalatest.{DoNotDiscover, _}
 import spray.http.StatusCodes._
 import spray.httpx.unmarshalling._
-import spray.routing.{MalformedRequestContentRejection, ExceptionHandler, Directives, RejectionHandler}
+import spray.routing.{Directives, ExceptionHandler, MalformedRequestContentRejection, RejectionHandler}
 import spray.testkit.ScalatestRouteTest
 
 @DoNotDiscover
 class ApiServiceSpec extends FlatSpec with Directives with ScalatestRouteTest with BeforeAndAfterAll {
-  import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
-  import spray.httpx.SprayJsonSupport._
 
   val agoraBusiness = new AgoraBusiness(TestAuthorizationProvider)
 
@@ -42,16 +40,22 @@ class ApiServiceSpec extends FlatSpec with Directives with ScalatestRouteTest wi
   var testConfigurationEntityWithId: AgoraEntity = null
 
   override def beforeAll() = {
-    testEntity1WithId = agoraBusiness.findSingle(testEntity1, agoraCIOwner.get).get
-    testEntity2WithId = agoraBusiness.findSingle(testEntity2, agoraCIOwner.get).get
-    testEntity3WithId = agoraBusiness.findSingle(testEntity3, agoraCIOwner.get).get
-    testEntity4WithId = agoraBusiness.findSingle(testEntity4, agoraCIOwner.get).get
-    testEntity5WithId = agoraBusiness.findSingle(testEntity5, agoraCIOwner.get).get
-    testEntity6WithId = agoraBusiness.findSingle(testEntity6, agoraCIOwner.get).get
-    testEntity7WithId = agoraBusiness.findSingle(testEntity7, agoraCIOwner.get).get
+    testEntity1WithId = agoraBusiness.find(testEntity1, None, Seq(testEntity1.entityType.get), agoraCIOwner.get).head
+    testEntity2WithId = agoraBusiness.find(testEntity2, None, Seq(testEntity2.entityType.get), agoraCIOwner.get).head
+    testEntity3WithId = agoraBusiness.find(testEntity3, None, Seq(testEntity3.entityType.get), agoraCIOwner.get).head
+    testEntity4WithId = agoraBusiness.find(testEntity4, None, Seq(testEntity4.entityType.get), agoraCIOwner.get).head
+    testEntity5WithId = agoraBusiness.find(testEntity5, None, Seq(testEntity5.entityType.get), agoraCIOwner.get).head
+    testEntity6WithId = agoraBusiness.find(testEntity6, None, Seq(testEntity6.entityType.get), agoraCIOwner.get).head
+    testEntity7WithId = agoraBusiness.find(testEntity7, None, Seq(testEntity7.entityType.get), agoraCIOwner.get).head
 
-    testEntityTaskWcWithId = agoraBusiness.findSingle(testEntityTaskWc, agoraCIOwner.get).get
-    testConfigurationEntityWithId = agoraBusiness.findSingle(testAgoraConfigurationEntity, agoraCIOwner.get).get
+    testEntityTaskWcWithId = agoraBusiness.find(testEntityTaskWc,
+      None,
+      Seq(testEntityTaskWc.entityType.get),
+      agoraCIOwner.get).head
+    testConfigurationEntityWithId = agoraBusiness.find(testAgoraConfigurationEntity,
+      None,
+      Seq(testAgoraConfigurationEntity.entityType.get),
+      agoraCIOwner.get).head
   }
 
   val methodsService = new MethodsService(TestAuthorizationProvider) with ActorRefFactoryContext with AgoraOpenAMMockDirectives
@@ -81,6 +85,10 @@ class ApiServiceSpec extends FlatSpec with Directives with ScalatestRouteTest wi
         entityType = entity.entityType
       )
     )
+  }
+
+  def brief(agoraEntity: AgoraEntity): AgoraEntity = {
+    brief(Seq(agoraEntity)).head
   }
 
   def excludeProjection(entities: Seq[AgoraEntity]): Seq[AgoraEntity] = {

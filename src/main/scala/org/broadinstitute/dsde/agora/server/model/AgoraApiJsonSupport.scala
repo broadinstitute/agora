@@ -45,7 +45,7 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
         val cn = x.fields("cn").convertTo[Seq[String]]
         val mailJson = x.fields.get("mail")
         val mail = mailJson match {
-          case Some(mailJson) => mailJson.convertTo[Seq[String]]
+          case Some(emailJson) => emailJson.convertTo[Seq[String]]
           case None => Seq.empty[String]
         }
         UserInfoResponse(username, cn, mail)

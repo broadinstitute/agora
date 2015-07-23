@@ -14,6 +14,6 @@ class GcsAuthorizationSpec extends FlatSpec {
 
   "Agora" should "verify GCS authorization when creating a new method" in {
     val entity = agoraBusiness.insert(testIntegrationEntity, "jcarey@broadinstitute.org")
-    assert(agoraBusiness.findSingle(testIntegrationEntity, username).get === entity)
+    assert(agoraBusiness.findSingle(entity, Seq(entity.entityType.get), username) === entity)
   }
 }

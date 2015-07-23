@@ -2,14 +2,12 @@
 package org.broadinstitute.dsde.agora.server.model
 
 import com.wordnik.swagger.annotations.{ApiModel, ApiModelProperty}
-import cromwell.binding.WdlNamespace
 import org.broadinstitute.dsde.agora.server.AgoraConfig
-import org.broadinstitute.dsde.agora.server.business.MethodImportResolver
 import org.joda.time.DateTime
-import scalaz._
-import scalaz.Scalaz._
 
 import scala.annotation.meta.field
+import scalaz.Scalaz._
+import scalaz._
 
 object AgoraEntityType extends Enumeration {
   def byPath(path: String): Seq[EntityType] = path match {
@@ -72,7 +70,7 @@ object AgoraEntity {
     }
 
     val _id = entity.snapshotId match {
-      case Some(id) => validateSnapshotId(id)
+      case Some(snapShotId) => validateSnapshotId(snapShotId)
       case None => None.successNel[String]
     }
 
@@ -86,7 +84,7 @@ object AgoraEntity {
       case None => None.successNel[String]
     }
 
-    def doNothing = true
+    def doNothing() = true
 
     // The |@| operator is a combinator that combines the validations into a single object
     // This allows all of the errors to be returned at once!

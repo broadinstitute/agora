@@ -1,12 +1,11 @@
 package org.broadinstitute.dsde.agora.server.business
 
 import cromwell.binding._
-import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
+import org.broadinstitute.dsde.agora.server.dataaccess.acls.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.dataaccess.acls.{AgoraPermissions, AuthorizationProvider}
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection, AgoraEntityType}
 import org.joda.time.DateTime
-import org.broadinstitute.dsde.agora.server.dataaccess.acls.AgoraPermissions._
 
 class AgoraBusiness(authorizationProvider: AuthorizationProvider) {
 
@@ -35,32 +34,16 @@ class AgoraBusiness(authorizationProvider: AuthorizationProvider) {
                  name: String,
                  snapshotId: Int,
                  entityTypes: Seq[AgoraEntityType.EntityType],
-                 username: String): Option[AgoraEntity] = {
-    val optEntity = AgoraDao.createAgoraDao(entityTypes).findSingle(namespace, name, snapshotId)
-    optEntity match {
-      case Some(foundEntity) =>
-        if (authorizationProvider.isAuthorizedForRead(foundEntity, username)) {
-          Some(foundEntity.addUrl())
-        }
-        else throw new AgoraAuthorizationException(AgoraPermissions(Read), foundEntity)
-      case None => None
+                 username: String): AgoraEntity = {
+    val foundEntity = AgoraDao.createAgoraDao(entityTypes).findSingle(namespace, name, snapshotId)
+    if (authorizationProvider.isAuthorizedForRead(foundEntity, username)) {
+      foundEntity.addUrl()
     }
+    else throw new AgoraAuthorizationException(AgoraPermissions(Read), foundEntity)
   }
 
-  def findSingle(entity: AgoraEntity, entityTypes: Seq[AgoraEntityType.EntityType], username: String): Option[AgoraEntity] = {
+  def findSingle(entity: AgoraEntity, entityTypes: Seq[AgoraEntityType.EntityType], username: String): AgoraEntity = {
     findSingle(entity.namespace.get, entity.name.get, entity.snapshotId.get, entityTypes, username)
-  }
-
-  def findSingle(entity: AgoraEntity, username: String): Option[AgoraEntity] = {
-    val optEntity = AgoraDao.createAgoraDao(entity.entityType).findSingle(entity)
-    optEntity match {
-      case Some(foundEntity) =>
-        if (authorizationProvider.isAuthorizedForRead(foundEntity, username)) {
-          Some(foundEntity.addUrl())
-        }
-        else throw new AgoraAuthorizationException(AgoraPermissions(Read), foundEntity)
-      case None => None
-    }
   }
 
   private def validatePayload(agoraEntity: AgoraEntity, username: String): Unit = {

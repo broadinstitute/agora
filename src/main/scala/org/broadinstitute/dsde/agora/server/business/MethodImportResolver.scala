@@ -4,15 +4,14 @@ package org.broadinstitute.dsde.agora.server.business
 import cromwell.binding._
 import cromwell.parser.WdlParser.SyntaxError
 import org.broadinstitute.dsde.agora.server.dataaccess.acls.AuthorizationProvider
-import org.broadinstitute.dsde.agora.server.model.{AgoraEntityType, AgoraEntity}
+import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
 
 case class MethodImportResolver(username: String, agoraBusiness: AgoraBusiness, authorizationProvider: AuthorizationProvider) {
   def importResolver(importUri: String): WdlSource = {
     ImportResolverHelper.validateUri(importUri)
     val method = ImportResolverHelper.resolve(importUri, agoraBusiness, username)
-    if (method.isEmpty) throw new SyntaxError(s"Can't resolve import: $importUri")
-    val canRead = authorizationProvider.isAuthorizedForRead(method.get, username)
-    if (canRead) method.get.payload.get
+    val canRead = authorizationProvider.isAuthorizedForRead(method, username)
+    if (canRead) method.payload.get
     else throw new SyntaxError(s"Can't resolve import: $importUri")
   }
 }
@@ -21,7 +20,7 @@ object ImportResolverHelper {
 
   private val methodScheme = "methods://"
 
-  def resolve(uri: String, agoraBusiness: AgoraBusiness, username: String): Option[AgoraEntity] = {
+  def resolve(uri: String, agoraBusiness: AgoraBusiness, username: String): AgoraEntity = {
     val withoutScheme = removeScheme(uri)
     val parts = uriParts(withoutScheme)
     val namespace = parts(0)

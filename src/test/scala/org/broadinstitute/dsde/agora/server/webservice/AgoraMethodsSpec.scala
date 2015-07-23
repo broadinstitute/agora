@@ -19,7 +19,7 @@ class AgoraMethodsSpec extends ApiServiceSpec {
   "Agora" should "return information about a method, including metadata " in {
     Get(ApiUtil.Methods.withLeadingSlash + "/" + namespace1.get + "/" + name1.get + "/"
       + testEntity1WithId.snapshotId.get) ~> methodsService.querySingleRoute ~> check {
-      handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => assert(entity === testEntity1WithId))
+      handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => assert(brief(entity) === testEntity1WithId))
       assert(status === OK)
     }
   }
@@ -37,7 +37,7 @@ class AgoraMethodsSpec extends ApiServiceSpec {
     Get(ApiUtil.Methods.withLeadingSlash + "/foofoofoofoo/foofoofoo/99999"
     ) ~> methodsService.querySingleRoute ~> check {
       assert(status === NotFound)
-      assert(mediaType === `application/json`)
+      assert(mediaType === `text/plain`)
     }
   }
 

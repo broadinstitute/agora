@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 ################################################################################
 # agora.py
 # 
@@ -180,7 +181,7 @@ if __name__ == "__main__":
     push_parser.add_argument('-s', '--namespace', dest='namespace', action='store', help='The namespace for method addition. Default value is your user login name')
     push_parser.add_argument('-n', '--name', dest='name', action='store', help='The method name to provide for method addition. Default is the name of the PAYLOAD_FILE.')
     push_parser.add_argument('-d', '--documentation', dest='docs', action='store', help='A file containing user documentation. Must be <10kb. May be plain text. Marking languages such as HTML or Github markdown are also supported')
-    push_parser.add_argument('-t', '--entityType', dest='entityType', action='store', help='The type of the entities you are trying to get', choices=['Task', 'Workflow', 'Configuration'], default='Workflow')
+    push_parser.add_argument('-t', '--entityType', dest='entityType', action='store', help='The type of the entities you are trying to get', choices=['Task', 'Workflow', 'Configuration'], required=True)
     push_parser.add_argument('PAYLOAD_FILE', help='A file containing the payload. For configurations, JSON. For tasks + workflows, the method description in WDL')
     push_parser.set_defaults(func=push)
     

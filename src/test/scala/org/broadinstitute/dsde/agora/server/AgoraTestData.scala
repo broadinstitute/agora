@@ -1,8 +1,8 @@
 package org.broadinstitute.dsde.agora.server
 
-import org.broadinstitute.dsde.agora.server.model.{AgoraEntityType, AgoraEntity}
+import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
 
-trait AgoraTestData {
+object AgoraTestData {
   def getBigDocumentation: String = {
     // Read contents of a test markdown file into a single string.
     val markdown = io.Source.fromFile("src/test/resources/TESTMARKDOWN.md").getLines() mkString "\n"
@@ -73,106 +73,106 @@ trait AgoraTestData {
                            |
                            |
                            | """.stripMargin)
-  val payload2 = Option("task test {}")
-  val payloadWcTask = Option("""
-                           |task wc {
-                           |  command {
-                           |    wc -l ${sep=' ' File files+} | tail -1 | cut -d' ' -f 2
-                           |  }
-                           |  output {
-                           |    Int count = read_int("stdout")
-                           |  }
-                           |}
-                           |
-                           | """.stripMargin)
+  val payload2 = Option("task test { command { test } }")
+  val payloadWcTask = Option( """
+                                |task wc {
+                                |  command {
+                                |    wc -l ${sep=' ' File files+} | tail -1 | cut -d' ' -f 2
+                                |  }
+                                |  output {
+                                |    Int count = read_int("stdout")
+                                |  }
+                                |}
+                                |
+                                | """.stripMargin)
   val payloadReferencingExternalMethod = Option( """
-                           |import "methods://broad.wc.1"
-                           |
-                           |task grep {
-                           |  command {
-                           |    grep ${pattern} ${flags?} ${File file_name}
-                           |  }
-                           |  output {
-                           |    File out = "stdout"
-                           |  }
-                           |  runtime {
-                           |    memory: "2MB"
-                           |    cores: 1
-                           |    disk: "3MB"
-                           |  }
-                           |}
-                           |
-                           |workflow scatter_gather_grep_wc {
-                           |  Array[File] input_files
-                           |  scatter(f in input_files) {
-                           |    call grep {
-                           |      input: file_name = f
-                           |    }
-                           |  }
-                           |  call wc {
-                           |    input: files = grep.out
-                           |  }
-                           |}
-                           | """.stripMargin)
+                                                   |import "methods://broad.wc.1"
+                                                   |
+                                                   |task grep {
+                                                   |  command {
+                                                   |    grep ${pattern} ${flags?} ${File file_name}
+                                                   |  }
+                                                   |  output {
+                                                   |    File out = "stdout"
+                                                   |  }
+                                                   |  runtime {
+                                                   |    memory: "2MB"
+                                                   |    cores: 1
+                                                   |    disk: "3MB"
+                                                   |  }
+                                                   |}
+                                                   |
+                                                   |workflow scatter_gather_grep_wc {
+                                                   |  Array[File] input_files
+                                                   |  scatter(f in input_files) {
+                                                   |    call grep {
+                                                   |      input: file_name = f
+                                                   |    }
+                                                   |  }
+                                                   |  call wc {
+                                                   |    input: files = grep.out
+                                                   |  }
+                                                   |}
+                                                   | """.stripMargin)
   val badPayload = Option("task test {")
-  val badPayloadInvalidImport = Option("""
-                           |import "invalid_syntax_for_tool"
-                           |import "broad.wc.1"
-                           |
-                           |workflow scatter_gather_grep_wc {
-                           |  Array[File] input_files
-                           |  scatter(f in input_files) {
-                           |    call grep {
-                           |      input: file_name = f
-                           |    }
-                           |  }
-                           |  call wc {
-                           |    input: files = grep.out
-                           |  }
-                           |}
-                           |
-                           | """.stripMargin)
-  val badPayloadNonExistentImport = Option("""
-                           |import "methods://broad.non_existent_grep.1"
-                           |import "broad.wc.1"
-                           |
-                           |workflow scatter_gather_grep_wc {
-                           |  Array[File] input_files
-                           |  scatter(f in input_files) {
-                           |    call grep {
-                           |      input: file_name = f
-                           |    }
-                           |  }
-                           |  call wc {
-                           |    input: files = grep.out
-                           |  }
-                           |}
-                           |
-                           | """.stripMargin)
+  val badPayloadInvalidImport = Option( """
+                                          |import "invalid_syntax_for_tool"
+                                          |import "broad.wc.1"
+                                          |
+                                          |workflow scatter_gather_grep_wc {
+                                          |  Array[File] input_files
+                                          |  scatter(f in input_files) {
+                                          |    call grep {
+                                          |      input: file_name = f
+                                          |    }
+                                          |  }
+                                          |  call wc {
+                                          |    input: files = grep.out
+                                          |  }
+                                          |}
+                                          |
+                                          | """.stripMargin)
+  val badPayloadNonExistentImport = Option( """
+                                              |import "methods://broad.non_existent_grep.1"
+                                              |import "broad.wc.1"
+                                              |
+                                              |workflow scatter_gather_grep_wc {
+                                              |  Array[File] input_files
+                                              |  scatter(f in input_files) {
+                                              |    call grep {
+                                              |      input: file_name = f
+                                              |    }
+                                              |  }
+                                              |  call wc {
+                                              |    input: files = grep.out
+                                              |  }
+                                              |}
+                                              |
+                                              | """.stripMargin)
 
-  val taskConfigPayload = Option("""{
-                                   |  "method": {
-                                   |    "name": "method",
-                                   |    "namespace": "method_ns",
-                                   |    "version": "1"
-                                   |  },
-                                   |  "name": "first",
-                                   |  "workspaceName": {
-                                   |    "namespace": "foo",
-                                   |    "name": "bar"
-                                   |  },
-                                   |  "outputs": {
-                                   |
-                                   |  },
-                                   |  "inputs": {
-                                   |    "p": "hi"
-                                   |  },
-                                   |  "rootEntityType": "sample",
-                                   |  "prerequisites": {
-                                   |
-                                   |  },
-                                   |  "namespace": "ns"
-                                   |}""".stripMargin)
+  val taskConfigPayload = Option( """{
+                                    |  "method": {
+                                    |    "name": "method",
+                                    |    "namespace": "method_ns",
+                                    |    "version": "1"
+                                    |  },
+                                    |  "name": "first",
+                                    |  "workspaceName": {
+                                    |    "namespace": "foo",
+                                    |    "name": "bar"
+                                    |  },
+                                    |  "outputs": {
+                                    |
+                                    |  },
+                                    |  "inputs": {
+                                    |    "p": "hi"
+                                    |  },
+                                    |  "rootEntityType": "sample",
+                                    |  "prerequisites": {
+                                    |
+                                    |  },
+                                    |  "namespace": "ns"
+                                    |}""".stripMargin)
 
   val testEntity1 = AgoraEntity(namespace = namespace1,
     name = name1,

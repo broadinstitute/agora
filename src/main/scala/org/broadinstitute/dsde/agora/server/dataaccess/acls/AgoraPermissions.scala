@@ -36,4 +36,5 @@ case class AgoraPermissions(permissions: Int) {
   def canRedact: Boolean = (permissions & Redact) != 0
 
   def canManage: Boolean = (permissions & Manage) != 0
+
 }

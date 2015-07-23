@@ -1,37 +1,26 @@
 package org.broadinstitute.dsde.agora.server.business
 
-import org.broadinstitute.dsde.agora.server.{AgoraTestData, AgoraConfig}
-import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
+import org.broadinstitute.dsde.agora.server.AgoraTestData._
+import org.broadinstitute.dsde.agora.server.dataaccess.authorization.TestAuthorizationProvider
 import org.scalatest.{DoNotDiscover, FlatSpec, Matchers}
 
 @DoNotDiscover
-class AgoraBusinessTest extends FlatSpec with Matchers with AgoraTestData {
+class AgoraBusinessTest extends FlatSpec with Matchers {
 
-  val agoraBusiness = new AgoraBusiness()
+  val agoraBusiness = new AgoraBusiness(TestAuthorizationProvider)
+  val methodImportResolver = new MethodImportResolver(agoraCIOwner.get, agoraBusiness, TestAuthorizationProvider)
 
-  "Agora" should "return an empty URL if entity namespace, name, or snapshotId are missing" in {
-    val noNamespace = AgoraEntity(name = Option("test"), snapshotId = Option(12), entityType = Option(AgoraEntityType.Task))
-    val noName = AgoraEntity(namespace = Option("broad"), snapshotId = Option(12), entityType = Option(AgoraEntityType.Task))
-    val noSnapshotId = AgoraEntity(namespace = Option("broad"), name = Option("test"), entityType = Option(AgoraEntityType.Task))
-    assert(agoraBusiness.agoraUrl(noNamespace) === "")
-    assert(agoraBusiness.agoraUrl(noName) === "")
-    assert(agoraBusiness.agoraUrl(noSnapshotId) === "")
-  }
-
-  "Agora" should "return a URL given an entity with a namespace, name, and id" in {
-    val entity = AgoraEntity(namespace = Option("broad"), name = Option("test"), snapshotId = Option(12), entityType = Option(AgoraEntityType.Task))
-    assert(agoraBusiness.agoraUrl(entity) === AgoraConfig.methodsUrl + "broad/test/12")
-  }
-
-  ignore should "not find a method payload when resolving a WDL import statement if the method has not been added" in {
+  "Agora" should "not find a method payload when resolving a WDL import statement if the method has not been added" in {
     val importString = "methods://broad.nonexistent.5400"
-    assert(agoraBusiness.importResolver(importString, agoraCIOwner.get) === "")
+    intercept[Exception] {
+      methodImportResolver.importResolver(importString)
+    }
   }
 
   "Agora" should "throw an exception when trying to resolve a WDL import that is improperly formatted" in {
     val importString = "methods:broad.nonexistent.5400"
     intercept[Exception] {
-      agoraBusiness.importResolver(importString, agoraCIOwner.get)
+      methodImportResolver.importResolver(importString)
     }
   }
 }

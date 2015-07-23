@@ -4,7 +4,7 @@ package org.broadinstitute.dsde.agora.server.dataaccess
 import com.mongodb.casbah.MongoCollection
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.AgoraMongoClient._
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.AgoraMongoDao
-import org.broadinstitute.dsde.agora.server.model.{AgoraEntityType, AgoraEntity, AgoraEntityProjection}
+import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection, AgoraEntityType}
 
 object AgoraDao {
   //factory method (currently only supports mongo)
@@ -26,7 +26,7 @@ trait AgoraDao {
 
   def find(entity: AgoraEntity, agoraProjection: Option[AgoraEntityProjection] = None): Seq[AgoraEntity]
 
-  def findSingle(entity: AgoraEntity): Option[AgoraEntity]
+  def findSingle(entity: AgoraEntity): AgoraEntity
 
-  def findSingle(namespace: String, name: String, snapshotId: Int): Option[AgoraEntity]
+  def findSingle(namespace: String, name: String, snapshotId: Int): AgoraEntity
 }

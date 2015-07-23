@@ -7,9 +7,9 @@ import com.mongodb.casbah.MongoCollection
 import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb.casbah.query.Imports
 import com.mongodb.util.JSON
-import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.AgoraMongoClient._
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.AgoraMongoDao._
+import org.broadinstitute.dsde.agora.server.dataaccess.{AgoraDao, AgoraEntityNotFoundException}
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntityProjection._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection}
@@ -55,10 +55,7 @@ class AgoraMongoDao(collections: Seq[MongoCollection]) extends AgoraDao {
     //insert the entity
     val dbEntityToInsert = EntityToMongoDbObject(entityWithId)
     collection.insert(dbEntityToInsert)
-    findSingle(entityWithId) match {
-      case None => throw new Exception("failed to find inserted entity?")
-      case foundEntity => foundEntity.get
-    }
+    findSingle(entityWithId)
   }
 
   def getNextId(entity: AgoraEntity): Int = {
@@ -80,11 +77,11 @@ class AgoraMongoDao(collections: Seq[MongoCollection]) extends AgoraDao {
     currentCount.get(CounterSequenceField).asInstanceOf[Int]
   }
 
-  override def findSingle(entity: AgoraEntity): Option[AgoraEntity] = {
+  override def findSingle(entity: AgoraEntity): AgoraEntity = {
     val entityVector = find(EntityToMongoDbObject(entity), None)
     entityVector.length match {
-      case 1 => Some(entityVector.head)
-      case 0 => None
+      case 1 => entityVector.head
+      case 0 => throw new AgoraEntityNotFoundException(entity)
       case _ => throw new Exception("Found > 1 documents matching: " + entity.toString)
     }
   }
@@ -122,7 +119,7 @@ class AgoraMongoDao(collections: Seq[MongoCollection]) extends AgoraDao {
     }
   }
 
-  override def findSingle(namespace: String, name: String, snapshotId: Int): Option[AgoraEntity] = {
+  override def findSingle(namespace: String, name: String, snapshotId: Int): AgoraEntity = {
     val entity = AgoraEntity(namespace = Option(namespace), name = Option(name), snapshotId = Option(snapshotId))
     findSingle(entity)
   }

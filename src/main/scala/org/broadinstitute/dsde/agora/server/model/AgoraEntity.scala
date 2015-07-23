@@ -4,10 +4,10 @@ package org.broadinstitute.dsde.agora.server.model
 import com.wordnik.swagger.annotations.{ApiModel, ApiModelProperty}
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.joda.time.DateTime
-import scalaz._
-import scalaz.Scalaz._
 
 import scala.annotation.meta.field
+import scalaz.Scalaz._
+import scalaz._
 
 object AgoraEntityType extends Enumeration {
   def byPath(path: String): Seq[EntityType] = path match {
@@ -70,7 +70,7 @@ object AgoraEntity {
     }
 
     val _id = entity.snapshotId match {
-      case Some(id) => validateSnapshotId(id)
+      case Some(snapShotId) => validateSnapshotId(snapShotId)
       case None => None.successNel[String]
     }
 
@@ -84,7 +84,7 @@ object AgoraEntity {
       case None => None.successNel[String]
     }
 
-    def doNothing = true
+    def doNothing() = true
 
     // The |@| operator is a combinator that combines the validations into a single object
     // This allows all of the errors to be returned at once!
@@ -127,6 +127,14 @@ case class AgoraEntity(@(ApiModelProperty@field)(required = false, value = "The 
   AgoraEntity.validate(this) match {
     case Success(_) => this
     case Failure(errors) => throw new IllegalArgumentException(s"Entity is not valid: Errors: $errors")
+  }
+
+  def agoraUrl: String = {
+    AgoraConfig.urlFromType(entityType) + namespace.get + "/" + name.get + "/" + snapshotId.get
+  }
+
+  def addUrl(): AgoraEntity = {
+    copy(url = Option(agoraUrl))
   }
 }
 

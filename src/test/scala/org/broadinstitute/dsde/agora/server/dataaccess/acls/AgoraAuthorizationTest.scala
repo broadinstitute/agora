@@ -1,8 +1,10 @@
 
 package org.broadinstitute.dsde.agora.server.dataaccess.acls
 
+import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
-import AgoraPermissions._
+import org.broadinstitute.dsde.agora.server.dataaccess.acls.AgoraPermissions._
+import org.broadinstitute.dsde.agora.server.dataaccess.authorization.TestAuthorizationProvider
 import org.broadinstitute.dsde.agora.server.dataaccess.authorization.TestAuthorizationProvider._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntityType
 import org.broadinstitute.dsde.agora.server.webservice.ApiServiceSpec
@@ -63,42 +65,36 @@ class AgoraAuthorizationTest extends ApiServiceSpec {
     assert(newAuthorization.canManage === false)
   }
 
-  "Agora" should "only authorize users with permissions in local permisison storage" in {
-    val agoraBusiness = new AgoraBusiness()
+  "Agora" should "only authorize users with permissions in local permission storage" in {
+    val agoraBusiness = new AgoraBusiness(TestAuthorizationProvider)
 
     val agoraEntity = agoraBusiness.findSingle(testEntity1WithId.namespace.get,
-                                          testEntity1WithId.name.get,
-                                          testEntity1WithId.snapshotId.get,
-                                          Seq(testEntity1WithId.entityType.get),
-                                          agoraCIOwner.get)
+                                               testEntity1WithId.name.get,
+                                               testEntity1WithId.snapshotId.get,
+                                               Seq(testEntity1WithId.entityType.get),
+                                               agoraCIOwner.get)
 
-    agoraEntity match {
-      case Some(entity) => {
+    //default permission is full authorization with testAuth
+    assert(isAuthorizedForRead(agoraEntity, owner2.get) === true)
+    assert(isAuthorizedForCreation(agoraEntity, owner2.get) === true)
 
-        //default permission is full authorization with testAuth
-        assert(isAuthorizedForRead(entity, owner2.get) === true)
-        assert(isAuthorizedForCreation(entity, owner2.get) === true)
+    //Remove owner1's permissions
+    addEntityPermission(hash(agoraEntity, owner1.get), AgoraPermissions(Nothing))
+    addNamespacePermission(hash(agoraEntity, owner1.get), AgoraPermissions(Nothing))
 
-        //Remove owner1's permissions
-        addEntityPermission(hash(entity, owner1.get), AgoraPermissions(Nothing))
-        addNamespacePermission(hash(entity, owner1.get), AgoraPermissions(Nothing))
+    assert(isAuthorizedForRead(agoraEntity, owner1.get) === false)
+    assert(isAuthorizedForCreation(agoraEntity, owner1.get) === false)
 
-        assert(isAuthorizedForRead(entity, owner1.get) === false)
-        assert(isAuthorizedForCreation(entity, owner1.get) === false)
+    //Add owner1's permissions
+    createEntityAuthorizations(agoraEntity, owner1.get)
 
-        //Add owner1's permissions
-        createEntityAuthorizations(entity, owner1.get)
-
-        assert(isAuthorizedForRead(entity, owner1.get) === true)
-        assert(isAuthorizedForCreation(entity, owner1.get) === true)
-      }
-    }
-
+    assert(isAuthorizedForRead(agoraEntity, owner1.get) === true)
+    assert(isAuthorizedForCreation(agoraEntity, owner1.get) === true)
   }
 
   "Agora" should "only return entities that can be read by user" in {
 
-    val agoraBusiness = new AgoraBusiness()
+    val agoraBusiness = new AgoraBusiness(TestAuthorizationProvider)
     val entities = agoraBusiness.find(testEntity1WithId, None, Seq(AgoraEntityType.Workflow, AgoraEntityType.Task), agoraCIOwner.get)
 
     // Without agoraCIOwner's permissions

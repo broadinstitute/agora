@@ -5,9 +5,7 @@ import org.broadinstitute.dsde.agora.server.dataaccess.acls.AuthorizationProvide
 import org.broadinstitute.dsde.agora.server.dataaccess.acls.gcs.GcsAuthorizationProvider
 
 object ProductionAgora extends Agora(GcsAuthorizationProvider) with App {
-  override def main(args: Array[String]) {
     start()
-  }
 }
 
 class Agora(authorizationProvider: AuthorizationProvider) extends LazyLogging with App {

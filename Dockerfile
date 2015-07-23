@@ -4,6 +4,12 @@
 FROM debian:jessie
 MAINTAINER DSDE <dsde-engineering@broadinstitute.org>
 
+
+# Integration Testing
+VOLUME ["/etc/Broad_DSDE_Development-c2604f2f8d78.p12" , "/dev/shm/Broad_DSDE_Development-c2604f2f8d78.p12"]
+VOLUME ["/etc/agora.conf", "/dev/shm/agora.conf"]
+ENV TEST_CONFIG /dev/shm/agora.conf
+
 # Install necessary packages including java 8 jre and sbt and clean up apt caches
 RUN echo "deb http://dl.bintray.com/sbt/debian /" >> /etc/apt/sources.list.d/sbt.list && \
     echo "deb http://ppa.launchpad.net/webupd8team/java/ubuntu trusty main" >> /etc/apt/sources.list.d/webupd8team-java.list && \
@@ -37,7 +43,7 @@ COPY src /usr/agora/src
 
 # Run the tests then copy in the application.conf file and build the jar. Then copy the jar in to the work directory and
 # do some clean up in order to minimize image size.
-RUN sbt test && \
+RUN sbt unitTest integrationTest && \
     sbt assembly && \
     cp /usr/agora/target/scala-2.11/agora-0.1-SNAPSHOT.jar /usr/agora && \
     rm -rf /root/.embedmongo /root/.ivy2 /root/.sbt /usr/agora/target /usr/agora/src /usr/agora/build.sbt /usr/agora/assembly.sbt

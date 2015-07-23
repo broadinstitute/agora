@@ -65,17 +65,11 @@ def get_push_documentation(docsFile):
     else:
         return ""
 
-
 # Read the entire contents of the payload file, removing leading/trailing whitespace.
 # Performing no validation (methods repo api handles this)
 def read_entire_file(inputFile):
-    try:
-        with open(inputFile) as myInput:
-            return myInput.read().strip()
-    except:
-        print "Cannot read input file ", inputFile
-        fail("File-read error")
-
+    with open(inputFile) as myInput:
+        return myInput.read().strip()
 
 # Bring up a text editor to solicit user input for methods post.
 # First line of user text is synopsis, rest is documentation.
@@ -98,57 +92,42 @@ def get_user_synopsis():
     return synopsis
 
 
+def httpRequest(method, authToken, requestUrl, requestBody, expectedReturnStatus):
+    conn = httplib.HTTPSConnection(agoraUrl)
+    headers = {'Cookie': authToken, 'Content-type':  "application/json"}
+    if requestBody is None:
+        conn.request(method, requestUrl, headers=headers)
+    else:
+        conn.request(method, requestUrl, requestBody, headers=headers)
+    response = conn.getresponse()
+    data = response.read()
+    if response.status != expectedReturnStatus:
+        message = ("[ERROR] Agora HTTP request failed\n"
+                   "Request URL: " + requestUrl + "\n"
+                   "Request body:\n"
+                   + str(requestBody) + "\n"
+                   "Response:\n"
+                   + str(response.status) + " " + response.reason + " " + data
+                  )
+        fail(message)
+    return json.loads(data)
+
 # Performs the actual content POST to agora. Fails on non-201(created) responses.
 def entity_post(authToken, endpoint, namespace, name, synopsis, documentation, entityType, payload, agoraUrl):
     requestUrl = endpoint
     addRequest = {"namespace": namespace, "name": name, "synopsis": synopsis, "documentation": documentation, "entityType": entityType, "payload": payload}
     requestBody = json.dumps(addRequest)
-    conn = httplib.HTTPSConnection(agoraUrl)
-    headers = {'Cookie': authToken, 'Content-type':  "application/json"}
-    conn.request("POST", requestUrl, requestBody, headers=headers)
-    r1 = conn.getresponse()
-    data = r1.read()
-    if r1.status != 201:
-        print "ERROR! Unable to POST entity ", namespace, "/", name
-        print "to ", endpoint
-        print "Request:"
-        print addRequest
-        print "\nResponse:"
-        print r1.status, r1.reason, data
-        fail("[ERROR] Entity POST failed")
-    return json.loads(data)
+    return httpRequest("POST", authToken,requestUrl, requestBody, 201)
 
 # Perform the actual GET using namespace, name, snapshotId
 def entity_get(authToken, endpoint, namespace, name, snapshot_id):
     requestUrl = endpoint + "/" + namespace + "/" + name + "/" + str(snapshot_id)
-    conn = httplib.HTTPSConnection(agoraUrl)
-    headers = {'Cookie': authToken, 'Content-type':  "application/json"}
-    conn.request("GET", requestUrl, headers=headers)
-    r1 = conn.getresponse()
-    data = r1.read()
-    if r1.status != 200:
-        print "ERROR! Unable to GET method ", namespace, "/", name, "/", snapshot_id
-        print "from ", endpoint
-        print "\nResponse:"
-        print r1.status, r1.reason, data
-        fail("[ERROR] Entity GET failed")
-    return json.loads(data)
+    return httpRequest("GET", authToken, requestUrl, None, 200)
 
 # Perform the actual GET to list entities filtered by query-string parameters
 def entity_list(authToken, endpoint, queryString):
     requestUrl = endpoint + queryString
-    conn = httplib.HTTPSConnection(agoraUrl)
-    headers = {'Cookie': authToken, 'Content-type':  "application/json"}
-    conn.request("GET", requestUrl, headers=headers)
-    r1 = conn.getresponse()
-    data = r1.read()
-    if r1.status != 200:
-        print "ERROR! Unable to GET list methods matching " + queryString
-        print "from ", endpoint
-        print "\nResponse:"
-        print r1.status, r1.reason, data
-        fail("[ERROR] List GET failed")
-    return json.loads(data)
+    return httpRequest("GET", authToken, requestUrl, None, 200)
 
 # Given program arguments, including a payload file, pushes content to agora
 def push(args):
@@ -158,15 +137,17 @@ def push(args):
     documentation = get_push_documentation(args.docs)   
     payload = read_entire_file(args.PAYLOAD_FILE)
     synopsis = get_user_synopsis() 
-    print entity_post(args.auth, endpoint, namespace, name, synopsis, documentation, args.entityType, payload, agoraUrl)
+    push_response = entity_post(args.auth, endpoint, namespace, name, synopsis, documentation, args.entityType, payload, agoraUrl)
+    print "Succesfully pushed to Agora. Reponse:"
+    print push_response
 
 # Given program args namespace, name, id: pull a specific method
 def pull(args):
     endpoint = get_endpoint(args.configurations, args.methods)
-    print entity_get(args.auth, endpoint, args.namespace, args.name, args.snapshot_id)
+    print entity_get(args.auth, endpoint, args.namespace, args.name, args.snapshotId)
 
 # Given the program arguments, query the methods repository for a filtered list of methods
-def search(args):
+def list_entities(args):
     endpoint = get_endpoint(args.configurations, args.methods)
     queryString = "?"
     if args.includedFields:
@@ -211,18 +192,18 @@ if __name__ == "__main__":
     pull_parser.set_defaults(func=pull)
     
     # GET (query-paremeters) arguments
-    search_parser = subparsers.add_parser('search', description='List methods in the Agora Methods Repository based on metadata', help='List methods in the Agora Methods Repository based on metadata')
-    search_parser.add_argument('-f', '--includedFields', dest='includedFields', nargs='*', action='store', help='Any specific metadata fields you wish to be included in the response entities')
-    search_parser.add_argument('-e', '--excludedFields', dest='excludedFields', nargs='*', action='store', help='Any specific metadata fields you wish to be excluded from the response entities')
-    search_parser.add_argument('-s', '--namespace', dest='namespace', action='store', help='The namespace for the entities you are trying to get')
-    search_parser.add_argument('-n', '--name', dest='name', action='store', help='The name of the entities you are trying to get')
-    search_parser.add_argument('-i', '--snapshotId', dest='snapshotId', type=int, action='store', help='The snapshot-id of the entities you are trying to get')    
-    search_parser.add_argument('-y', '--synopsis', dest='synopsis', action='store', help='The exact synopsis of the entities you are trying to get')
-    search_parser.add_argument('-d', '--documentation', dest='docs', action='store', help='The exact documentation of the entities you are trying to get')
-    search_parser.add_argument('-o', '--owner', dest='owner', action='store', help='The owner of the entities you are trying to get')
-    search_parser.add_argument('-p', '--payload', dest='payload', action='store', help='The exact payload of the entities you are trying to get')
-    search_parser.add_argument('-t', '--entityType', dest='entityType', action='store', help='The type of the entities you are trying to get',choices=['Task', 'Workflow', 'Configuration'])
-    search_parser.set_defaults(func=search)
+    list_parser = subparsers.add_parser('list', description='List methods in the Agora Methods Repository based on metadata', help='List methods in the Agora Methods Repository based on metadata')
+    list_parser.add_argument('-f', '--includedFields', dest='includedFields', nargs='*', action='store', help='Any specific metadata fields you wish to be included in the response entities')
+    list_parser.add_argument('-e', '--excludedFields', dest='excludedFields', nargs='*', action='store', help='Any specific metadata fields you wish to be excluded from the response entities')
+    list_parser.add_argument('-s', '--namespace', dest='namespace', action='store', help='The namespace for the entities you are trying to get')
+    list_parser.add_argument('-n', '--name', dest='name', action='store', help='The name of the entities you are trying to get')
+    list_parser.add_argument('-i', '--snapshotId', dest='snapshotId', type=int, action='store', help='The snapshot-id of the entities you are trying to get')    
+    list_parser.add_argument('-y', '--synopsis', dest='synopsis', action='store', help='The exact synopsis of the entities you are trying to get')
+    list_parser.add_argument('-d', '--documentation', dest='docs', action='store', help='The exact documentation of the entities you are trying to get')
+    list_parser.add_argument('-o', '--owner', dest='owner', action='store', help='The owner of the entities you are trying to get')
+    list_parser.add_argument('-p', '--payload', dest='payload', action='store', help='The exact payload of the entities you are trying to get')
+    list_parser.add_argument('-t', '--entityType', dest='entityType', action='store', help='The type of the entities you are trying to get',choices=['Task', 'Workflow', 'Configuration'])
+    list_parser.set_defaults(func=list_entities)
 
     # Call the appropriate function for the given subcommand, passing in the parsed program arguments
     args = parser.parse_args()

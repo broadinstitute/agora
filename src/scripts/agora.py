@@ -29,10 +29,6 @@ import httplib
 import urllib
 import json
 
-# Really ought to have this configured somewhere, but fine for now
-agoraUrl="agora-ci.broadinstitute.org"  
-
-
 def fail(message):
     print message
     sys.exit(1)
@@ -92,18 +88,18 @@ def get_user_synopsis():
     return synopsis
 
 
-def httpRequest(method, authToken, requestUrl, requestBody, expectedReturnStatus):
-    conn = httplib.HTTPSConnection(agoraUrl)
+def httpRequest(baseUrl, path, method, authToken, requestBody, expectedReturnStatus):
+    conn = httplib.HTTPSConnection(baseUrl)
     headers = {'Cookie': authToken, 'Content-type':  "application/json"}
     if requestBody is None:
-        conn.request(method, requestUrl, headers=headers)
+        conn.request(method, path, headers=headers)
     else:
-        conn.request(method, requestUrl, requestBody, headers=headers)
+        conn.request(method, path, requestBody, headers=headers)
     response = conn.getresponse()
     data = response.read()
     if response.status != expectedReturnStatus:
         message = ("[ERROR] Agora HTTP request failed\n"
-                   "Request URL: " + requestUrl + "\n"
+                   "Request URL: " + path + "\n"
                    "Request body:\n"
                    + str(requestBody) + "\n"
                    "Response:\n"
@@ -113,21 +109,21 @@ def httpRequest(method, authToken, requestUrl, requestBody, expectedReturnStatus
     return json.loads(data)
 
 # Performs the actual content POST to agora. Fails on non-201(created) responses.
-def entity_post(authToken, endpoint, namespace, name, synopsis, documentation, entityType, payload, agoraUrl):
-    requestUrl = endpoint
+def entity_post(baseUrl, authToken, endpoint, namespace, name, synopsis, documentation, entityType, payload):
+    path = endpoint
     addRequest = {"namespace": namespace, "name": name, "synopsis": synopsis, "documentation": documentation, "entityType": entityType, "payload": payload}
     requestBody = json.dumps(addRequest)
-    return httpRequest("POST", authToken,requestUrl, requestBody, 201)
+    return httpRequest(baseUrl, path, "POST", authToken, requestBody, 201)
 
 # Perform the actual GET using namespace, name, snapshotId
-def entity_get(authToken, endpoint, namespace, name, snapshot_id):
-    requestUrl = endpoint + "/" + namespace + "/" + name + "/" + str(snapshot_id)
-    return httpRequest("GET", authToken, requestUrl, None, 200)
+def entity_get(baseUrl, authToken, endpoint, namespace, name, snapshot_id):
+    path = endpoint + "/" + namespace + "/" + name + "/" + str(snapshot_id)
+    return httpRequest(baseUrl, path, "GET", authToken, None, 200)
 
 # Perform the actual GET to list entities filtered by query-string parameters
-def entity_list(authToken, endpoint, queryString):
-    requestUrl = endpoint + queryString
-    return httpRequest("GET", authToken, requestUrl, None, 200)
+def entity_list(baseUrl, authToken, endpoint, queryString):
+    path = endpoint + queryString
+    return httpRequest(baseUrl, path, "GET", authToken, None, 200)
 
 # Given program arguments, including a payload file, pushes content to agora
 def push(args):
@@ -137,17 +133,18 @@ def push(args):
     documentation = get_push_documentation(args.docs)   
     payload = read_entire_file(args.PAYLOAD_FILE)
     synopsis = get_user_synopsis() 
-    push_response = entity_post(args.auth, endpoint, namespace, name, synopsis, documentation, args.entityType, payload, agoraUrl)
+    push_response = entity_post(args.agoraUrl, args.auth, endpoint, namespace, name, synopsis, documentation, args.entityType, payload)
     print "Succesfully pushed to Agora. Reponse:"
     print push_response
 
 # Given program args namespace, name, id: pull a specific method
 def pull(args):
     endpoint = get_endpoint(args.configurations, args.methods)
-    print entity_get(args.auth, endpoint, args.namespace, args.name, args.snapshotId)
+    print entity_get(args.agoraUrl, args.auth, endpoint, args.namespace, args.name, args.snapshotId)
 
 # Given the program arguments, query the methods repository for a filtered list of methods
 def list_entities(args):
+    baseUrl = args.agoraUrl
     endpoint = get_endpoint(args.configurations, args.methods)
     queryString = "?"
     if args.includedFields:
@@ -158,11 +155,13 @@ def list_entities(args):
             queryString = queryString + "excludedField=" + field + "&"
     excludedFields = args.excludedFields
     args = args.__dict__
-    trimmedArgs = {key: value for key, value in args.iteritems() if args[key] and key != 'func' and key != 'auth' and key != 'methods' and key != 'configurations' and key != 'excludedFields' and key != 'includedFields'}
+    trimmedArgs = {key: value for key, value in args.iteritems() if args[key] and key != 'func' and key != 'auth' and key != 'methods' and key != 'configurations' and key != 'excludedFields' and key != 'includedFields' and key != 'agoraUrl'}
     for key, value in trimmedArgs.iteritems():
         queryString = queryString + key + "=" + value + "&"
     queryString = queryString.rstrip("&")
-    print entity_list(args['auth'], endpoint, queryString)
+    if queryString == '?':
+        queryString = ''
+    print entity_list(baseUrl, args['auth'], endpoint, queryString)
 
 if __name__ == "__main__":
     # The main argument parser
@@ -170,6 +169,7 @@ if __name__ == "__main__":
     
     # Core application arguments
     parser.add_argument('-a', '--auth', dest='auth', action='store', help='Oath token key=value pair for passing in request cookies')
+    parser.add_argument('-u', '--url', dest='agoraUrl', default='agora-prod.broadinstitute.org', action='store', help='Agora location. Default is agora-prod.broadinstitute.org')
     endpoint_group = parser.add_mutually_exclusive_group(required=True)
     endpoint_group.add_argument('-c', '--configurations', action='store_true', help='Operate on task-configurations, via the /configurations endpoint')
     endpoint_group.add_argument('-m', '--methods', action='store_true', help='Operate on tasks and workflows, via the /methods endpoint')    

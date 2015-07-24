@@ -12,7 +12,7 @@ class AgoraBusiness(authorizationProvider: AuthorizationProvider) {
   def insert(agoraEntity: AgoraEntity, username: String): AgoraEntity = {
     if (authorizationProvider.isAuthorizedForCreation(agoraEntity, username)) {
       validatePayload(agoraEntity, username)
-      val entityWithId = AgoraDao.createAgoraDao(agoraEntity.entityType).insert(agoraEntity.copy(createDate = Option(new DateTime())))
+      val entityWithId = AgoraDao.createAgoraDao(agoraEntity.entityType).insert(agoraEntity.addDate())
       authorizationProvider.createEntityAuthorizations(entityWithId, username)
       entityWithId.addUrl()
     } else {

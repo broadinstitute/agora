@@ -10,11 +10,11 @@ import org.scalatest.{DoNotDiscover, FlatSpec}
 @DoNotDiscover
 class GcsAuthorizationSpec extends FlatSpec {
   val agoraBusiness = new AgoraBusiness(GcsAuthorizationProvider)
-  val username: String = AgoraConfig.gcsServiceAccountUserEmail
+  val user = "jcarey@broadinstitute.org"
 
   "Agora" should "verify GCS authorization when creating a new method" in {
-    val entity = agoraBusiness.insert(testIntegrationEntity, "jcarey@broadinstitute.org")
-    assert(agoraBusiness.findSingle(entity, Seq(entity.entityType.get), username) === entity)
+    val entity = agoraBusiness.insert(testIntegrationEntity, user)
+    assert(agoraBusiness.findSingle(entity, Seq(entity.entityType.get), user) === entity)
   }
 
   "Agora" should "check bucket write ACL when creating a new method in an existing workspace and fail if the user " +

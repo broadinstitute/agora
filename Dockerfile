@@ -5,9 +5,6 @@ FROM debian:jessie
 MAINTAINER DSDE <dsde-engineering@broadinstitute.org>
 
 
-# Integration Testing
-VOLUME ["/etc/Broad_DSDE_Development-c2604f2f8d78.p12" , "/dev/shm/Broad_DSDE_Development-c2604f2f8d78.p12"]
-VOLUME ["agora.conf", "/dev/shm/agora.conf"]
 ENV TEST_CONFIG /dev/shm/agora.conf
 
 # Install necessary packages including java 8 jre and sbt and clean up apt caches

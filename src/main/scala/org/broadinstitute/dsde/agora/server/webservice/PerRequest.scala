@@ -2,7 +2,7 @@ package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.actor.SupervisorStrategy.Stop
 import akka.actor.{OneForOneStrategy, _}
-import org.broadinstitute.dsde.agora.server.business.AgoraAuthorizationException
+import org.broadinstitute.dsde.agora.server.business.{NamespaceAuthorizationException, EntityAuthorizationException}
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraEntityNotFoundException
 import org.broadinstitute.dsde.agora.server.webservice.PerRequest._
 import spray.http.HttpHeader
@@ -55,9 +55,13 @@ trait PerRequest extends Actor {
 
   override val supervisorStrategy =
     OneForOneStrategy() {
-      case authException: AgoraAuthorizationException =>
+      case authEntityException: EntityAuthorizationException =>
         system.log.info("Authorization exception processing request:" + r.request.uri)
-        r.complete(Unauthorized, authException.getMessage)
+        r.complete(Unauthorized, authEntityException.getMessage)
+        Stop
+      case authNamespaceException: NamespaceAuthorizationException =>
+        system.log.info("Authorization exception processing request:" + r.request.uri)
+        r.complete(Unauthorized, authNamespaceException.getMessage)
         Stop
       case entityNotFoundException: AgoraEntityNotFoundException =>
         system.log.info("Authorization exception processing request:" + r.request.uri)

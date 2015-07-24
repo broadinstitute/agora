@@ -14,11 +14,11 @@ import scala.concurrent.ExecutionContext
  */
 trait AgoraOpenAMMockDirectives extends AgoraDirectives {
   def commonNameFromCookie(magnet: ImplicitMagnet[ExecutionContext]): Directive1[String] = {
-    provide(AgoraConfig.gcsServiceAccountUserEmail)
+    provide("broadprometheustest@gmail.com")
   }
 
   def usernameFromCookie(magnet: ImplicitMagnet[ExecutionContext]): Directive1[String] = {
-    provide(AgoraConfig.gcsServiceAccountUserEmail)
+    provide("broadprometheustest@gmail.com")
   }
 
 }

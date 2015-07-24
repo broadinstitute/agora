@@ -2,14 +2,14 @@
 package org.broadinstitute.dsde.agora.server.dataaccess.acls.gcs
 
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
-import com.google.api.services.storage.model.{StorageObject, BucketAccessControl, ObjectAccessControl, Bucket}
-import org.broadinstitute.dsde.agora.server.business.AgoraAuthorizationException
-import org.broadinstitute.dsde.agora.server.dataaccess.acls.AgoraPermissions.{Create, Read, Nothing}
+import com.google.api.services.storage.model.{BucketAccessControl, StorageObject, Bucket}
+import org.broadinstitute.dsde.agora.server.dataaccess.acls.AgoraPermissions.{Create, Nothing}
 import org.broadinstitute.dsde.agora.server.dataaccess.acls.{AgoraPermissions, AuthorizationProvider}
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.dataaccess.acls.gcs.GcsClient._
 import spray.http.StatusCodes._
 import scala.util.{Success, Failure}
+import scala.collection.JavaConverters._
 
 import scala.util.Try
 
@@ -21,25 +21,17 @@ object GcsAuthorizationProvider extends AuthorizationProvider {
     val isBucketFound = doesBucketExist(bucket)
 
     if (!isBucketFound) AgoraPermissions(Create)
-    else {
-      val p = getBucketPermissions(bucket, username)
-      println(s"$p")
-      p
-    }
+    else getBucketPermissions(bucket, username)
   }
 
   override def entityAuthorization(entity: AgoraEntity, username: String): AgoraPermissions = {
-    if (namespaceAuthorization(entity, username).canRead) {
       val _object = entityToObject(entity)
       val isObjectFound = doesObjectExist(_object, username)
 
       if (!isObjectFound) AgoraPermissions(Create)
       else getObjectPermissions(_object, username)
-    }
-    else AgoraPermissions(Nothing)
   }
 
-  // This does not check permissions first! May overwrite existing entities.
   override def createEntityAuthorizations(entity: AgoraEntity, username: String): Unit = {
     val bucket = entityToBucket(entity)
     val _object = entityToObject(entity)
@@ -49,8 +41,14 @@ object GcsAuthorizationProvider extends AuthorizationProvider {
     val bucketResponse = getOrCreateBucket(bucket)
     val bucketAcls = bucketResponse.getAcl
 
-    bucketAcls.add(bucketAcl)
-    patchBucketAcls(bucket, bucketAcls).execute()
+    // Convert java list to scala
+    val scalaBucketAcls = bucketAcls.asScala.toList
+      .map(acl => new BucketAccessControl().setEntity(acl.getEntity).setRole(acl.getRole))
+
+    if (!scalaBucketAcls.contains(bucketAcl)) {
+      bucketAcls.add(bucketAcl)
+      patchBucketAcls(bucket, bucketAcls).execute()
+    }
 
     val objectResponse = createObject(_object).setProjection("full").execute()
     val objectAcls = objectResponse.getAcl

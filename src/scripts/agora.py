@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 ################################################################################
 # agora.py
 # 
@@ -73,7 +74,7 @@ def read_entire_file(inputFile):
 # Mimics git commit functionality
 def get_user_synopsis():
     EDITOR = os.environ.get('EDITOR','vim')
-    initial_message = "\n# Provide a 1-sentence synopsis (< 80 charactors) in your first line,\nSubsequent lines are ignored"
+    initial_message = "\n# Provide a 1-sentence synopsis (< 80 charactors) in your first line. Subsequent lines are ignored"
     lines = []
     with tempfile.NamedTemporaryFile(suffix=".tmp") as tmpfile:
         tmpfile.write(initial_message)
@@ -132,7 +133,9 @@ def push(args):
     name = get_push_name(args.name, args.PAYLOAD_FILE)
     documentation = get_push_documentation(args.docs)   
     payload = read_entire_file(args.PAYLOAD_FILE)
-    synopsis = get_user_synopsis() 
+    synopsis = args.synopsis
+    if synopsis is None:
+        synopsis = get_user_synopsis()
     push_response = entity_post(args.agoraUrl, args.auth, endpoint, namespace, name, synopsis, documentation, args.entityType, payload)
     print "Succesfully pushed to Agora. Reponse:"
     print push_response
@@ -180,7 +183,8 @@ if __name__ == "__main__":
     push_parser.add_argument('-s', '--namespace', dest='namespace', action='store', help='The namespace for method addition. Default value is your user login name')
     push_parser.add_argument('-n', '--name', dest='name', action='store', help='The method name to provide for method addition. Default is the name of the PAYLOAD_FILE.')
     push_parser.add_argument('-d', '--documentation', dest='docs', action='store', help='A file containing user documentation. Must be <10kb. May be plain text. Marking languages such as HTML or Github markdown are also supported')
-    push_parser.add_argument('-t', '--entityType', dest='entityType', action='store', help='The type of the entities you are trying to get', choices=['Task', 'Workflow', 'Configuration'], default='Workflow')
+    push_parser.add_argument('-t', '--entityType', dest='entityType', action='store', help='The type of the entities you are trying to get', choices=['Task', 'Workflow', 'Configuration'], required=True)
+    push_parser.add_argument('-y', '--synopsis', dest='synopsis', action='store', help='The synopsis for the entity you are pushing')
     push_parser.add_argument('PAYLOAD_FILE', help='A file containing the payload. For configurations, JSON. For tasks + workflows, the method description in WDL')
     push_parser.set_defaults(func=push)
     

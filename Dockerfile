@@ -13,8 +13,7 @@ RUN echo "deb http://ppa.launchpad.net/webupd8team/java/ubuntu trusty main" >> /
     echo debconf shared/accepted-oracle-license-v1-1 seen true | /usr/bin/debconf-set-selections
 
 RUN apt-get update && \
-    apt-get --no-install-recommends install -y --force-yes \
-        oracle-java8-installer \
+    apt-get --no-install-recommends install -y --force-yes oracle-java8-installer &&\
     apt-get clean autoclean && \
     apt-get autoremove -y && \
     rm -rf /var/lib/{apt,dpkg,cache,log}/ /var/cache/oracle-jdk8-installer 

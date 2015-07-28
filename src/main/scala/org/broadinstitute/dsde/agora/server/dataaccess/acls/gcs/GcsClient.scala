@@ -120,7 +120,7 @@ object GcsClient {
   def listBucketAcl(bucket: Bucket) =
     bucketAcls.list(bucket.getName)
 
-  def patchBuckettAcl(bucket: Bucket, user: String, content: BucketAccessControl) =
+  def patchBucketAcl(bucket: Bucket, user: String, content: BucketAccessControl) =
     bucketAcls.patch(bucket.getName, user.toGoogleUserEntity, content)
 
 

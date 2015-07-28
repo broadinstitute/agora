@@ -4,14 +4,13 @@ import com.google.api.services.storage.model.{ObjectAccessControl, BucketAccessC
 import org.broadinstitute.dsde.agora.server.business.{EntityAuthorizationException, NamespaceAuthorizationException}
 import org.broadinstitute.dsde.agora.server.dataaccess.acls.AgoraPermissions.Manage
 import org.broadinstitute.dsde.agora.server.dataaccess.acls.{AgoraPermissions, AuthorizationProvider}
-import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
+import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.dataaccess.acls.gcs.GcsClient._
-import spray.routing.RequestContext
 
 //TODO: Lots to refactor in this class. too much duplication
 class AclBusiness(authorizationProvider: AuthorizationProvider) {
 
-  def listNamespaceAcls(context: RequestContext, entity: AgoraEntity, user: String) = {
+  def listNamespaceAcls(entity: AgoraEntity, user: String) = {
     if (authorizationProvider.namespaceAuthorization(entity, user).canManage) {
       val bucket = entityToBucket(entity)
       val bucketAcls = listBucketAcl(bucket).setFields("items(entity,role)").execute()
@@ -23,7 +22,7 @@ class AclBusiness(authorizationProvider: AuthorizationProvider) {
     }
   }
 
-  def insertNamespaceAcl(_context: RequestContext, entity: AgoraEntity, user: String, acl: BucketAccessControl) = {
+  def insertNamespaceAcl(entity: AgoraEntity, user: String, acl: BucketAccessControl) = {
     if (authorizationProvider.namespaceAuthorization(entity, user).canManage) {
       val bucket = entityToBucket(entity)
       val bucketAcls = getBucket(bucket).setProjection("full").execute().getAcl
@@ -39,7 +38,7 @@ class AclBusiness(authorizationProvider: AuthorizationProvider) {
     }
   }
 
-  def deleteNamespaceAcl(_context: RequestContext, entity: AgoraEntity, user: String, acl: BucketAccessControl) = {
+  def deleteNamespaceAcl(entity: AgoraEntity, user: String, acl: BucketAccessControl) = {
     if (authorizationProvider.namespaceAuthorization(entity, user).canManage) {
       val bucket = entityToBucket(entity)
       val bucketAcls = getBucket(bucket).setProjection("full").execute().getAcl
@@ -54,6 +53,7 @@ class AclBusiness(authorizationProvider: AuthorizationProvider) {
     }
   }
 
+  // Code written in "Java" to communicate with Google APIs
   def filterBucketAclsByEntity(acls: java.util.List[BucketAccessControl], entityToFilter: String): java.util.ArrayList[BucketAccessControl] = {
     val numberOfAcls = acls.size
     val updatedAcls = new java.util.ArrayList[BucketAccessControl]()
@@ -65,7 +65,7 @@ class AclBusiness(authorizationProvider: AuthorizationProvider) {
     return updatedAcls
   }
 
-  def listEntityAcls(context: RequestContext, entity: AgoraEntity, user: String) = {
+  def listEntityAcls(entity: AgoraEntity, user: String) = {
     if (authorizationProvider.entityAuthorization(entity, user).canManage) {
       val _object = entityToObject(entity)
       val objectAcls = listObjectAcl(_object).setFields("items(entity,role)").execute()
@@ -77,7 +77,7 @@ class AclBusiness(authorizationProvider: AuthorizationProvider) {
     }
   }
 
-  def insertEntityAcl(_context: RequestContext, entity: AgoraEntity, user: String, acl: ObjectAccessControl) = {
+  def insertEntityAcl(entity: AgoraEntity, user: String, acl: ObjectAccessControl) = {
     if (authorizationProvider.namespaceAuthorization(entity, user).canManage) {
       val _object = entityToObject(entity)
       val objectAcls = getObject(_object).setProjection("full").execute().getAcl
@@ -93,7 +93,7 @@ class AclBusiness(authorizationProvider: AuthorizationProvider) {
     }
   }
 
-  def deleteEntityAcl(_context: RequestContext, entity: AgoraEntity, user: String, acl: ObjectAccessControl) = {
+  def deleteEntityAcl(entity: AgoraEntity, user: String, acl: ObjectAccessControl) = {
     if (authorizationProvider.namespaceAuthorization(entity, user).canManage) {
       val _object = entityToObject(entity)
       val objectAcls = getObject(_object).setProjection("full").execute().getAcl
@@ -108,6 +108,7 @@ class AclBusiness(authorizationProvider: AuthorizationProvider) {
     }
   }
 
+  // Code written in "Java" to communicate with Google APIs
   def filterObjectAclsByEntity(acls: java.util.List[ObjectAccessControl], entityToFilter: String): java.util.ArrayList[ObjectAccessControl] = {
     val numberOfAcls = acls.size
     val updatedAcls = new java.util.ArrayList[ObjectAccessControl]()

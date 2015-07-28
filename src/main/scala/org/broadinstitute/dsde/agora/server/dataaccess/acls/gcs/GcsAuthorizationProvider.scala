@@ -74,6 +74,7 @@ object GcsAuthHelpers {
       case Failure(ex: GoogleJsonResponseException) =>
         if (ex.getDetails.getCode == NotFound.intValue) false
         else true
+      case Failure(ex) => throw new Exception(ex)
     }
   }
 
@@ -99,6 +100,7 @@ object GcsAuthHelpers {
       case Failure(ex: GoogleJsonResponseException) =>
         if (ex.getDetails.getCode == NotFound.intValue) false
         else true
+      case Failure(ex) => throw new Exception(ex)
     }
   }
 

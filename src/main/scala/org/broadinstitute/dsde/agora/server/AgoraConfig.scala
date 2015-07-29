@@ -8,6 +8,23 @@ import org.broadinstitute.dsde.agora.server.model.AgoraEntityType.EntityType
 
 object AgoraConfig {
   private val config: Config = ConfigFactory.load()
+  
+  val LocalEnvironment = "local"
+  val DevEnvironment = "dev"
+  val CiEnvironment = "ci"
+  val ProdEnvironment = "prod"
+
+  val Environments = List[String](LocalEnvironment, DevEnvironment, CiEnvironment, ProdEnvironment)
+
+  lazy val environment = config.as[Option[String]]("environment").getOrElse(LocalEnvironment)
+  if (!Environments.contains(AgoraConfig.environment))
+    throw new IllegalArgumentException("Illegal environment '" + AgoraConfig.environment + "' specified.")
+
+  val envConfig = config.getConfig(environment)
+  val mockAuthenticatedUserEmail = envConfig.as[Option[String]]("mockAuthenticatedUserEmail").getOrElse("noone@broadinstitute.org")
+  def useOpenAMAuthentication(environment: String) : Boolean = {
+    config.getConfig(environment).as[Option[Boolean]]("useOpenAMAuthentication").getOrElse(false)
+  }
 
   lazy val serverInstanceName = config.as[String]("instance.name")
   private lazy val scheme = config.as[Option[String]]("webservice.scheme").getOrElse("http")
@@ -22,12 +39,19 @@ object AgoraConfig {
   lazy val configurationsUrl = baseUrl + configurationsRoute + "/"
   lazy val webserviceInterface = config.as[Option[String]]("webservice.interface").getOrElse("0.0.0.0")
 
+  def useStandaloneMongoDb(environment: String) : Boolean = {
+    config.getConfig(environment).as[Option[Boolean]]("useStandaloneMongo").getOrElse(false)
+  }
   lazy val mongoDbHost = config.as[Option[String]]("mongodb.host").getOrElse("localhost")
   lazy val mongoDbPort = config.as[Option[Int]]("mongodb.port").getOrElse(27017)
   lazy val mongoDbUser = config.as[Option[String]]("mongodb.user")
   lazy val mongoDbPassword = config.as[Option[String]]("mongodb.password")
   lazy val mongoDbDatabase = config.as[Option[String]]("mongodb.db").getOrElse("agora")
 
+  def useGcsAuthorizationProvider(environment: String) : Boolean = {
+    config.getConfig(environment).as[Option[Boolean]]("useGcsAuthorizationProvider").getOrElse(false)
+  }
+  
   lazy val gcsProjectId = config.as[String]("gcs.project.id")
   lazy val gcsServiceAccountUserEmail = config.as[String]("gcs.service.account.email")
   lazy val gcServiceAccountP12KeyFile = config.as[String]("gcs.service.account.p12.key.file")

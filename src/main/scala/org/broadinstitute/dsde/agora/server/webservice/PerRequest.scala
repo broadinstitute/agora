@@ -111,8 +111,8 @@ object PerRequest {
     def unapply[T >: Any](requestComplete: RequestCompleteWithHeaders[T]) = Some((requestComplete.response, requestComplete.headers, requestComplete.marshaller))
   }
 
-  case class WithProps(r: RequestContext, props: Props, message: AnyRef, timeout: Duration) extends PerRequest {
-    lazy val target = context.actorOf(props)
+  case class WithProps(r: RequestContext, props: Props, message: AnyRef, name: String, timeout: Duration) extends PerRequest {
+    lazy val target = context.actorOf(props, name)
   }
 }
 
@@ -122,6 +122,6 @@ object PerRequest {
 trait PerRequestCreator {
   implicit def actorRefFactory: ActorRefFactory
 
-  def perRequest(r: RequestContext, props: Props, message: AnyRef, timeout: Duration = 1.minutes) =
-    actorRefFactory.actorOf(Props(new WithProps(r, props, message, timeout)))
+  def perRequest(r: RequestContext, props: Props, message: AnyRef, name: String = java.lang.Thread.currentThread.getStackTrace()(1).getMethodName, timeout: Duration = 1.minutes) =
+    actorRefFactory.actorOf(Props(new WithProps(r, props, message, name + System.nanoTime(), timeout)), name + System.nanoTime())
 }

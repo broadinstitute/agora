@@ -2,17 +2,18 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.actor.Props
+import kamon.spray.KamonTraceDirectives._
+import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.handlers.{PermissionHandler, QueryHandler, AddHandler}
 import org.broadinstitute.dsde.agora.server.webservice.routes.RouteHelpers
-import spray.routing.{HttpService}
 import spray.httpx.SprayJsonSupport._
-import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
+import spray.routing.HttpService
 
 /**
  * AgoraService defines routes for ApiServiceActor.
  *
- * Concrete implementaions are MethodsService and ConfigurationsService.
+ * Concrete implementations are MethodsService and ConfigurationsService.
  */
 abstract class AgoraService extends HttpService with RouteHelpers {
 
@@ -31,18 +32,18 @@ abstract class AgoraService extends HttpService with RouteHelpers {
       parameterMap { (params) =>
         val entity = AgoraEntity(Option(namespace))
 
-        get {requestContext =>
+        get { requestContext =>
           completeNamespacePermissionsGet(requestContext, entity, username, permissionHandlerProps)
         } ~
-        post {requestContext =>
-          completeNamespacePermissionsPost(requestContext, entity, params, username, permissionHandlerProps)
-        } ~
-        put {requestContext =>
-          completeNamespacePermissionsPut(requestContext, entity, params, username, permissionHandlerProps)
-        } ~
-        delete {requestContext =>
-          completeNamespacePermissionsDelete(requestContext, entity, params, username, permissionHandlerProps)
-        }
+          post { requestContext =>
+            completeNamespacePermissionsPost(requestContext, entity, params, username, permissionHandlerProps)
+          } ~
+          put { requestContext =>
+            completeNamespacePermissionsPut(requestContext, entity, params, username, permissionHandlerProps)
+          } ~
+          delete { requestContext =>
+            completeNamespacePermissionsDelete(requestContext, entity, params, username, permissionHandlerProps)
+          }
 
       }
     }
@@ -55,15 +56,15 @@ abstract class AgoraService extends HttpService with RouteHelpers {
         get { requestContext =>
           completeEntityPermissionsGet(requestContext, entity, username, permissionHandlerProps)
         } ~
-        post { requestContext =>
-          completeEntityPermissionsPost(requestContext, entity, params, username, permissionHandlerProps)
-        } ~
-        put { requestContext =>
-          completeEntityPermissionsPut(requestContext, entity, params, username, permissionHandlerProps)
-        } ~
-        delete { requestContext =>
-          completeEntityPermissionsDelete(requestContext, entity, params, username, permissionHandlerProps)
-        }
+          post { requestContext =>
+            completeEntityPermissionsPost(requestContext, entity, params, username, permissionHandlerProps)
+          } ~
+          put { requestContext =>
+            completeEntityPermissionsPut(requestContext, entity, params, username, permissionHandlerProps)
+          } ~
+          delete { requestContext =>
+            completeEntityPermissionsDelete(requestContext, entity, params, username, permissionHandlerProps)
+          }
 
       }
     }
@@ -73,9 +74,11 @@ abstract class AgoraService extends HttpService with RouteHelpers {
   def querySingleRoute =
     matchQuerySingleRoute(path) { (namespace, name, snapshotId, username) =>
       extractOnlyPayloadParameter { (onlyPayload) =>
-        requestContext =>
-          val entity = AgoraEntity(Option(namespace), Option(name), Option(snapshotId))
-          completeWithPerRequest(requestContext, entity, username, toBool(onlyPayload), path, queryHandlerProps)
+        traceName("querySingleRoute") {
+          requestContext =>
+            val entity = AgoraEntity(Option(namespace), Option(name), Option(snapshotId))
+            completeWithPerRequest(requestContext, entity, username, toBool(onlyPayload), path, queryHandlerProps)
+        }
       }
     }
 
@@ -85,7 +88,9 @@ abstract class AgoraService extends HttpService with RouteHelpers {
     matchQueryRoute(path) { (username) =>
       parameterMultiMap { params =>
         validateEntityType(params, path) {
-          requestContext => completeWithPerRequest(requestContext, params, username, path, queryHandlerProps)
+          traceName("queryRoute") {
+            requestContext => completeWithPerRequest(requestContext, params, username, path, queryHandlerProps)
+          }
         }
       }
     }
@@ -96,7 +101,9 @@ abstract class AgoraService extends HttpService with RouteHelpers {
     postPath(path) { (username) =>
       entity(as[AgoraEntity]) { agoraEntity =>
         validatePostRoute(agoraEntity, path) {
-          requestContext => completeWithPerRequest(requestContext, agoraEntity, username, path, addHandlerProps)
+          traceName("postRoute") {
+            requestContext => completeWithPerRequest(requestContext, agoraEntity, username, path, addHandlerProps)
+          }
         }
       }
     }

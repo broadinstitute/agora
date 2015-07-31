@@ -1,5 +1,4 @@
-import sbtassembly.Plugin.AssemblyKeys._
-import sbtassembly.Plugin._
+import sbtassembly.MergeStrategy
 import sbtrelease.ReleasePlugin._
 
 name := "Agora"
@@ -30,12 +29,18 @@ libraryDependencies ++= Seq(
   "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2",
   "com.typesafe.slick" %% "slick" % "3.0.0",
   "com.zaxxer" % "HikariCP" % "2.3.9",
+  "io.kamon" %% "kamon-core" % "0.4.0",
+  "io.kamon" %% "kamon-akka" % "0.4.0",
+  "io.kamon" %% "kamon-spray" % "0.4.0",
+  "io.kamon" %% "kamon-system-metrics" % "0.4.0",
+  "io.kamon" %% "kamon-statsd" % "0.4.0",
   "io.spray" %% "spray-can" % sprayV,
   "io.spray" %% "spray-client" % sprayV,
   "io.spray" %% "spray-json" % "1.3.1", // NB: Not at sprayV. 1.3.2 does not exist.
   "io.spray" %% "spray-routing" % sprayV,
   "mysql" % "mysql-connector-java" % "5.1.35",
   "net.ceedubs" %% "ficus" % "1.1.2",
+  "org.aspectj" % "aspectjweaver" % "1.8.6",
   "org.broadinstitute" %% "cromwell" % "0.1-SNAPSHOT" excludeAll ExclusionRule(organization = "com.gettyimages"),
   "org.broadinstitute.dsde.vault" %% "vault-common" % "0.1-15-bf74315",
   "org.mongodb" %% "casbah" % "2.8.1",
@@ -83,42 +88,7 @@ releaseSettings
 
 shellPrompt := { state => "%s| %s> ".format(GitCommand.prompt.apply(state), version.value) }
 
-jarName in assembly := "agora-" + version.value + ".jar"
-
-logLevel in assembly := Level.Info
-
-val customMergeStrategy: String => MergeStrategy = {
-  case x if Assembly.isConfigFile(x) =>
-    MergeStrategy.concat
-  case PathList(ps@_*) if (Assembly.isReadme(ps.last) || Assembly.isLicenseFile(ps.last)) =>
-    MergeStrategy.rename
-  case PathList("META-INF", xs@_*) =>
-    xs map {
-      _.toLowerCase
-    } match {
-      case ("manifest.mf" :: Nil) | ("index.list" :: Nil) | ("dependencies" :: Nil) =>
-        MergeStrategy.discard
-      case ps@(x :: xs) if ps.last.endsWith(".sf") || ps.last.endsWith(".dsa") =>
-        MergeStrategy.discard
-      case "plexus" :: xs =>
-        MergeStrategy.discard
-      case "spring.tooling" :: xs =>
-        MergeStrategy.discard
-      case "com.google.guava" :: xs =>
-        MergeStrategy.discard
-      case "services" :: xs =>
-        MergeStrategy.filterDistinctLines
-      case ("spring.schemas" :: Nil) | ("spring.handlers" :: Nil) =>
-        MergeStrategy.filterDistinctLines
-      case _ => MergeStrategy.deduplicate
-    }
-  case "asm-license.txt" | "overview.html" =>
-    MergeStrategy.discard
-  case "logback.xml" =>
-    MergeStrategy.first
-  case _ => MergeStrategy.deduplicate
-}
-
+//test settings
 val integrationTest = inputKey[Unit]("Runs the Agora integration tests.")
 
 val unitTest = inputKey[Unit]("Runs the Agora unit tests.")
@@ -131,10 +101,71 @@ unitTest := {
   (testOnly in Test).toTask(" org.broadinstitute.dsde.agora.server.AgoraUnitTestSuite").value
 }
 
-mergeStrategy in assembly := customMergeStrategy
-
 fork in Test:= true
 
 javaOptions in Test ++= Seq("-Dconfig.file=" + Option(System.getenv("TEST_CONFIG")).getOrElse("src/test/resources/reference.conf"))
 
+//assembly settings
 test in assembly := {}
+
+assemblyJarName in assembly := "agora-" + version.value + ".jar"
+
+logLevel in assembly := Level.Info
+
+packageOptions in assembly += Package.ManifestAttributes("Premain-Class" -> "org.aspectj.weaver.loadtime.Agent")
+
+// Create a new MergeStrategy for aop.xml files
+val aopMerge: MergeStrategy = new MergeStrategy {
+  val name = "aopMerge"
+  import scala.xml._
+  import scala.xml.dtd._
+  def apply(tempDir: File, path: String, files: Seq[File]): Either[String, Seq[(File, String)]] = {
+    val dt = DocType("aspectj", PublicID("-//AspectJ//DTD//EN", "http://www.eclipse.org/aspectj/dtd/aspectj.dtd"), Nil)
+    val file = MergeStrategy.createMergeTarget(tempDir, path)
+    val xmls: Seq[Elem] = files.map(XML.loadFile)
+    val aspectsChildren: Seq[Node] = xmls.flatMap(_ \\ "aspectj" \ "aspects" \ "_")
+    val weaverChildren: Seq[Node] = xmls.flatMap(_ \\ "aspectj" \ "weaver" \ "_")
+    val options: String = xmls.map(x => (x \\ "aspectj" \ "weaver" \ "@options").text).mkString(" ").trim
+    val weaverAttr = if (options.isEmpty) Null else new UnprefixedAttribute("options", options, Null)
+    val aspects = new Elem(null, "aspects", Null, TopScope, false, aspectsChildren: _*)
+    val weaver = new Elem(null, "weaver", weaverAttr, TopScope, false, weaverChildren: _*)
+    val aspectj = new Elem(null, "aspectj", Null, TopScope, false, aspects, weaver)
+    XML.save(file.toString, aspectj, "UTF-8", xmlDecl = false, dt)
+    IO.append(file, IO.Newline.getBytes(IO.defaultCharset))
+    Right(Seq(file -> path))
+  }
+}
+
+assemblyMergeStrategy in assembly := {
+  case x if Assembly.isConfigFile(x) =>
+    MergeStrategy.concat
+  case PathList(ps@_*) if Assembly.isReadme(ps.last) || Assembly.isLicenseFile(ps.last) =>
+    MergeStrategy.rename
+  case PathList("META-INF", "aop.xml") =>
+    aopMerge
+  case PathList("META-INF", xs@_*) =>
+    xs map {
+      _.toLowerCase
+    } match {
+      case ("manifest.mf" :: Nil) | ("index.list" :: Nil) | ("dependencies" :: Nil) =>
+        MergeStrategy.discard
+      case ps@(x :: strings) if ps.last.endsWith(".sf") || ps.last.endsWith(".dsa") =>
+        MergeStrategy.discard
+      case "plexus" :: strings =>
+        MergeStrategy.discard
+      case "spring.tooling" :: strings =>
+        MergeStrategy.discard
+      case "com.google.guava" :: strings =>
+        MergeStrategy.discard
+      case "services" :: strings =>
+        MergeStrategy.filterDistinctLines
+      case ("spring.schemas" :: Nil) | ("spring.handlers" :: Nil) =>
+        MergeStrategy.filterDistinctLines
+      case _ => MergeStrategy.deduplicate
+    }
+  case "asm-license.txt" | "overview.html" =>
+    MergeStrategy.discard
+  case "logback.xml" =>
+    MergeStrategy.first
+  case _ => MergeStrategy.deduplicate
+}

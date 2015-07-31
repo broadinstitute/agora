@@ -1,5 +1,8 @@
 package org.broadinstitute.dsde.agora.server.business
 
+import cromwell.parser.WdlParser.SyntaxError
+import org.broadinstitute.dsde.agora.server.webservice.util.{DockerImageReference, DockerHubClient}
+
 import cromwell.binding._
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
 import org.broadinstitute.dsde.agora.server.dataaccess.acls.AgoraPermissions._
@@ -52,14 +55,42 @@ class AgoraBusiness(authorizationProvider: AuthorizationProvider) {
   private def validatePayload(agoraEntity: AgoraEntity, username: String): Unit = {
     agoraEntity.entityType.get match {
       case AgoraEntityType.Task =>
-        WdlNamespace.load(agoraEntity.payload.get)
-
+        val namespace = WdlNamespace.load(agoraEntity.payload.get)
+        // Passed basic validation.  Now check if (any) docker images that are referenced exist
+        namespace.tasks.foreach { validateDockerImage }
       case AgoraEntityType.Workflow =>
         val resolver = MethodImportResolver(username, this, authorizationProvider)
-        WdlNamespace.load(agoraEntity.payload.get, resolver.importResolver _)
-
+        val namespace = WdlNamespace.load(agoraEntity.payload.get, resolver.importResolver _)
+        // Passed basic validation.  Now check if (any) docker images that are referenced exist
+        namespace.tasks.foreach { validateDockerImage }
       case AgoraEntityType.Configuration =>
       //add config validation here
     }
+  }
+
+  private def validateDockerImage(task: Task) = {
+    if (task.runtimeAttributes.docker.isDefined) {
+      DockerHubClient.doesDockerImageExist(parseDockerString(task.runtimeAttributes.docker.get))
+    }
+  }
+
+  /**
+   * Parses out user/image:tag from a docker string.
+   *
+   * @param imageId docker imageId string.  Looks like ubuntu:latest ggrant/joust:latest
+   */
+  private def parseDockerString(imageId: String) = {
+    val splitUser = imageId.split('/')
+    if (splitUser.length > 2) {
+      throw new SyntaxError("Docker image string '" + imageId + "' is malformed")
+    }
+    val user = if (splitUser.length == 1) None else Option(splitUser(0))
+    val splitTag = splitUser(splitUser.length - 1).split(':')
+    if (splitTag.length > 2) {
+      throw new SyntaxError("Docker image string '" + imageId + "' is malformed")
+    }
+    val repo = splitTag(0)
+    val tag = if (splitTag.length == 1) "latest" else splitTag(1)
+    DockerImageReference(user, repo, tag)
   }
 }

@@ -136,6 +136,10 @@ case class AgoraEntity(@(ApiModelProperty@field)(required = false, value = "The 
   def addUrl(): AgoraEntity = {
     copy(url = Option(agoraUrl))
   }
+
+  def addDate(): AgoraEntity = {
+    copy(createDate = Option(new DateTime()))
+  }
 }
 
 

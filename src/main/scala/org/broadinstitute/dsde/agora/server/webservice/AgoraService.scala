@@ -16,15 +16,49 @@ import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
  */
 abstract class AgoraService(authorizationProvider: AuthorizationProvider) extends HttpService with RouteHelpers {
 
-  private implicit val executionContext = actorRefFactory.dispatcher
-
   def path: String
 
-  def routes = querySingleRoute ~ queryRoute ~ postRoute
+  def routes = namespaceAclsRoute ~ entityAclsRoute ~ querySingleRoute ~ queryRoute ~ postRoute
 
   def queryHandlerProps = Props(classOf[QueryHandler], authorizationProvider)
 
   def addHandlerProps = Props(classOf[AddHandler], authorizationProvider)
+
+  def aclHandlerProps = Props(classOf[AclHandler], authorizationProvider)
+
+  def namespaceAclsRoute =
+    matchNamespaceAclsRoute(path) { (namespace, username) =>
+      parameterMap { (params) =>
+        val entity = AgoraEntity(Option(namespace))
+
+        get {requestContext =>
+          completeNamespaceAclsGet(requestContext, entity, username, aclHandlerProps)
+        } ~
+        post {requestContext =>
+          completeNamespaceAclsPost(requestContext, entity, params, username, aclHandlerProps)
+        } ~
+        delete {requestContext =>
+          completeNamespaceAclsDelete(requestContext, entity, params, username, aclHandlerProps)
+        }
+    }
+  }
+
+  def entityAclsRoute =
+    matchEntityAclRoute(path) { (namespace, name, snapshotId, username) =>
+      parameterMap { (params) =>
+        val entity = AgoraEntity(Option(namespace), Option(name), Option(snapshotId))
+
+        get { requestContext =>
+          completeEntityAclGet(requestContext, entity, username, aclHandlerProps)
+        } ~
+        post { requestContext =>
+          completeEntityAclPost(requestContext, entity, params, username, aclHandlerProps)
+        } ~
+        delete {requestContext =>
+          completeEntityAclDelete(requestContext, entity, params, username, aclHandlerProps)
+        }
+      }
+    }
 
   // GET http://root.com/methods/<namespace>/<name>/<snapshotId>?onlyPayload=true
   // GET http://root.com/configurations/<namespace>/<name>/<snapshotId>

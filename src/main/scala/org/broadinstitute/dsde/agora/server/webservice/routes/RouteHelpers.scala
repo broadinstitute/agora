@@ -2,19 +2,69 @@ package org.broadinstitute.dsde.agora.server.webservice.routes
 
 import akka.actor.Props
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntityType, AgoraEntityProjection, AgoraEntity}
-import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages.{Add, Query, QuerySingle}
+import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages._
 import org.broadinstitute.dsde.agora.server.webservice.PerRequestCreator
+import org.broadinstitute.dsde.agora.server.dataaccess.acls.gcs.GcsClient._
 import spray.routing.{Directive0, Directives, RequestContext}
-
 import scala.util.Try
 
 
-trait RouteHelpers extends AgoraDirectives
-  with QuerySingleHelper
+trait RouteHelpers extends QuerySingleHelper
   with QueryRouteHelper
   with AddRouteHelper
+  with EntityAclsRouteHelper
+  with NamespaceAclsRouteHelper
 
-trait BaseRoute extends PerRequestCreator with RouteUtil
+trait BaseRoute extends PerRequestCreator with RouteUtil with AgoraDirectives{
+  implicit val executionContext = actorRefFactory.dispatcher
+}
+
+trait NamespaceAclsRouteHelper extends BaseRoute {
+
+  def matchNamespaceAclsRoute(_path: String) =
+    path(_path / Segment / "acls") &
+    usernameFromCookie()
+
+  def completeNamespaceAclsGet(context: RequestContext, entity: AgoraEntity, username: String, aclHandler: Props) = {
+    val message = ListNamespaceAcls(context, entity, username)
+    perRequest(context, aclHandler, message)
+  }
+  def completeNamespaceAclsPost(context: RequestContext, entity: AgoraEntity, params: Map[String, String], username: String, aclHandler: Props) ={
+    val acl = bucketAclFromParams(params)
+    val message = InsertNamespaceAcl(context, entity, username, acl)
+    perRequest(context, aclHandler, message)
+
+  }
+  def completeNamespaceAclsDelete(context: RequestContext, entity: AgoraEntity, params: Map[String, String], username: String, aclHandler: Props) = {
+    val acl = bucketAclFromParams(params)
+    val message = DeleteNamespaceAcl(context, entity, username, acl)
+    perRequest(context, aclHandler, message)
+  }
+}
+
+trait EntityAclsRouteHelper extends BaseRoute {
+
+  def matchEntityAclRoute(_path: String) =
+    path(_path / Segment / Segment / IntNumber / "acls") &
+      usernameFromCookie()
+
+  def completeEntityAclGet(context: RequestContext, entity: AgoraEntity, username: String, aclHandler: Props) = {
+    val message = ListEntityAcls(context, entity, username)
+    perRequest(context, aclHandler, message)
+  }
+
+  def completeEntityAclPost(context: RequestContext, entity: AgoraEntity, params: Map[String, String], username: String, aclHandler: Props) = {
+    val acl = objectAclFromParams(params)
+    val message = InsertEntityAcl(context, entity, username, acl)
+    perRequest(context, aclHandler, message)
+  }
+
+  def completeEntityAclDelete(context: RequestContext, entity: AgoraEntity, params: Map[String, String], username: String, aclHandler: Props) = {
+    val acl = objectAclFromParams(params)
+    val message = DeleteEntityAcl(context, entity, username, acl)
+    perRequest(context, aclHandler, message)
+  }
+}
 
 trait QuerySingleHelper extends BaseRoute {
 
@@ -37,7 +87,6 @@ trait QuerySingleHelper extends BaseRoute {
 
 trait QueryRouteHelper extends BaseRoute {
 
-  // queryRoute Helpers
   def matchQueryRoute(_path: String) = get & path(_path)
 
   def entityFromParams(params: Map[String, List[String]]): AgoraEntity = {

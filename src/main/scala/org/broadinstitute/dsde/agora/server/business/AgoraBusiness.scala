@@ -5,18 +5,19 @@ import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
 import org.broadinstitute.dsde.agora.server.dataaccess.acls.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.dataaccess.acls.{AgoraPermissions, AuthorizationProvider}
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection, AgoraEntityType}
-import org.joda.time.DateTime
 
 class AgoraBusiness(authorizationProvider: AuthorizationProvider) {
 
   def insert(agoraEntity: AgoraEntity, username: String): AgoraEntity = {
     if (authorizationProvider.isAuthorizedForCreation(agoraEntity, username)) {
       validatePayload(agoraEntity, username)
-      val entityWithId = AgoraDao.createAgoraDao(agoraEntity.entityType).insert(agoraEntity.copy(createDate = Option(new DateTime())))
+
+      val entityWithId = AgoraDao.createAgoraDao(agoraEntity.entityType).insert(agoraEntity.addDate())
       authorizationProvider.createEntityAuthorizations(entityWithId, username)
       entityWithId.addUrl()
+
     } else {
-      throw new AgoraAuthorizationException(AgoraPermissions(Create), agoraEntity)
+      throw new EntityAuthorizationException(AgoraPermissions(Create), agoraEntity)
     }
   }
 
@@ -24,9 +25,10 @@ class AgoraBusiness(authorizationProvider: AuthorizationProvider) {
            agoraProjection: Option[AgoraEntityProjection],
            entityTypes: Seq[AgoraEntityType.EntityType],
            username: String): Seq[AgoraEntity] = {
-    val entities = AgoraDao.createAgoraDao(entityTypes).find(agoraSearch, agoraProjection).map(
-      entity => entity.addUrl()
-    )
+    val entities = AgoraDao.createAgoraDao(entityTypes)
+      .find(agoraSearch, agoraProjection)
+      .map(entity => entity.addUrl())
+
     authorizationProvider.filterByReadPermissions(entities, username)
   }
 
@@ -36,10 +38,11 @@ class AgoraBusiness(authorizationProvider: AuthorizationProvider) {
                  entityTypes: Seq[AgoraEntityType.EntityType],
                  username: String): AgoraEntity = {
     val foundEntity = AgoraDao.createAgoraDao(entityTypes).findSingle(namespace, name, snapshotId)
-    if (authorizationProvider.isAuthorizedForRead(foundEntity, username)) {
+
+    if (authorizationProvider.isAuthorizedForRead(foundEntity, username))
       foundEntity.addUrl()
-    }
-    else throw new AgoraAuthorizationException(AgoraPermissions(Read), foundEntity)
+    else
+      throw new EntityAuthorizationException(AgoraPermissions(Read), foundEntity)
   }
 
   def findSingle(entity: AgoraEntity, entityTypes: Seq[AgoraEntityType.EntityType], username: String): AgoraEntity = {
@@ -50,9 +53,11 @@ class AgoraBusiness(authorizationProvider: AuthorizationProvider) {
     agoraEntity.entityType.get match {
       case AgoraEntityType.Task =>
         WdlNamespace.load(agoraEntity.payload.get)
+
       case AgoraEntityType.Workflow =>
         val resolver = MethodImportResolver(username, this, authorizationProvider)
         WdlNamespace.load(agoraEntity.payload.get, resolver.importResolver _)
+
       case AgoraEntityType.Configuration =>
       //add config validation here
     }

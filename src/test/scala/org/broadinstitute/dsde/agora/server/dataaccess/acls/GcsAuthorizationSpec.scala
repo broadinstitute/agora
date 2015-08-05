@@ -3,7 +3,7 @@ package org.broadinstitute.dsde.agora.server.dataaccess.acls
 
 import org.broadinstitute.dsde.agora.server.AgoraIntegrationTestData._
 import org.broadinstitute.dsde.agora.server.business.{EntityAuthorizationException, AgoraBusiness}
-import org.broadinstitute.dsde.agora.server.dataaccess.acls.AgoraPermissions.{Nothing}
+import org.broadinstitute.dsde.agora.server.dataaccess.acls.AgoraPermissions.Nothing
 import org.broadinstitute.dsde.agora.server.dataaccess.acls.gcs.GcsAuthorizationProvider
 import org.scalatest.{DoNotDiscover, FlatSpec}
 

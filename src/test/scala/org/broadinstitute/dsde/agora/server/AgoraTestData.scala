@@ -173,7 +173,106 @@ object AgoraTestData {
                                     |  },
                                     |  "namespace": "ns"
                                     |}""".stripMargin)
-
+  val payloadWithValidOfficialDockerImageInWdl = Option( """
+                                    |task wc {
+                                    |  command {
+                                    |    wc -l ${sep=' ' File files+} | tail -1 | cut -d' ' -f 2
+                                    |  }
+                                    |  output {
+                                    |    Int count = read_int("stdout")
+                                    |  }
+                                    |  runtime {
+                                    |    docker: "ubuntu:latest"
+                                    |  }
+                                    |}
+                                    | """.stripMargin)
+  val payloadWithInvalidOfficialDockerRepoNameInWdl = Option( """
+                                                                |task wc {
+                                                                |  command {
+                                                                |    wc -l ${sep=' ' File files+} | tail -1 | cut -d' ' -f 2
+                                                                |  }
+                                                                |  output {
+                                                                |    Int count = read_int("stdout")
+                                                                |  }
+                                                                |  runtime {
+                                                                |    docker: "ubuntu_doesnotexist:latest"
+                                                                |  }
+                                                                |}
+                                                                | """.stripMargin)
+  val payloadWithInvalidOfficialDockerTagNameInWdl = Option( """
+                                                             |task wc {
+                                                             |  command {
+                                                             |    wc -l ${sep=' ' File files+} | tail -1 | cut -d' ' -f 2
+                                                             |  }
+                                                             |  output {
+                                                             |    Int count = read_int("stdout")
+                                                             |  }
+                                                             |  runtime {
+                                                             |    docker: "ubuntu:ggrant_latest"
+                                                             |  }
+                                                             |}
+                                                             | """.stripMargin)
+  val payloadWithValidPersonalDockerImageInWdl = Option( """
+                                                           |task wc {
+                                                           |  command {
+                                                           |    wc -l ${sep=' ' File files+} | tail -1 | cut -d' ' -f 2
+                                                           |  }
+                                                           |  output {
+                                                           |    Int count = read_int("stdout")
+                                                           |  }
+                                                           |  runtime {
+                                                           |    docker: "broadinstitute/scala-baseimage"
+                                                           |  }
+                                                           |}
+                                                           | """.stripMargin)
+  val payloadWithInvalidPersonalDockerUserNameInWdl = Option( """
+                                                               |task wc {
+                                                               |  command {
+                                                               |    wc -l ${sep=' ' File files+} | tail -1 | cut -d' ' -f 2
+                                                               |  }
+                                                               |  output {
+                                                               |    Int count = read_int("stdout")
+                                                               |  }
+                                                               |  runtime {
+                                                               |    docker: "broadinstitute_doesnotexist/scala-baseimage:latest"
+                                                               |    memory: "2MB"
+                                                               |    cores: 1
+                                                               |    disk: "3MB"
+                                                               |  }
+                                                               |}
+                                                               | """.stripMargin)
+  val payloadWithInvalidPersonalDockerRepoNameInWdl = Option( """
+                                                                |task wc {
+                                                                |  command {
+                                                                |    wc -l ${sep=' ' File files+} | tail -1 | cut -d' ' -f 2
+                                                                |  }
+                                                                |  output {
+                                                                |    Int count = read_int("stdout")
+                                                                |  }
+                                                                |  runtime {
+                                                                |    docker: "broadinstitute/scala-baseimage_doesnotexist:latest"
+                                                                |    memory: "2MB"
+                                                                |    cores: 1
+                                                                |    disk: "3MB"
+                                                                |  }
+                                                                |}
+                                                                | """.stripMargin)
+  val payloadWithInvalidPersonalDockerTagNameInWdl = Option( """
+                                                                |task wc {
+                                                                |  command {
+                                                                |    wc -l ${sep=' ' File files+} | tail -1 | cut -d' ' -f 2
+                                                                |  }
+                                                                |  output {
+                                                                |    Int count = read_int("stdout")
+                                                                |  }
+                                                                |  runtime {
+                                                                |    docker: "broadinstitute/scala-baseimage:latest_doesnotexist"
+                                                                |    memory: "2MB"
+                                                                |    cores: 1
+                                                                |    disk: "3MB"
+                                                                |  }
+                                                                |}
+                                                                | """.stripMargin)
   val testEntity1 = AgoraEntity(namespace = namespace1,
     name = name1,
     synopsis = synopsis1,
@@ -277,6 +376,15 @@ object AgoraTestData {
     owner = owner1,
     payload = badPayloadNonExistentImport,
     entityType = Option(AgoraEntityType.Workflow)
+  )
+
+  val testAgoraEntityWithInvalidOfficialDockerImageInWdl = new AgoraEntity(namespace = namespace1,
+    name = name1,
+    synopsis = synopsis1,
+    documentation = documentation1,
+    owner = owner1,
+    payload = payloadWithInvalidOfficialDockerTagNameInWdl,
+    entityType = Option(AgoraEntityType.Task)
   )
 
   val testEntityWorkflowWithExistentWdlImport = new AgoraEntity(

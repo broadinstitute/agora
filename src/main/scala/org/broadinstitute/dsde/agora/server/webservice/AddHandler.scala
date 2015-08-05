@@ -7,6 +7,7 @@ import org.broadinstitute.dsde.agora.server.dataaccess.acls.AuthorizationProvide
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraError}
 import org.broadinstitute.dsde.agora.server.webservice.PerRequest.RequestComplete
+import org.broadinstitute.dsde.agora.server.webservice.util.DockerHubClient.DockerImageNotFoundException
 import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages
 import spray.http.StatusCodes._
 import spray.httpx.SprayJsonSupport._
@@ -27,7 +28,8 @@ class AddHandler(authorizationProvider: AuthorizationProvider) extends Actor {
       try {
         add(requestContext, agoraAddRequest, username)
       } catch {
-        case e: SyntaxError => context.parent ! RequestComplete(BadRequest, AgoraError("Syntax error in payload: " + e.getMessage))
+        case se: SyntaxError => context.parent ! RequestComplete(BadRequest, AgoraError("Syntax error in payload: " + se.getMessage))
+        case de: DockerImageNotFoundException => context.parent ! RequestComplete(BadRequest, AgoraError("Invalid Docker Referenced in payload: " + de.getMessage))
       }
       context.stop(self)
   }

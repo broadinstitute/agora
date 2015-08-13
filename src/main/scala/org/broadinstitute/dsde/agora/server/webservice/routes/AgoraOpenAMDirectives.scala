@@ -32,5 +32,6 @@ trait AgoraOpenAMDirectives extends AgoraDirectives {
     } yield userInfo.mail.head
     onSuccess(userInfoFuture)
   }
-
 }
+
+object AgoraOpenAMDirectives extends AgoraOpenAMDirectives

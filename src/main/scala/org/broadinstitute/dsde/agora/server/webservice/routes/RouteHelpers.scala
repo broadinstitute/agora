@@ -1,75 +1,110 @@
 package org.broadinstitute.dsde.agora.server.webservice.routes
 
 import akka.actor.Props
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraEntityPermissionsClient._
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AccessControl
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntityType, AgoraEntityProjection, AgoraEntity}
 import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages._
 import org.broadinstitute.dsde.agora.server.webservice.PerRequestCreator
-import org.broadinstitute.dsde.agora.server.dataaccess.acls.gcs.GcsClient._
 import spray.routing.{Directive0, Directives, RequestContext}
 import scala.util.Try
 
+import org.broadinstitute.dsde.agora.server.AgoraConfig.openAMAuthentication
 
 trait RouteHelpers extends QuerySingleHelper
   with QueryRouteHelper
   with AddRouteHelper
-  with EntityAclsRouteHelper
-  with NamespaceAclsRouteHelper
+  with EntityPermissionsRouteHelper
+  with NamespacePermissionsRouteHelper
 
-trait BaseRoute extends PerRequestCreator with RouteUtil with AgoraDirectives{
+trait BaseRoute extends PerRequestCreator with RouteUtil  {
   implicit val executionContext = actorRefFactory.dispatcher
-}
 
-trait NamespaceAclsRouteHelper extends BaseRoute {
-
-  def matchNamespaceAclsRoute(_path: String) =
-    path(_path / Segment / "acls") &
-    usernameFromCookie()
-
-  def completeNamespaceAclsGet(context: RequestContext, entity: AgoraEntity, username: String, aclHandler: Props) = {
-    val message = ListNamespaceAcls(context, entity, username)
-    perRequest(context, aclHandler, message)
-  }
-  def completeNamespaceAclsPost(context: RequestContext, entity: AgoraEntity, params: Map[String, String], username: String, aclHandler: Props) ={
-    val acl = bucketAclFromParams(params)
-    val message = InsertNamespaceAcl(context, entity, username, acl)
-    perRequest(context, aclHandler, message)
-
-  }
-  def completeNamespaceAclsDelete(context: RequestContext, entity: AgoraEntity, params: Map[String, String], username: String, aclHandler: Props) = {
-    val acl = bucketAclFromParams(params)
-    val message = DeleteNamespaceAcl(context, entity, username, acl)
-    perRequest(context, aclHandler, message)
+  def getUserFromParams(params: Map[String, String]): String = {
+    val user = params.get("user")
+    if (user.isDefined)
+      user.get
+    else
+      throw new IllegalArgumentException("Missing params: user and/or role.")
   }
 }
 
-trait EntityAclsRouteHelper extends BaseRoute {
+trait NamespacePermissionsRouteHelper extends BaseRoute {
 
-  def matchEntityAclRoute(_path: String) =
-    path(_path / Segment / Segment / IntNumber / "acls") &
-      usernameFromCookie()
+  def matchNamespacePermissionsRoute(_path: String) =
+    path(_path / Segment / "permissions") &
+    openAMAuthentication.usernameFromCookie()
 
-  def completeEntityAclGet(context: RequestContext, entity: AgoraEntity, username: String, aclHandler: Props) = {
-    val message = ListEntityAcls(context, entity, username)
+  def completeNamespacePermissionsGet(context: RequestContext, entity: AgoraEntity, username: String, aclHandler: Props) = {
+    addUserIfNotInDatabase(username)
+    val message = ListNamespacePermissions(context, entity, username)
     perRequest(context, aclHandler, message)
   }
 
-  def completeEntityAclPost(context: RequestContext, entity: AgoraEntity, params: Map[String, String], username: String, aclHandler: Props) = {
-    val acl = objectAclFromParams(params)
-    val message = InsertEntityAcl(context, entity, username, acl)
+  def completeNamespacePermissionsPost(context: RequestContext, entity: AgoraEntity, params: Map[String, String], username: String, aclHandler: Props) ={
+    addUserIfNotInDatabase(username)
+    val accessObject = AccessControl.fromParams(params)
+    val message = InsertNamespacePermission(context, entity, username, accessObject)
     perRequest(context, aclHandler, message)
   }
 
-  def completeEntityAclDelete(context: RequestContext, entity: AgoraEntity, params: Map[String, String], username: String, aclHandler: Props) = {
-    val acl = objectAclFromParams(params)
-    val message = DeleteEntityAcl(context, entity, username, acl)
+  def completeNamespacePermissionsPut(context: RequestContext, entity: AgoraEntity, params: Map[String, String], username: String, aclHandler: Props) ={
+    addUserIfNotInDatabase(username)
+    val accessObject = AccessControl.fromParams(params)
+    val message = EditNamespacePermission(context, entity, username, accessObject)
+    perRequest(context, aclHandler, message)
+  }
+
+  def completeNamespacePermissionsDelete(context: RequestContext, entity: AgoraEntity, params: Map[String, String], username: String, aclHandler: Props) = {
+    addUserIfNotInDatabase(username)
+    val userToRemove = getUserFromParams(params)
+    val message = DeleteNamespacePermission(context, entity, username, userToRemove)
+    perRequest(context, aclHandler, message)
+  }
+}
+
+trait EntityPermissionsRouteHelper extends BaseRoute {
+
+  def matchEntityPermissionsRoute(_path: String) =
+    path(_path / Segment / Segment / IntNumber / "permissions") &
+    openAMAuthentication.usernameFromCookie()
+
+  def completeEntityPermissionsGet(context: RequestContext, entity: AgoraEntity, username: String, aclHandler: Props) = {
+    addUserIfNotInDatabase(username)
+    val message = ListEntityPermissions(context, entity, username)
+    perRequest(context, aclHandler, message)
+  }
+
+  def completeEntityPermissionsPost(context: RequestContext, entity: AgoraEntity, params: Map[String, String], username: String, aclHandler: Props) = {
+    addUserIfNotInDatabase(username)
+    val accessObject = AccessControl.fromParams(params)
+    val message = InsertEntityPermission(context, entity, username, accessObject)
+    perRequest(context, aclHandler, message)
+  }
+
+  def completeEntityPermissionsPut(context: RequestContext, entity: AgoraEntity, params: Map[String, String], username: String, aclHandler: Props) = {
+    addUserIfNotInDatabase(username)
+    val accessObject = AccessControl.fromParams(params)
+    val message = EditEntityPermission(context, entity, username, accessObject)
+    perRequest(context, aclHandler, message)
+  }
+
+  def completeEntityPermissionsDelete(context: RequestContext, entity: AgoraEntity, params: Map[String, String], username: String, aclHandler: Props) = {
+    addUserIfNotInDatabase(username)
+    val userToRemove = getUserFromParams(params)
+    val message = DeleteEntityPermission(context, entity, username, userToRemove)
     perRequest(context, aclHandler, message)
   }
 }
 
 trait QuerySingleHelper extends BaseRoute {
 
-  def matchQuerySingleRoute(_path: String) = get & path(_path / Segment / Segment / IntNumber)
-  val extractOnlyPayloadParameter = extract(_.request.uri.query.get("onlyPayload"))
+  def matchQuerySingleRoute(_path: String) =
+    get &
+    path(_path / Segment / Segment / IntNumber) &
+    openAMAuthentication.usernameFromCookie()
+
+  def extractOnlyPayloadParameter = extract(_.request.uri.query.get("onlyPayload"))
 
   def completeWithPerRequest(context: RequestContext,
                               entity: AgoraEntity,
@@ -77,7 +112,7 @@ trait QuerySingleHelper extends BaseRoute {
                               onlyPayload: Boolean,
                               path: String,
                               queryHandler: Props): Unit = {
-
+    addUserIfNotInDatabase(username)
     val entityType = AgoraEntityType.byPath(path)
     val message = QuerySingle(context, entity, entityType, username, onlyPayload)
 
@@ -87,7 +122,10 @@ trait QuerySingleHelper extends BaseRoute {
 
 trait QueryRouteHelper extends BaseRoute {
 
-  def matchQueryRoute(_path: String) = get & path(_path)
+  def matchQueryRoute(_path: String) =
+    get &
+    path(_path) &
+    openAMAuthentication.usernameFromCookie()
 
   def entityFromParams(params: Map[String, List[String]]): AgoraEntity = {
     val namespace   = params.getOrElse("namespace", Nil).headOption
@@ -124,7 +162,7 @@ trait QueryRouteHelper extends BaseRoute {
                              username: String,
                              path: String,
                              queryHandler: Props): Unit = {
-
+    addUserIfNotInDatabase(username)
     val entity = entityFromParams(params)
     val entityType = AgoraEntityType.byPath(path)
     val projection = projectionFromParams(params)
@@ -135,7 +173,10 @@ trait QueryRouteHelper extends BaseRoute {
 
 trait AddRouteHelper extends BaseRoute {
 
-  def postPath(_path: String) = post & path(_path)
+  def postPath(_path: String) =
+  post &
+  path(_path) &
+  openAMAuthentication.usernameFromCookie()
 
   def validateEntityType(entity: AgoraEntity, path: String): Directive0 = {
     validateEntityType(entity.entityType, path)
@@ -145,6 +186,7 @@ trait AddRouteHelper extends BaseRoute {
                              entity: AgoraEntity,
                              username: String,
                              addHandler: Props ) = {
+    addUserIfNotInDatabase(username)
     perRequest(context, addHandler, Add(context, entity, username))
   }
 }

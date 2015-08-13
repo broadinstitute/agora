@@ -10,10 +10,14 @@ import scala.concurrent.ExecutionContext
 
 trait MockAgoraDirectives extends AgoraDirectives {
   def commonNameFromCookie(magnet: ImplicitMagnet[ExecutionContext]): Directive1[String] = {
-    provide(AgoraConfig.mockAuthenticatedUserEmail.split("@")(0))
+
+
+    provide(AgoraConfig.mockAuthenticatedUserEmail)
   }
 
   def usernameFromCookie(magnet: ImplicitMagnet[ExecutionContext]): Directive1[String] = {
     provide(AgoraConfig.mockAuthenticatedUserEmail)
   }
 }
+
+object MockAgoraDirectives extends MockAgoraDirectives

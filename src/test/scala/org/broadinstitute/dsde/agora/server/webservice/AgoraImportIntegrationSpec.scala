@@ -2,7 +2,6 @@ package org.broadinstitute.dsde.agora.server.webservice
 
 import org.broadinstitute.dsde.agora.server.AgoraIntegrationTestData._
 import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
-import org.broadinstitute.dsde.agora.server.dataaccess.acls.MockAuthorizationProvider
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
@@ -23,8 +22,8 @@ class AgoraImportIntegrationSpec extends FlatSpec with RouteTest with ScalatestR
     def actorRefFactory = system
   }
 
-  val agoraBusiness = new AgoraBusiness(MockAuthorizationProvider)
-  val methodsService = new MethodsService(MockAuthorizationProvider) with ActorRefFactoryContext with AgoraOpenAMMockDirectives
+  val agoraBusiness = new AgoraBusiness()
+  val methodsService = new MethodsService() with ActorRefFactoryContext
 
 
   def handleError[T](deserialized: Deserialized[T], assertions: (T) => Unit) = {

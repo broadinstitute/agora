@@ -75,7 +75,7 @@ class AgoraMethodsSpec extends ApiServiceSpec {
         handleError(
           entity.as[Seq[AgoraEntity]],
           (entities: Seq[AgoraEntity]) =>
-            assert(entities.toSet === brief(Seq(testEntity1WithId, testEntity2WithId, testEntity3WithId, testEntity4WithId, testEntity5WithId)).toSet)
+            assert(entities.toSet === brief(Seq(testEntity1WithId, testEntity3WithId, testEntity4WithId, testEntity5WithId)).toSet)
         )
       }
   }

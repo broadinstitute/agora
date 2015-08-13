@@ -3,7 +3,6 @@ package org.broadinstitute.dsde.agora.server.webservice
 import akka.actor.Actor
 import cromwell.parser.WdlParser.SyntaxError
 import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
-import org.broadinstitute.dsde.agora.server.dataaccess.acls.AuthorizationProvider
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraError}
 import org.broadinstitute.dsde.agora.server.webservice.PerRequest.RequestComplete
@@ -18,10 +17,10 @@ import spray.routing.RequestContext
  * It then handles the returns from the business layer and completes the request. It is responsible for adding a method
  * or method configuration to the methods repository.
  */
-class AddHandler(authorizationProvider: AuthorizationProvider) extends Actor {
+class AddHandler extends Actor {
   implicit val system = context.system
 
-  val agoraBusiness = new AgoraBusiness(authorizationProvider)
+  val agoraBusiness = new AgoraBusiness()
 
   def receive = {
     case ServiceMessages.Add(requestContext: RequestContext, agoraAddRequest: AgoraEntity, username: String) =>

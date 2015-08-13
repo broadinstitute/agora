@@ -14,26 +14,29 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.util.Try
 
-class ServerInitializer(environment: String) extends LazyLogging {
+class ServerInitializer extends LazyLogging {
   implicit val actorSystem = ActorSystem("agora")
 
   def startAllServices() {
-    if (!AgoraConfig.useStandaloneMongoDb(environment)) {
+    if (AgoraConfig.usesEmbeddedMongo)
       EmbeddedMongo.startMongo()
-    }
-    startWebServiceActors(environment)
+
+    startWebServiceActors()
   }
 
   def stopAllServices() {
-    if (!AgoraConfig.useStandaloneMongoDb(environment)) {
+    if (AgoraConfig.usesEmbeddedMongo)
       EmbeddedMongo.stopMongo()
-    }
+
+    println("Closing connection to sql db.")
+    AgoraConfig.sqlDatabase.close()
+
     stopAndCatchExceptions(stopWebServiceActors())
   }
 
-  private def startWebServiceActors(environment: String) = {
+  private def startWebServiceActors() = {
     implicit val bindTimeout: Timeout = 120.seconds
-    val service = actorSystem.actorOf(ApiServiceActor.props(environment), "agora-actor")
+    val service = actorSystem.actorOf(ApiServiceActor.props, "agora-actor")
     Await.result(IO(Http) ? Http.Bind(service, interface = AgoraConfig.webserviceInterface, port = AgoraConfig.port), bindTimeout.duration) match {
       case CommandFailed(b: Http.Bind) =>
         logger.error(s"Unable to bind to port ${AgoraConfig.port} on interface ${AgoraConfig.webserviceInterface}")

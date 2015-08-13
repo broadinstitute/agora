@@ -5,7 +5,6 @@ import cromwell.parser.WdlParser.SyntaxError
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.business.{ImportResolverHelper, MethodImportResolver}
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraEntityNotFoundException
-import org.broadinstitute.dsde.agora.server.dataaccess.acls.MockAuthorizationProvider
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
@@ -82,7 +81,7 @@ class AgoraImportSpec extends ApiServiceSpec {
 
   "ImportResolverHelper.resolve" should "return throw an AgoraEntityNotFoundException if method does not exist" in {
     val thrown = intercept[AgoraEntityNotFoundException] {
-      ImportResolverHelper.resolve("methods://foo.bar.1", agoraBusiness, agoraCIOwner.get)
+      ImportResolverHelper.resolve("methods://foo.bar.1", agoraBusiness, mockAutheticatedOwner.get)
     }
     assert(thrown != null)
   }
@@ -91,7 +90,7 @@ class AgoraImportSpec extends ApiServiceSpec {
     val namespace = testEntityTaskWcWithId.namespace.get
     val name = testEntityTaskWcWithId.name.get
     val id = testEntityTaskWcWithId.snapshotId.get
-    val method = ImportResolverHelper.resolve(s"methods://$namespace.$name.$id", agoraBusiness, agoraCIOwner.get)
+    val method = ImportResolverHelper.resolve(s"methods://$namespace.$name.$id", agoraBusiness, mockAutheticatedOwner.get)
     assert(method !== None)
     assert(method.namespace.get === namespace)
     assert(method.name.get === name)
@@ -100,14 +99,14 @@ class AgoraImportSpec extends ApiServiceSpec {
 
   "MethodImportResolver" should "reject import if scheme != methods://" in {
     val uri = "blah://"
-    val resolver = MethodImportResolver(agoraCIOwner.get, agoraBusiness, MockAuthorizationProvider)
+    val resolver = MethodImportResolver(mockAutheticatedOwner.get, agoraBusiness)
     val thrown = the[SyntaxError] thrownBy resolver.importResolver(uri)
     assert(thrown.getMessage.contains("start with") === true)
   }
 
   "MethodImportResolver" should "throw an AgoraEntityNotFoundException if method not found" in {
     val uri = "methods://foo.bar.22"
-    val resolver = MethodImportResolver(agoraCIOwner.get, agoraBusiness, MockAuthorizationProvider)
+    val resolver = MethodImportResolver(mockAutheticatedOwner.get, agoraBusiness)
     val thrown = intercept[AgoraEntityNotFoundException] {
       resolver.importResolver(uri)
     }
@@ -119,7 +118,7 @@ class AgoraImportSpec extends ApiServiceSpec {
     val name = testEntityTaskWcWithId.name.get
     val id = testEntityTaskWcWithId.snapshotId.get
     val uri = s"methods://$namespace.$name.$id"
-    val resolver = MethodImportResolver(agoraCIOwner.get, agoraBusiness, MockAuthorizationProvider)
+    val resolver = MethodImportResolver(mockAutheticatedOwner.get, agoraBusiness)
     val payload = resolver.importResolver(uri)
     assert(payload.contains("wc") === true)
   }

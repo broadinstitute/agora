@@ -70,7 +70,10 @@ class AgoraBusiness(authorizationProvider: AuthorizationProvider) {
 
   private def validateDockerImage(task: Task) = {
     if (task.runtimeAttributes.docker.isDefined) {
-      DockerHubClient.doesDockerImageExist(parseDockerString(task.runtimeAttributes.docker.get))
+      val dockerImageReference = parseDockerString(task.runtimeAttributes.docker.get)
+      if (dockerImageReference.isDefined) {
+        DockerHubClient.doesDockerImageExist(dockerImageReference.get)
+      }
     }
   }
 
@@ -79,18 +82,22 @@ class AgoraBusiness(authorizationProvider: AuthorizationProvider) {
    *
    * @param imageId docker imageId string.  Looks like ubuntu:latest ggrant/joust:latest
    */
-  private def parseDockerString(imageId: String) = {
-    val splitUser = imageId.split('/')
-    if (splitUser.length > 2) {
-      throw new SyntaxError("Docker image string '" + imageId + "' is malformed")
+  private def parseDockerString(imageId: String) : Option[DockerImageReference] = {
+    if (imageId.startsWith("gcr.io")) {
+      None
+    } else {
+      val splitUser = imageId.split('/')
+      if (splitUser.length > 2) {
+        throw new SyntaxError("Docker image string '" + imageId + "' is malformed")
+      }
+      val user = if (splitUser.length == 1) None else Option(splitUser(0))
+      val splitTag = splitUser(splitUser.length - 1).split(':')
+      if (splitTag.length > 2) {
+        throw new SyntaxError("Docker image string '" + imageId + "' is malformed")
+      }
+      val repo = splitTag(0)
+      val tag = if (splitTag.length == 1) "latest" else splitTag(1)
+      Option(DockerImageReference(user, repo, tag))
     }
-    val user = if (splitUser.length == 1) None else Option(splitUser(0))
-    val splitTag = splitUser(splitUser.length - 1).split(':')
-    if (splitTag.length > 2) {
-      throw new SyntaxError("Docker image string '" + imageId + "' is malformed")
-    }
-    val repo = splitTag(0)
-    val tag = if (splitTag.length == 1) "latest" else splitTag(1)
-    DockerImageReference(user, repo, tag)
   }
 }

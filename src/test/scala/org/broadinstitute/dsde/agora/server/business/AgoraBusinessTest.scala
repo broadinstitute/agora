@@ -1,14 +1,13 @@
 package org.broadinstitute.dsde.agora.server.business
 
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
-import org.broadinstitute.dsde.agora.server.dataaccess.acls.MockAuthorizationProvider
 import org.scalatest.{DoNotDiscover, FlatSpec, Matchers}
 
 @DoNotDiscover
 class AgoraBusinessTest extends FlatSpec with Matchers {
 
-  val agoraBusiness = new AgoraBusiness(MockAuthorizationProvider)
-  val methodImportResolver = new MethodImportResolver(agoraCIOwner.get, agoraBusiness, MockAuthorizationProvider)
+  val agoraBusiness = new AgoraBusiness()
+  val methodImportResolver = new MethodImportResolver(agoraCIOwner.get, agoraBusiness)
 
   "Agora" should "not find a method payload when resolving a WDL import statement if the method has not been added" in {
     val importString = "methods://broad.nonexistent.5400"

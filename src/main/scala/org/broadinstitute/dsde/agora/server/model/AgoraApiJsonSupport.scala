@@ -2,6 +2,7 @@
 package org.broadinstitute.dsde.agora.server.model
 
 import org.broadinstitute.dsde.agora.server.webservice.util.AgoraOpenAMClient.UserInfoResponse
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AgoraPermissions, AccessControl}
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import spray.json._
@@ -57,9 +58,26 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
     ISODateTimeFormat.dateTimeNoMillis()
   }
 
+  implicit object AgoraPermissionsFormat extends RootJsonFormat[AgoraPermissions] {
+    override def write(obj: AgoraPermissions): JsArray =
+      JsArray(obj.toListOfStrings.map(JsString.apply))
+
+    override def read(json: JsValue): AgoraPermissions = json match {
+      case array: JsArray =>
+        val listOfStrings = array.convertTo[Seq[String]]
+        AgoraPermissions(listOfStrings)
+      case _ => throw new DeserializationException("unsupported AgoraPermission")
+    }
+
+  }
+
   implicit val AgoraEntityFormat = jsonFormat10(AgoraEntity.apply)
 
   implicit val AgoraEntityProjectionFormat = jsonFormat2(AgoraEntityProjection.apply)
 
   implicit val AgoraErrorFormat = jsonFormat1(AgoraError)
+
+  implicit val AccessControlFormat = jsonFormat2(AccessControl.apply)
+
+
 }

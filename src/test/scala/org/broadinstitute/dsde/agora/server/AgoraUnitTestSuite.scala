@@ -2,11 +2,16 @@ package org.broadinstitute.dsde.agora.server
 
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.business.{AgoraBusiness, AgoraBusinessTest}
-import org.broadinstitute.dsde.agora.server.dataaccess.acls.{MockAuthorizationProvider, AgoraAuthorizationTest, RoleTranslatorTest}
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.{EmbeddedMongo, MethodsDbTest}
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
 import org.broadinstitute.dsde.agora.server.model.{AgoraApiJsonSupportTest, AgoraEntityTest}
 import org.broadinstitute.dsde.agora.server.webservice._
 import org.scalatest.{BeforeAndAfterAll, Suites}
+import slick.driver.MySQLDriver.api._
+
+
+import scala.concurrent.Await
+import scala.concurrent.duration._
 
 class AgoraUnitTestSuite extends Suites(
   new AgoraMethodsSpec,
@@ -17,42 +22,55 @@ class AgoraUnitTestSuite extends Suites(
   new AgoraBusinessTest,
   new AgoraApiJsonSupportTest,
   new AgoraEntityTest,
-  new AgoraAuthorizationTest,
-  new RoleTranslatorTest) with BeforeAndAfterAll {
+  new AgoraPermissionsSpec,
+  new EntityPermissionsClientSpec,
+  new NamespacePermissionsClientSpec) with BeforeAndAfterAll {
 
-  val agora = new Agora(AgoraConfig.LocalEnvironment)     // Unit Tests use the local environment settings
-                                                          // mockAuthentication, mockAuthorization, embedded Mongo
-  val agoraBusiness = new AgoraBusiness(MockAuthorizationProvider)
+  val agora = new Agora()     // Unit Tests use the local environment settings
+  val agoraBusiness = new AgoraBusiness()
+  val timeout = 10.seconds
+
+  var db: Database = _
 
   override def beforeAll() {
     EmbeddedMongo.startMongo()
     println(s"Starting Agora web services ($suiteName)")
     agora.start()
 
-    MockAuthorizationProvider.createEntityAuthorizations(testEntity1, agoraCIOwner.get)
-    MockAuthorizationProvider.createEntityAuthorizations(testEntity2, agoraCIOwner.get)
-    MockAuthorizationProvider.createEntityAuthorizations(testEntity3, agoraCIOwner.get)
-    MockAuthorizationProvider.createEntityAuthorizations(testEntity4, agoraCIOwner.get)
-    MockAuthorizationProvider.createEntityAuthorizations(testEntity5, agoraCIOwner.get)
-    MockAuthorizationProvider.createEntityAuthorizations(testEntity6, agoraCIOwner.get)
-    MockAuthorizationProvider.createEntityAuthorizations(testEntity7, agoraCIOwner.get)
-    MockAuthorizationProvider.createEntityAuthorizations(testEntityTaskWc, agoraCIOwner.get)
-    MockAuthorizationProvider.createEntityAuthorizations(testAgoraConfigurationEntity, agoraCIOwner.get)
+    db = AgoraConfig.sqlDatabase
 
-    agoraBusiness.insert(testEntity1, agoraCIOwner.get)
-    agoraBusiness.insert(testEntity2, agoraCIOwner.get)
-    agoraBusiness.insert(testEntity3, agoraCIOwner.get)
-    agoraBusiness.insert(testEntity4, agoraCIOwner.get)
-    agoraBusiness.insert(testEntity5, agoraCIOwner.get)
-    agoraBusiness.insert(testEntity6, agoraCIOwner.get)
-    agoraBusiness.insert(testEntity7, agoraCIOwner.get)
-    agoraBusiness.insert(testEntityTaskWc, agoraCIOwner.get)
-    agoraBusiness.insert(testAgoraConfigurationEntity, agoraCIOwner.get)
+    val setupFuture = db.run(
+      (entities.schema ++
+        users.schema ++
+        permissions.schema).create
+    )
+
+    println("Connecting to test sql database.")
+    Await.result(setupFuture, timeout)
+
+    agoraBusiness.insert(testEntity1, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testEntity2, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testEntity3, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testEntity4, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testEntity5, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testEntity6, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testEntity7, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testEntityTaskWc, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testAgoraConfigurationEntity, mockAutheticatedOwner.get)
   }
 
   override def afterAll() {
     println(s"Stopping Agora web services ($suiteName)")
     agora.stop()
     EmbeddedMongo.stopMongo()
+
+    val tearDownFuture = db.run(
+      (entities.schema ++
+        users.schema ++
+        permissions.schema).drop
+    )
+    Await.ready(tearDownFuture, timeout)
+    println("Disconnecting from sql database.")
+    db.close
   }
 }

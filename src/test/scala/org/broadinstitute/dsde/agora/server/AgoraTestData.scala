@@ -15,8 +15,9 @@ object AgoraTestData {
   val namespace3 = Option("GATK")
   val name1 = Option("testMethod1")
   val name2 = Option("testMethod2")
-  val nameNonExistent = Option("nonexistent")
   val snapshotId1 = Option(1)
+  val snapshotId2 = Option(2)
+  val nameNonExistent = Option("nonexistent")
   val synopsis1 = Option("This is a test method")
   val synopsis2 = Option("This is another test method")
   val synopsis3 = Option("This is a test configuration")
@@ -34,8 +35,11 @@ object AgoraTestData {
 
   // NB: save io by storing output.
   val bigDocumentation: Option[String] = Option(getBigDocumentation)
-  val owner1 = Option("bob")
-  val owner2 = Option("dave")
+  val owner1 = Option("testowner1@broadinstitute.org")
+  val owner2 = Option("testowner2@broadinstitute.org")
+  val owner3 = Option("testowner3@broadinstitute.org")
+  val mockAutheticatedOwner = Option(AgoraConfig.mockAuthenticatedUserEmail)
+
   val payload1 = Option( """task grep {
                            |  command {
                            |    grep ${pattern} ${flags?} ${File file_name}
@@ -285,7 +289,7 @@ object AgoraTestData {
     name = name1,
     synopsis = synopsis1,
     documentation = documentation1,
-    owner = owner1,
+    owner = owner2,
     payload = payload1,
     entityType = Option(AgoraEntityType.Workflow))
 
@@ -406,6 +410,7 @@ object AgoraTestData {
     payload = payload1,
     entityType = Option(AgoraEntityType.Workflow)
   )
+
   val testAgoraConfigurationEntity = new AgoraEntity(
     namespace = namespace1,
     name = name1,

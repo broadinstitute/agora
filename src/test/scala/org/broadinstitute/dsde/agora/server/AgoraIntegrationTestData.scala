@@ -4,10 +4,13 @@ import org.broadinstitute.dsde.agora.server.model.{AgoraEntityType, AgoraEntity}
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 
 object AgoraIntegrationTestData  {
-  val owner1 = "broadprometheustest@gmail.com"
-  val owner2 = "jcarey@broadinstitute.org"
 
-  val testIntegrationEntity = AgoraEntity(namespace = Option("___test" + System.currentTimeMillis()),
+  val agoraCIOwner = "agora-test"
+  val mockAutheticatedOwner = AgoraConfig.mockAuthenticatedUserEmail
+  val owner1 = "tester1"
+  val owner2 = "tester2"
+
+  val testIntegrationEntity = AgoraEntity(namespace = Option("___test1"),
                                           name = Option("testWorkflow"),
                                           synopsis = synopsis1,
                                           documentation = documentation1,
@@ -15,7 +18,7 @@ object AgoraIntegrationTestData  {
                                           payload = payload1,
                                           entityType = Option(AgoraEntityType.Workflow))
 
-  val testIntegrationEntity2 = AgoraEntity(namespace = Option("___test" + System.currentTimeMillis()),
+  val testIntegrationEntity2 = AgoraEntity(namespace = Option("___test2"),
                                             name = Option("testWorkflow"),
                                             synopsis = synopsis1,
                                             documentation = documentation1,
@@ -23,65 +26,65 @@ object AgoraIntegrationTestData  {
                                             payload = payload1,
                                             entityType = Option(AgoraEntityType.Workflow))
 
-  val testAgoraEntityWithValidOfficialDockerImageInWdl = new AgoraEntity(namespace = Option("___docker_test" + System.currentTimeMillis()),
+  val testAgoraEntityWithValidOfficialDockerImageInWdl = new AgoraEntity(namespace = Option("___docker_test"),
     name = name1,
     synopsis = synopsis1,
     documentation = documentation1,
-    owner = Option(owner1),
+    owner = Option(mockAutheticatedOwner),
     payload = payloadWithValidOfficialDockerImageInWdl,
     entityType = Option(AgoraEntityType.Task)
   )
 
-  val testAgoraEntityWithInvalidOfficialDockerRepoNameInWdl = new AgoraEntity(namespace = Option("___docker_test" + System.currentTimeMillis()),
+  val testAgoraEntityWithInvalidOfficialDockerRepoNameInWdl = new AgoraEntity(namespace = Option("___docker_test"),
     name = name1,
     synopsis = synopsis1,
     documentation = documentation1,
-    owner = Option(owner1),
+    owner = Option(mockAutheticatedOwner),
     payload = payloadWithInvalidOfficialDockerRepoNameInWdl,
     entityType = Option(AgoraEntityType.Task)
   )
 
-  val testAgoraEntityWithInvalidOfficialDockerTagNameInWdl = new AgoraEntity(namespace = Option("___docker_test" + System.currentTimeMillis()),
+  val testAgoraEntityWithInvalidOfficialDockerTagNameInWdl = new AgoraEntity(namespace = Option("___docker_test"),
     name = name1,
     synopsis = synopsis1,
     documentation = documentation1,
-    owner = Option(owner1),
+    owner = Option(mockAutheticatedOwner),
     payload = payloadWithInvalidOfficialDockerTagNameInWdl,
     entityType = Option(AgoraEntityType.Task)
   )
 
-  val testAgoraEntityWithValidPersonalDockerInWdl = new AgoraEntity(namespace = Option("___docker_test" + System.currentTimeMillis()),
+  val testAgoraEntityWithValidPersonalDockerInWdl = new AgoraEntity(namespace = Option("___docker_test"),
     name = name1,
     synopsis = synopsis1,
     documentation = documentation1,
-    owner = Option(owner1),
+    owner = Option(mockAutheticatedOwner),
     payload = payloadWithValidPersonalDockerImageInWdl,
     entityType = Option(AgoraEntityType.Task)
   )
 
-  val testAgoraEntityWithInvalidPersonalDockerUserNameInWdl = new AgoraEntity(namespace = Option("___docker_test" + System.currentTimeMillis()),
+  val testAgoraEntityWithInvalidPersonalDockerUserNameInWdl = new AgoraEntity(namespace = Option("___docker_test"),
     name = name1,
     synopsis = synopsis1,
     documentation = documentation1,
-    owner = Option(owner1),
+    owner = Option(mockAutheticatedOwner),
     payload = payloadWithInvalidPersonalDockerUserNameInWdl,
     entityType = Option(AgoraEntityType.Task)
   )
 
-  val testAgoraEntityWithInvalidPersonalDockerRepoNameInWdl = new AgoraEntity(namespace = Option("___docker_test" + System.currentTimeMillis()),
+  val testAgoraEntityWithInvalidPersonalDockerRepoNameInWdl = new AgoraEntity(namespace = Option("___docker_test"),
     name = name1,
     synopsis = synopsis1,
     documentation = documentation1,
-    owner = Option(owner1),
+    owner = Option(mockAutheticatedOwner),
     payload = payloadWithInvalidPersonalDockerRepoNameInWdl,
     entityType = Option(AgoraEntityType.Task)
   )
 
-  val testAgoraEntityWithInvalidPersonalDockerTagNameInWdl = new AgoraEntity(namespace = Option("___docker_test" + System.currentTimeMillis()),
+  val testAgoraEntityWithInvalidPersonalDockerTagNameInWdl = new AgoraEntity(namespace = Option("___docker_test"),
     name = name1,
     synopsis = synopsis1,
     documentation = documentation1,
-    owner = Option(owner1),
+    owner = Option(mockAutheticatedOwner),
     payload = payloadWithInvalidPersonalDockerTagNameInWdl,
     entityType = Option(AgoraEntityType.Task)
   )

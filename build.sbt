@@ -20,26 +20,65 @@ libraryDependencies ++= Seq(
   "cglib" % "cglib-nodep" % "2.2",
   "ch.qos.logback" % "logback-classic" % "1.1.3",
   "com.gettyimages" %% "spray-swagger" % "0.5.0",
+  "com.github.simplyscala" %% "scalatest-embedmongo" % "0.2.2",
   "com.google.api-client" % "google-api-client" % "1.20.0" excludeAll ExclusionRule(organization = "com.google.guava"),
   "com.google.apis" % "google-api-services-storage" % "v1-rev35-1.20.0",
+  "com.h2database" % "h2" % "1.3.175",
   "com.typesafe.akka" %% "akka-actor" % "2.3.4",
   "com.typesafe.akka" %% "akka-slf4j" % "2.3.11",
+  "com.typesafe" % "config" % "1.2.1",
   "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2",
+  "com.typesafe.slick" %% "slick" % "3.0.0",
+  "com.zaxxer" % "HikariCP-java6" % "2.0.1",
   "io.spray" %% "spray-can" % sprayV,
   "io.spray" %% "spray-client" % sprayV,
   "io.spray" %% "spray-json" % "1.3.1", // NB: Not at sprayV. 1.3.2 does not exist.
   "io.spray" %% "spray-routing" % sprayV,
+  "mysql" % "mysql-connector-java" % "5.1.35",
   "net.ceedubs" %% "ficus" % "1.1.2",
   "org.broadinstitute" %% "cromwell" % "0.1-SNAPSHOT" excludeAll ExclusionRule(organization = "com.gettyimages"),
   "org.broadinstitute.dsde.vault" %% "vault-common" % "0.1-15-bf74315",
   "org.mongodb" %% "casbah" % "2.8.1",
+  "org.flywaydb" % "flyway-core" % "3.2.1",
   "org.scalaz" %% "scalaz-core" % "7.1.3",
+  "org.slf4j" % "slf4j-nop" % "1.6.4",
   "org.webjars" % "swagger-ui" % "2.0.24",
-  "com.github.simplyscala" %% "scalatest-embedmongo" % "0.2.2",
   //---------- Test libraries -------------------//
   "io.spray" %% "spray-testkit" % sprayV % Test,
   "org.scalatest" %% "scalatest" % "2.2.4" % Test
 )
+
+Seq(flywaySettings: _*)
+
+//These can be overrided with system properties:
+// i.e: sbt -Dflyway.url=jdbc:mysql://DB_HOST:DB_PORT:DB_NAME -Dflyway.user=root -Dflyway.password=abc123
+flywayUrl := "jdbc:h2:file:local"
+
+flywayUser := "root"
+
+lazy val safeClean = taskKey[Unit]("DO NOT RUN IN PRODUCTION! Deletes the entire database with flywayClean. DO NOT RUN IN PRODUCTION!")
+
+safeClean := println("""
+    |__        ___    ____  _   _ ___ _   _  ____ _
+    |\ \      / / \  |  _ \| \ | |_ _| \ | |/ ___| |
+    | \ \ /\ / / _ \ | |_) |  \| || ||  \| | |  _| |
+    |  \ V  V / ___ \|  _ <| |\  || || |\  | |_| |_|
+    |   \_/\_/_/   \_\_| \_\_| \_|___|_| \_|\____(_)
+    |
+    |
+    | This will permanently DELETE EVERYTHING in the database.
+    | Do you really want to delete the entire database?
+    | If so, then remove the line:
+    |
+    | `addCommandAlias("flywayClean", "safeClean")`
+    |
+    | in the build.sbt file and rerun `sbt flywayClean`
+    |
+    | """.stripMargin)
+
+// Wrapper around flywayClean for safety.
+
+addCommandAlias("flywayClean", "safeClean")
 
 releaseSettings
 

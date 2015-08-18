@@ -2,7 +2,6 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.actor.Props
-import org.broadinstitute.dsde.agora.server.dataaccess.acls.AuthorizationProvider
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.routes.RouteHelpers
 import spray.routing.{HttpService}
@@ -14,74 +13,78 @@ import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
  *
  * Concrete implementaions are MethodsService and ConfigurationsService.
  */
-abstract class AgoraService(authorizationProvider: AuthorizationProvider) extends HttpService with RouteHelpers {
+abstract class AgoraService extends HttpService with RouteHelpers {
 
   def path: String
 
-  def routes = namespaceAclsRoute ~ entityAclsRoute ~ querySingleRoute ~ queryRoute ~ postRoute
+  def routes = namespacePermissionsRoute ~ entityPermissionsRoute ~ querySingleRoute ~ queryRoute ~ postRoute
 
-  def queryHandlerProps = Props(classOf[QueryHandler], authorizationProvider)
+  def queryHandlerProps = Props(classOf[QueryHandler])
 
-  def addHandlerProps = Props(classOf[AddHandler], authorizationProvider)
+  def addHandlerProps = Props(classOf[AddHandler])
 
-  def aclHandlerProps = Props(classOf[AclHandler], authorizationProvider)
+  def permissionHandlerProps = Props(classOf[PermissionHandler])
 
-  def namespaceAclsRoute =
-    matchNamespaceAclsRoute(path) { (namespace, username) =>
+  def namespacePermissionsRoute =
+    matchNamespacePermissionsRoute(path) { (namespace, username) =>
       parameterMap { (params) =>
         val entity = AgoraEntity(Option(namespace))
 
         get {requestContext =>
-          completeNamespaceAclsGet(requestContext, entity, username, aclHandlerProps)
+          completeNamespacePermissionsGet(requestContext, entity, username, permissionHandlerProps)
         } ~
         post {requestContext =>
-          completeNamespaceAclsPost(requestContext, entity, params, username, aclHandlerProps)
+          completeNamespacePermissionsPost(requestContext, entity, params, username, permissionHandlerProps)
+        } ~
+        put {requestContext =>
+          completeNamespacePermissionsPut(requestContext, entity, params, username, permissionHandlerProps)
         } ~
         delete {requestContext =>
-          completeNamespaceAclsDelete(requestContext, entity, params, username, aclHandlerProps)
+          completeNamespacePermissionsDelete(requestContext, entity, params, username, permissionHandlerProps)
         }
-    }
-  }
 
-  def entityAclsRoute =
-    matchEntityAclRoute(path) { (namespace, name, snapshotId, username) =>
+      }
+    }
+
+  def entityPermissionsRoute =
+    matchEntityPermissionsRoute(path) { (namespace, name, snapshotId, username) =>
       parameterMap { (params) =>
         val entity = AgoraEntity(Option(namespace), Option(name), Option(snapshotId))
 
         get { requestContext =>
-          completeEntityAclGet(requestContext, entity, username, aclHandlerProps)
+          completeEntityPermissionsGet(requestContext, entity, username, permissionHandlerProps)
         } ~
         post { requestContext =>
-          completeEntityAclPost(requestContext, entity, params, username, aclHandlerProps)
+          completeEntityPermissionsPost(requestContext, entity, params, username, permissionHandlerProps)
         } ~
-        delete {requestContext =>
-          completeEntityAclDelete(requestContext, entity, params, username, aclHandlerProps)
+        put { requestContext =>
+          completeEntityPermissionsPut(requestContext, entity, params, username, permissionHandlerProps)
+        } ~
+        delete { requestContext =>
+          completeEntityPermissionsDelete(requestContext, entity, params, username, permissionHandlerProps)
         }
+
       }
     }
 
   // GET http://root.com/methods/<namespace>/<name>/<snapshotId>?onlyPayload=true
   // GET http://root.com/configurations/<namespace>/<name>/<snapshotId>
   def querySingleRoute =
-    matchQuerySingleRoute(path) { (namespace, name, snapshotId) =>
-      usernameFromCookie() { (username) =>
-        extractOnlyPayloadParameter { (onlyPayload) =>
-          requestContext =>
-            val entity = AgoraEntity(Option(namespace), Option(name), Option(snapshotId))
-            completeWithPerRequest(requestContext, entity, username, toBool(onlyPayload), path, queryHandlerProps)
-        }
+    matchQuerySingleRoute(path) { (namespace, name, snapshotId, username) =>
+      extractOnlyPayloadParameter { (onlyPayload) =>
+        requestContext =>
+          val entity = AgoraEntity(Option(namespace), Option(name), Option(snapshotId))
+          completeWithPerRequest(requestContext, entity, username, toBool(onlyPayload), path, queryHandlerProps)
       }
     }
 
   // GET http://root.com/methods?
   // GET http://root.com/configurations?
   def queryRoute =
-    matchQueryRoute(path) {
-      usernameFromCookie() { username =>
-        parameterMultiMap { params =>
-          validateEntityType(params, path) {
-            requestContext => completeWithPerRequest(requestContext, params, username, path, queryHandlerProps)
-          }
+    matchQueryRoute(path) { (username) =>
+      parameterMultiMap { params =>
+        validateEntityType(params, path) {
+          requestContext => completeWithPerRequest(requestContext, params, username, path, queryHandlerProps)
         }
       }
     }
@@ -89,12 +92,10 @@ abstract class AgoraService(authorizationProvider: AuthorizationProvider) extend
   // POST http://root.com/methods
   // POST http://root.com/configurations
   def postRoute =
-    postPath(path) {
-      usernameFromCookie() { username =>
-        entity(as[AgoraEntity]) { agoraEntity =>
-          validateEntityType(agoraEntity, path) {
-            requestContext => completeWithPerRequest(requestContext, agoraEntity, username, addHandlerProps)
-          }
+    postPath(path) { (username) =>
+      entity(as[AgoraEntity]) { agoraEntity =>
+        validateEntityType(agoraEntity, path) {
+          requestContext => completeWithPerRequest(requestContext, agoraEntity, username, addHandlerProps)
         }
       }
     }

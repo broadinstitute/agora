@@ -1,6 +1,6 @@
 package org.broadinstitute.dsde.agora.server.webservice.util
 
-import com.google.api.services.storage.model.{BucketAccessControl, ObjectAccessControl}
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AccessControl
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection, AgoraEntityType}
 import spray.routing.RequestContext
 
@@ -9,35 +9,45 @@ import spray.routing.RequestContext
  */
 object ServiceMessages {
 
-  // Namespace Acl messages
-  case class ListNamespaceAcls(requestContext: RequestContext,
-                               entity: AgoraEntity,
-                               username: String)
+  // Namespace Permission messages
+  case class ListNamespacePermissions(requestContext: RequestContext,
+                                       entity: AgoraEntity,
+                                       username: String)
 
-  case class InsertNamespaceAcl(requestContext: RequestContext,
-                                entity: AgoraEntity,
-                                username: String,
-                                acl: BucketAccessControl)
+  case class InsertNamespacePermission(requestContext: RequestContext,
+                                        entity: AgoraEntity,
+                                        username: String,
+                                        accessObject: AccessControl)
 
-  case class DeleteNamespaceAcl(requestContext: RequestContext,
-                                entity: AgoraEntity,
-                                username: String,
-                                acl: BucketAccessControl)
+  case class EditNamespacePermission(requestContext: RequestContext,
+                                       entity: AgoraEntity,
+                                       username: String,
+                                       accessObject: AccessControl)
 
-  // Entity Acl messages
-  case class ListEntityAcls(requestContext: RequestContext,
-                             entity: AgoraEntity,
-                             username: String)
+  case class DeleteNamespacePermission(requestContext: RequestContext,
+                                        entity: AgoraEntity,
+                                        username: String,
+                                        userToRemove: String)
 
-  case class InsertEntityAcl(requestContext: RequestContext,
-                              entity: AgoraEntity,
-                              username: String,
-                              acl: ObjectAccessControl)
+  // Entity Permission messages
+  case class ListEntityPermissions(requestContext: RequestContext,
+                                   entity: AgoraEntity,
+                                   username: String)
 
-  case class DeleteEntityAcl(requestContext: RequestContext,
-                              entity: AgoraEntity,
-                              username: String,
-                              acl: ObjectAccessControl)
+  case class InsertEntityPermission(requestContext: RequestContext,
+                                    entity: AgoraEntity,
+                                    username: String,
+                                    accessObject: AccessControl)
+
+  case class EditEntityPermission(requestContext: RequestContext,
+                                    entity: AgoraEntity,
+                                    username: String,
+                                    accessObject: AccessControl)
+
+  case class DeleteEntityPermission(requestContext: RequestContext,
+                                    entity: AgoraEntity,
+                                    username: String,
+                                    userToRemove: String)
 
   // Agora Entity messages
   case class QuerySingle(requestContext: RequestContext,

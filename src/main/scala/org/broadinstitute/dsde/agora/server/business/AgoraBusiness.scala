@@ -5,22 +5,33 @@ import org.broadinstitute.dsde.agora.server.webservice.util.{DockerImageReferenc
 
 import cromwell.binding._
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
-import org.broadinstitute.dsde.agora.server.dataaccess.acls.AgoraPermissions._
-import org.broadinstitute.dsde.agora.server.dataaccess.acls.{AgoraPermissions, AuthorizationProvider}
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.NamespacePermissionsClient
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraEntityPermissionsClient
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection, AgoraEntityType}
 
-class AgoraBusiness(authorizationProvider: AuthorizationProvider) {
+class AgoraBusiness {
 
   def insert(agoraEntity: AgoraEntity, username: String): AgoraEntity = {
-    if (authorizationProvider.isAuthorizedForCreation(agoraEntity, username)) {
+    if (NamespacePermissionsClient.getNamespacePermission(agoraEntity, username).canCreate) {
       validatePayload(agoraEntity, username)
 
       val entityWithId = AgoraDao.createAgoraDao(agoraEntity.entityType).insert(agoraEntity.addDate())
-      authorizationProvider.createEntityAuthorizations(entityWithId, username)
+      val userAccess = new AccessControl(username, AgoraPermissions(All))
+
+      if (!NamespacePermissionsClient.doesEntityExists(agoraEntity)) {
+        NamespacePermissionsClient.addEntity(entityWithId)
+        NamespacePermissionsClient.insertNamespacePermission(entityWithId, userAccess)
+      }
+
+      AgoraEntityPermissionsClient.addEntity(entityWithId)
+      AgoraEntityPermissionsClient.insertEntityPermission(entityWithId, userAccess)
+
       entityWithId.addUrl()
 
     } else {
-      throw new EntityAuthorizationException(AgoraPermissions(Create), agoraEntity)
+      throw new NamespaceAuthorizationException(AgoraPermissions(Create), agoraEntity, username)
     }
   }
 
@@ -28,11 +39,12 @@ class AgoraBusiness(authorizationProvider: AuthorizationProvider) {
            agoraProjection: Option[AgoraEntityProjection],
            entityTypes: Seq[AgoraEntityType.EntityType],
            username: String): Seq[AgoraEntity] = {
+
     val entities = AgoraDao.createAgoraDao(entityTypes)
       .find(agoraSearch, agoraProjection)
       .map(entity => entity.addUrl())
 
-    authorizationProvider.filterByReadPermissions(entities, username)
+    AgoraEntityPermissionsClient.filterEntityByRead(entities, username)
   }
 
   def findSingle(namespace: String,
@@ -42,10 +54,10 @@ class AgoraBusiness(authorizationProvider: AuthorizationProvider) {
                  username: String): AgoraEntity = {
     val foundEntity = AgoraDao.createAgoraDao(entityTypes).findSingle(namespace, name, snapshotId)
 
-    if (authorizationProvider.isAuthorizedForRead(foundEntity, username))
+    if (AgoraEntityPermissionsClient.getEntityPermission(foundEntity, username).canRead)
       foundEntity.addUrl()
     else
-      throw new EntityAuthorizationException(AgoraPermissions(Read), foundEntity)
+      throw new EntityAuthorizationException(AgoraPermissions(Read), foundEntity, username)
   }
 
   def findSingle(entity: AgoraEntity, entityTypes: Seq[AgoraEntityType.EntityType], username: String): AgoraEntity = {
@@ -59,7 +71,7 @@ class AgoraBusiness(authorizationProvider: AuthorizationProvider) {
         // Passed basic validation.  Now check if (any) docker images that are referenced exist
         namespace.tasks.foreach { validateDockerImage }
       case AgoraEntityType.Workflow =>
-        val resolver = MethodImportResolver(username, this, authorizationProvider)
+        val resolver = MethodImportResolver(username, this)
         val namespace = WdlNamespace.load(agoraEntity.payload.get, resolver.importResolver _)
         // Passed basic validation.  Now check if (any) docker images that are referenced exist
         namespace.tasks.foreach { validateDockerImage }

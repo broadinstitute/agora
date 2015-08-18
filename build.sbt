@@ -29,7 +29,7 @@ libraryDependencies ++= Seq(
   "com.typesafe" % "config" % "1.2.1",
   "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2",
   "com.typesafe.slick" %% "slick" % "3.0.0",
-  "com.zaxxer" % "HikariCP-java6" % "2.0.1",
+  "com.zaxxer" % "HikariCP" % "2.4.0",
   "io.spray" %% "spray-can" % sprayV,
   "io.spray" %% "spray-client" % sprayV,
   "io.spray" %% "spray-json" % "1.3.1", // NB: Not at sprayV. 1.3.2 does not exist.
@@ -41,7 +41,6 @@ libraryDependencies ++= Seq(
   "org.mongodb" %% "casbah" % "2.8.1",
   "org.flywaydb" % "flyway-core" % "3.2.1",
   "org.scalaz" %% "scalaz-core" % "7.1.3",
-  "org.slf4j" % "slf4j-nop" % "1.6.4",
   "org.webjars" % "swagger-ui" % "2.0.24",
   //---------- Test libraries -------------------//
   "io.spray" %% "spray-testkit" % sprayV % Test,

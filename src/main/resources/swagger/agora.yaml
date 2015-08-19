@@ -3,8 +3,6 @@ info:
   title: Agora API
   description: All of the Green
   version: "1.0.0"
-# the domain of the service
-host: localhost:8000 #grab from environment variable!
 # array of all schemes that your API supports
 schemes:
   - http

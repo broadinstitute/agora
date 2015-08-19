@@ -41,7 +41,7 @@ libraryDependencies ++= Seq(
   "org.mongodb" %% "casbah" % "2.8.1",
   "org.flywaydb" % "flyway-core" % "3.2.1",
   "org.scalaz" %% "scalaz-core" % "7.1.3",
-  "org.webjars" % "swagger-ui" % "2.0.24",
+  "org.webjars" % "swagger-ui" % "2.1.1",
   //---------- Test libraries -------------------//
   "io.spray" %% "spray-testkit" % sprayV % Test,
   "org.scalatest" %% "scalatest" % "2.2.4" % Test

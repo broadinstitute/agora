@@ -3,11 +3,6 @@ info:
   title: Agora API
   description: All of the Green
   version: "1.0.0"
-# array of all schemes that your API supports
-schemes:
-  - http
-  - https
-
 produces:
   - application/json
   - text/plain

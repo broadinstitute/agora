@@ -5,10 +5,6 @@
         "description": "All of the Green",
         "version": "1.0.0"
     },
-    "schemes": [
-        "http",
-        "https"
-    ],
     "produces": [
         "application/json",
         "text/plain"

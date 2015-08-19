@@ -29,7 +29,7 @@ libraryDependencies ++= Seq(
   "com.typesafe" % "config" % "1.2.1",
   "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2",
   "com.typesafe.slick" %% "slick" % "3.0.0",
-  "com.zaxxer" % "HikariCP" % "2.4.0",
+  "com.zaxxer" % "HikariCP" % "2.3.9",
   "io.spray" %% "spray-can" % sprayV,
   "io.spray" %% "spray-client" % sprayV,
   "io.spray" %% "spray-json" % "1.3.1", // NB: Not at sprayV. 1.3.2 does not exist.

@@ -27,11 +27,12 @@ class ApiServiceActor extends HttpServiceActor {
   val methodsService = new MethodsService() with ActorRefFactoryContext
   val configurationsService = new ConfigurationsService() with ActorRefFactoryContext
 
-  def possibleRoutes = methodsService.routes ~ configurationsService.routes ~ swaggerService.routes ~
+
+  def possibleRoutes = methodsService.routes ~ configurationsService.routes ~
     get {
       pathSingleSlash {
         getFromResource("swagger/index.html")
-      } ~ getFromResourceDirectory("swagger/") ~ getFromResourceDirectory("META-INF/resources/webjars/swagger-ui/2.0.24/")
+      } ~ getFromResourceDirectory("swagger/") ~ getFromResourceDirectory("META-INF/resources/webjars/swagger-ui/2.1.1/")
     }
 
   def receive = runRoute(possibleRoutes)

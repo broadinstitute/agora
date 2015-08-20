@@ -2,6 +2,7 @@ package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.actor.Props
 import com.gettyimages.spray.swagger.SwaggerHttpService
+import com.typesafe.scalalogging.slf4j.LazyLogging
 import com.wordnik.swagger.model.ApiInfo
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.webservice.configurations.ConfigurationsService
@@ -16,7 +17,7 @@ object ApiServiceActor {
   def props: Props = Props(classOf[ApiServiceActor])
 }
 
-class ApiServiceActor extends HttpServiceActor {
+class ApiServiceActor extends HttpServiceActor with LazyLogging {
 
   override def actorRefFactory = context
 
@@ -40,7 +41,10 @@ class ApiServiceActor extends HttpServiceActor {
   implicit def routeExceptionHandler(implicit log: LoggingContext) =
     ExceptionHandler {
       case e: IllegalArgumentException => complete(BadRequest, e.getMessage)
-      case ex: Throwable => complete(InternalServerError, s"Something went wrong, but the error is unspecified.")
+      case ex: Throwable => {
+        logger.error(ex.getMessage)
+        complete(InternalServerError, s"Something went wrong, but the error is unspecified.")
+      }
     }
 
   implicit val routeRejectionHandler =

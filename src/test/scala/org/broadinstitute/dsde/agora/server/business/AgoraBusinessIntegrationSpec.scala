@@ -1,7 +1,7 @@
 package org.broadinstitute.dsde.agora.server.business
 
 import org.broadinstitute.dsde.agora.server.AgoraIntegrationTestData._
-import org.broadinstitute.dsde.agora.server.webservice.util.DockerHubClient.DockerImageNotFoundException
+import org.broadinstitute.dsde.agora.server.exceptions.DockerImageNotFoundException
 import org.scalatest.{DoNotDiscover, FlatSpec}
 
 @DoNotDiscover

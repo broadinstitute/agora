@@ -1,6 +1,7 @@
 
 package org.broadinstitute.dsde.agora.server.model
 
+import org.broadinstitute.dsde.agora.server.exceptions.AgoraException
 import org.broadinstitute.dsde.agora.server.webservice.util.AgoraOpenAMClient.UserInfoResponse
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AgoraPermissions, AccessControl}
 import org.bson.types.ObjectId
@@ -128,7 +129,17 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
         AgoraPermissions(listOfStrings)
       case _ => throw new DeserializationException("unsupported AgoraPermission")
     }
+  }
 
+  implicit object AgoraExceptionFormat extends RootJsonFormat[AgoraException] {
+    override def write(obj: AgoraException): JsObject =
+      JsObject("code" -> JsNumber(obj.statusCode.intValue),
+               "message" -> JsString(obj.message)
+      )
+
+    override def read(json: JsValue): AgoraException = json match {
+      case _ => throw new DeserializationException("Cannot read AgoraExceptions in JSON")
+    }
   }
 
   def methodRef(payload: String): AgoraEntity = {
@@ -150,9 +161,6 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
   
   implicit val AgoraEntityProjectionFormat = jsonFormat2(AgoraEntityProjection.apply)
 
-  implicit val AgoraErrorFormat = jsonFormat1(AgoraError)
-
   implicit val AccessControlFormat = jsonFormat2(AccessControl.apply)
-
 
 }

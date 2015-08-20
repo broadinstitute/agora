@@ -3,6 +3,9 @@ package org.broadinstitute.dsde.agora.server.model
 import scalaz._
 import scalaz.Scalaz._
 
+/**
+ * Included and excluded field projections for an AgoraEntity.
+ */
 case class AgoraEntityProjection(includedFields: Seq[String], excludedFields: Seq[String]) {
   AgoraEntityProjection.validate(this) match {
     case Success(_) => this
@@ -15,6 +18,7 @@ case class AgoraEntityProjection(includedFields: Seq[String], excludedFields: Se
 object AgoraEntityProjection {
   val RequiredProjectionFields = Seq[String]("namespace", "name", "snapshotId", "entityType")
 
+  // Scalaz type validation of agora entity fields.
   def validate(projection: AgoraEntityProjection): ValidationNel[String, Boolean] = {
 
     def validateRequiredFields(projection: AgoraEntityProjection): ValidationNel[String, AgoraEntityProjection] = {

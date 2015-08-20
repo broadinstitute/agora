@@ -1,6 +1,7 @@
 package org.broadinstitute.dsde.agora.server.webservice.util
 
 import akka.actor.ActorSystem
+import org.broadinstitute.dsde.agora.server.exceptions.DockerImageNotFoundException
 import spray.client.pipelining._
 import spray.http.HttpResponse
 import spray.http.StatusCodes._
@@ -14,13 +15,6 @@ case class DockerImageReference(user: Option[String], repo: String, tag: String)
 case class DockerTagInfo(pk: Int, id: String)
 
 object DockerHubClient {
-  case class DockerConnectionException(text: String = "There was a problem connecting to Docker Hub APIs.") extends Exception(text)
-
-  case class DockerImageNotFoundException(dockerImage: DockerImageReference) extends Exception {
-    override def getMessage: String = {
-      s"Docker Image for User ${dockerImage.user.getOrElse("'Official'")}/" + s"${dockerImage.repo}" + s":${dockerImage.tag} not found."
-    }
-  }
 
   implicit val actorSystem = ActorSystem("agora")
 

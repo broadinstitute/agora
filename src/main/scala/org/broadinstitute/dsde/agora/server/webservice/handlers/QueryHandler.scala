@@ -1,4 +1,4 @@
-package org.broadinstitute.dsde.agora.server.webservice
+package org.broadinstitute.dsde.agora.server.webservice.handlers
 
 import akka.actor.Actor
 import org.broadinstitute.dsde.agora.server.business.AgoraBusiness

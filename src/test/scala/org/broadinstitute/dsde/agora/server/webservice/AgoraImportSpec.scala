@@ -4,7 +4,7 @@ package org.broadinstitute.dsde.agora.server.webservice
 import cromwell.parser.WdlParser.SyntaxError
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.business.{ImportResolverHelper, MethodImportResolver}
-import org.broadinstitute.dsde.agora.server.dataaccess.AgoraEntityNotFoundException
+import org.broadinstitute.dsde.agora.server.exceptions.AgoraEntityNotFoundException
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil

@@ -37,7 +37,6 @@ class AgoraMethodsSpec extends ApiServiceSpec {
     Get(ApiUtil.Methods.withLeadingSlash + "/foofoofoofoo/foofoofoo/99999"
     ) ~> methodsService.querySingleRoute ~> check {
       assert(status === NotFound)
-      assert(mediaType === `text/plain`)
     }
   }
 

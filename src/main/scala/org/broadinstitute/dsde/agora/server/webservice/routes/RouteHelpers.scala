@@ -178,16 +178,22 @@ trait AddRouteHelper extends BaseRoute {
   path(_path) &
   openAMAuthentication.usernameFromCookie()
 
-  def validateEntityType(entity: AgoraEntity, path: String): Directive0 = {
-    validateEntityType(entity.entityType, path)
+  def validatePostRoute(entity: AgoraEntity, path: String): Directive0 = {
+    validateEntityType(entity.entityType, path) &
+    validate(entity.payload.get.nonEmpty, "You must supply a payload.")
   }
 
   def completeWithPerRequest(context: RequestContext,
                              entity: AgoraEntity,
                              username: String,
+                             path: String,
                              addHandler: Props ) = {
     addUserIfNotInDatabase(username)
-    perRequest(context, addHandler, Add(context, entity, username))
+    val entityWithType = AgoraEntityType.byPath(path) match {
+      case AgoraEntityType.Configuration => entity.addEntityType(Option(AgoraEntityType.Configuration))
+      case _ => entity
+    }
+    perRequest(context, addHandler, Add(context, entityWithType, username))
   }
 }
 
@@ -196,11 +202,13 @@ trait RouteUtil extends Directives {
   def validateEntityType(entityType: Option[AgoraEntityType.EntityType], path: String): Directive0 = {
     val possibleTypes = AgoraEntityType.byPath(path)
 
-    if (entityType.isDefined)
+    if (entityType.isDefined) {
       validate(possibleTypes.contains(entityType.get),
-               s"You can't perform operation for entity type $entityType.get at path /$path.")
-    else
+        s"You can't perform operation for entity type $entityType.get at path /$path.")
+    }
+    else {
       pass
+    }
   }
 
   def toBool(x: Option[String]): Boolean = {

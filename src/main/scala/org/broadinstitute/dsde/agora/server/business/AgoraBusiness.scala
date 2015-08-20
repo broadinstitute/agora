@@ -4,12 +4,15 @@ import cromwell.parser.WdlParser.SyntaxError
 import org.broadinstitute.dsde.agora.server.webservice.util.{DockerImageReference, DockerHubClient}
 
 import cromwell.binding._
-import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
+import org.broadinstitute.dsde.agora.server.dataaccess.{AgoraEntityNotFoundException, AgoraDao}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.NamespacePermissionsClient
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraEntityPermissionsClient
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
-import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection, AgoraEntityType}
+import org.broadinstitute.dsde.agora.server.model.{AgoraApiJsonSupport, AgoraEntity, AgoraEntityProjection, AgoraEntityType}
+import spray.json
+import spray.json._
+import DefaultJsonProtocol._
 
 class AgoraBusiness {
 
@@ -17,7 +20,16 @@ class AgoraBusiness {
     if (NamespacePermissionsClient.getNamespacePermission(agoraEntity, username).canCreate) {
       validatePayload(agoraEntity, username)
 
-      val entityWithId = AgoraDao.createAgoraDao(agoraEntity.entityType).insert(agoraEntity.addDate())
+      val entityToInsert = agoraEntity.entityType.get match {
+        case AgoraEntityType.Configuration =>
+          val method = resolveMethodRef(agoraEntity.payload.get)
+          if (!AgoraEntityPermissionsClient.getEntityPermission(method, username).canRead) {
+            throw new AgoraEntityNotFoundException(method)
+          }
+          agoraEntity.addMethodId(method.id.get.toHexString)
+        case _ => agoraEntity
+      }
+      val entityWithId = AgoraDao.createAgoraDao(entityToInsert.entityType).insert(entityToInsert.addDate())
       val userAccess = new AccessControl(username, AgoraPermissions(All))
 
       if (!NamespacePermissionsClient.doesEntityExists(agoraEntity)) {
@@ -27,9 +39,7 @@ class AgoraBusiness {
 
       AgoraEntityPermissionsClient.addEntity(entityWithId)
       AgoraEntityPermissionsClient.insertEntityPermission(entityWithId, userAccess)
-
-      entityWithId.addUrl()
-
+      entityWithId.addUrl().removeIds()
     } else {
       throw new NamespaceAuthorizationException(AgoraPermissions(Create), agoraEntity, username)
     }
@@ -42,7 +52,7 @@ class AgoraBusiness {
 
     val entities = AgoraDao.createAgoraDao(entityTypes)
       .find(agoraSearch, agoraProjection)
-      .map(entity => entity.addUrl())
+      .map(entity => entity.addUrl().removeIds())
 
     AgoraEntityPermissionsClient.filterEntityByRead(entities, username)
   }
@@ -55,7 +65,7 @@ class AgoraBusiness {
     val foundEntity = AgoraDao.createAgoraDao(entityTypes).findSingle(namespace, name, snapshotId)
 
     if (AgoraEntityPermissionsClient.getEntityPermission(foundEntity, username).canRead)
-      foundEntity.addUrl()
+      foundEntity.addUrl().removeIds()
     else
       throw new EntityAuthorizationException(AgoraPermissions(Read), foundEntity, username)
   }
@@ -76,7 +86,13 @@ class AgoraBusiness {
         // Passed basic validation.  Now check if (any) docker images that are referenced exist
         namespace.tasks.foreach { validateDockerImage }
       case AgoraEntityType.Configuration =>
-      //add config validation here
+        val json = agoraEntity.payload.get.parseJson
+        val fields = json.asJsObject.getFields("methodStoreMethod")
+        require(fields.size == 1)
+        val subFields = fields(0).asJsObject.getFields("methodNamespace", "methodName", "methodVersion")
+        require(subFields(0).isInstanceOf[JsString])
+        require(subFields(1).isInstanceOf[JsString])
+        require(subFields(2).isInstanceOf[JsNumber])
     }
   }
 
@@ -87,6 +103,11 @@ class AgoraBusiness {
         DockerHubClient.doesDockerImageExist(dockerImageReference.get)
       }
     }
+  }
+
+  private def resolveMethodRef(payload: String): AgoraEntity = {
+    val queryMethod = AgoraApiJsonSupport.methodRef(payload)
+    AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(queryMethod)
   }
 
   /**

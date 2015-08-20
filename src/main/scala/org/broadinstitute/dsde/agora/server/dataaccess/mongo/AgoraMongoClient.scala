@@ -34,6 +34,12 @@ object AgoraMongoClient {
     mongoClient(AgoraConfig.mongoDbDatabase)(ConfigurationsCollection)
   }
 
+  def getCollectionsByEntityType(entityTypes: Seq[AgoraEntityType.EntityType]): Seq[MongoCollection] = {
+    entityTypes.flatMap {
+      entityType => getCollectionsByEntityType(Option(entityType))
+    }
+  }
+
   def getCollectionsByEntityType(entityType: Option[AgoraEntityType.EntityType]): Seq[MongoCollection] = {
     entityType match {
       case Some(AgoraEntityType.Task) =>

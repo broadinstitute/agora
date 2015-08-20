@@ -3,6 +3,7 @@ package org.broadinstitute.dsde.agora.server.model
 
 import com.wordnik.swagger.annotations.{ApiModel, ApiModelProperty}
 import org.broadinstitute.dsde.agora.server.AgoraConfig
+import org.bson.types.ObjectId
 import org.joda.time.DateTime
 
 import scala.annotation.meta.field
@@ -19,6 +20,7 @@ object AgoraEntityType extends Enumeration {
   val Task = Value("Task")
   val Workflow = Value("Workflow")
   val Configuration = Value("Configuration")
+  val MethodTypes = Seq(Task, Workflow)
 }
 
 object AgoraEntity {
@@ -102,7 +104,10 @@ case class AgoraEntity(namespace: Option[String] = None,
                        createDate: Option[DateTime] = None,
                        payload: Option[String] = None,
                        url: Option[String] = None,
-                       entityType: Option[AgoraEntityType.EntityType] = None) {
+                       entityType: Option[AgoraEntityType.EntityType] = None,
+                       id: Option[ObjectId] = None,
+                       methodId: Option[ObjectId] = None,
+                       method: Option[AgoraEntity] = None) {
 
   AgoraEntity.validate(this) match {
     case Success(_) => this
@@ -119,6 +124,22 @@ case class AgoraEntity(namespace: Option[String] = None,
 
   def addDate(): AgoraEntity = {
     copy(createDate = Option(new DateTime()))
+  }
+  
+  def addMethodId(methodId: String): AgoraEntity = {
+    copy(methodId = Option(new ObjectId(methodId)))
+  }
+
+  def addMethod(method: Option[AgoraEntity]): AgoraEntity = {
+    copy(method = method)
+  }
+  
+  def removeIds(): AgoraEntity = {
+    copy(id = None, methodId = None)
+  }
+
+  def addEntityType(entityType: Option[AgoraEntityType.EntityType]): AgoraEntity = {
+    copy(entityType = entityType)
   }
 }
 

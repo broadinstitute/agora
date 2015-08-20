@@ -94,12 +94,11 @@ abstract class AgoraService extends HttpService with RouteHelpers {
   def postRoute =
     postPath(path) { (username) =>
       entity(as[AgoraEntity]) { agoraEntity =>
-        validateEntityType(agoraEntity, path) {
-          requestContext => completeWithPerRequest(requestContext, agoraEntity, username, addHandlerProps)
+        validatePostRoute(agoraEntity, path) {
+          requestContext => completeWithPerRequest(requestContext, agoraEntity, username, path, addHandlerProps)
         }
       }
     }
-
 }
 
 

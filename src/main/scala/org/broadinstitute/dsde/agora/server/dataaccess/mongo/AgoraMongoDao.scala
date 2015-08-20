@@ -12,7 +12,8 @@ import org.broadinstitute.dsde.agora.server.dataaccess.mongo.AgoraMongoDao._
 import org.broadinstitute.dsde.agora.server.dataaccess.{AgoraDao, AgoraEntityNotFoundException}
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntityProjection._
-import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection}
+import org.broadinstitute.dsde.agora.server.model.{AgoraEntityType, AgoraEntity, AgoraEntityProjection}
+import org.bson.types.ObjectId
 import spray.json._
 
 object AgoraMongoDao {
@@ -26,7 +27,9 @@ object AgoraMongoDao {
     JSON.parse(entity.copy(url = None).toJson.toString()).asInstanceOf[DBObject]
   }
 
-  def MongoDbObjectToEntity(mongoDBObject: DBObject): AgoraEntity = mongoDBObject.toString.parseJson.convertTo[AgoraEntity]
+  def MongoDbObjectToEntity(mongoDBObject: DBObject): AgoraEntity = {
+    mongoDBObject.toString.parseJson.convertTo[AgoraEntity]
+  }
 }
 
 /**
@@ -35,11 +38,6 @@ object AgoraMongoDao {
  * @param collections The collections to query. In order to insert a single colleciton must be specified.
  */
 class AgoraMongoDao(collections: Seq[MongoCollection]) extends AgoraDao {
-
-  def assureSingleCollection: MongoCollection = {
-    if (collections.size != 1) throw new IllegalArgumentException("Multiple collections defined. Only a single collection is supported for this operation")
-    else collections.head
-  }
 
   /**
    * On insert we query for the given namespace/name if it exists we increment the snapshotId and store a new one.
@@ -55,7 +53,51 @@ class AgoraMongoDao(collections: Seq[MongoCollection]) extends AgoraDao {
     //insert the entity
     val dbEntityToInsert = EntityToMongoDbObject(entityWithId)
     collection.insert(dbEntityToInsert)
-    findSingle(entityWithId)
+    val insertedEntity = findSingle(MongoDbObjectToEntity(dbEntityToInsert))
+    insertedEntity
+  }
+
+  override def findSingle(namespace: String, name: String, snapshotId: Int): AgoraEntity = {
+    val entity = AgoraEntity(namespace = Option(namespace), name = Option(name), snapshotId = Option(snapshotId))
+    findSingle(entity)
+  }
+
+  override def findSingle(entity: AgoraEntity): AgoraEntity = {
+    val dbEntity = EntityToMongoDbObject(entity)
+    val entityVector = find(dbEntity, None)
+    entityVector.length match {
+      case 1 =>
+        val foundEntity = entityVector.head
+        addMethodRef(Seq(foundEntity), None).head
+      case 0 => throw new AgoraEntityNotFoundException(entity)
+      case _ => throw new Exception("Found > 1 documents matching: " + entity.toString)
+    }
+  }
+
+  override def find(entity: AgoraEntity, projectionOpt: Option[AgoraEntityProjection]): Seq[AgoraEntity] = {
+    val projection = projectionOpt match {
+      case Some(projection) => projectionOpt
+      case None => DefaultFindProjection
+    }
+    val dbEntity = EntityToMongoDbObject(entity)
+    val entities = find(dbEntity, projection)
+    addMethodRef(entities, projection)
+  }
+
+  def findById(ids: Seq[ObjectId], entityCollections: Seq[MongoCollection], projection: Option[AgoraEntityProjection]): Seq[AgoraEntity] = {
+    val dbQuery = (MongoDbIdField $in ids)
+    val entities = entityCollections.flatMap {
+      collection =>
+        collection.find(dbQuery, projectionToDBProjections(projection)).map {
+          dbObject => MongoDbObjectToEntity(dbObject)
+        }
+    }
+    entities
+  }
+
+  def assureSingleCollection: MongoCollection = {
+    if (collections.size != 1) throw new IllegalArgumentException("Multiple collections defined. Only a single collection is supported for this operation")
+    else collections.head
   }
 
   def getNextId(entity: AgoraEntity): Int = {
@@ -75,22 +117,6 @@ class AgoraMongoDao(collections: Seq[MongoCollection]) extends AgoraDao {
 
     //return new sequence
     currentCount.get(CounterSequenceField).asInstanceOf[Int]
-  }
-
-  override def findSingle(entity: AgoraEntity): AgoraEntity = {
-    val entityVector = find(EntityToMongoDbObject(entity), None)
-    entityVector.length match {
-      case 1 => entityVector.head
-      case 0 => throw new AgoraEntityNotFoundException(entity)
-      case _ => throw new Exception("Found > 1 documents matching: " + entity.toString)
-    }
-  }
-
-  override def find(entity: AgoraEntity, projectionOpt: Option[AgoraEntityProjection]): Seq[AgoraEntity] = {
-    projectionOpt match {
-      case Some(projection) => find(EntityToMongoDbObject(entity), projectionOpt)
-      case None => find(EntityToMongoDbObject(entity), DefaultFindProjection)
-    }
   }
 
   def find(query: Imports.DBObject, projection: Option[AgoraEntityProjection]) = {
@@ -119,8 +145,37 @@ class AgoraMongoDao(collections: Seq[MongoCollection]) extends AgoraDao {
     }
   }
 
-  override def findSingle(namespace: String, name: String, snapshotId: Int): AgoraEntity = {
-    val entity = AgoraEntity(namespace = Option(namespace), name = Option(name), snapshotId = Option(snapshotId))
-    findSingle(entity)
+  // Populate method field within configurations
+  def addMethodRef(entities: Seq[AgoraEntity], projection: Option[AgoraEntityProjection]): Seq[AgoraEntity] = {
+    // Don't bother trying to populate method refs unless there are configs in the result set (only configs have embedded methods)
+    val configCollection = getCollectionsByEntityType(Seq(AgoraEntityType.Configuration)).head
+    if (!collections.contains(configCollection)) {
+      return entities
+    }
+
+    // Get map of method ids to Methods
+    val methodRefs = methodIds(entities)
+    val methodCollections = getCollectionsByEntityType(AgoraEntityType.MethodTypes)
+    val methods = findById(methodRefs, methodCollections, projection)
+    val methodsMap = idToEntityMap(methods, methodCollections)
+
+    // Populate method field if methodId has a value
+    val entitiesWithRefs = entities.map {
+      entity =>
+        if (entity.methodId.nonEmpty) {
+          val method = methodsMap.get(entity.methodId.get)
+          entity.addMethod(Option(method.get.addUrl().removeIds()))
+        }
+        else {
+          entity
+        }
+    }
+    entitiesWithRefs
+  }
+
+  def methodIds(entities: Seq[AgoraEntity]): Seq[ObjectId] = entities.flatMap { entity => entity.methodId }
+
+  def idToEntityMap(entities: Seq[AgoraEntity], entityCollections: Seq[MongoCollection]): Map[ObjectId, AgoraEntity] = {
+    entities.map { entity => entity.id.get -> entity }.toMap
   }
 }

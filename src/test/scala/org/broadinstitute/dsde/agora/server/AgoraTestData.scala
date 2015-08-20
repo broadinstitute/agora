@@ -154,11 +154,11 @@ object AgoraTestData {
                                               |
                                               | """.stripMargin)
 
-  val taskConfigPayload = Option( """{
-                                    |  "method": {
-                                    |    "name": "method",
-                                    |    "namespace": "method_ns",
-                                    |    "version": "1"
+  val taskConfigPayload = Option( s"""{
+                                    |  "methodStoreMethod": {
+                                    |    "methodNamespace": "${namespace1.get}",
+                                    |    "methodName": "${name1.get}",
+                                    |    "methodVersion": 1
                                     |  },
                                     |  "name": "first",
                                     |  "workspaceName": {
@@ -177,6 +177,31 @@ object AgoraTestData {
                                     |  },
                                     |  "namespace": "ns"
                                     |}""".stripMargin)
+
+  val taskConfigPayload2 = Option( s"""{
+                                    |  "methodStoreMethod": {
+                                    |    "methodNamespace": "${namespace2.get}",
+                                    |    "methodName": "${name1.get}",
+                                    |    "methodVersion": 1
+                                    |  },
+                                    |  "name": "first",
+                                    |  "workspaceName": {
+                                    |    "namespace": "foo",
+                                    |    "name": "bar"
+                                    |  },
+                                    |  "outputs": {
+                                    |
+                                    |  },
+                                    |  "inputs": {
+                                    |    "p": "hi"
+                                    |  },
+                                    |  "rootEntityType": "sample",
+                                    |  "prerequisites": {
+                                    |
+                                    |  },
+                                    |  "namespace": "ns"
+                                    |}""".stripMargin)
+
   val payloadWithValidOfficialDockerImageInWdl = Option( """
                                     |task wc {
                                     |  command {
@@ -422,6 +447,16 @@ object AgoraTestData {
   )
 
   val testAgoraConfigurationEntity2 = new AgoraEntity(
+    namespace = namespace3,
+    name = name2,
+    synopsis = synopsis3,
+    documentation = documentation1,
+    owner = owner1,
+    payload = taskConfigPayload2,
+    entityType = Option(AgoraEntityType.Configuration)
+  )
+
+  val testAgoraConfigurationEntity3 = new AgoraEntity(
     namespace = namespace2,
     name = name1,
     synopsis = synopsis3,

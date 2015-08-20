@@ -81,7 +81,8 @@ class ApiServiceSpec extends FlatSpec with Directives with ScalatestRouteTest wi
         owner = entity.owner,
         url = entity.url,
         createDate = entity.createDate,
-        entityType = entity.entityType
+        entityType = entity.entityType,
+        id = entity.id
       )
     )
   }

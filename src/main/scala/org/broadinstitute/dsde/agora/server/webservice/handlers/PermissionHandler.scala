@@ -1,9 +1,9 @@
-package org.broadinstitute.dsde.agora.server.webservice
-
+package org.broadinstitute.dsde.agora.server.webservice.handlers
 
 import akka.actor.Actor
 import org.broadinstitute.dsde.agora.server.busines.PermissionBusiness
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AccessControl
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AgoraPermissions, AccessControl}
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.PerRequest.RequestComplete
 import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages._
@@ -11,8 +11,10 @@ import spray.routing.RequestContext
 
 
 class PermissionHandler extends Actor {
-  import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
+
+  // JSON Serialization Support
   import spray.httpx.SprayJsonSupport._
+  import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 
   implicit val system = context.system
   val permissionBusiness = new PermissionBusiness()
@@ -25,17 +27,17 @@ class PermissionHandler extends Actor {
 
     case InsertNamespacePermission(_context: RequestContext, entity: AgoraEntity, requester: String, userAccess: AccessControl) =>
       val rowsChanged = permissionBusiness.insertNamespacePermission(entity, requester, userAccess)
-      context.parent ! RequestComplete(rowsChanged.toString)
+      context.parent ! RequestComplete(userAccess)
       context.stop(self)
 
     case EditNamespacePermission(_context: RequestContext, entity: AgoraEntity, requester: String, userAccess: AccessControl) =>
       val rowsChanged = permissionBusiness.editNamespacePermission(entity, requester, userAccess)
-      context.parent ! RequestComplete(rowsChanged.toString)
+      context.parent ! RequestComplete(userAccess)
       context.stop(self)
 
     case DeleteNamespacePermission(_context: RequestContext, entity: AgoraEntity, requester: String, userToRemove: String) =>
       val rowsChanged = permissionBusiness.deleteNamespacePermission(entity, requester, userToRemove)
-      context.parent ! RequestComplete(rowsChanged.toString)
+      context.parent ! RequestComplete(AccessControl(userToRemove, AgoraPermissions(Nothing)))
       context.stop(self)
 
     case ListEntityPermissions(_context: RequestContext, entity: AgoraEntity, requester: String) =>
@@ -45,17 +47,17 @@ class PermissionHandler extends Actor {
 
     case InsertEntityPermission(_context: RequestContext, entity: AgoraEntity, requester: String, userAccess: AccessControl) =>
       val rowsChanged = permissionBusiness.insertEntityPermission(entity, requester, userAccess)
-      context.parent ! RequestComplete(rowsChanged.toString)
+      context.parent ! RequestComplete(userAccess)
       context.stop(self)
 
     case EditEntityPermission(_context: RequestContext, entity: AgoraEntity, requester: String, userAccess: AccessControl) =>
       val rowsChanged = permissionBusiness.editEntityPermission(entity, requester, userAccess)
-      context.parent ! RequestComplete(rowsChanged.toString)
+      context.parent ! RequestComplete(userAccess)
       context.stop(self)
 
     case DeleteEntityPermission(_context: RequestContext, entity: AgoraEntity, requester: String, userToRemove: String) =>
       val rowsChanged = permissionBusiness.deleteEntityPermission(entity, requester, userToRemove)
-      context.parent ! RequestComplete(rowsChanged.toString)
+      context.parent ! RequestComplete(AccessControl(userToRemove, AgoraPermissions(Nothing)))
       context.stop(self)
   }
 

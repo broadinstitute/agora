@@ -9,7 +9,8 @@ import com.mongodb.casbah.query.Imports
 import com.mongodb.util.JSON
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.AgoraMongoClient._
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.AgoraMongoDao._
-import org.broadinstitute.dsde.agora.server.dataaccess.{AgoraDao, AgoraEntityNotFoundException}
+import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
+import org.broadinstitute.dsde.agora.server.exceptions.AgoraEntityNotFoundException
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntityProjection._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntityType, AgoraEntity, AgoraEntityProjection}

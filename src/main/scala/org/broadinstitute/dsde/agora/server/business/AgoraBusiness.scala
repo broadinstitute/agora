@@ -1,10 +1,11 @@
 package org.broadinstitute.dsde.agora.server.business
 
 import cromwell.parser.WdlParser.SyntaxError
+import org.broadinstitute.dsde.agora.server.exceptions.{AgoraEntityNotFoundException, NamespaceAuthorizationException}
 import org.broadinstitute.dsde.agora.server.webservice.util.{DockerImageReference, DockerHubClient}
 
 import cromwell.binding._
-import org.broadinstitute.dsde.agora.server.dataaccess.{AgoraEntityNotFoundException, AgoraDao}
+import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.NamespacePermissionsClient
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraEntityPermissionsClient
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
@@ -67,7 +68,7 @@ class AgoraBusiness {
     if (AgoraEntityPermissionsClient.getEntityPermission(foundEntity, username).canRead)
       foundEntity.addUrl().removeIds()
     else
-      throw new EntityAuthorizationException(AgoraPermissions(Read), foundEntity, username)
+      throw new AgoraEntityNotFoundException(foundEntity)
   }
 
   def findSingle(entity: AgoraEntity, entityTypes: Seq[AgoraEntityType.EntityType], username: String): AgoraEntity = {

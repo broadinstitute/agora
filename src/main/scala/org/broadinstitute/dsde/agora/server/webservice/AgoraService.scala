@@ -3,6 +3,7 @@ package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.actor.Props
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
+import org.broadinstitute.dsde.agora.server.webservice.handlers.{PermissionHandler, QueryHandler, AddHandler}
 import org.broadinstitute.dsde.agora.server.webservice.routes.RouteHelpers
 import spray.routing.{HttpService}
 import spray.httpx.SprayJsonSupport._

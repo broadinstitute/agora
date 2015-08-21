@@ -1,9 +1,10 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
+
 import akka.actor.SupervisorStrategy.Stop
 import akka.actor.{OneForOneStrategy, _}
-import org.broadinstitute.dsde.agora.server.business.{NamespaceAuthorizationException, EntityAuthorizationException}
-import org.broadinstitute.dsde.agora.server.dataaccess.AgoraEntityNotFoundException
+import cromwell.parser.WdlParser.SyntaxError
+import org.broadinstitute.dsde.agora.server.exceptions._
 import org.broadinstitute.dsde.agora.server.webservice.PerRequest._
 import spray.http.HttpHeader
 import spray.http.StatusCodes._
@@ -24,6 +25,10 @@ import scala.concurrent.duration._
  */
 trait PerRequest extends Actor {
   import context._
+
+  // JSON Serialization Support
+  import spray.httpx.SprayJsonSupport._
+  import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 
   def r: RequestContext
   def target: ActorRef
@@ -55,21 +60,25 @@ trait PerRequest extends Actor {
 
   override val supervisorStrategy =
     OneForOneStrategy() {
-      case authEntityException: EntityAuthorizationException =>
-        system.log.info("Authorization exception processing request:" + r.request.uri)
-        r.complete(Unauthorized, authEntityException.getMessage)
+
+      //Should make a single Authorization Exception trait to minimize code duplication.
+      case e: AgoraEntityAuthorizationException =>
+        r.complete(Unauthorized, AgoraException(e.getMessage, e.getCause, Unauthorized))
         Stop
-      case authNamespaceException: NamespaceAuthorizationException =>
-        system.log.info("Authorization exception processing request:" + r.request.uri)
-        r.complete(Unauthorized, authNamespaceException.getMessage)
+      case e: NamespaceAuthorizationException =>
+        r.complete(Unauthorized, AgoraException(e.getMessage, e.getCause, Unauthorized))
         Stop
-      case entityNotFoundException: AgoraEntityNotFoundException =>
-        system.log.info("Authorization exception processing request:" + r.request.uri)
-        r.complete(NotFound, entityNotFoundException.getMessage)
+      case e: AgoraEntityNotFoundException =>
+        r.complete(NotFound, AgoraException(e.getMessage, e.getCause, NotFound))
         Stop
-      case e =>
-        system.log.error(e, "error processing request: " + r.request.uri)
-        r.complete(InternalServerError, e.getMessage)
+      case e: DockerImageNotFoundException =>
+        r.complete(BadRequest, AgoraException(e.getMessage, e.getCause, BadRequest))
+        Stop
+      case e: SyntaxError =>
+        r.complete(BadRequest, AgoraException(e.getMessage, e.getCause, BadRequest))
+        Stop
+      case e: Throwable =>
+        r.complete(AgoraException(e.getMessage, e.getCause, InternalServerError))
         Stop
     }
 }

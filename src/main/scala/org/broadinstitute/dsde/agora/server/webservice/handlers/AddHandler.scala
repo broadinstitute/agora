@@ -1,12 +1,10 @@
-package org.broadinstitute.dsde.agora.server.webservice
+package org.broadinstitute.dsde.agora.server.webservice.handlers
 
 import akka.actor.Actor
-import cromwell.parser.WdlParser.SyntaxError
 import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
-import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraError}
+import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.PerRequest.RequestComplete
-import org.broadinstitute.dsde.agora.server.webservice.util.DockerHubClient.DockerImageNotFoundException
 import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages
 import spray.http.StatusCodes._
 import spray.httpx.SprayJsonSupport._
@@ -24,12 +22,7 @@ class AddHandler extends Actor {
 
   def receive = {
     case ServiceMessages.Add(requestContext: RequestContext, agoraAddRequest: AgoraEntity, username: String) =>
-      try {
-        add(requestContext, agoraAddRequest, username)
-      } catch {
-        case se: SyntaxError => context.parent ! RequestComplete(BadRequest, AgoraError("Syntax error in payload: " + se.getMessage))
-        case de: DockerImageNotFoundException => context.parent ! RequestComplete(BadRequest, AgoraError("Invalid Docker Referenced in payload: " + de.getMessage))
-      }
+      add(requestContext, agoraAddRequest, username)
       context.stop(self)
   }
 

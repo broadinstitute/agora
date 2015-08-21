@@ -5,7 +5,6 @@ info:
   version: "1.0.0"
 produces:
   - application/json
-  - text/plain
 paths:
   /methods:
     get:
@@ -72,7 +71,7 @@ paths:
           schema:
             type: array
             items:
-              $ref: '#/definitions/AgoraEntity'
+              $ref: '#/definitions/MethodResponse'
         default:
           description: Unexpected error
           schema:
@@ -80,12 +79,12 @@ paths:
     post:
       summary: Add a Method.
       description: |
-        Inserts a method into the method repository and 
+        Inserts a method into the method repository and
         gives the owner full access permissions. Must supply a namespace
         name, payload, and entityType. Cannot supply a snapshotId
-      consumes: 
+      consumes:
         - application/json
-      produces: 
+      produces:
         - application/json
       parameters:
         - name: body
@@ -93,14 +92,14 @@ paths:
           description: Agora Entity
           required: false
           schema:
-            $ref: '#/definitions/AgoraEntity'
+            $ref: '#/definitions/MethodQuery'
       tags:
         - Methods
       responses:
         201:
           description: Method successfully added.
           schema:
-              $ref: '#/definitions/AgoraEntity'
+              $ref: '#/definitions/MethodResponse'
         400:
           description: Malformed input.
           schema:
@@ -131,6 +130,11 @@ paths:
           description: Snapshot ID of method.
           required: true
           type: number
+        - name: onlypayload
+          in: query
+          description: Boolean to return only the payload of the method.
+          required: false
+          type: string
       tags:
         - Methods
       responses:
@@ -139,7 +143,7 @@ paths:
           schema:
             type: array
             items:
-              $ref: '#/definitions/AgoraEntity'
+              $ref: '#/definitions/MethodResponse'
         default:
           description: Unexpected error
           schema:
@@ -209,7 +213,7 @@ paths:
           schema:
             type: array
             items:
-              $ref: '#/definitions/AgoraEntity'
+              $ref: '#/definitions/ConfigurationResponse'
         default:
           description: Unexpected error
           schema:
@@ -217,12 +221,12 @@ paths:
     post:
       summary: Add a Method.
       description: |
-        Inserts a method into the method repository and 
+        Inserts a method into the method repository and
         gives the owner full access permissions. Must supply a namespace
         name, payload, and entityType. Cannot supply a snapshotId
-      consumes: 
+      consumes:
         - application/json
-      produces: 
+      produces:
         - application/json
       parameters:
         - name: body
@@ -230,14 +234,14 @@ paths:
           description: Agora Entity
           required: false
           schema:
-            $ref: '#/definitions/AgoraEntity'
+            $ref: '#/definitions/ConfigurationQuery'
       tags:
         - Configurations
       responses:
         201:
           description: Method successfully added.
           schema:
-              $ref: '#/definitions/AgoraEntity'
+              $ref: '#/definitions/ConfigurationResponse'
         400:
           description: Malformed input.
           schema:
@@ -276,7 +280,7 @@ paths:
           schema:
             type: array
             items:
-              $ref: '#/definitions/AgoraEntity'
+              $ref: '#/definitions/ConfigurationResponse'
         default:
           description: Unexpected error
           schema:
@@ -322,16 +326,16 @@ paths:
           type: string
         - name: roles
           in: query
-          description: List of comma seperated roles (Read, Write, Create, Redact, Manage) or (All)
+          description: List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.
           required: true
           type: string
       tags:
       	- NamespacePermissions
       responses:
         200:
-          description: Number of rows changed
+          description: Access control modified.
           schema:
-            type: integer
+            $ref: '#/definitions/AccessControl'
         default:
           description: Unexpected error
           schema:
@@ -353,16 +357,16 @@ paths:
           type: string
         - name: roles
           in: query
-          description: List of comma seperated roles (Read, Write, Create, Redact, Manage) or (All) or (Nothing)
+          description: List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.
           required: true
           type: string
       tags:
       	- NamespacePermissions
       responses:
         200:
-          description: Number of rows changed
+          description: Access control modified.
           schema:
-            type: integer
+            $ref: '#/definitions/AccessControl'
         default:
           description: Unexpected error
           schema:
@@ -386,9 +390,9 @@ paths:
       	- NamespacePermissions
       responses:
         200:
-          description: Number of rows changed
+          description: Access control modified.
           schema:
-            type: integer
+            $ref: '#/definitions/AccessControl'
         default:
           description: Unexpected error
           schema:
@@ -413,7 +417,7 @@ paths:
           in: path
           description: SnapshotId
           required: true
-          type: number    
+          type: number
       tags:
       	- Permissions
       responses:
@@ -446,7 +450,7 @@ paths:
           in: path
           description: SnapshotId
           required: true
-          type: number    
+          type: number
         - name: user
           in: query
           description: User's email.
@@ -454,16 +458,16 @@ paths:
           type: string
         - name: roles
           in: query
-          description: List of comma seperated roles (Read, Write, Create, Redact, Manage) or (All)
+          description: List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.
           required: true
           type: string
       tags:
       	- Permissions
       responses:
         200:
-          description: Number of rows changed
+          description: Access control modified.
           schema:
-            type: integer
+            $ref: '#/definitions/AccessControl'
         default:
           description: Unexpected error
           schema:
@@ -487,7 +491,7 @@ paths:
           in: path
           description: SnapshotId
           required: true
-          type: number    
+          type: number
         - name: user
           in: query
           description: User's email.
@@ -495,16 +499,16 @@ paths:
           type: string
         - name: roles
           in: query
-          description: List of comma seperated roles (Read, Write, Create, Redact, Manage) or (All) or (Nothing)
+          description: List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.
           required: true
           type: string
       tags:
       	- Permissions
       responses:
         200:
-          description: Number of rows changed
+          description: Access control modified.
           schema:
-            type: integer
+            $ref: '#/definitions/AccessControl'
         default:
           description: Unexpected error
           schema:
@@ -528,7 +532,7 @@ paths:
           in: path
           description: SnapshotId
           required: true
-          type: number    
+          type: number
         - name: user
           in: query
           description: User's email of whom to revoke permissions.
@@ -538,9 +542,9 @@ paths:
       	- Permissions
       responses:
         200:
-          description: Number of rows changed
+          description: Access control modified.
           schema:
-            type: integer
+            $ref: '#/definitions/AccessControl'
         default:
           description: Unexpected error
           schema:
@@ -586,16 +590,16 @@ paths:
           type: string
         - name: roles
           in: query
-          description: List of comma seperated roles (Read, Write, Create, Redact, Manage) or (All)
+          description: List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.
           required: true
           type: string
       tags:
       	- NamespacePermissions
       responses:
         200:
-          description: Number of rows changed
+          description: Access control modified.
           schema:
-            type: integer
+            $ref: '#/definitions/AccessControl'
         default:
           description: Unexpected error
           schema:
@@ -617,16 +621,16 @@ paths:
           type: string
         - name: roles
           in: query
-          description: List of comma seperated roles (Read, Write, Create, Redact, Manage) or (All) or (Nothing)
+          description: List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.
           required: true
           type: string
       tags:
       	- NamespacePermissions
       responses:
         200:
-          description: Number of rows changed
+          description: Access control modified.
           schema:
-            type: integer
+            $ref: '#/definitions/AccessControl'
         default:
           description: Unexpected error
           schema:
@@ -650,9 +654,9 @@ paths:
       	- NamespacePermissions
       responses:
         200:
-          description: Number of rows changed
+          description: Access control modified.
           schema:
-            type: integer
+            $ref: '#/definitions/AccessControl'
         default:
           description: Unexpected error
           schema:
@@ -677,7 +681,7 @@ paths:
           in: path
           description: SnapshotId
           required: true
-          type: number    
+          type: number
       tags:
       	- Permissions
       responses:
@@ -710,7 +714,7 @@ paths:
           in: path
           description: SnapshotId
           required: true
-          type: number    
+          type: number
         - name: user
           in: query
           description: User's email.
@@ -718,16 +722,16 @@ paths:
           type: string
         - name: roles
           in: query
-          description: List of comma seperated roles (Read, Write, Create, Redact, Manage) or (All)
+          description: List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.
           required: true
           type: string
       tags:
       	- Permissions
       responses:
         200:
-          description: Number of rows changed
+          description: Access control modified.
           schema:
-            type: integer
+            $ref: '#/definitions/AccessControl'
         default:
           description: Unexpected error
           schema:
@@ -751,7 +755,7 @@ paths:
           in: path
           description: SnapshotId
           required: true
-          type: number    
+          type: number
         - name: user
           in: query
           description: User's email.
@@ -759,16 +763,16 @@ paths:
           type: string
         - name: roles
           in: query
-          description: List of comma seperated roles (Read, Write, Create, Redact, Manage) or (All) or (Nothing)
+          description: List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.
           required: true
           type: string
       tags:
       	- Permissions
       responses:
         200:
-          description: Number of rows changed
+          description: Access control modified.
           schema:
-            type: integer
+            $ref: '#/definitions/AccessControl'
         default:
           description: Unexpected error
           schema:
@@ -792,7 +796,7 @@ paths:
           in: path
           description: SnapshotId
           required: true
-          type: number    
+          type: number
         - name: user
           in: query
           description: User's email of whom to revoke permissions.
@@ -802,55 +806,171 @@ paths:
       	- Permissions
       responses:
         200:
-          description: Number of rows changed
+          description: Access control modified.
           schema:
-            type: integer
+            $ref: '#/definitions/AccessControl'
         default:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
 
 definitions:
-  AgoraEntity:
+  MethodQuery:
     properties:
       namespace:
         type: string
         description: Namespace which contains AgoraEntity.
+        default: broad-dsde-test
       name:
         type: string
         description: Name of the AgoraEntity.
-      snapshotId:
-        type: number
-        description: Snapshot Id of the AgoraEntity.
+        default: BWA
       synopsis:
         type: string
         description: Synopsis which contains AgoraEntity.
+        default: Quickly aligns short nucleotide sequences.
       documentation:
         type: string
         description: Documentation of the AgoraEntity.
-      owner:
-        type: string
-        description: Owner of the AgoraEntity.
+        default: |
+          BWA is a software package for mapping low-divergent sequences
+          against a large reference genome, such as the human genome.
+          It consists of three algorithms: BWA-backtrack, BWA-SW and BWA-MEM.
       payload:
         type: string
         description: Payload of method -- must be in WDL format
+        default: |
+          task wc { command { cat ${File in_file} | wc -l } output { Int count = read_int(stdout()) }}
       entityType:
         type: string
         description: Tyoe of the AgoraEntity -- Task or Workflow.
+        default: Task
+  ConfigurationQuery:
+    properties:
+      namespace:
+        type: string
+        description: Namespace which contains Configuration.
+        default: broad-dsde-test
+      name:
+        type: string
+        description: Name of the Configuration.
+        default: quick-BWA-config
+      synopsis:
+        type: string
+        description: Synopsis which contains Configuration.
+        default: Quick synopsis of configuration.
+      documentation:
+        type: string
+        description: Documentation of the Configuration.
+        default: |
+          Example configuraion with an associated method.
+      payload:
+        type: string
+        description: Payload of method -- must be in WDL format
+        default: |
+          { "methodStoreMethod": { "methodNamespace": "broad-dsde-test", "methodName": "BWA", "methodVersion": 1}}
+      entityType:
+        type: string
+        description: Can only be Configuration.
+        default: Configuration
+  ConfigurationResponse:
+    properties:
+      method:
+        type: object
+      namespace:
+        type: string
+        description: Namespace which contains AgoraEntity.
+        default: broad-dsde-test
+      name:
+        type: string
+        description: Name of the AgoraEntity.
+        default: BWA
+      snapshotId:
+        type: integer
+        description: SnapshotId of AgoraEntity
+      synopsis:
+        type: string
+        description: Synopsis which contains AgoraEntity.
+        default: Quickly aligns short nucleotide sequences.
+      documentation:
+        type: string
+        description: Documentation of the AgoraEntity.
+        default: |
+          BWA is a software package for mapping low-divergent sequences
+          against a large reference genome, such as the human genome.
+          It consists of three algorithms: BWA-backtrack, BWA-SW and BWA-MEM.
+      createDate:
+        type: string
+        description: Timestamp of creation
+      url:
+        type: string
+        description: URL where resource can be accessed.
+      payload:
+        type: string
+        description: Payload of method -- must be in WDL format
+        default: |
+          task wc { command { cat ${File in_file} | wc -l } output { Int count = read_int(stdout()) }}
+      entityType:
+        type: string
+        description: Tyoe of the AgoraEntity -- Task or Workflow.
+        default: Task
+  MethodResponse:
+    properties:
+      namespace:
+        type: string
+        description: Namespace which contains AgoraEntity.
+        default: broad-dsde-test
+      name:
+        type: string
+        description: Name of the AgoraEntity.
+        default: BWA
+      snapshotId:
+        type: integer
+        description: SnapshotId of AgoraEntity
+      synopsis:
+        type: string
+        description: Synopsis which contains AgoraEntity.
+        default: Quickly aligns short nucleotide sequences.
+      documentation:
+        type: string
+        description: Documentation of the AgoraEntity.
+        default: |
+          BWA is a software package for mapping low-divergent sequences
+          against a large reference genome, such as the human genome.
+          It consists of three algorithms: BWA-backtrack, BWA-SW and BWA-MEM.
+      createDate:
+        type: string
+        description: Timestamp of creation
+      url:
+        type: string
+        description: URL where resource can be accessed.
+      payload:
+        type: string
+        description: Payload of method -- must be in WDL format
+        default: |
+          task wc { command { cat ${File in_file} | wc -l } output { Int count = read_int(stdout()) }}
+      entityType:
+        type: string
+        description: Tyoe of the AgoraEntity -- Task or Workflow.
+        default: Task
   AccessControl:
     properties:
       user:
         type: string
         description: A user's email.
+        default: test-user@broadinstitute.org
       roles:
         type: array
         description: The roles a user has on an entity.
-        items: 
+        items:
           type: string
+        default: [Read, Write, Manage]
   Error:
     properties:
       code:
         type: integer
         format: int32
+        default: 500
       message:
         type: string
+        default: Internal Server Error

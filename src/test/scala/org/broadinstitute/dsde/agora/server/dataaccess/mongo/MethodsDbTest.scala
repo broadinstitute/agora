@@ -1,7 +1,8 @@
 package org.broadinstitute.dsde.agora.server.dataaccess.mongo
 
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
-import org.broadinstitute.dsde.agora.server.dataaccess.{AgoraDao, AgoraEntityNotFoundException}
+import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
+import org.broadinstitute.dsde.agora.server.exceptions.AgoraEntityNotFoundException
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
 import org.scalatest.{DoNotDiscover, FlatSpec}
 

@@ -1,8 +1,8 @@
 package org.broadinstitute.dsde.agora.server.busines
 
-import org.broadinstitute.dsde.agora.server.business.{EntityAuthorizationException, NamespaceAuthorizationException}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AgoraEntityPermissionsClient, NamespacePermissionsClient, AccessControl, AgoraPermissions}
 import AgoraPermissions.Manage
+import org.broadinstitute.dsde.agora.server.exceptions.{NamespaceAuthorizationException, AgoraEntityAuthorizationException}
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 
 
@@ -57,6 +57,6 @@ class PermissionBusiness {
 
   def authorizeEntityRequester(entity: AgoraEntity, requester: String) = {
     if (!AgoraEntityPermissionsClient.getEntityPermission(entity, requester).canManage)
-      throw new EntityAuthorizationException(AgoraPermissions(Manage), entity, requester)
+      throw new AgoraEntityAuthorizationException(AgoraPermissions(Manage), entity, requester)
   }
 }

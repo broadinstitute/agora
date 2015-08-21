@@ -1,5 +1,4 @@
-
-package org.broadinstitute.dsde.agora.server.dataaccess
+package org.broadinstitute.dsde.agora.server.exceptions
 
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 

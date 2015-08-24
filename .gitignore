@@ -4,3 +4,4 @@ log
 *.log
 *.p12
 *.db
+native

@@ -1,6 +1,7 @@
 package org.broadinstitute.dsde.agora.server
 
 import com.typesafe.scalalogging.slf4j.LazyLogging
+import kamon.Kamon
 
 object ProductionAgora extends Agora {
     start()
@@ -12,6 +13,7 @@ class Agora extends LazyLogging with App {
   sys addShutdownHook stop()
 
   def start() {
+    Kamon.start()
     server.startAllServices()
     logger.info("Agora instance " + AgoraConfig.serverInstanceName + " initialized, Environment: " + AgoraConfig.environment)
   }
@@ -20,6 +22,7 @@ class Agora extends LazyLogging with App {
     logger.info("Stopping server...")
     server.stopAllServices()
     logger.info("Server stopped.")
+    Kamon.shutdown()
   }
 }
 

@@ -2,11 +2,10 @@
 package org.broadinstitute.dsde.agora.server
 
 import org.broadinstitute.dsde.agora.server.business.AgoraBusinessIntegrationSpec
-import org.broadinstitute.dsde.agora.server.webservice.AgoraImportIntegrationSpec
 import org.broadinstitute.dsde.agora.server.AgoraIntegrationTestData._
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.EmbeddedMongo
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
-import org.broadinstitute.dsde.agora.server.webservice.PermissionIntegrationSpec
+import org.broadinstitute.dsde.agora.server.webservice.{AgoraImportIntegrationSpec, PermissionIntegrationSpec}
 import org.scalatest.{BeforeAndAfterAll, Suites}
 import slick.driver.MySQLDriver.api._
 

@@ -26,5 +26,4 @@ WORKDIR /usr/agora
 COPY agora-0.1-SNAPSHOT.jar /usr/agora/
 
 # Start the webservice with default parameters do not use default config
-ENTRYPOINT ["java", "-Djava.library.path=./native", "-Dconfig.file=/etc/agora.conf",
- "-javaagent:agora-0.1-SNAPSHOT.jar", "-jar", "agora-0.1-SNAPSHOT.jar"]
+ENTRYPOINT ["java", "-Djava.library.path=./native", "-Dconfig.file=/etc/agora.conf", "-javaagent:agora-0.1-SNAPSHOT.jar", "-jar", "agora-0.1-SNAPSHOT.jar"]

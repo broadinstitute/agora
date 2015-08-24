@@ -41,22 +41,28 @@ object AgoraTestData {
   val mockAutheticatedOwner = Option(AgoraConfig.mockAuthenticatedUserEmail)
 
   val payload1 = Option( """task grep {
+                           |  String pattern
+                           |  String? flags
+                           |  File file_name
+                           |
                            |  command {
-                           |    grep ${pattern} ${flags?} ${File file_name}
+                           |    grep ${pattern} ${flags} ${file_name}
                            |  }
                            |  output {
                            |    File out = "stdout"
                            |  }
                            |  runtime {
-                           |    memory: "2MB"
-                           |    cores: 1
-                           |    disk: "3MB"
+                           |    memory: "2 MB"
+                           |    cpu: 1
+                           |    defaultDisks: "mydisk 3 LOCAL_SSD"
                            |  }
                            |}
                            |
                            |task wc {
+                           |  Array[File]+ files
+                           |
                            |  command {
-                           |    wc -l ${sep=' ' File files+} | tail -1 | cut -d' ' -f 2
+                           |    wc -l ${sep=' ' files} | tail -1 | cut -d' ' -f 2
                            |  }
                            |  output {
                            |    Int count = read_int("stdout")
@@ -65,6 +71,7 @@ object AgoraTestData {
                            |
                            |workflow scatter_gather_grep_wc {
                            |  Array[File] input_files
+                           |
                            |  scatter(f in input_files) {
                            |    call grep {
                            |      input: file_name = f
@@ -80,8 +87,10 @@ object AgoraTestData {
   val payload2 = Option("task test { command { test } }")
   val payloadWcTask = Option( """
                                 |task wc {
+                                |  Array[File]+ files
+                                |
                                 |  command {
-                                |    wc -l ${sep=' ' File files+} | tail -1 | cut -d' ' -f 2
+                                |    wc -l ${sep=' ' files} | tail -1 | cut -d' ' -f 2
                                 |  }
                                 |  output {
                                 |    Int count = read_int("stdout")
@@ -93,16 +102,20 @@ object AgoraTestData {
                                                    |import "methods://broad.wc.1"
                                                    |
                                                    |task grep {
+                                                   |  String pattern
+                                                   |  String? flags
+                                                   |  File file_name
+                                                   |
                                                    |  command {
-                                                   |    grep ${pattern} ${flags?} ${File file_name}
+                                                   |    grep ${pattern} ${flags} ${file_name}
                                                    |  }
                                                    |  output {
                                                    |    File out = "stdout"
                                                    |  }
                                                    |  runtime {
-                                                   |    memory: "2MB"
-                                                   |    cores: 1
-                                                   |    disk: "3MB"
+                                                   |    memory: "2 MB"
+                                                   |    cpu: 1
+                                                   |    defaultDisks: "mydisk 3 LOCAL_SSD"
                                                    |  }
                                                    |}
                                                    |
@@ -204,8 +217,9 @@ object AgoraTestData {
 
   val payloadWithValidOfficialDockerImageInWdl = Option( """
                                     |task wc {
+                                    |  Array[File]+ files
                                     |  command {
-                                    |    wc -l ${sep=' ' File files+} | tail -1 | cut -d' ' -f 2
+                                    |    wc -l ${sep=' ' files} | tail -1 | cut -d' ' -f 2
                                     |  }
                                     |  output {
                                     |    Int count = read_int("stdout")
@@ -217,8 +231,9 @@ object AgoraTestData {
                                     | """.stripMargin)
   val payloadWithInvalidOfficialDockerRepoNameInWdl = Option( """
                                                                 |task wc {
+                                                                |  Array[File]+ files
                                                                 |  command {
-                                                                |    wc -l ${sep=' ' File files+} | tail -1 | cut -d' ' -f 2
+                                                                |    wc -l ${sep=' ' files} | tail -1 | cut -d' ' -f 2
                                                                 |  }
                                                                 |  output {
                                                                 |    Int count = read_int("stdout")
@@ -230,8 +245,9 @@ object AgoraTestData {
                                                                 | """.stripMargin)
   val payloadWithInvalidOfficialDockerTagNameInWdl = Option( """
                                                              |task wc {
+                                                             |  Array[File]+ files
                                                              |  command {
-                                                             |    wc -l ${sep=' ' File files+} | tail -1 | cut -d' ' -f 2
+                                                             |    wc -l ${sep=' ' files} | tail -1 | cut -d' ' -f 2
                                                              |  }
                                                              |  output {
                                                              |    Int count = read_int("stdout")
@@ -243,8 +259,9 @@ object AgoraTestData {
                                                              | """.stripMargin)
   val payloadWithValidPersonalDockerImageInWdl = Option( """
                                                            |task wc {
+                                                           |  Array[File]+ files
                                                            |  command {
-                                                           |    wc -l ${sep=' ' File files+} | tail -1 | cut -d' ' -f 2
+                                                           |    wc -l ${sep=' ' files} | tail -1 | cut -d' ' -f 2
                                                            |  }
                                                            |  output {
                                                            |    Int count = read_int("stdout")
@@ -256,49 +273,52 @@ object AgoraTestData {
                                                            | """.stripMargin)
   val payloadWithInvalidPersonalDockerUserNameInWdl = Option( """
                                                                |task wc {
+                                                               |  Array[File]+ files
                                                                |  command {
-                                                               |    wc -l ${sep=' ' File files+} | tail -1 | cut -d' ' -f 2
+                                                               |    wc -l ${sep=' ' files} | tail -1 | cut -d' ' -f 2
                                                                |  }
                                                                |  output {
                                                                |    Int count = read_int("stdout")
                                                                |  }
                                                                |  runtime {
                                                                |    docker: "broadinstitute_doesnotexist/scala-baseimage:latest"
-                                                               |    memory: "2MB"
-                                                               |    cores: 1
-                                                               |    disk: "3MB"
+                                                               |    memory: "2 MB"
+                                                               |    cpu: 1
+                                                               |    defaultDisks: "mydisk 3 LOCAL_SSD"
                                                                |  }
                                                                |}
                                                                | """.stripMargin)
   val payloadWithInvalidPersonalDockerRepoNameInWdl = Option( """
                                                                 |task wc {
+                                                                |  Array[File]+ files
                                                                 |  command {
-                                                                |    wc -l ${sep=' ' File files+} | tail -1 | cut -d' ' -f 2
+                                                                |    wc -l ${sep=' ' files} | tail -1 | cut -d' ' -f 2
                                                                 |  }
                                                                 |  output {
                                                                 |    Int count = read_int("stdout")
                                                                 |  }
                                                                 |  runtime {
                                                                 |    docker: "broadinstitute/scala-baseimage_doesnotexist:latest"
-                                                                |    memory: "2MB"
-                                                                |    cores: 1
-                                                                |    disk: "3MB"
+                                                                |    memory: "2 MB"
+                                                                |    cpu: 1
+                                                                |    defaultDisks: "mydisk 3 LOCAL_SSD"
                                                                 |  }
                                                                 |}
                                                                 | """.stripMargin)
   val payloadWithInvalidPersonalDockerTagNameInWdl = Option( """
                                                                 |task wc {
+                                                                |  Array[File]+ files
                                                                 |  command {
-                                                                |    wc -l ${sep=' ' File files+} | tail -1 | cut -d' ' -f 2
+                                                                |    wc -l ${sep=' ' files} | tail -1 | cut -d' ' -f 2
                                                                 |  }
                                                                 |  output {
                                                                 |    Int count = read_int("stdout")
                                                                 |  }
                                                                 |  runtime {
                                                                 |    docker: "broadinstitute/scala-baseimage:latest_doesnotexist"
-                                                                |    memory: "2MB"
-                                                                |    cores: 1
-                                                                |    disk: "3MB"
+                                                                |    memory: "2 MB"
+                                                                |    cpu: 1
+                                                                |    defaultDisks: "mydisk 3 LOCAL_SSD"
                                                                 |  }
                                                                 |}
                                                                 | """.stripMargin)

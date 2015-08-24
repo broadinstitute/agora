@@ -1,5 +1,6 @@
 package org.broadinstitute.dsde.agora.server.business
 
+import cromwell.parser.BackendType
 import cromwell.parser.WdlParser.SyntaxError
 import org.broadinstitute.dsde.agora.server.exceptions.{AgoraEntityNotFoundException, NamespaceAuthorizationException}
 import org.broadinstitute.dsde.agora.server.webservice.util.{DockerImageReference, DockerHubClient}
@@ -78,12 +79,12 @@ class AgoraBusiness {
   private def validatePayload(agoraEntity: AgoraEntity, username: String): Unit = {
     agoraEntity.entityType.get match {
       case AgoraEntityType.Task =>
-        val namespace = WdlNamespace.load(agoraEntity.payload.get)
+        val namespace = WdlNamespace.load(agoraEntity.payload.get, BackendType.LOCAL)
         // Passed basic validation.  Now check if (any) docker images that are referenced exist
         namespace.tasks.foreach { validateDockerImage }
       case AgoraEntityType.Workflow =>
         val resolver = MethodImportResolver(username, this)
-        val namespace = WdlNamespace.load(agoraEntity.payload.get, resolver.importResolver _)
+        val namespace = WdlNamespace.load(agoraEntity.payload.get, resolver.importResolver _, BackendType.LOCAL)
         // Passed basic validation.  Now check if (any) docker images that are referenced exist
         namespace.tasks.foreach { validateDockerImage }
       case AgoraEntityType.Configuration =>

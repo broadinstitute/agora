@@ -5,7 +5,7 @@ name := "Agora"
 
 organization := "org.broadinstitute"
 
-scalaVersion := "2.11.6"
+scalaVersion := "2.11.7"
 
 val sprayV = "1.3.2"
 
@@ -41,7 +41,7 @@ libraryDependencies ++= Seq(
   "mysql" % "mysql-connector-java" % "5.1.35",
   "net.ceedubs" %% "ficus" % "1.1.2",
   "org.aspectj" % "aspectjweaver" % "1.8.6",
-  "org.broadinstitute" %% "cromwell" % "0.1-SNAPSHOT" excludeAll ExclusionRule(organization = "com.gettyimages"),
+  "org.broadinstitute" %% "cromwell" % "0.9" excludeAll ExclusionRule(organization = "com.gettyimages"),
   "org.broadinstitute.dsde.vault" %% "vault-common" % "0.1-15-bf74315",
   "org.mongodb" %% "casbah" % "2.8.1",
   "org.flywaydb" % "flyway-core" % "3.2.1",
@@ -63,22 +63,22 @@ flywayUser := "root"
 lazy val safeClean = taskKey[Unit]("DO NOT RUN IN PRODUCTION! Deletes the entire database with flywayClean. DO NOT RUN IN PRODUCTION!")
 
 safeClean := println("""
-    |__        ___    ____  _   _ ___ _   _  ____ _
-    |\ \      / / \  |  _ \| \ | |_ _| \ | |/ ___| |
-    | \ \ /\ / / _ \ | |_) |  \| || ||  \| | |  _| |
-    |  \ V  V / ___ \|  _ <| |\  || || |\  | |_| |_|
-    |   \_/\_/_/   \_\_| \_\_| \_|___|_| \_|\____(_)
-    |
-    |
-    | This will permanently DELETE EVERYTHING in the database.
-    | Do you really want to delete the entire database?
-    | If so, then remove the line:
-    |
-    | `addCommandAlias("flywayClean", "safeClean")`
-    |
-    | in the build.sbt file and rerun `sbt flywayClean`
-    |
-    | """.stripMargin)
+                       |__        ___    ____  _   _ ___ _   _  ____ _
+                       |\ \      / / \  |  _ \| \ | |_ _| \ | |/ ___| |
+                       | \ \ /\ / / _ \ | |_) |  \| || ||  \| | |  _| |
+                       |  \ V  V / ___ \|  _ <| |\  || || |\  | |_| |_|
+                       |   \_/\_/_/   \_\_| \_\_| \_|___|_| \_|\____(_)
+                       |
+                       |
+                       | This will permanently DELETE EVERYTHING in the database.
+                       | Do you really want to delete the entire database?
+                       | If so, then remove the line:
+                       |
+                       | `addCommandAlias("flywayClean", "safeClean")`
+                       |
+                       | in the build.sbt file and rerun `sbt flywayClean`
+                       |
+                       | """.stripMargin)
 
 // Wrapper around flywayClean for safety.
 

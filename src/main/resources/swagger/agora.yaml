@@ -130,7 +130,7 @@ paths:
           description: Snapshot ID of method.
           required: true
           type: number
-        - name: onlypayload
+        - name: onlyPayload
           in: query
           description: Boolean to return only the payload of the method.
           required: false

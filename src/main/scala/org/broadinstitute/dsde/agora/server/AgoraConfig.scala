@@ -14,10 +14,10 @@ object AgoraConfig {
   // Environments
   val LocalEnvironment = "local"
   val DevEnvironment = "dev"
-  val CiEnvironment = "ci"
+  val StagingEnvironment = "staging"
   val ProdEnvironment = "prod"
 
-  val Environments = List[String](LocalEnvironment, DevEnvironment, CiEnvironment, ProdEnvironment)
+  val Environments = List[String](LocalEnvironment, DevEnvironment, StagingEnvironment, ProdEnvironment)
 
   lazy val environment = config.as[Option[String]]("environment").getOrElse(LocalEnvironment)
   if (!Environments.contains(AgoraConfig.environment))
@@ -40,7 +40,7 @@ object AgoraConfig {
   }
 
   // CI
-  if (environment.equals(CiEnvironment)) {
+  if (environment.equals(StagingEnvironment)) {
     openAMAuthentication = AgoraOpenAMDirectives
     usesEmbeddedMongo = false
   }

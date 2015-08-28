@@ -74,6 +74,9 @@ trait PerRequest extends Actor {
       case e: DockerImageNotFoundException =>
         r.complete(BadRequest, AgoraException(e.getMessage, e.getCause, BadRequest))
         Stop
+      case e: PermissionNotFoundException =>
+        r.complete(BadRequest, AgoraException(e.getMessage, e.getCause, BadRequest))
+        Stop
       case e: SyntaxError =>
         r.complete(BadRequest, AgoraException(e.getMessage, e.getCause, BadRequest))
         Stop

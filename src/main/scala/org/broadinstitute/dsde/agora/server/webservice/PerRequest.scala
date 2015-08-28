@@ -78,7 +78,7 @@ trait PerRequest extends Actor {
         r.complete(BadRequest, AgoraException(e.getMessage, e.getCause, BadRequest))
         Stop
       case e: Throwable =>
-        r.complete(AgoraException(e.getMessage, e.getCause, InternalServerError))
+        r.complete(InternalServerError, AgoraException(e.getMessage, e.getCause, InternalServerError))
         Stop
     }
 }

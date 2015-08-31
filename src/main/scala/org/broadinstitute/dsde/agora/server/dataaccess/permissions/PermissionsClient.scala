@@ -2,6 +2,7 @@ package org.broadinstitute.dsde.agora.server.dataaccess.permissions
 
 import AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.AgoraConfig
+import org.broadinstitute.dsde.agora.server.exceptions.PermissionNotFoundException
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import scala.concurrent.{Future, Await}
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -108,7 +109,7 @@ trait PermissionsClient {
         val entityID = userAndEntity.get._2
 
         // First, try to update
-        // if permission already exists, update will fail by updating 0 rows
+        // if permission does not exist, update will fail by updating 0 rows
         val updateQuery = permissions
           .filter(_.userID === userID)
           .filter(_.entityID === entityID)
@@ -168,7 +169,13 @@ trait PermissionsClient {
       case ex: Throwable => throw new PermissionNotFoundException(s"Could not edit permissions", ex)
     }
 
-    Await.result(editPermissionFuture, timeout)
+    val rowsEdited = Await.result(editPermissionFuture, timeout)
+
+    // If no rows were changed, then the permission could not be found.
+    if (rowsEdited == 0)
+      throw new PermissionNotFoundException("Could not find permission to edit.")
+    else
+      rowsEdited
   }
 
   def deletePermission(entity: AgoraEntity, userToRemove: String): Int = {

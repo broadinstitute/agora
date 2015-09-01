@@ -96,6 +96,20 @@ class AgoraMongoDao(collections: Seq[MongoCollection]) extends AgoraDao {
     entities
   }
 
+  // Find all configurations that have specified method id.
+  override def findConfigurations(id: ObjectId) = {
+    val dbQuery = "methodId" $eq id
+    val entityCollections = getCollectionsByEntityType(Option(AgoraEntityType.Configuration))
+    val entities = entityCollections.flatMap {
+      collection =>
+        collection.find(dbQuery).map {
+          dbObject => MongoDbObjectToEntity(dbObject)
+        }
+    }
+
+    entities
+  }
+
   def assureSingleCollection: MongoCollection = {
     if (collections.size != 1) throw new IllegalArgumentException("Multiple collections defined. Only a single collection is supported for this operation")
     else collections.head

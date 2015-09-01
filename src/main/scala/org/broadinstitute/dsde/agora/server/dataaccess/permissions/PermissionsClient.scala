@@ -183,6 +183,18 @@ trait PermissionsClient {
     editPermission(entity, accessObject)
   }
 
+  def deleteAllPermissions(agoraEntity: AgoraEntity): Int = {
+    val deleteQuery = for {
+      entity <- entities.filter(_.alias === alias(agoraEntity)).result.head
+      rowsDeleted <- permissions.filter(_.entityID === entity.id).delete
+    } yield rowsDeleted
+
+    val rowsDeletedFuture = db.run(deleteQuery)
+
+    Await.result(rowsDeletedFuture, timeout)
+
+  }
+
   def filterEntityByRead(agoraEntities: Seq[AgoraEntity], userEmail: String) = {
     val entitiesThatUserCanReadQuery = for {
       user <- users if user.email === userEmail

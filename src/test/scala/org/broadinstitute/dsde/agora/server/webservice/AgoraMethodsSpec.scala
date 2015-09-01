@@ -129,12 +129,12 @@ class AgoraMethodsSpec extends ApiServiceSpec {
   "Agora" should "store 10kb of github markdown as method documentation and return it without alteration" in {
     val entityJSON = s"""{
                         | "namespace": "$namespace1",
-                                                     | "name": "$name1",
-                                                                        | "synopsis": "",
-                                                                        | "documentation": "$getBigDocumentation",
-                                                                                                                  | "payload": "",
-                                                                                                                  | "entityType": "Task"
-                                                                                                                  |}""".stripMargin
+                        | "name": "$name1",
+                        | "synopsis": "",
+                        | "documentation": "$getBigDocumentation",
+                        | "payload": "",
+                        | "entityType": "Task"
+                        |}""".stripMargin
 
     val entity = HttpEntity(
       contentType = ContentType(`application/json`),
@@ -154,4 +154,23 @@ class AgoraMethodsSpec extends ApiServiceSpec {
       rejection === ValidationRejection
     }
   }
+
+  "Agora" should "allow method redaction" in {
+    Delete(ApiUtil.Methods.withLeadingSlash + "/" + testEntityToBeRedactedWithId.get.namespace.get + "/" +
+    testEntityToBeRedactedWithId.get.name.get + "/" + testEntityToBeRedactedWithId.get.snapshotId.get ) ~>
+    methodsService.querySingleRoute ~> check {
+      assert(body.asString === "1")
+    }
+  }
+
+  "Agora" should "not allow redacted methods to be queried" in {
+    Get(ApiUtil.Methods.withLeadingSlash + "/" + testEntityToBeRedactedWithId.get.namespace.get + "/" +
+      testEntityToBeRedactedWithId.get.name.get + "/" + testEntityToBeRedactedWithId.get.snapshotId.get ) ~>
+      methodsService.querySingleRoute ~> check {
+      assert(body.asString contains "not found")
+    }
+  }
+
+
+
 }

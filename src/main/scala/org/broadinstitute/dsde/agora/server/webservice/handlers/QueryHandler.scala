@@ -35,6 +35,13 @@ class QueryHandler extends Actor {
                username: String) =>
       query(requestContext, agoraSearch, agoraProjection, entityTypes, username)
       context.stop(self)
+
+    case Delete(requestContext: RequestContext,
+                entity: AgoraEntity,
+                entityTypes: Seq[AgoraEntityType.EntityType],
+                username: String) =>
+      delete(requestContext, entity, entityTypes, username)
+      context.stop(self)
   }
 
   def query(requestContext: RequestContext,
@@ -54,6 +61,14 @@ class QueryHandler extends Actor {
             username: String): Unit = {
     val entities = agoraBusiness.find(agoraSearch, agoraProjection, entityTypes, username)
     context.parent ! RequestComplete(entities)
+  }
+
+  def delete(requestContext: RequestContext,
+              entity: AgoraEntity,
+              entityTypes: Seq[AgoraEntityType.EntityType],
+              username: String): Unit = {
+    val rowsDeleted = agoraBusiness.delete(entity, entityTypes, username)
+    context.parent ! RequestComplete(rowsDeleted.toString)
   }
 
 }

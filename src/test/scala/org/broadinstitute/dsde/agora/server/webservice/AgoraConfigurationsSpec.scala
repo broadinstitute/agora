@@ -20,11 +20,16 @@ class AgoraConfigurationsSpec extends ApiServiceSpec {
   var method1: AgoraEntity = _
   var origPermission: AgoraPermissions = _
   var origAccessControl: AccessControl = _
+  var testEntityToBeRedacted2WithId: Option[AgoraEntity] = null
+  var testAgoraConfigurationToBeRedactedWithId: Option[AgoraEntity] = null
 
   override def beforeAll() = {
     method1 = AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).find(testEntity1).head
     origPermission = AgoraEntityPermissionsClient.getEntityPermission(method1, AgoraConfig.mockAuthenticatedUserEmail)
     origAccessControl = new AccessControl(AgoraConfig.mockAuthenticatedUserEmail, origPermission)
+
+    testEntityToBeRedacted2WithId = agoraBusiness.find(testEntityToBeRedacted2, None, Seq(testEntityToBeRedacted2.entityType.get), mockAutheticatedOwner.get).headOption
+    testAgoraConfigurationToBeRedactedWithId = agoraBusiness.find(testAgoraConfigurationToBeRedacted, None, Seq(testAgoraConfigurationToBeRedacted.entityType.get), mockAutheticatedOwner.get).headOption
   }
 
   override def afterAll() = {
@@ -63,8 +68,6 @@ class AgoraConfigurationsSpec extends ApiServiceSpec {
       configurationsService.queryRoute ~> check {
 
       handleError(entity.as[Seq[AgoraEntity]], (configs: Seq[AgoraEntity]) => {
-        assert(configs.size === 3)
-
         val method1 = AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(namespace1.get, name1.get, snapshotId1.get)
         val method2 = AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(namespace2.get, name1.get, snapshotId1.get)
         val method3 = AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(namespace1.get, name1.get, snapshotId1.get)
@@ -129,4 +132,28 @@ class AgoraConfigurationsSpec extends ApiServiceSpec {
       rejection === ValidationRejection
     }
   }
+
+  "Agora" should "redact methods when it has at least 1 associated configuration" in {
+    Delete(ApiUtil.Methods.withLeadingSlash + "/" +
+      testEntityToBeRedacted2WithId.get.namespace.get + "/" +
+      testEntityToBeRedacted2WithId.get.name.get + "/" +
+      testEntityToBeRedacted2WithId.get.snapshotId.get ) ~>
+    methodsService.querySingleRoute ~>
+    check {
+      assert(body.asString === "1")
+    }
+  }
+
+  "Agora" should "redact associated configurations when the referenced method is redacted" in {
+    Get(ApiUtil.Configurations.withLeadingSlash + "/" +
+      testAgoraConfigurationToBeRedactedWithId.get.namespace.get + "/" +
+      testAgoraConfigurationToBeRedactedWithId.get.name.get + "/" +
+      testAgoraConfigurationToBeRedactedWithId.get.snapshotId.get ) ~>
+    configurationsService.querySingleRoute ~>
+    check {
+      assert(body.asString contains "not found")
+    }
+  }
+
+
 }

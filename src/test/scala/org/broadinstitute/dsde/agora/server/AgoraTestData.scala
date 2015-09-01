@@ -15,6 +15,7 @@ object AgoraTestData {
   val namespace3 = Option("GATK")
   val name1 = Option("testMethod1")
   val name2 = Option("testMethod2")
+  val name3 = Option("name3")
   val snapshotId1 = Option(1)
   val snapshotId2 = Option(2)
   val nameNonExistent = Option("nonexistent")
@@ -215,6 +216,31 @@ object AgoraTestData {
                                     |  "namespace": "ns"
                                     |}""".stripMargin)
 
+
+  val taskConfigPayload3 = Option( s"""{
+                                      |  "methodStoreMethod": {
+                                      |    "methodNamespace": "${namespace3.get}",
+                                      |    "methodName": "${name3.get}",
+                                      |    "methodVersion": 1
+                                      |  },
+                                      |  "name": "first",
+                                      |  "workspaceName": {
+                                      |    "namespace": "foo",
+                                      |    "name": "bar"
+                                      |  },
+                                      |  "outputs": {
+                                      |
+                                      |  },
+                                      |  "inputs": {
+                                      |    "p": "hi"
+                                      |  },
+                                      |  "rootEntityType": "sample",
+                                      |  "prerequisites": {
+                                      |
+                                      |  },
+                                      |  "namespace": "ns"
+                                      |}""".stripMargin)
+
   val payloadWithValidOfficialDockerImageInWdl = Option( """
                                     |task wc {
                                     |  Array[File]+ files
@@ -378,6 +404,24 @@ object AgoraTestData {
     payload = payload2,
     entityType = Option(AgoraEntityType.Task))
 
+  val testEntityToBeRedacted = AgoraEntity(namespace = namespace1,
+    name = name3,
+    synopsis = synopsis2,
+    documentation = documentation1,
+    owner = owner2,
+    payload = payload1,
+    entityType = Option(AgoraEntityType.Task)
+  )
+
+  val testEntityToBeRedacted2 = AgoraEntity(namespace = namespace3,
+    name = name3,
+    synopsis = synopsis2,
+    documentation = documentation1,
+    owner = owner1,
+    payload = payload2,
+    entityType = Option(AgoraEntityType.Task)
+  )
+
   val testEntityTaskWc = AgoraEntity(namespace = namespace1,
     name = nameWc,
     synopsis = synopsisWc,
@@ -483,6 +527,16 @@ object AgoraTestData {
     documentation = documentation1,
     owner = owner1,
     payload = taskConfigPayload,
+    entityType = Option(AgoraEntityType.Configuration)
+  )
+
+  val testAgoraConfigurationToBeRedacted = new AgoraEntity(
+    namespace = namespace3,
+    name = name3,
+    synopsis = synopsis3,
+    documentation = documentation1,
+    owner = owner1,
+    payload = taskConfigPayload3,
     entityType = Option(AgoraEntityType.Configuration)
   )
 }

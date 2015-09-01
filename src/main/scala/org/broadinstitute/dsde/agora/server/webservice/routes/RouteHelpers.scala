@@ -100,7 +100,6 @@ trait EntityPermissionsRouteHelper extends BaseRoute {
 trait QuerySingleHelper extends BaseRoute {
 
   def matchQuerySingleRoute(_path: String) =
-    get &
     path(_path / Segment / Segment / IntNumber) &
     openAMAuthentication.usernameFromCookie()
 
@@ -113,11 +112,24 @@ trait QuerySingleHelper extends BaseRoute {
                               path: String,
                               queryHandler: Props): Unit = {
     addUserIfNotInDatabase(username)
-    val entityType = AgoraEntityType.byPath(path)
-    val message = QuerySingle(context, entity, entityType, username, onlyPayload)
+    val entityTypes = AgoraEntityType.byPath(path)
+    val message = QuerySingle(context, entity, entityTypes, username, onlyPayload)
 
-    perRequest(context, queryHandler, message, java.lang.Thread.currentThread.getStackTrace()(1).getMethodName)
+    perRequest(context, queryHandler, message)
   }
+
+  def completeEntityDelete(context: RequestContext,
+                            entity: AgoraEntity,
+                            username: String,
+                            path: String,
+                            queryHandler: Props): Unit = {
+    addUserIfNotInDatabase(username)
+    val entityTypes = AgoraEntityType.byPath(path)
+    val message = Delete(context, entity, entityTypes, username)
+
+    perRequest(context, queryHandler, message)
+  }
+
 }
 
 trait QueryRouteHelper extends BaseRoute {
@@ -167,7 +179,7 @@ trait QueryRouteHelper extends BaseRoute {
     val entityType = AgoraEntityType.byPath(path)
     val projection = projectionFromParams(params)
     val message = Query(context, entity, projection, entityType, username)
-    perRequest(context, queryHandler, message, java.lang.Thread.currentThread.getStackTrace()(1).getMethodName)
+    perRequest(context, queryHandler, message)
   }
 }
 

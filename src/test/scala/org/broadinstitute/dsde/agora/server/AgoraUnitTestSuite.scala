@@ -58,6 +58,9 @@ class AgoraUnitTestSuite extends Suites(
     agoraBusiness.insert(testEntityTaskWc, mockAutheticatedOwner.get)
     agoraBusiness.insert(testAgoraConfigurationEntity, mockAutheticatedOwner.get)
     agoraBusiness.insert(testAgoraConfigurationEntity2, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testEntityToBeRedacted, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testEntityToBeRedacted2, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testAgoraConfigurationToBeRedacted, mockAutheticatedOwner.get)
   }
 
   override def afterAll() {

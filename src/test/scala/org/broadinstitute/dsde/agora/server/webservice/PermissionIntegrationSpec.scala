@@ -56,6 +56,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
       methodsService.namespacePermissionsRoute ~>
       check {
         assert(status == OK)
+        assert(body.asString contains "Create")
       }
   }
 
@@ -76,6 +77,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
       methodsService.namespacePermissionsRoute ~>
       check {
         assert(status == OK)
+        assert(body.asString contains "Read")
       }
   }
 
@@ -86,6 +88,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
       methodsService.namespacePermissionsRoute ~>
       check {
         assert(status == OK)
+        assert(body.asString contains "[]")
       }
   }
 
@@ -128,6 +131,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
       methodsService.entityPermissionsRoute ~>
       check {
         assert(status == OK)
+        assert(body.asString contains "Manage")
       }
   }
 
@@ -148,6 +152,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
       methodsService.entityPermissionsRoute ~>
       check {
         assert(status == OK)
+        assert(body.asString contains "Read")
       }
   }
 
@@ -158,6 +163,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
       methodsService.entityPermissionsRoute ~>
       check {
         assert(status == OK)
+        assert(body.asString contains "[]")
       }
   }
 

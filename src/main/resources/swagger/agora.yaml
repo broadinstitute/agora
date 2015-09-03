@@ -5,6 +5,7 @@ info:
   version: "1.0.0"
 produces:
   - application/json
+  - text/plain
 paths:
   /methods:
     get:
@@ -139,13 +140,43 @@ paths:
         - Methods
       responses:
         200:
-          description: An array of methods.
+          description: A single method.
           schema:
-            type: array
-            items:
-              $ref: '#/definitions/MethodResponse'
+            $ref: '#/definitions/MethodResponse'
         default:
           description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: Redact a single method.
+      description: |
+        Redacts a method and all of its associated configurations
+      parameters:
+        - name: namespace
+          in: path
+          description: Namespace of method.
+          required: true
+          type: string
+        - name: name
+          in: path
+          description: Name of method.
+          required: true
+          type: string
+        - name: snapshotId
+          in: path
+          description: Snapshot ID of method.
+          required: true
+          type: number
+      tags:
+        - Methods
+      responses:
+        200:
+          description: |
+            An integer showing how many methods were deleted.
+          schema:
+            type: number
+        default:
+          description: Error upon redaction
           schema:
             $ref: '#/definitions/Error'
   /configurations:
@@ -283,6 +314,38 @@ paths:
               $ref: '#/definitions/ConfigurationResponse'
         default:
           description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: Redact a single configuration.
+      description: |
+        Redacts a configuration and all of its associated configurations
+      parameters:
+        - name: namespace
+          in: path
+          description: Namespace of config.
+          required: true
+          type: string
+        - name: name
+          in: path
+          description: Name of config.
+          required: true
+          type: string
+        - name: snapshotId
+          in: path
+          description: Snapshot ID of config.
+          required: true
+          type: number
+      tags:
+        - Configurations
+      responses:
+        200:
+          description: |
+            An integer showing how many configurations were deleted. Should be 1.
+          schema:
+            type: number
+        default:
+          description: Error upon redaction
           schema:
             $ref: '#/definitions/Error'
   /methods/{namespace}/permissions:
@@ -820,7 +883,7 @@ definitions:
       namespace:
         type: string
         description: Namespace which contains AgoraEntity.
-        default: broad-dsde-test
+        default: YOUR_NAMESPACE
       name:
         type: string
         description: Name of the AgoraEntity.
@@ -840,17 +903,17 @@ definitions:
         type: string
         description: Payload of method -- must be in WDL format
         default: |
-          task wc { command { cat ${File in_file} | wc -l } output { Int count = read_int(stdout()) }}
+          task wc {File in_file command { cat ${in_file} | wc -l } output { Int count = read_int(stdout()) }}
       entityType:
         type: string
-        description: Tyoe of the AgoraEntity -- Task or Workflow.
+        description: Type of the AgoraEntity -- Task or Workflow.
         default: Task
   ConfigurationQuery:
     properties:
       namespace:
         type: string
         description: Namespace which contains Configuration.
-        default: broad-dsde-test
+        default: YOUR_NAMESPACE
       name:
         type: string
         description: Name of the Configuration.
@@ -868,7 +931,7 @@ definitions:
         type: string
         description: Payload of method -- must be in WDL format
         default: |
-          { "methodStoreMethod": { "methodNamespace": "broad-dsde-test", "methodName": "BWA", "methodVersion": 1}}
+          { "methodStoreMethod": { "methodNamespace": "YOUR_NAMESPACE", "methodName": "BWA", "methodVersion": 1}}
       entityType:
         type: string
         description: Can only be Configuration.
@@ -880,7 +943,7 @@ definitions:
       namespace:
         type: string
         description: Namespace which contains AgoraEntity.
-        default: broad-dsde-test
+        default: YOUR_NAMESPACE
       name:
         type: string
         description: Name of the AgoraEntity.
@@ -894,7 +957,7 @@ definitions:
         default: Quickly aligns short nucleotide sequences.
       documentation:
         type: string
-        description: Documentation of the AgoraEntity.
+        description: Documentation of the AgoraEntity. MUST BE REQUESTED EXPLICITLY.
         default: |
           BWA is a software package for mapping low-divergent sequences
           against a large reference genome, such as the human genome.
@@ -907,19 +970,19 @@ definitions:
         description: URL where resource can be accessed.
       payload:
         type: string
-        description: Payload of method -- must be in WDL format
+        description: Payload of method -- must be in WDL format. MUST BE REQUESTED EXPLICITLY.
         default: |
-          task wc { command { cat ${File in_file} | wc -l } output { Int count = read_int(stdout()) }}
+          { "methodStoreMethod": { "methodNamespace": "YOUR_NAMESPACE", "methodName": "BWA", "methodVersion": 1}}
       entityType:
         type: string
-        description: Tyoe of the AgoraEntity -- Task or Workflow.
+        description: Type of the AgoraEntity -- Task or Workflow.
         default: Task
   MethodResponse:
     properties:
       namespace:
         type: string
         description: Namespace which contains AgoraEntity.
-        default: broad-dsde-test
+        default: YOUR_NAMESPACE
       name:
         type: string
         description: Name of the AgoraEntity.
@@ -933,7 +996,7 @@ definitions:
         default: Quickly aligns short nucleotide sequences.
       documentation:
         type: string
-        description: Documentation of the AgoraEntity.
+        description: Documentation of the AgoraEntity. MUST BE REQUESTED EXPLICITLY.
         default: |
           BWA is a software package for mapping low-divergent sequences
           against a large reference genome, such as the human genome.
@@ -946,12 +1009,12 @@ definitions:
         description: URL where resource can be accessed.
       payload:
         type: string
-        description: Payload of method -- must be in WDL format
+        description: Payload of method -- must be in WDL format. MUST BE REQUESTED EXPLICITLY.
         default: |
-          task wc { command { cat ${File in_file} | wc -l } output { Int count = read_int(stdout()) }}
+          task wc {File in_file command { cat ${in_file} | wc -l } output { Int count = read_int(stdout()) }}
       entityType:
         type: string
-        description: Tyoe of the AgoraEntity -- Task or Workflow.
+        description: Type of the AgoraEntity -- Task or Workflow.
         default: Task
   AccessControl:
     properties:
@@ -964,7 +1027,7 @@ definitions:
         description: The roles a user has on an entity.
         items:
           type: string
-        default: [Read, Write, Manage]
+        default: [Read, Write, Create, Redact, Manage]
   Error:
     properties:
       code:

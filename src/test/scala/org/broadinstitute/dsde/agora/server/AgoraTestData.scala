@@ -16,6 +16,7 @@ object AgoraTestData {
   val name1 = Option("testMethod1")
   val name2 = Option("testMethod2")
   val name3 = Option("name3")
+  val name4 = Option("name4")
   val snapshotId1 = Option(1)
   val snapshotId2 = Option(2)
   val nameNonExistent = Option("nonexistent")
@@ -39,6 +40,7 @@ object AgoraTestData {
   val owner1 = Option("testowner1@broadinstitute.org")
   val owner2 = Option("testowner2@broadinstitute.org")
   val owner3 = Option("testowner3@broadinstitute.org")
+  val adminUser = Option("admin@broadinstitute.org")
   val mockAutheticatedOwner = Option(AgoraConfig.mockAuthenticatedUserEmail)
 
   val payload1 = Option( """task grep {
@@ -415,6 +417,15 @@ object AgoraTestData {
 
   val testEntityToBeRedacted2 = AgoraEntity(namespace = namespace3,
     name = name3,
+    synopsis = synopsis2,
+    documentation = documentation1,
+    owner = owner1,
+    payload = payload2,
+    entityType = Option(AgoraEntityType.Task)
+  )
+
+  val testEntityToBeRedacted3 = AgoraEntity(namespace = namespace3,
+    name = name4,
     synopsis = synopsis2,
     documentation = documentation1,
     owner = owner1,

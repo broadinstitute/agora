@@ -37,16 +37,19 @@ class AgoraUnitTestSuite extends Suites(
     println(s"Starting Agora web services ($suiteName)")
     agora.start()
 
+    println("Connecting to test sql database.")
     db = AgoraConfig.sqlDatabase
 
-    val setupFuture = db.run(
+    val setupFuture = DBIO.seq(
       (entities.schema ++
         users.schema ++
-        permissions.schema).create
+        permissions.schema).create,
+
+      users += UserDao(adminUser.get, isAdmin = true)
     )
 
-    println("Connecting to test sql database.")
-    Await.result(setupFuture, timeout)
+    println("Populating databases.")
+    Await.result(db.run(setupFuture), timeout)
 
     agoraBusiness.insert(testEntity1, mockAutheticatedOwner.get)
     agoraBusiness.insert(testEntity2, mockAutheticatedOwner.get)
@@ -60,6 +63,7 @@ class AgoraUnitTestSuite extends Suites(
     agoraBusiness.insert(testAgoraConfigurationEntity2, mockAutheticatedOwner.get)
     agoraBusiness.insert(testEntityToBeRedacted, mockAutheticatedOwner.get)
     agoraBusiness.insert(testEntityToBeRedacted2, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testEntityToBeRedacted3, mockAutheticatedOwner.get)
     agoraBusiness.insert(testAgoraConfigurationToBeRedacted, mockAutheticatedOwner.get)
   }
 

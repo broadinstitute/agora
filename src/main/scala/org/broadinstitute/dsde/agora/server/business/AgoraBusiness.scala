@@ -7,8 +7,6 @@ import org.broadinstitute.dsde.agora.server.webservice.util.{DockerImageReferenc
 
 import cromwell.binding._
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions.NamespacePermissionsClient
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraEntityPermissionsClient
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.model.{AgoraApiJsonSupport, AgoraEntity, AgoraEntityProjection, AgoraEntityType}
@@ -48,7 +46,8 @@ class AgoraBusiness {
   }
 
   def delete(agoraEntity: AgoraEntity, entityTypes: Seq[AgoraEntityType.EntityType], username: String): Int = {
-    if (!NamespacePermissionsClient.getNamespacePermission(agoraEntity, username).canRedact)
+    if (!NamespacePermissionsClient.getNamespacePermission(agoraEntity, username).canRedact &&
+        !NamespacePermissionsClient.isAdmin(username))
       throw new NamespaceAuthorizationException(AgoraPermissions(Redact), agoraEntity, username)
 
     // if the entity was a method, then redact all associated configurations

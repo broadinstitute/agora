@@ -9,13 +9,13 @@ import spray.routing._
 import scala.concurrent.ExecutionContext
 
 trait MockAgoraDirectives extends AgoraDirectives {
-  def commonNameFromCookie(magnet: ImplicitMagnet[ExecutionContext]): Directive1[String] = {
+  def commonNameFromRequest(magnet: ImplicitMagnet[ExecutionContext]): Directive1[String] = {
 
 
     provide(AgoraConfig.mockAuthenticatedUserEmail)
   }
 
-  def usernameFromCookie(magnet: ImplicitMagnet[ExecutionContext]): Directive1[String] = {
+  def usernameFromRequest(magnet: ImplicitMagnet[ExecutionContext]): Directive1[String] = {
     provide(AgoraConfig.mockAuthenticatedUserEmail)
   }
 }

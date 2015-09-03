@@ -1,7 +1,7 @@
 package org.broadinstitute.dsde.agora.server.webservice.routes
 
 import akka.actor.Props
-import org.broadinstitute.dsde.agora.server.AgoraConfig.openAMAuthentication
+import org.broadinstitute.dsde.agora.server.AgoraConfig.authenticationDirectives
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AccessControl
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraEntityPermissionsClient._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection, AgoraEntityType}
@@ -33,7 +33,7 @@ trait NamespacePermissionsRouteHelper extends BaseRoute {
 
   def matchNamespacePermissionsRoute(_path: String) =
     path(_path / Segment / "permissions") &
-    openAMAuthentication.usernameFromCookie()
+    authenticationDirectives.usernameFromRequest()
 
   def completeNamespacePermissionsGet(context: RequestContext, entity: AgoraEntity, username: String, permissionsHandler: Props) = {
     addUserIfNotInDatabase(username)
@@ -67,7 +67,7 @@ trait EntityPermissionsRouteHelper extends BaseRoute {
 
   def matchEntityPermissionsRoute(_path: String) =
     path(_path / Segment / Segment / IntNumber / "permissions") &
-    openAMAuthentication.usernameFromCookie()
+    authenticationDirectives.usernameFromRequest()
 
   def completeEntityPermissionsGet(context: RequestContext, entity: AgoraEntity, username: String, permissionsHandler: Props) = {
     addUserIfNotInDatabase(username)
@@ -101,7 +101,7 @@ trait QuerySingleHelper extends BaseRoute {
 
   def matchQuerySingleRoute(_path: String) =
     path(_path / Segment / Segment / IntNumber) &
-    openAMAuthentication.usernameFromCookie()
+    authenticationDirectives.usernameFromRequest()
 
   def extractOnlyPayloadParameter = extract(_.request.uri.query.get("onlyPayload"))
 
@@ -137,7 +137,7 @@ trait QueryRouteHelper extends BaseRoute {
   def matchQueryRoute(_path: String) =
     get &
     path(_path) &
-    openAMAuthentication.usernameFromCookie()
+    authenticationDirectives.usernameFromRequest()
 
   def entityFromParams(params: Map[String, List[String]]): AgoraEntity = {
     val namespace   = params.getOrElse("namespace", Nil).headOption
@@ -188,7 +188,7 @@ trait AddRouteHelper extends BaseRoute {
   def postPath(_path: String) =
   post &
   path(_path) &
-  openAMAuthentication.usernameFromCookie()
+  authenticationDirectives.usernameFromRequest()
 
   def validatePostRoute(entity: AgoraEntity, path: String): Directive0 = {
     validateEntityType(entity.entityType, path) &

@@ -105,7 +105,13 @@
                             "$ref": "#/definitions/Error"
                         }
                     }
-                }
+        },
+        "security":[
+          {
+            "agora_auth":
+            ["openid"]
+        }
+        ]
             },
             "post": {
                 "summary": "Add a Method.",
@@ -149,7 +155,13 @@
                             "$ref": "#/definitions/Error"
                         }
                     }
-                }
+        },
+        "security":[
+          {
+            "agora_auth":
+            ["openid"]
+        }
+        ]
             }
         },
         "/methods/{namespace}/{name}/{snapshotId}": {
@@ -202,7 +214,12 @@
                             "$ref": "#/definitions/Error"
                         }
                     }
-                }
+        },
+        "security":[
+          {
+            "agora_auth":
+            ["openid"]
+        }
             },
             "delete": {
                 "summary": "Redact a single method.",
@@ -344,7 +361,13 @@
                             "$ref": "#/definitions/Error"
                         }
                     }
+        },
+        "security":[
+          {
+            "agora_auth":
+            ["openid"]
                 }
+        ]
             },
             "post": {
                 "summary": "Add a Method.",
@@ -388,7 +411,13 @@
                             "$ref": "#/definitions/Error"
                         }
                     }
+        },
+        "security":[
+          {
+            "agora_auth":
+            ["openid"]
                 }
+        ]
             }
         },
         "/configurations/{namespace}/{name}/{snapshotId}": {
@@ -437,6 +466,11 @@
                             "$ref": "#/definitions/Error"
                         }
                     }
+        },
+        "security":[
+          {
+            "agora_auth":
+            ["openid"]
                 }
             },
             "delete": {
@@ -516,7 +550,13 @@
                             "$ref": "#/definitions/Error"
                         }
                     }
+        },
+        "security":[
+          {
+            "agora_auth":
+            ["openid"]
                 }
+        ]
             },
             "post": {
                 "summary": "Add a permissions on namespace.",
@@ -560,7 +600,13 @@
                             "$ref": "#/definitions/Error"
                         }
                     }
+        },
+        "security":[
+          {
+            "agora_auth":
+            ["openid"]
                 }
+        ]
             },
             "put": {
                 "summary": "Edit a permissions on namespace.",
@@ -604,7 +650,13 @@
                             "$ref": "#/definitions/Error"
                         }
                     }
+        },
+        "security":[
+          {
+            "agora_auth":
+            ["openid"]
                 }
+        ]
             },
             "delete": {
                 "summary": "Delete a permission on namespace.",
@@ -641,7 +693,13 @@
                             "$ref": "#/definitions/Error"
                         }
                     }
+        },
+        "security":[
+          {
+            "agora_auth":
+            ["openid"]
                 }
+        ]
             }
         },
         "/methods/{namespace}/{name}/{snapshotId}/permissions": {
@@ -690,7 +748,13 @@
                             "$ref": "#/definitions/Error"
                         }
                     }
+        },
+        "security":[
+          {
+            "agora_auth":
+            ["openid"]
                 }
+        ]
             },
             "post": {
                 "summary": "Add a permissions on a specific method.",
@@ -748,7 +812,13 @@
                             "$ref": "#/definitions/Error"
                         }
                     }
+        },
+        "security":[
+          {
+            "agora_auth":
+            ["openid"]
                 }
+        ]
             },
             "put": {
                 "summary": "Edit a permissions on a specific method.",
@@ -806,7 +876,13 @@
                             "$ref": "#/definitions/Error"
                         }
                     }
+        },
+        "security":[
+          {
+            "agora_auth":
+            ["openid"]
                 }
+        ]
             },
             "delete": {
                 "summary": "Delete a permission on a specific method.",
@@ -857,7 +933,13 @@
                             "$ref": "#/definitions/Error"
                         }
                     }
+        },
+        "security":[
+          {
+            "agora_auth":
+            ["openid"]
                 }
+        ]
             }
         },
         "/configurations/{namespace}/permissions": {
@@ -892,7 +974,13 @@
                             "$ref": "#/definitions/Error"
                         }
                     }
+        },
+        "security":[
+          {
+            "agora_auth":
+            ["openid"]
                 }
+        ]
             },
             "post": {
                 "summary": "Add a permissions on namespace.",
@@ -936,7 +1024,13 @@
                             "$ref": "#/definitions/Error"
                         }
                     }
+        },
+        "security":[
+          {
+            "agora_auth":
+            ["openid"]
                 }
+        ]
             },
             "put": {
                 "summary": "Edit a permissions on namespace.",
@@ -980,7 +1074,13 @@
                             "$ref": "#/definitions/Error"
                         }
                     }
+        },
+        "security":[
+          {
+            "agora_auth":
+            ["openid"]
                 }
+        ]
             },
             "delete": {
                 "summary": "Delete a permission on namespace.",
@@ -1017,7 +1117,13 @@
                             "$ref": "#/definitions/Error"
                         }
                     }
+        },
+        "security":[
+          {
+            "agora_auth":
+            ["openid"]
                 }
+        ]
             }
         },
         "/configurations/{namespace}/{name}/{snapshotId}/permissions": {
@@ -1066,7 +1172,13 @@
                             "$ref": "#/definitions/Error"
                         }
                     }
+        },
+        "security":[
+          {
+            "agora_auth":
+            ["openid"]
                 }
+        ]
             },
             "post": {
                 "summary": "Add a permissions on a specific method.",
@@ -1124,7 +1236,13 @@
                             "$ref": "#/definitions/Error"
                         }
                     }
+        },
+        "security":[
+          {
+            "agora_auth":
+            ["openid"]
                 }
+        ]
             },
             "put": {
                 "summary": "Edit a permissions on a specific method.",
@@ -1182,7 +1300,13 @@
                             "$ref": "#/definitions/Error"
                         }
                     }
+        },
+        "security":[
+          {
+            "agora_auth":
+            ["openid"]
                 }
+        ]
             },
             "delete": {
                 "summary": "Delete a permission on a specific method.",
@@ -1233,7 +1357,23 @@
                             "$ref": "#/definitions/Error"
                         }
                     }
+        },
+        "security":[
+          {
+            "agora_auth":
+            ["openid"]
+          }
+        ]
+      }
                 }
+  },
+  "securityDefinitions":{
+    "agora_auth":{
+      "type":"oauth2",
+      "authorizationUrl":"https://accounts.google.com/o/oauth2/auth",
+      "flow":"implicit",
+      "scopes":{
+        "openid":"authorized for all"
             }
         }
     },

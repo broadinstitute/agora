@@ -2,7 +2,7 @@ swagger: '2.0'
 info:
   title: Agora API
   description: All of the Green
-  version: "1.0.0"
+  version: 1.0.0
 produces:
   - application/json
   - text/plain
@@ -67,7 +67,7 @@ paths:
       tags:
         - Methods
       responses:
-        200:
+        '200':
           description: An array of methods.
           schema:
             type: array
@@ -77,6 +77,9 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+      security:
+        - agora_auth:
+            - openid
     post:
       summary: Add a Method.
       description: |
@@ -97,19 +100,22 @@ paths:
       tags:
         - Methods
       responses:
-        201:
+        '201':
           description: Method successfully added.
           schema:
-              $ref: '#/definitions/MethodResponse'
-        400:
+            $ref: '#/definitions/MethodResponse'
+        '400':
           description: Malformed input.
           schema:
             $ref: '#/definitions/Error'
-        500:
+        '500':
           description: Internal error.
           schema:
             $ref: '#/definitions/Error'
-  /methods/{namespace}/{name}/{snapshotId}:
+      security:
+        - agora_auth:
+            - openid
+  '/methods/{namespace}/{name}/{snapshotId}':
     get:
       summary: Find a single method.
       description: |
@@ -139,7 +145,7 @@ paths:
       tags:
         - Methods
       responses:
-        200:
+        '200':
           description: A single method.
           schema:
             $ref: '#/definitions/MethodResponse'
@@ -239,7 +245,7 @@ paths:
       tags:
         - Configurations
       responses:
-        200:
+        '200':
           description: An array of configurations.
           schema:
             type: array
@@ -249,6 +255,9 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+      security:
+        - agora_auth:
+            - openid
     post:
       summary: Add a Method.
       description: |
@@ -269,19 +278,22 @@ paths:
       tags:
         - Configurations
       responses:
-        201:
+        '201':
           description: Method successfully added.
           schema:
-              $ref: '#/definitions/ConfigurationResponse'
-        400:
+            $ref: '#/definitions/ConfigurationResponse'
+        '400':
           description: Malformed input.
           schema:
             $ref: '#/definitions/Error'
-        500:
+        '500':
           description: Internal error.
           schema:
             $ref: '#/definitions/Error'
-  /configurations/{namespace}/{name}/{snapshotId}:
+      security:
+        - agora_auth:
+            - openid
+  '/configurations/{namespace}/{name}/{snapshotId}':
     get:
       summary: Find a single method.
       description: |
@@ -306,7 +318,7 @@ paths:
       tags:
         - Configurations
       responses:
-        200:
+        '200':
           description: An array of configurations.
           schema:
             type: array
@@ -348,7 +360,6 @@ paths:
           description: Error upon redaction
           schema:
             $ref: '#/definitions/Error'
-  /methods/{namespace}/permissions:
     get:
       summary: List permissions on namespace.
       description: |
@@ -360,9 +371,9 @@ paths:
           required: true
           type: string
       tags:
-      	- NamespacePermissions
+        - NamespacePermissions
       responses:
-        200:
+        '200':
           description: An array of permissions.
           schema:
             type: array
@@ -372,10 +383,14 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+      security:
+        - agora_auth:
+            - openid
     post:
       summary: Add a permissions on namespace.
-      description: |
-        Add a permissions on namespace. Will edit if user already has some permission on namespace.
+      description: >
+        Add a permissions on namespace. Will edit if user already has some
+        permission on namespace.
       parameters:
         - name: namespace
           in: path
@@ -384,18 +399,18 @@ paths:
           type: string
         - name: user
           in: query
-          description: User's email.
+          description: "User's email."
           required: true
           type: string
         - name: roles
           in: query
-          description: List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.
+          description: 'List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.'
           required: true
           type: string
       tags:
-      	- NamespacePermissions
+        - NamespacePermissions
       responses:
-        200:
+        '200':
           description: Access control modified.
           schema:
             $ref: '#/definitions/AccessControl'
@@ -403,6 +418,9 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+      security:
+        - agora_auth:
+            - openid
     put:
       summary: Edit a permissions on namespace.
       description: |
@@ -415,18 +433,18 @@ paths:
           type: string
         - name: user
           in: query
-          description: User's email.
+          description: "User's email."
           required: true
           type: string
         - name: roles
           in: query
-          description: List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.
+          description: 'List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.'
           required: true
           type: string
       tags:
-      	- NamespacePermissions
+        - NamespacePermissions
       responses:
-        200:
+        '200':
           description: Access control modified.
           schema:
             $ref: '#/definitions/AccessControl'
@@ -434,6 +452,9 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+      security:
+        - agora_auth:
+            - openid
     delete:
       summary: Delete a permission on namespace.
       description: |
@@ -446,13 +467,13 @@ paths:
           type: string
         - name: user
           in: query
-          description: User's email of whom to revoke permissions.
+          description: "User's email of whom to revoke permissions."
           required: true
           type: string
       tags:
-      	- NamespacePermissions
+        - NamespacePermissions
       responses:
-        200:
+        '200':
           description: Access control modified.
           schema:
             $ref: '#/definitions/AccessControl'
@@ -460,7 +481,10 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-  /methods/{namespace}/{name}/{snapshotId}/permissions:
+      security:
+        - agora_auth:
+            - openid
+  '/methods/{namespace}/{name}/{snapshotId}/permissions':
     get:
       summary: List permissions on a specific method.
       description: |
@@ -482,9 +506,9 @@ paths:
           required: true
           type: number
       tags:
-      	- Permissions
+        - Permissions
       responses:
-        200:
+        '200':
           description: An array of permissions.
           schema:
             type: array
@@ -494,10 +518,14 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+      security:
+        - agora_auth:
+            - openid
     post:
       summary: Add a permissions on a specific method.
-      description: |
-        Add a permissions on a specific method. Will edit if user already has some permission on a specific method.
+      description: >
+        Add a permissions on a specific method. Will edit if user already has
+        some permission on a specific method.
       parameters:
         - name: namespace
           in: path
@@ -516,18 +544,18 @@ paths:
           type: number
         - name: user
           in: query
-          description: User's email.
+          description: "User's email."
           required: true
           type: string
         - name: roles
           in: query
-          description: List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.
+          description: 'List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.'
           required: true
           type: string
       tags:
-      	- Permissions
+        - Permissions
       responses:
-        200:
+        '200':
           description: Access control modified.
           schema:
             $ref: '#/definitions/AccessControl'
@@ -535,6 +563,9 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+      security:
+        - agora_auth:
+            - openid
     put:
       summary: Edit a permissions on a specific method.
       description: |
@@ -557,18 +588,18 @@ paths:
           type: number
         - name: user
           in: query
-          description: User's email.
+          description: "User's email."
           required: true
           type: string
         - name: roles
           in: query
-          description: List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.
+          description: 'List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.'
           required: true
           type: string
       tags:
-      	- Permissions
+        - Permissions
       responses:
-        200:
+        '200':
           description: Access control modified.
           schema:
             $ref: '#/definitions/AccessControl'
@@ -576,6 +607,9 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+      security:
+        - agora_auth:
+            - openid
     delete:
       summary: Delete a permission on a specific method.
       description: |
@@ -598,13 +632,13 @@ paths:
           type: number
         - name: user
           in: query
-          description: User's email of whom to revoke permissions.
+          description: "User's email of whom to revoke permissions."
           required: true
           type: string
       tags:
-      	- Permissions
+        - Permissions
       responses:
-        200:
+        '200':
           description: Access control modified.
           schema:
             $ref: '#/definitions/AccessControl'
@@ -612,7 +646,10 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-  /configurations/{namespace}/permissions:
+      security:
+        - agora_auth:
+            - openid
+  '/configurations/{namespace}/permissions':
     get:
       summary: List permissions on namespace.
       description: |
@@ -624,9 +661,9 @@ paths:
           required: true
           type: string
       tags:
-      	- NamespacePermissions
+        - NamespacePermissions
       responses:
-        200:
+        '200':
           description: An array of permissions.
           schema:
             type: array
@@ -636,10 +673,14 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+      security:
+        - agora_auth:
+            - openid
     post:
       summary: Add a permissions on namespace.
-      description: |
-        Add a permissions on namespace. Will edit if user already has some permission on namespace.
+      description: >
+        Add a permissions on namespace. Will edit if user already has some
+        permission on namespace.
       parameters:
         - name: namespace
           in: path
@@ -648,18 +689,18 @@ paths:
           type: string
         - name: user
           in: query
-          description: User's email.
+          description: "User's email."
           required: true
           type: string
         - name: roles
           in: query
-          description: List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.
+          description: 'List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.'
           required: true
           type: string
       tags:
-      	- NamespacePermissions
+        - NamespacePermissions
       responses:
-        200:
+        '200':
           description: Access control modified.
           schema:
             $ref: '#/definitions/AccessControl'
@@ -667,6 +708,9 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+      security:
+        - agora_auth:
+            - openid
     put:
       summary: Edit a permissions on namespace.
       description: |
@@ -679,18 +723,18 @@ paths:
           type: string
         - name: user
           in: query
-          description: User's email.
+          description: "User's email."
           required: true
           type: string
         - name: roles
           in: query
-          description: List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.
+          description: 'List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.'
           required: true
           type: string
       tags:
-      	- NamespacePermissions
+        - NamespacePermissions
       responses:
-        200:
+        '200':
           description: Access control modified.
           schema:
             $ref: '#/definitions/AccessControl'
@@ -698,6 +742,9 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+      security:
+        - agora_auth:
+            - openid
     delete:
       summary: Delete a permission on namespace.
       description: |
@@ -710,13 +757,13 @@ paths:
           type: string
         - name: user
           in: query
-          description: User's email of whom to revoke permissions.
+          description: "User's email of whom to revoke permissions."
           required: true
           type: string
       tags:
-      	- NamespacePermissions
+        - NamespacePermissions
       responses:
-        200:
+        '200':
           description: Access control modified.
           schema:
             $ref: '#/definitions/AccessControl'
@@ -724,7 +771,10 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-  /configurations/{namespace}/{name}/{snapshotId}/permissions:
+      security:
+        - agora_auth:
+            - openid
+  '/configurations/{namespace}/{name}/{snapshotId}/permissions':
     get:
       summary: List permissions on a specific method.
       description: |
@@ -746,9 +796,9 @@ paths:
           required: true
           type: number
       tags:
-      	- Permissions
+        - Permissions
       responses:
-        200:
+        '200':
           description: An array of permissions.
           schema:
             type: array
@@ -758,10 +808,14 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+      security:
+        - agora_auth:
+            - openid
     post:
       summary: Add a permissions on a specific method.
-      description: |
-        Add a permissions on a specific method. Will edit if user already has some permission on a specific method.
+      description: >
+        Add a permissions on a specific method. Will edit if user already has
+        some permission on a specific method.
       parameters:
         - name: namespace
           in: path
@@ -780,18 +834,18 @@ paths:
           type: number
         - name: user
           in: query
-          description: User's email.
+          description: "User's email."
           required: true
           type: string
         - name: roles
           in: query
-          description: List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.
+          description: 'List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.'
           required: true
           type: string
       tags:
-      	- Permissions
+        - Permissions
       responses:
-        200:
+        '200':
           description: Access control modified.
           schema:
             $ref: '#/definitions/AccessControl'
@@ -799,6 +853,9 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+      security:
+        - agora_auth:
+            - openid
     put:
       summary: Edit a permissions on a specific method.
       description: |
@@ -821,18 +878,18 @@ paths:
           type: number
         - name: user
           in: query
-          description: User's email.
+          description: "User's email."
           required: true
           type: string
         - name: roles
           in: query
-          description: List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.
+          description: 'List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.'
           required: true
           type: string
       tags:
-      	- Permissions
+        - Permissions
       responses:
-        200:
+        '200':
           description: Access control modified.
           schema:
             $ref: '#/definitions/AccessControl'
@@ -840,6 +897,9 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+      security:
+        - agora_auth:
+            - openid
     delete:
       summary: Delete a permission on a specific method.
       description: |
@@ -862,13 +922,13 @@ paths:
           type: number
         - name: user
           in: query
-          description: User's email of whom to revoke permissions.
+          description: "User's email of whom to revoke permissions."
           required: true
           type: string
       tags:
-      	- Permissions
+        - Permissions
       responses:
-        200:
+        '200':
           description: Access control modified.
           schema:
             $ref: '#/definitions/AccessControl'
@@ -876,7 +936,16 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-
+      security:
+        - agora_auth:
+            - openid
+securityDefinitions:
+  agora_auth:
+    type: oauth2
+    authorizationUrl: 'https://accounts.google.com/o/oauth2/auth'
+    flow: implicit
+    scopes:
+      openid: authorized for all
 definitions:
   MethodQuery:
     properties:
@@ -902,8 +971,9 @@ definitions:
       payload:
         type: string
         description: Payload of method -- must be in WDL format
-        default: |
+        default: >
           task wc {File in_file command { cat ${in_file} | wc -l } output { Int count = read_int(stdout()) }}
+          = read_int(stdout()) }}
       entityType:
         type: string
         description: Type of the AgoraEntity -- Task or Workflow.
@@ -930,8 +1000,9 @@ definitions:
       payload:
         type: string
         description: Payload of method -- must be in WDL format
-        default: |
+        default: >
           { "methodStoreMethod": { "methodNamespace": "YOUR_NAMESPACE", "methodName": "BWA", "methodVersion": 1}}
+          "methodName": "BWA", "methodVersion": 1}}
       entityType:
         type: string
         description: Can only be Configuration.
@@ -971,8 +1042,9 @@ definitions:
       payload:
         type: string
         description: Payload of method -- must be in WDL format. MUST BE REQUESTED EXPLICITLY.
-        default: |
+        default: >
           { "methodStoreMethod": { "methodNamespace": "YOUR_NAMESPACE", "methodName": "BWA", "methodVersion": 1}}
+          = read_int(stdout()) }}
       entityType:
         type: string
         description: Type of the AgoraEntity -- Task or Workflow.
@@ -1010,8 +1082,9 @@ definitions:
       payload:
         type: string
         description: Payload of method -- must be in WDL format. MUST BE REQUESTED EXPLICITLY.
-        default: |
+        default: >
           task wc {File in_file command { cat ${in_file} | wc -l } output { Int count = read_int(stdout()) }}
+          = read_int(stdout()) }}
       entityType:
         type: string
         description: Type of the AgoraEntity -- Task or Workflow.
@@ -1020,7 +1093,7 @@ definitions:
     properties:
       user:
         type: string
-        description: A user's email.
+        description: "A user's email."
         default: test-user@broadinstitute.org
       roles:
         type: array
@@ -1028,6 +1101,9 @@ definitions:
         items:
           type: string
         default: [Read, Write, Create, Redact, Manage]
+          - Read
+          - Write
+          - Manage
   Error:
     properties:
       code:

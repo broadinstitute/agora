@@ -26,6 +26,12 @@ trait PermissionsClient {
     }
   }
 
+  def isAdmin(userEmail: String): Boolean = {
+    val userQuery = users.findByEmail(userEmail)
+    val user = Await.result(db.run(userQuery.result.head), timeout)
+    user.isAdmin
+  }
+
   // Entities
   def addEntity(entity: AgoraEntity): Future[Int] =
     Await.ready(db.run(entities += EntityDao(alias(entity))), timeout)

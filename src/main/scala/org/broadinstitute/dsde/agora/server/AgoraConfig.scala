@@ -5,7 +5,7 @@ import com.typesafe.config.{Config, ConfigFactory}
 import net.ceedubs.ficus.Ficus._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntityType
 import org.broadinstitute.dsde.agora.server.model.AgoraEntityType.EntityType
-import org.broadinstitute.dsde.agora.server.webservice.routes.{AgoraDirectives, AgoraOpenAMDirectives, MockAgoraDirectives}
+import org.broadinstitute.dsde.agora.server.webservice.routes.{AgoraDirectives, MockAgoraDirectives, OpenIdConnectDirectives}
 import scala.slick.jdbc.JdbcBackend.Database
 
 object AgoraConfig {
@@ -23,31 +23,31 @@ object AgoraConfig {
   if (!Environments.contains(AgoraConfig.environment))
     throw new IllegalArgumentException("Illegal environment '" + AgoraConfig.environment + "' specified.")
 
-  var openAMAuthentication: AgoraDirectives = _
+  var authenticationDirectives: AgoraDirectives = _
   var usesEmbeddedMongo: Boolean = _
   lazy val mockAuthenticatedUserEmail = config.as[Option[String]]("mockAuthenticatedUserEmail").getOrElse("noone@broadinstitute.org")
 
   // Local
   if (environment.equals(LocalEnvironment)) {
-    openAMAuthentication = MockAgoraDirectives
+    authenticationDirectives = MockAgoraDirectives
     usesEmbeddedMongo = true
   }
 
   // Dev
   if (environment.equals(DevEnvironment)) {
-    openAMAuthentication = AgoraOpenAMDirectives
+    authenticationDirectives = OpenIdConnectDirectives
     usesEmbeddedMongo = false
   }
 
   // CI
   if (environment.equals(StagingEnvironment)) {
-    openAMAuthentication = AgoraOpenAMDirectives
+    authenticationDirectives = OpenIdConnectDirectives
     usesEmbeddedMongo = false
   }
 
   // Prod
   if (environment.equals(ProdEnvironment)) {
-    openAMAuthentication = AgoraOpenAMDirectives
+    authenticationDirectives = OpenIdConnectDirectives
     usesEmbeddedMongo = false
   }
 

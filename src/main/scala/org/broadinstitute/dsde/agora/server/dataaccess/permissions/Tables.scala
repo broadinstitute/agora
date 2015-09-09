@@ -3,15 +3,16 @@ package org.broadinstitute.dsde.agora.server.dataaccess.permissions
 import slick.driver.MySQLDriver.api._
 
 // Users
-case class UserDao(email: String, id: Option[Int] = None)
+case class UserDao(email: String, isAdmin: Boolean = false, id: Option[Int] = None)
 
 class UsersTable(tag: Tag) extends Table[UserDao](tag, "USERS") {
   def id = column[Int]("ID", O.PrimaryKey, O.AutoInc)
   def email = column[String]("EMAIL", O.Length(255))
+  def is_admin = column[Boolean]("IS_ADMIN")
 
   // This * projection auto-transforms the tupled column
   // values to and from a User.
-  def * = (email, id.?) <> (UserDao.tupled, UserDao.unapply)
+  def * = (email, is_admin, id.?) <> (UserDao.tupled, UserDao.unapply)
   def idx = index("idx_users", email, unique = true)
 }
 

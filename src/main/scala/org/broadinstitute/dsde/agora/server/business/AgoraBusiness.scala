@@ -7,8 +7,6 @@ import org.broadinstitute.dsde.agora.server.webservice.util.{DockerImageReferenc
 
 import cromwell.binding._
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions.NamespacePermissionsClient
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraEntityPermissionsClient
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.model.{AgoraApiJsonSupport, AgoraEntity, AgoraEntityProjection, AgoraEntityType}
@@ -45,6 +43,25 @@ class AgoraBusiness {
     } else {
       throw new NamespaceAuthorizationException(AgoraPermissions(Create), agoraEntity, username)
     }
+  }
+
+  def delete(agoraEntity: AgoraEntity, entityTypes: Seq[AgoraEntityType.EntityType], username: String): Int = {
+    if (!NamespacePermissionsClient.getNamespacePermission(agoraEntity, username).canRedact &&
+        !NamespacePermissionsClient.isAdmin(username))
+      throw new NamespaceAuthorizationException(AgoraPermissions(Redact), agoraEntity, username)
+
+    // if the entity was a method, then redact all associated configurations
+    if (entityTypes equals AgoraEntityType.MethodTypes) {
+
+      val dao = AgoraDao.createAgoraDao(entityTypes)
+      val entityWithId = dao.findSingle(agoraEntity.namespace.get, agoraEntity.name.get, agoraEntity.snapshotId.get)
+      val configurations = dao.findConfigurations(entityWithId.id.get)
+
+      configurations.foreach {config => AgoraEntityPermissionsClient.deleteAllPermissions(config)}
+    }
+
+    AgoraEntityPermissionsClient.deleteAllPermissions(agoraEntity)
+
   }
 
   def find(agoraSearch: AgoraEntity,

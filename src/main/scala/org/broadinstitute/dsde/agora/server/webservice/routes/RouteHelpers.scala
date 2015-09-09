@@ -1,7 +1,7 @@
 package org.broadinstitute.dsde.agora.server.webservice.routes
 
 import akka.actor.Props
-import org.broadinstitute.dsde.agora.server.AgoraConfig.openAMAuthentication
+import org.broadinstitute.dsde.agora.server.AgoraConfig.authenticationDirectives
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AccessControl
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraEntityPermissionsClient._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection, AgoraEntityType}
@@ -33,7 +33,7 @@ trait NamespacePermissionsRouteHelper extends BaseRoute {
 
   def matchNamespacePermissionsRoute(_path: String) =
     path(_path / Segment / "permissions") &
-    openAMAuthentication.usernameFromCookie()
+    authenticationDirectives.usernameFromRequest()
 
   def completeNamespacePermissionsGet(context: RequestContext, entity: AgoraEntity, username: String, permissionsHandler: Props) = {
     addUserIfNotInDatabase(username)
@@ -67,7 +67,7 @@ trait EntityPermissionsRouteHelper extends BaseRoute {
 
   def matchEntityPermissionsRoute(_path: String) =
     path(_path / Segment / Segment / IntNumber / "permissions") &
-    openAMAuthentication.usernameFromCookie()
+    authenticationDirectives.usernameFromRequest()
 
   def completeEntityPermissionsGet(context: RequestContext, entity: AgoraEntity, username: String, permissionsHandler: Props) = {
     addUserIfNotInDatabase(username)
@@ -100,9 +100,8 @@ trait EntityPermissionsRouteHelper extends BaseRoute {
 trait QuerySingleHelper extends BaseRoute {
 
   def matchQuerySingleRoute(_path: String) =
-    get &
     path(_path / Segment / Segment / IntNumber) &
-    openAMAuthentication.usernameFromCookie()
+    authenticationDirectives.usernameFromRequest()
 
   def extractOnlyPayloadParameter = extract(_.request.uri.query.get("onlyPayload"))
 
@@ -113,11 +112,24 @@ trait QuerySingleHelper extends BaseRoute {
                               path: String,
                               queryHandler: Props): Unit = {
     addUserIfNotInDatabase(username)
-    val entityType = AgoraEntityType.byPath(path)
-    val message = QuerySingle(context, entity, entityType, username, onlyPayload)
+    val entityTypes = AgoraEntityType.byPath(path)
+    val message = QuerySingle(context, entity, entityTypes, username, onlyPayload)
 
-    perRequest(context, queryHandler, message, java.lang.Thread.currentThread.getStackTrace()(1).getMethodName)
+    perRequest(context, queryHandler, message)
   }
+
+  def completeEntityDelete(context: RequestContext,
+                            entity: AgoraEntity,
+                            username: String,
+                            path: String,
+                            queryHandler: Props): Unit = {
+    addUserIfNotInDatabase(username)
+    val entityTypes = AgoraEntityType.byPath(path)
+    val message = Delete(context, entity, entityTypes, username)
+
+    perRequest(context, queryHandler, message)
+  }
+
 }
 
 trait QueryRouteHelper extends BaseRoute {
@@ -125,7 +137,7 @@ trait QueryRouteHelper extends BaseRoute {
   def matchQueryRoute(_path: String) =
     get &
     path(_path) &
-    openAMAuthentication.usernameFromCookie()
+    authenticationDirectives.usernameFromRequest()
 
   def entityFromParams(params: Map[String, List[String]]): AgoraEntity = {
     val namespace   = params.getOrElse("namespace", Nil).headOption
@@ -167,7 +179,7 @@ trait QueryRouteHelper extends BaseRoute {
     val entityType = AgoraEntityType.byPath(path)
     val projection = projectionFromParams(params)
     val message = Query(context, entity, projection, entityType, username)
-    perRequest(context, queryHandler, message, java.lang.Thread.currentThread.getStackTrace()(1).getMethodName)
+    perRequest(context, queryHandler, message)
   }
 }
 
@@ -176,11 +188,12 @@ trait AddRouteHelper extends BaseRoute {
   def postPath(_path: String) =
   post &
   path(_path) &
-  openAMAuthentication.usernameFromCookie()
+  authenticationDirectives.usernameFromRequest()
 
   def validatePostRoute(entity: AgoraEntity, path: String): Directive0 = {
     validateEntityType(entity.entityType, path) &
-    validate(entity.payload.get.nonEmpty, "You must supply a payload.")
+    validate(entity.payload.get.nonEmpty, "You must supply a payload.") &
+    validate(entity.snapshotId.isEmpty, "You cannot specify a snapshotId. It will be assigned by the system.")
   }
 
   def completeWithPerRequest(context: RequestContext,

@@ -37,6 +37,8 @@ class ApiServiceSpec extends FlatSpec with Directives with ScalatestRouteTest wi
   var testEntity7WithId: AgoraEntity = null
   var testEntityTaskWcWithId: AgoraEntity = null
   var testConfigurationEntityWithId: AgoraEntity = null
+  var testEntityToBeRedactedWithId: Option[AgoraEntity] = null
+
 
   override def beforeAll() = {
     testEntity1WithId = agoraBusiness.find(testEntity1, None, Seq(testEntity1.entityType.get), mockAutheticatedOwner.get).head
@@ -47,14 +49,10 @@ class ApiServiceSpec extends FlatSpec with Directives with ScalatestRouteTest wi
     testEntity6WithId = agoraBusiness.find(testEntity6, None, Seq(testEntity6.entityType.get), mockAutheticatedOwner.get).head
     testEntity7WithId = agoraBusiness.find(testEntity7, None, Seq(testEntity7.entityType.get), mockAutheticatedOwner.get).head
 
-    testEntityTaskWcWithId = agoraBusiness.find(testEntityTaskWc,
-      None,
-      Seq(testEntityTaskWc.entityType.get),
-      mockAutheticatedOwner.get).head
-    testConfigurationEntityWithId = agoraBusiness.find(testAgoraConfigurationEntity,
-      None,
-      Seq(testAgoraConfigurationEntity.entityType.get),
-      mockAutheticatedOwner.get).head
+    testEntityTaskWcWithId = agoraBusiness.find(testEntityTaskWc, None, Seq(testEntityTaskWc.entityType.get), mockAutheticatedOwner.get).head
+    testConfigurationEntityWithId = agoraBusiness.find(testAgoraConfigurationEntity, None, Seq(testAgoraConfigurationEntity.entityType.get), mockAutheticatedOwner.get).head
+    testEntityToBeRedactedWithId = agoraBusiness.find(testEntityToBeRedacted, None, Seq(testEntityToBeRedacted.entityType.get), mockAutheticatedOwner.get).headOption
+
   }
 
   val methodsService = new MethodsService() with ActorRefFactoryContext

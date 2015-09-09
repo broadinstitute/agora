@@ -35,15 +35,15 @@ abstract class AgoraService extends HttpService with RouteHelpers {
         get { requestContext =>
           completeNamespacePermissionsGet(requestContext, entity, username, permissionHandlerProps)
         } ~
-          post { requestContext =>
-            completeNamespacePermissionsPost(requestContext, entity, params, username, permissionHandlerProps)
-          } ~
-          put { requestContext =>
-            completeNamespacePermissionsPut(requestContext, entity, params, username, permissionHandlerProps)
-          } ~
-          delete { requestContext =>
-            completeNamespacePermissionsDelete(requestContext, entity, params, username, permissionHandlerProps)
-          }
+        post { requestContext =>
+          completeNamespacePermissionsPost(requestContext, entity, params, username, permissionHandlerProps)
+        } ~
+        put { requestContext =>
+          completeNamespacePermissionsPut(requestContext, entity, params, username, permissionHandlerProps)
+        } ~
+        delete { requestContext =>
+          completeNamespacePermissionsDelete(requestContext, entity, params, username, permissionHandlerProps)
+        }
 
       }
     }
@@ -56,15 +56,15 @@ abstract class AgoraService extends HttpService with RouteHelpers {
         get { requestContext =>
           completeEntityPermissionsGet(requestContext, entity, username, permissionHandlerProps)
         } ~
-          post { requestContext =>
-            completeEntityPermissionsPost(requestContext, entity, params, username, permissionHandlerProps)
-          } ~
-          put { requestContext =>
-            completeEntityPermissionsPut(requestContext, entity, params, username, permissionHandlerProps)
-          } ~
-          delete { requestContext =>
-            completeEntityPermissionsDelete(requestContext, entity, params, username, permissionHandlerProps)
-          }
+        post { requestContext =>
+          completeEntityPermissionsPost(requestContext, entity, params, username, permissionHandlerProps)
+        } ~
+        put { requestContext =>
+          completeEntityPermissionsPut(requestContext, entity, params, username, permissionHandlerProps)
+        } ~
+        delete { requestContext =>
+          completeEntityPermissionsDelete(requestContext, entity, params, username, permissionHandlerProps)
+        }
 
       }
     }
@@ -75,9 +75,14 @@ abstract class AgoraService extends HttpService with RouteHelpers {
     matchQuerySingleRoute(path) { (namespace, name, snapshotId, username) =>
       extractOnlyPayloadParameter { (onlyPayload) =>
         traceName("querySingleRoute") {
-          requestContext =>
-            val entity = AgoraEntity(Option(namespace), Option(name), Option(snapshotId))
+          val entity = AgoraEntity(Option(namespace), Option(name), Option(snapshotId))
+
+          get { requestContext =>
             completeWithPerRequest(requestContext, entity, username, toBool(onlyPayload), path, queryHandlerProps)
+          } ~
+          delete { requestContext =>
+            completeEntityDelete(requestContext, entity, username, path, queryHandlerProps)
+          }
         }
       }
     }

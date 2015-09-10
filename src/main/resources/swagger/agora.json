@@ -109,7 +109,9 @@
         "security": [
           {
             "agora_auth": [
-              "openid"
+              "openid",
+              "email",
+              "profile"
             ]
           }
         ]
@@ -160,7 +162,9 @@
         "security": [
           {
             "agora_auth": [
-              "openid"
+              "openid",
+              "email",
+              "profile"
             ]
           }
         ]
@@ -220,7 +224,9 @@
         "security": [
           {
             "agora_auth": [
-              "openid"
+              "openid",
+              "email",
+              "profile"
             ]
           }
         ]
@@ -369,7 +375,9 @@
         "security": [
           {
             "agora_auth": [
-              "openid"
+              "openid",
+              "email",
+              "profile"
             ]
           }
         ]
@@ -420,7 +428,9 @@
         "security": [
           {
             "agora_auth": [
-              "openid"
+              "openid",
+              "email",
+              "profile"
             ]
           }
         ]
@@ -476,7 +486,9 @@
         "security": [
           {
             "agora_auth": [
-              "openid"
+              "openid",
+              "email",
+              "profile"
             ]
           }
         ]
@@ -562,7 +574,9 @@
         "security": [
           {
             "agora_auth": [
-              "openid"
+              "openid",
+              "email",
+              "profile"
             ]
           }
         ]
@@ -613,7 +627,9 @@
         "security": [
           {
             "agora_auth": [
-              "openid"
+              "openid",
+              "email",
+              "profile"
             ]
           }
         ]
@@ -664,7 +680,9 @@
         "security": [
           {
             "agora_auth": [
-              "openid"
+              "openid",
+              "email",
+              "profile"
             ]
           }
         ]
@@ -708,7 +726,9 @@
         "security": [
           {
             "agora_auth": [
-              "openid"
+              "openid",
+              "email",
+              "profile"
             ]
           }
         ]
@@ -764,7 +784,9 @@
         "security": [
           {
             "agora_auth": [
-              "openid"
+              "openid",
+              "email",
+              "profile"
             ]
           }
         ]
@@ -829,7 +851,9 @@
         "security": [
           {
             "agora_auth": [
-              "openid"
+              "openid",
+              "email",
+              "profile"
             ]
           }
         ]
@@ -894,7 +918,9 @@
         "security": [
           {
             "agora_auth": [
-              "openid"
+              "openid",
+              "email",
+              "profile"
             ]
           }
         ]
@@ -952,7 +978,9 @@
         "security": [
           {
             "agora_auth": [
-              "openid"
+              "openid",
+              "email",
+              "profile"
             ]
           }
         ]
@@ -994,7 +1022,9 @@
         "security": [
           {
             "agora_auth": [
-              "openid"
+              "openid",
+              "email",
+              "profile"
             ]
           }
         ]
@@ -1045,7 +1075,9 @@
         "security": [
           {
             "agora_auth": [
-              "openid"
+              "openid",
+              "email",
+              "profile"
             ]
           }
         ]
@@ -1096,7 +1128,9 @@
         "security": [
           {
             "agora_auth": [
-              "openid"
+              "openid",
+              "email",
+              "profile"
             ]
           }
         ]
@@ -1140,7 +1174,9 @@
         "security": [
           {
             "agora_auth": [
-              "openid"
+              "openid",
+              "email",
+              "profile"
             ]
           }
         ]
@@ -1196,7 +1232,9 @@
         "security": [
           {
             "agora_auth": [
-              "openid"
+              "openid",
+              "email",
+              "profile"
             ]
           }
         ]
@@ -1261,7 +1299,9 @@
         "security": [
           {
             "agora_auth": [
-              "openid"
+              "openid",
+              "email",
+              "profile"
             ]
           }
         ]
@@ -1326,7 +1366,9 @@
         "security": [
           {
             "agora_auth": [
-              "openid"
+              "openid",
+              "email",
+              "profile"
             ]
           }
         ]
@@ -1384,7 +1426,9 @@
         "security": [
           {
             "agora_auth": [
-              "openid"
+              "openid",
+              "email",
+              "profile"
             ]
           }
         ]
@@ -1397,7 +1441,9 @@
       "authorizationUrl": "https://accounts.google.com/o/oauth2/auth",
       "flow": "implicit",
       "scopes": {
-        "openid": "authorized for all"
+        "openid": "open id authorization",
+        "email": "email authorization",
+        "profile": "profile authorization"
       }
     }
   },

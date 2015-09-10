@@ -80,6 +80,8 @@ paths:
       security:
         - agora_auth:
             - openid
+            - email
+            - profile
     post:
       summary: Add a Method.
       description: |
@@ -115,6 +117,8 @@ paths:
       security:
         - agora_auth:
             - openid
+            - email
+            - profile
   '/methods/{namespace}/{name}/{snapshotId}':
     get:
       summary: Find a single method.
@@ -156,6 +160,8 @@ paths:
       security:
         - agora_auth:
             - openid
+            - email
+            - profile
     delete:
       summary: Redact a single method.
       description: |
@@ -261,6 +267,8 @@ paths:
       security:
         - agora_auth:
             - openid
+            - email
+            - profile
     post:
       summary: Add a Method.
       description: |
@@ -296,6 +304,8 @@ paths:
       security:
         - agora_auth:
             - openid
+            - email
+            - profile
   '/configurations/{namespace}/{name}/{snapshotId}':
     get:
       summary: Find a single method.
@@ -334,6 +344,8 @@ paths:
       security:
         - agora_auth:
             - openid
+            - email
+            - profile
     delete:
       summary: Redact a single configuration.
       description: |
@@ -394,6 +406,8 @@ paths:
       security:
         - agora_auth:
             - openid
+            - email
+            - profile
     post:
       summary: Add a permissions on namespace.
       description: >
@@ -429,6 +443,8 @@ paths:
       security:
         - agora_auth:
             - openid
+            - email
+            - profile
     put:
       summary: Edit a permissions on namespace.
       description: |
@@ -463,6 +479,8 @@ paths:
       security:
         - agora_auth:
             - openid
+            - email
+            - profile
     delete:
       summary: Delete a permission on namespace.
       description: |
@@ -492,6 +510,8 @@ paths:
       security:
         - agora_auth:
             - openid
+            - email
+            - profile
   '/methods/{namespace}/{name}/{snapshotId}/permissions':
     get:
       summary: List permissions on a specific method.
@@ -529,6 +549,8 @@ paths:
       security:
         - agora_auth:
             - openid
+            - email
+            - profile
     post:
       summary: Add a permissions on a specific method.
       description: >
@@ -574,6 +596,8 @@ paths:
       security:
         - agora_auth:
             - openid
+            - email
+            - profile
     put:
       summary: Edit a permissions on a specific method.
       description: |
@@ -618,6 +642,8 @@ paths:
       security:
         - agora_auth:
             - openid
+            - email
+            - profile
     delete:
       summary: Delete a permission on a specific method.
       description: |
@@ -657,6 +683,8 @@ paths:
       security:
         - agora_auth:
             - openid
+            - email
+            - profile
   '/configurations/{namespace}/permissions':
     get:
       summary: List permissions on namespace.
@@ -684,6 +712,8 @@ paths:
       security:
         - agora_auth:
             - openid
+            - email
+            - profile
     post:
       summary: Add a permissions on namespace.
       description: >
@@ -719,6 +749,8 @@ paths:
       security:
         - agora_auth:
             - openid
+            - email
+            - profile
     put:
       summary: Edit a permissions on namespace.
       description: |
@@ -753,6 +785,8 @@ paths:
       security:
         - agora_auth:
             - openid
+            - email
+            - profile
     delete:
       summary: Delete a permission on namespace.
       description: |
@@ -782,6 +816,8 @@ paths:
       security:
         - agora_auth:
             - openid
+            - email
+            - profile
   '/configurations/{namespace}/{name}/{snapshotId}/permissions':
     get:
       summary: List permissions on a specific method.
@@ -819,6 +855,8 @@ paths:
       security:
         - agora_auth:
             - openid
+            - email
+            - profile
     post:
       summary: Add a permissions on a specific method.
       description: >
@@ -864,6 +902,8 @@ paths:
       security:
         - agora_auth:
             - openid
+            - email
+            - profile
     put:
       summary: Edit a permissions on a specific method.
       description: |
@@ -908,6 +948,8 @@ paths:
       security:
         - agora_auth:
             - openid
+            - email
+            - profile
     delete:
       summary: Delete a permission on a specific method.
       description: |
@@ -947,13 +989,17 @@ paths:
       security:
         - agora_auth:
             - openid
+            - email
+            - profile
 securityDefinitions:
   agora_auth:
     type: oauth2
     authorizationUrl: 'https://accounts.google.com/o/oauth2/auth'
     flow: implicit
     scopes:
-      openid: authorized for all
+      openid: open id authorization
+      email: email authorization
+      profile: profile authorization
 definitions:
   MethodQuery:
     properties:

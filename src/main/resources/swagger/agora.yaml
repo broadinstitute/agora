@@ -153,6 +153,9 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+      security:
+        - agora_auth:
+            - openid
     delete:
       summary: Redact a single method.
       description: |
@@ -176,7 +179,7 @@ paths:
       tags:
         - Methods
       responses:
-        200:
+        '200':
           description: |
             An integer showing how many methods were deleted.
           schema:
@@ -328,6 +331,9 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+      security:
+        - agora_auth:
+            - openid
     delete:
       summary: Redact a single configuration.
       description: |
@@ -351,15 +357,17 @@ paths:
       tags:
         - Configurations
       responses:
-        200:
-          description: |
-            An integer showing how many configurations were deleted. Should be 1.
+        '200':
+          description: >
+            An integer showing how many configurations were deleted. Should be
+            1.
           schema:
             type: number
         default:
           description: Error upon redaction
           schema:
             $ref: '#/definitions/Error'
+  '/methods/{namespace}/permissions':
     get:
       summary: List permissions on namespace.
       description: |
@@ -972,8 +980,8 @@ definitions:
         type: string
         description: Payload of method -- must be in WDL format
         default: >
-          task wc {File in_file command { cat ${in_file} | wc -l } output { Int count = read_int(stdout()) }}
-          = read_int(stdout()) }}
+          task wc {File in_file command { cat ${in_file} | wc -l } output { Int
+          count = read_int(stdout()) }}
       entityType:
         type: string
         description: Type of the AgoraEntity -- Task or Workflow.
@@ -1001,7 +1009,7 @@ definitions:
         type: string
         description: Payload of method -- must be in WDL format
         default: >
-          { "methodStoreMethod": { "methodNamespace": "YOUR_NAMESPACE", "methodName": "BWA", "methodVersion": 1}}
+          { "methodStoreMethod": { "methodNamespace": "YOUR_NAMESPACE",
           "methodName": "BWA", "methodVersion": 1}}
       entityType:
         type: string
@@ -1043,8 +1051,8 @@ definitions:
         type: string
         description: Payload of method -- must be in WDL format. MUST BE REQUESTED EXPLICITLY.
         default: >
-          { "methodStoreMethod": { "methodNamespace": "YOUR_NAMESPACE", "methodName": "BWA", "methodVersion": 1}}
-          = read_int(stdout()) }}
+          { "methodStoreMethod": { "methodNamespace": "YOUR_NAMESPACE",
+          "methodName": "BWA", "methodVersion": 1}}
       entityType:
         type: string
         description: Type of the AgoraEntity -- Task or Workflow.
@@ -1083,8 +1091,8 @@ definitions:
         type: string
         description: Payload of method -- must be in WDL format. MUST BE REQUESTED EXPLICITLY.
         default: >
-          task wc {File in_file command { cat ${in_file} | wc -l } output { Int count = read_int(stdout()) }}
-          = read_int(stdout()) }}
+          task wc {File in_file command { cat ${in_file} | wc -l } output { Int
+          count = read_int(stdout()) }}
       entityType:
         type: string
         description: Type of the AgoraEntity -- Task or Workflow.
@@ -1100,9 +1108,11 @@ definitions:
         description: The roles a user has on an entity.
         items:
           type: string
-        default: [Read, Write, Create, Redact, Manage]
+        default:
           - Read
           - Write
+          - Create
+          - Redact
           - Manage
   Error:
     properties:

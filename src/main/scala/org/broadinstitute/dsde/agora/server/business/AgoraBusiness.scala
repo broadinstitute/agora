@@ -106,7 +106,7 @@ class AgoraBusiness {
         namespace.tasks.foreach { validateDockerImage }
       case AgoraEntityType.Configuration =>
         val json = agoraEntity.payload.get.parseJson
-        val fields = json.asJsObject.getFields("methodStoreMethod")
+        val fields = json.asJsObject.getFields("methodRepoMethod")
         require(fields.size == 1)
         val subFields = fields(0).asJsObject.getFields("methodNamespace", "methodName", "methodVersion")
         require(subFields(0).isInstanceOf[JsString])

@@ -1055,7 +1055,7 @@ definitions:
         type: string
         description: Payload of method -- must be in WDL format
         default: >
-          { "methodStoreMethod": { "methodNamespace": "YOUR_NAMESPACE",
+          { "methodRepoMethod": { "methodNamespace": "YOUR_NAMESPACE",
           "methodName": "BWA", "methodVersion": 1}}
       entityType:
         type: string
@@ -1097,7 +1097,7 @@ definitions:
         type: string
         description: Payload of method -- must be in WDL format. MUST BE REQUESTED EXPLICITLY.
         default: >
-          { "methodStoreMethod": { "methodNamespace": "YOUR_NAMESPACE",
+          { "methodRepoMethod": { "methodNamespace": "YOUR_NAMESPACE",
           "methodName": "BWA", "methodVersion": 1}}
       entityType:
         type: string

@@ -2,7 +2,7 @@ package org.broadinstitute.dsde.agora.server.business
 
 import cromwell.parser.BackendType
 import cromwell.parser.WdlParser.SyntaxError
-import org.broadinstitute.dsde.agora.server.exceptions.{AgoraEntityNotFoundException, NamespaceAuthorizationException}
+import org.broadinstitute.dsde.agora.server.exceptions.{ValidationException, AgoraException, AgoraEntityNotFoundException, NamespaceAuthorizationException}
 import org.broadinstitute.dsde.agora.server.webservice.util.{DockerImageReference, DockerHubClient}
 
 import cromwell.binding._
@@ -106,12 +106,13 @@ class AgoraBusiness {
         namespace.tasks.foreach { validateDockerImage }
       case AgoraEntityType.Configuration =>
         val json = agoraEntity.payload.get.parseJson
-        val fields = json.asJsObject.getFields("methodStoreMethod")
-        require(fields.size == 1)
+        val fields = json.asJsObject.getFields("methodRepoMethod")
+        if(fields.size != 1) throw new ValidationException("Configuration payload must define at least one field named 'methodRepoMethod'.")
+
         val subFields = fields(0).asJsObject.getFields("methodNamespace", "methodName", "methodVersion")
-        require(subFields(0).isInstanceOf[JsString])
-        require(subFields(1).isInstanceOf[JsString])
-        require(subFields(2).isInstanceOf[JsNumber])
+        if(!subFields(0).isInstanceOf[JsString]) throw new ValidationException("Configuration methodRepoMethod must include a 'methodNamespace' key with a string value")
+        if(!subFields(1).isInstanceOf[JsString]) throw new ValidationException("Configuration methodRepoMethod must include a 'methodName' key with a string value")
+        if(!subFields(2).isInstanceOf[JsNumber]) throw new ValidationException("Configuration methodRepoMethod must include a 'methodVersion' key with a JSNumber value")
     }
   }
 

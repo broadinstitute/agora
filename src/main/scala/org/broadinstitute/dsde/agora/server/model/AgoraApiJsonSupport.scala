@@ -144,7 +144,7 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
 
   def methodRef(payload: String): AgoraEntity = {
     val json = payload.parseJson
-    val refJson = json.asJsObject.fields("methodStoreMethod").asJsObject
+    val refJson = json.asJsObject.fields("methodRepoMethod").asJsObject
     val namespace = refJson.fields("methodNamespace").convertTo[String]
     val name = refJson.fields("methodName").convertTo[String]
     val snapshotId = refJson.fields("methodVersion").convertTo[Int]

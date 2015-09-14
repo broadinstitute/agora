@@ -80,6 +80,9 @@ trait PerRequest extends Actor {
       case e: SyntaxError =>
         r.complete(BadRequest, AgoraException(e.getMessage, e.getCause, BadRequest))
         Stop
+      case e: ValidationException =>
+        r.complete(BadRequest,AgoraException(e.getMessage, e.getCause, BadRequest))
+        Stop
       case e: Throwable =>
         r.complete(InternalServerError, AgoraException(e.getMessage, e.getCause, InternalServerError))
         Stop

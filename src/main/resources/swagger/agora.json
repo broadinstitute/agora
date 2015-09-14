@@ -1507,7 +1507,7 @@
         "payload": {
           "type": "string",
           "description": "Payload of method -- must be in WDL format",
-          "default": "{ \"methodStoreMethod\": { \"methodNamespace\": \"YOUR_NAMESPACE\", \"methodName\": \"BWA\", \"methodVersion\": 1}}\n"
+          "default": "{ \"methodRepoMethod\": { \"methodNamespace\": \"YOUR_NAMESPACE\", \"methodName\": \"BWA\", \"methodVersion\": 1}}\n"
         },
         "entityType": {
           "type": "string",
@@ -1556,7 +1556,7 @@
         "payload": {
           "type": "string",
           "description": "Payload of method -- must be in WDL format. MUST BE REQUESTED EXPLICITLY.",
-          "default": "{ \"methodStoreMethod\": { \"methodNamespace\": \"YOUR_NAMESPACE\", \"methodName\": \"BWA\", \"methodVersion\": 1}}\n"
+          "default": "{ \"methodRepoMethod\": { \"methodNamespace\": \"YOUR_NAMESPACE\", \"methodName\": \"BWA\", \"methodVersion\": 1}}\n"
         },
         "entityType": {
           "type": "string",

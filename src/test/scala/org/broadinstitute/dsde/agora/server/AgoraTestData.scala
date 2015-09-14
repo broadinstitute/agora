@@ -171,7 +171,7 @@ object AgoraTestData {
                                               | """.stripMargin)
 
   val taskConfigPayload = Option( s"""{
-                                    |  "methodStoreMethod": {
+                                    |  "methodRepoMethod": {
                                     |    "methodNamespace": "${namespace1.get}",
                                     |    "methodName": "${name1.get}",
                                     |    "methodVersion": 1
@@ -195,7 +195,7 @@ object AgoraTestData {
                                     |}""".stripMargin)
 
   val taskConfigPayload2 = Option( s"""{
-                                    |  "methodStoreMethod": {
+                                    |  "methodRepoMethod": {
                                     |    "methodNamespace": "${namespace2.get}",
                                     |    "methodName": "${name1.get}",
                                     |    "methodVersion": 1
@@ -220,7 +220,7 @@ object AgoraTestData {
 
 
   val taskConfigPayload3 = Option( s"""{
-                                      |  "methodStoreMethod": {
+                                      |  "methodRepoMethod": {
                                       |    "methodNamespace": "${namespace3.get}",
                                       |    "methodName": "${name3.get}",
                                       |    "methodVersion": 1

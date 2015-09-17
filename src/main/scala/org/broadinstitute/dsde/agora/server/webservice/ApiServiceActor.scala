@@ -33,7 +33,7 @@ class ApiServiceActor extends HttpServiceActor with LazyLogging {
     get {
       pathSingleSlash {
         getFromResource("swagger/index.html")
-      } ~ getFromResourceDirectory("swagger/") ~ getFromResourceDirectory("META-INF/resources/webjars/swagger-ui/2.1.1/")
+      } ~ getFromResourceDirectory("swagger/") ~ getFromResourceDirectory("META-INF/resources/webjars/swagger-ui/2.1.2/")
     }
 
   def receive = runRoute(possibleRoutes)

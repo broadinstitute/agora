@@ -52,7 +52,6 @@ class ApiServiceSpec extends FlatSpec with Directives with ScalatestRouteTest wi
     testEntityTaskWcWithId = agoraBusiness.find(testEntityTaskWc, None, Seq(testEntityTaskWc.entityType.get), mockAutheticatedOwner.get).head
     testConfigurationEntityWithId = agoraBusiness.find(testAgoraConfigurationEntity, None, Seq(testAgoraConfigurationEntity.entityType.get), mockAutheticatedOwner.get).head
     testEntityToBeRedactedWithId = agoraBusiness.find(testEntityToBeRedacted, None, Seq(testEntityToBeRedacted.entityType.get), mockAutheticatedOwner.get).headOption
-
   }
 
   val methodsService = new MethodsService() with ActorRefFactoryContext

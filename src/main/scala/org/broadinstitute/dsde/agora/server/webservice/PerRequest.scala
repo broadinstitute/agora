@@ -4,6 +4,7 @@ package org.broadinstitute.dsde.agora.server.webservice
 import akka.actor.SupervisorStrategy.Stop
 import akka.actor.{OneForOneStrategy, _}
 import cromwell.parser.WdlParser.SyntaxError
+import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.exceptions._
 import org.broadinstitute.dsde.agora.server.webservice.PerRequest._
 import spray.http.HttpHeader
@@ -59,8 +60,7 @@ trait PerRequest extends Actor {
   }
 
   override val supervisorStrategy =
-    OneForOneStrategy() {
-
+    OneForOneStrategy(loggingEnabled = AgoraConfig.supervisorLogging) {
       //Should make a single Authorization Exception trait to minimize code duplication.
       case e: AgoraEntityAuthorizationException =>
         r.complete(Unauthorized, AgoraException(e.getMessage, e.getCause, Unauthorized))

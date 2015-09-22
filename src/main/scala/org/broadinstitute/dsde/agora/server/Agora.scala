@@ -7,13 +7,13 @@ object ProductionAgora extends Agora {
     start()
 }
 
-class Agora extends LazyLogging with App {
+class Agora() extends LazyLogging with App {
   lazy val server: ServerInitializer = new ServerInitializer()
 
   sys addShutdownHook stop()
 
   def start() {
-    Kamon.start()
+    if (AgoraConfig.kamonInstrumentation) Kamon.start()
     server.startAllServices()
     logger.info("Agora instance " + AgoraConfig.serverInstanceName + " initialized, Environment: " + AgoraConfig.environment)
   }
@@ -22,7 +22,7 @@ class Agora extends LazyLogging with App {
     logger.info("Stopping server...")
     server.stopAllServices()
     logger.info("Server stopped.")
-    Kamon.shutdown()
+    if (AgoraConfig.kamonInstrumentation) Kamon.shutdown()
   }
 }
 

@@ -65,6 +65,8 @@ object AgoraConfig {
   lazy val configurationsRoute = config.as[Option[String]]("configurations.route").getOrElse("configurations")
   lazy val configurationsUrl = baseUrl + configurationsRoute + "/"
   lazy val webserviceInterface = config.as[Option[String]]("webservice.interface").getOrElse("0.0.0.0")
+  lazy val supervisorLogging = config.as[Option[Boolean]]("supervisor.logging").getOrElse(true)
+  lazy val kamonInstrumentation = config.as[Option[Boolean]]("kamon.instrumentation").getOrElse(true)
 
   // Mongo
   lazy val mongoDbHost = config.as[Option[String]]("mongodb.host").getOrElse("localhost")

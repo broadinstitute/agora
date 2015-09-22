@@ -26,7 +26,8 @@ class AgoraUnitTestSuite extends Suites(
   new EntityPermissionsClientSpec,
   new NamespacePermissionsClientSpec) with BeforeAndAfterAll {
 
-  val agora = new Agora()     // Unit Tests use the local environment settings
+  val agora = new Agora()
+  // Unit Tests use the local environment settings
   val agoraBusiness = new AgoraBusiness()
   val timeout = 10.seconds
 

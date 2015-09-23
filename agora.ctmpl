@@ -1,0 +1,116 @@
+{{with $environment := env "ENVIRONMENT"}}
+{{$keyname := printf "secret/dsde/%s/agora/agora.conf" $environment}}
+{{with vault $keyname}}
+
+webservice {
+    port = "{{.Data.webservice_port}}"
+    interface = "0.0.0.0"
+    host = "{{.Data.webservice_host}}"
+    schema = "https"
+}
+
+instance {
+    name = "reference"
+}
+
+mongodb {
+    host = "{{.Data.mongodb_host}}"
+    port = 27017
+    user = "{{.Data.mongodb_user}}"
+    password = "{{.Data.mongodb_password}}"
+    db = "{{.Data.mongodb_db}}"
+}
+
+environment = "dev"
+mockAuthenticatedUserEmail = "broadprometheustest@gmail.com"
+
+swagger {
+    apiDocs = "api-docs"
+    apiVersion = "0.1"
+    baseUrl = "/"
+    contact = "dsde-engineering@broadinstitute.org"
+    description = "Agora stores nethods along with metadata."
+    info = "Agora Methods Repository"
+    license = "BSD"
+    licenseUrl = "http://opensource.org/licenses/BSD-3-Clause"
+    swaggerVersion = "1.2"
+    termsOfServiceUrl = "http://www.github.com/broadinstitute/agora"
+}
+
+sqlDatabase = {
+    url = "{{.Data.sqlDatabase_url}}"
+    driver = "com.mysql.jdbc.Driver"
+    user = "{{.Data.sqlDatabase_user}}"
+    password = "{{.Data.sqlDatabase_password}}"
+}
+
+kamon {
+    instrumentation = true
+    internal-config {
+    akka {
+        loglevel = INFO
+        actor {
+            default-dispatcher {
+                fork-join-executor{
+                    parallelism-factor = 1.0
+                }
+            }
+        }
+    }
+  metric {
+    filters{
+      akka-dispatcher
+      {
+        includes = ["**"]
+        excludes = []
+      }
+      akka-actor {
+        includes = [ "agora/user/**" ]
+        excludes = [ ]
+      }
+      akka-router {
+        includes = [ "**" ]
+        excludes = [ ]
+      }
+    }
+  }
+  statsd {
+    hostname = "{{.Data.kamon_statsd_hostname}}"
+    port = "{{.Data.kamon_statsd_port}}"
+    flush-interval = 10 seconds
+    max-packet-size = 1024 bytes
+    subscriptions
+    {
+      histogram       = ["**"]
+      min-max-counter = ["**"]
+      gauge           = ["**"]
+      counter         = ["**"]
+      trace           = ["**"]
+      trace-segment   = ["**"]
+      akka-actor      = ["**"]
+      akka-dispatcher = ["**"]
+      akka-router     = ["**"]
+      system-metric   = ["**"]
+      http-server     = ["**"]
+    }
+    metric-key-generator = kamon.statsd.SimpleMetricKeyGenerator
+    simple-metric-key-generator
+    {
+      application = "agora"
+      include-hostname = true
+      hostname-override = "{{.Data.webservice_host}}"
+      metric-name-normalization-strategy = normalize
+    }
+  }
+}
+
+modules {
+  kamon-statsd {
+    auto-start = yes
+    requires-aspectj = no
+    extension-id = "kamon.statsd.StatsD"
+    }
+  }
+}
+{{end}}
+{{end}}

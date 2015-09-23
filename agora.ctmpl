@@ -9,10 +9,6 @@ webservice {
     schema = "https"
 }
 
-instance {
-    name = "reference"
-}
-
 mongodb {
     host = "{{.Data.mongodb_host}}"
     port = 27017

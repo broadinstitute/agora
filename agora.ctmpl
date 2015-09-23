@@ -33,7 +33,7 @@ swagger {
     info = "Agora Methods Repository"
     license = "BSD"
     licenseUrl = "http://opensource.org/licenses/BSD-3-Clause"
-    swaggerVersion = "1.2"
+    swaggerVersion = "2.0"
     termsOfServiceUrl = "http://www.github.com/broadinstitute/agora"
 }
 

@@ -11,13 +11,16 @@ import scala.concurrent.duration._
 
 class EntityPermissionsClientSpec extends FlatSpec with ScalaFutures with BeforeAndAfterAll {
 
+  var agoraBusiness: AgoraBusiness = _
   var foundTestEntity1: AgoraEntity = _
   var foundTestEntity2: AgoraEntity = _
+  var testEntityWithPublicPermissionsWithId: AgoraEntity = _
 
   override def beforeAll() = {
-    val agoraBusiness = new AgoraBusiness()
+    agoraBusiness = new AgoraBusiness()
     foundTestEntity1 = agoraBusiness.find(testEntity1, None, Seq(testEntity1.entityType.get), mockAutheticatedOwner.get).head;
     foundTestEntity2 = agoraBusiness.find(testEntity2, None, Seq(testEntity2.entityType.get), mockAutheticatedOwner.get).head;
+    testEntityWithPublicPermissionsWithId = agoraBusiness.find(testEntityWithPublicPermissions, None, Seq(testEntityWithPublicPermissions.entityType.get), mockAutheticatedOwner.get).head;
   }
 
   "Agora" should "add entity permissions." in {
@@ -85,6 +88,16 @@ class EntityPermissionsClientSpec extends FlatSpec with ScalaFutures with Before
   "Agora" should "delete entity permissions" in {
     val deleteCount = deleteEntityPermission(foundTestEntity2, foundTestEntity2.owner.get)
     assert(deleteCount == 1)
+  }
+
+  "Agora" should "be able to insert a 'public' permission" in {
+    val insertCount = insertEntityPermission(testEntityWithPublicPermissionsWithId, AccessControl("public", AgoraPermissions(All)))
+    assert(insertCount == 1)
+  }
+
+  "Agora" should "allow public methods to be accessible" in {
+    agoraBusiness.findSingle(testEntityWithPublicPermissionsWithId, Seq(testEntityWithPublicPermissions.entityType.get), owner2.get)
+    assert(1 === 1) //test passes as long as findSingle does not throw permissions error
   }
 
 }

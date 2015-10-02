@@ -421,7 +421,7 @@ paths:
           type: string
         - name: user
           in: query
-          description: "User's email."
+          description: "User's email or 'public'."
           required: true
           type: string
         - name: roles
@@ -457,7 +457,7 @@ paths:
           type: string
         - name: user
           in: query
-          description: "User's email."
+          description: "User's email or 'public'."
           required: true
           type: string
         - name: roles
@@ -493,7 +493,7 @@ paths:
           type: string
         - name: user
           in: query
-          description: "User's email of whom to revoke permissions."
+          description: "User's email or 'public'."
           required: true
           type: string
       tags:
@@ -574,7 +574,7 @@ paths:
           type: number
         - name: user
           in: query
-          description: "User's email."
+          description: "User's email or 'public'."
           required: true
           type: string
         - name: roles
@@ -620,7 +620,7 @@ paths:
           type: number
         - name: user
           in: query
-          description: "User's email."
+          description: "User's email or 'public'."
           required: true
           type: string
         - name: roles
@@ -666,7 +666,7 @@ paths:
           type: number
         - name: user
           in: query
-          description: "User's email of whom to revoke permissions."
+          description: "User's email or 'public'."
           required: true
           type: string
       tags:
@@ -727,7 +727,7 @@ paths:
           type: string
         - name: user
           in: query
-          description: "User's email."
+          description: "User's email or 'public'."
           required: true
           type: string
         - name: roles
@@ -763,7 +763,7 @@ paths:
           type: string
         - name: user
           in: query
-          description: "User's email."
+          description: "User's email or 'public'."
           required: true
           type: string
         - name: roles
@@ -799,7 +799,7 @@ paths:
           type: string
         - name: user
           in: query
-          description: "User's email of whom to revoke permissions."
+          description: "User's email or 'public'."
           required: true
           type: string
       tags:
@@ -880,7 +880,7 @@ paths:
           type: number
         - name: user
           in: query
-          description: "User's email."
+          description: "User's email or 'public'."
           required: true
           type: string
         - name: roles
@@ -926,7 +926,7 @@ paths:
           type: number
         - name: user
           in: query
-          description: "User's email."
+          description: "User's email or 'public'."
           required: true
           type: string
         - name: roles
@@ -972,7 +972,7 @@ paths:
           type: number
         - name: user
           in: query
-          description: "User's email of whom to revoke permissions."
+          description: "User's email or 'public'."
           required: true
           type: string
       tags:
@@ -1147,7 +1147,7 @@ definitions:
     properties:
       user:
         type: string
-        description: "A user's email."
+        description: "A user's email or 'public' to give access to all users."
         default: test-user@broadinstitute.org
       roles:
         type: array

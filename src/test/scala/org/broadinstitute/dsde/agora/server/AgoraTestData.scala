@@ -433,6 +433,15 @@ object AgoraTestData {
     entityType = Option(AgoraEntityType.Task)
   )
 
+  val testEntityWithPublicPermissions = AgoraEntity(namespace = namespace1,
+    name = name4,
+    synopsis = synopsis2,
+    documentation = documentation1,
+    owner = owner1,
+    payload = payload2,
+    entityType = Option(AgoraEntityType.Task)
+  )
+
   val testEntityTaskWc = AgoraEntity(namespace = namespace1,
     name = nameWc,
     synopsis = synopsisWc,

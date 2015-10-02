@@ -51,12 +51,15 @@ class PermissionBusiness {
   }
 
   def authorizeNamespaceRequester(entity: AgoraEntity, requester: String) = {
-    if (!NamespacePermissionsClient.getNamespacePermission(entity, requester).canManage)
+    if (!NamespacePermissionsClient.getNamespacePermission(entity, requester).canManage &&
+        !NamespacePermissionsClient.getNamespacePermission(entity, "public").canManage)
       throw new NamespaceAuthorizationException(AgoraPermissions(Manage), entity, requester)
   }
 
   def authorizeEntityRequester(entity: AgoraEntity, requester: String) = {
-    if (!AgoraEntityPermissionsClient.getEntityPermission(entity, requester).canManage)
+    if (!AgoraEntityPermissionsClient.getEntityPermission(entity, requester).canManage &&
+        !AgoraEntityPermissionsClient.getEntityPermission(entity, "public").canManage)
       throw new AgoraEntityAuthorizationException(AgoraPermissions(Manage), entity, requester)
   }
+
 }

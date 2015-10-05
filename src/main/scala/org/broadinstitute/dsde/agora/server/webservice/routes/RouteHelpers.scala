@@ -6,6 +6,7 @@ import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AccessControl
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraEntityPermissionsClient._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection, AgoraEntityType}
 import org.broadinstitute.dsde.agora.server.webservice.PerRequestCreator
+import org.broadinstitute.dsde.agora.server.webservice.handlers.PermissionHandler
 import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages._
 import spray.routing.{Directive0, Directives, RequestContext}
 
@@ -41,6 +42,12 @@ trait NamespacePermissionsRouteHelper extends BaseRoute {
     perRequest(context, permissionsHandler, message)
   }
 
+  def completeBatchNamespacePermissionsPost(context: RequestContext, entity: AgoraEntity, accessObjects: List[AccessControl], username: String, permissionHandler: Props) = {
+    accessObjects.foreach(accessObject => addUserIfNotInDatabase(accessObject.user))
+    val message = BatchNamespacePermission(context, entity, username, accessObjects)
+    perRequest(context, permissionHandler, message)
+  }
+
   def completeNamespacePermissionsPost(context: RequestContext, entity: AgoraEntity, params: Map[String, String], username: String, permissionsHandler: Props) ={
     addUserIfNotInDatabase(username)
     val accessObject = AccessControl.fromParams(params)
@@ -73,6 +80,12 @@ trait EntityPermissionsRouteHelper extends BaseRoute {
     addUserIfNotInDatabase(username)
     val message = ListEntityPermissions(context, entity, username)
     perRequest(context, permissionsHandler, message)
+  }
+
+  def completeBatchEntityPermissionsPost(context: RequestContext, entity: AgoraEntity, accessObjects: List[AccessControl], username: String, permissionHandler: Props) = {
+    accessObjects.foreach(accessObject => addUserIfNotInDatabase(accessObject.user))
+    val message = BatchEntityPermission(context, entity, username, accessObjects)
+    perRequest(context, permissionHandler, message)
   }
 
   def completeEntityPermissionsPost(context: RequestContext, entity: AgoraEntity, params: Map[String, String], username: String, permissionsHandler: Props) = {

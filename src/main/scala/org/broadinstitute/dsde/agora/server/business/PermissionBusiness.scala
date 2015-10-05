@@ -18,6 +18,10 @@ class PermissionBusiness {
     NamespacePermissionsClient.insertNamespacePermission(entity, accessObject)
   }
 
+  def batchNamespacePermission(entity: AgoraEntity, requester: String, accessObjectList: List[AccessControl]) = {
+    accessObjectList.map(accessObject => insertNamespacePermission(entity, requester, accessObject)).sum
+  }
+
   def editNamespacePermission(entity: AgoraEntity, requester: String, accessObject: AccessControl) = {
     authorizeNamespaceRequester(entity, requester)
     NamespacePermissionsClient.editNamespacePermission(entity, accessObject)
@@ -36,7 +40,10 @@ class PermissionBusiness {
   def insertEntityPermission(entity: AgoraEntity, requester: String, accessObject: AccessControl) = {
     authorizeEntityRequester(entity, requester)
     AgoraEntityPermissionsClient.insertEntityPermission(entity, accessObject)
+  }
 
+  def batchEntityPermission(entity: AgoraEntity, requester: String, accessObjectList: List[AccessControl]) = {
+    accessObjectList.map(accessObject => insertEntityPermission(entity, requester, accessObject)).sum
   }
 
   def editEntityPermission(entity: AgoraEntity, requester: String, accessObject: AccessControl) = {

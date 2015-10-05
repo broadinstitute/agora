@@ -412,7 +412,9 @@ paths:
       summary: Add a permissions on namespace.
       description: >
         Add a permissions on namespace. Will edit if user already has some
-        permission on namespace.
+        permission on namespace. Can accept a batch. Either url params or
+        a body is required. If both are provdided, the body will override
+        the url params.
       parameters:
         - name: namespace
           in: path
@@ -422,18 +424,28 @@ paths:
         - name: user
           in: query
           description: "User's email or 'public'."
-          required: true
+          required: false
           type: string
         - name: roles
           in: query
           description: 'List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.'
-          required: true
+          required: false
           type: string
+        - name: list of permissions
+          in: body
+          description: |
+            List of access control objects (user, roles). Can edit or delete (with 'Nothing')
+            permissions using this path as well.
+          required: false
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/AccessControl'
       tags:
         - NamespacePermissions
       responses:
         '200':
-          description: Access control modified.
+          description: Access control modified or list of access controls.
           schema:
             $ref: '#/definitions/AccessControl'
         default:
@@ -575,13 +587,23 @@ paths:
         - name: user
           in: query
           description: "User's email or 'public'."
-          required: true
+          required: false
           type: string
         - name: roles
           in: query
           description: 'List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.'
-          required: true
+          required: false
           type: string
+        - name: list of permissions
+          in: body
+          description: |
+            List of access control objects (user, roles). Can edit or delete (with 'Nothing')
+            permissions using this path as well.
+          required: false
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/AccessControl'
       tags:
         - Permissions
       responses:
@@ -728,13 +750,23 @@ paths:
         - name: user
           in: query
           description: "User's email or 'public'."
-          required: true
+          required: false
           type: string
         - name: roles
           in: query
           description: 'List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.'
-          required: true
+          required: false
           type: string
+        - name: list of permissions
+          in: body
+          description: |
+            List of access control objects (user, roles). Can edit or delete (with 'Nothing')
+            permissions using this path as well.
+          required: false
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/AccessControl'
       tags:
         - NamespacePermissions
       responses:
@@ -881,13 +913,23 @@ paths:
         - name: user
           in: query
           description: "User's email or 'public'."
-          required: true
+          required: false
           type: string
         - name: roles
           in: query
           description: 'List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.'
-          required: true
+          required: false
           type: string
+        - name: list of permissions
+          in: body
+          description: |
+            List of access control objects (user, roles). Can edit or delete (with 'Nothing')
+            permissions using this path as well.
+          required: false
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/AccessControl'
       tags:
         - Permissions
       responses:

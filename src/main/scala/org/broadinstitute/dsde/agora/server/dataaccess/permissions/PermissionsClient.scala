@@ -132,8 +132,7 @@ trait PermissionsClient {
     try {
       Await.result(db.run(addPermissionAction), timeout)
     } catch {
-      case ex: Throwable => throw new Exception( s"""User $userEmail already has some permissions on $agoraEntity. """ +
-        s"Consider using PUT to edit the user's permissions.")
+      case ex:Throwable => editPermission(agoraEntity, userAccessObject)
     }
   }
 

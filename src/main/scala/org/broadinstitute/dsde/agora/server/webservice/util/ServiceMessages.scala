@@ -19,6 +19,11 @@ object ServiceMessages {
                                         username: String,
                                         accessObject: AccessControl)
 
+  case class BatchNamespacePermission(requestContext: RequestContext,
+                                             entity: AgoraEntity,
+                                             username: String,
+                                             accessObjects: List[AccessControl])
+
   case class EditNamespacePermission(requestContext: RequestContext,
                                        entity: AgoraEntity,
                                        username: String,
@@ -38,6 +43,11 @@ object ServiceMessages {
                                     entity: AgoraEntity,
                                     username: String,
                                     accessObject: AccessControl)
+
+  case class BatchEntityPermission(requestContext: RequestContext,
+                                         entity: AgoraEntity,
+                                         username: String,
+                                         accessObjects: List[AccessControl])
 
   case class EditEntityPermission(requestContext: RequestContext,
                                     entity: AgoraEntity,

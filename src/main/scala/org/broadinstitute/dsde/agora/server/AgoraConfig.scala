@@ -39,7 +39,7 @@ object AgoraConfig {
     usesEmbeddedMongo = false
   }
 
-  // CI
+  // Staging
   if (environment.equals(StagingEnvironment)) {
     authenticationDirectives = OpenIdConnectDirectives
     usesEmbeddedMongo = false

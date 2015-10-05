@@ -1,14 +1,26 @@
 package org.broadinstitute.dsde.agora.server.dataaccess.permissions
 
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
+import org.broadinstitute.dsde.agora.server.AgoraTestFixture
+import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.NamespacePermissionsClient._
-import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{BeforeAndAfterAll, FlatSpec}
-import scala.concurrent.duration._
+import org.scalatest.{DoNotDiscover, BeforeAndAfterAll, FlatSpec}
 
-class NamespacePermissionsClientSpec extends FlatSpec with ScalaFutures with BeforeAndAfterAll {
+@DoNotDiscover
+class NamespacePermissionsClientSpec extends FlatSpec with ScalaFutures with BeforeAndAfterAll with AgoraTestFixture {
+
+  override def beforeAll() = {
+    ensureDatabasesAreRunning()
+    val agoraBusiness = new AgoraBusiness
+    agoraBusiness.insert(testEntity1, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testEntity2, mockAutheticatedOwner.get)
+  }
+
+  override def afterAll() = {
+    clearDatabases()
+  }
 
   "Agora" should "add namespace permissions." in {
     val insertCount1 = insertNamespacePermission(testEntity1, AccessControl(testEntity1.owner.get, AgoraPermissions(All)))

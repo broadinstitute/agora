@@ -1,15 +1,16 @@
 package org.broadinstitute.dsde.agora.server.dataaccess.permissions
 
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraEntityPermissionsClient._
+import org.broadinstitute.dsde.agora.server.AgoraTestFixture
 import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraEntityPermissionsClient._
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{BeforeAndAfterAll, FlatSpec}
-import scala.concurrent.duration._
+import org.scalatest.{DoNotDiscover, BeforeAndAfterAll, FlatSpec}
 
-class EntityPermissionsClientSpec extends FlatSpec with ScalaFutures with BeforeAndAfterAll {
+@DoNotDiscover
+class EntityPermissionsClientSpec extends FlatSpec with ScalaFutures with BeforeAndAfterAll with AgoraTestFixture {
 
   var agoraBusiness: AgoraBusiness = _
   var foundTestEntity1: AgoraEntity = _
@@ -17,10 +18,18 @@ class EntityPermissionsClientSpec extends FlatSpec with ScalaFutures with Before
   var testEntityWithPublicPermissionsWithId: AgoraEntity = _
 
   override def beforeAll() = {
+    ensureDatabasesAreRunning()
     agoraBusiness = new AgoraBusiness()
-    foundTestEntity1 = agoraBusiness.find(testEntity1, None, Seq(testEntity1.entityType.get), mockAutheticatedOwner.get).head;
-    foundTestEntity2 = agoraBusiness.find(testEntity2, None, Seq(testEntity2.entityType.get), mockAutheticatedOwner.get).head;
+    agoraBusiness.insert(testEntity1, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testEntity2, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testEntityWithPublicPermissions, mockAutheticatedOwner.get)
     testEntityWithPublicPermissionsWithId = agoraBusiness.find(testEntityWithPublicPermissions, None, Seq(testEntityWithPublicPermissions.entityType.get), mockAutheticatedOwner.get).head;
+    foundTestEntity1 = agoraBusiness.find(testEntity1, None, Seq(testEntity1.entityType.get), mockAutheticatedOwner.get).head
+    foundTestEntity2 = agoraBusiness.find(testEntity2, None, Seq(testEntity2.entityType.get), mockAutheticatedOwner.get).head
+  }
+
+  override def afterAll() = {
+    clearDatabases()
   }
 
   "Agora" should "add entity permissions." in {
@@ -63,7 +72,7 @@ class EntityPermissionsClientSpec extends FlatSpec with ScalaFutures with Before
   }
 
   "Agora" should "allow users to create entities that do not exist" in {
-    val newEntity = foundTestEntity1.copy(snapshotId=Option(1234))
+    val newEntity = foundTestEntity1.copy(snapshotId = Option(1234))
     val permissions = getEntityPermission(newEntity, foundTestEntity2.owner.get)
     assert(permissions.canCreate)
     assert(!permissions.canManage)

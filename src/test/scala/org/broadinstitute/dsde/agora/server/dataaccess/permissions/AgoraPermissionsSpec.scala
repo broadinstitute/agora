@@ -1,12 +1,22 @@
 
 package org.broadinstitute.dsde.agora.server.dataaccess.permissions
 
+import org.broadinstitute.dsde.agora.server.AgoraTestFixture
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.webservice.ApiServiceSpec
-import org.scalatest.DoNotDiscover
+import org.scalatest.{BeforeAndAfterAll, DoNotDiscover}
 
 @DoNotDiscover
-class AgoraPermissionsSpec extends ApiServiceSpec {
+class AgoraPermissionsSpec extends ApiServiceSpec with BeforeAndAfterAll with AgoraTestFixture {
+
+  override protected def beforeAll() = {
+    ensureDatabasesAreRunning()
+  }
+
+  override protected def afterAll() = {
+    clearDatabases()
+  }
+
   "Agora" should "return true if someone has read access and we ask if they have read access " in {
     val authorization = AgoraPermissions(Read)
     assert(authorization.canRead === true)

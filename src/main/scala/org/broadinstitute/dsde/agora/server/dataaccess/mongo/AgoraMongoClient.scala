@@ -8,11 +8,11 @@ import org.broadinstitute.dsde.agora.server.model.AgoraEntityType
 
 object AgoraMongoClient {
   private val mongoClient = getMongoClient
+
   val TasksCollection = "tasks"
   val WorkflowsCollection = "workflows"
   val ConfigurationsCollection = "configurations"
   val CounterCollection = "counters"
-
 
   def getCollection(collectionName: String): MongoCollection = {
     mongoClient(AgoraConfig.mongoDbDatabase)(collectionName)
@@ -20,6 +20,10 @@ object AgoraMongoClient {
 
   def getCountersCollection: MongoCollection = {
     mongoClient(AgoraConfig.mongoDbDatabase)(CounterCollection)
+  }
+
+  def getAllCollections: Seq[MongoCollection] = {
+    Seq(getTasksCollection, getWorkflowsCollection, getCountersCollection, getConfigurationsCollection)
   }
 
   private def getTasksCollection: MongoCollection = {
@@ -58,7 +62,6 @@ object AgoraMongoClient {
 
     val user: Option[String] = AgoraConfig.mongoDbUser
     val password: Option[String] = AgoraConfig.mongoDbPassword
-
 
     (user, password) match {
       case (Some(userName), Some(userPassword)) =>

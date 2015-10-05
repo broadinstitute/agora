@@ -88,22 +88,9 @@ releaseSettings
 
 shellPrompt := { state => "%s| %s> ".format(GitCommand.prompt.apply(state), version.value) }
 
-//test settings
-val integrationTest = inputKey[Unit]("Runs the Agora integration tests.")
-
-val unitTest = inputKey[Unit]("Runs the Agora unit tests.")
-
-integrationTest := {
-  (testOnly in Test).toTask(" org.broadinstitute.dsde.agora.server.AgoraIntegrationTestSuite").value
-}
-
-unitTest := {
-  (testOnly in Test).toTask(" org.broadinstitute.dsde.agora.server.AgoraUnitTestSuite").value
-}
-
-fork in Test:= true
-
 javaOptions in Test ++= Seq("-Dconfig.file=" + Option(System.getenv("TEST_CONFIG")).getOrElse("src/test/resources/reference.conf"))
+
+parallelExecution in Test := false
 
 //assembly settings
 test in assembly := {}

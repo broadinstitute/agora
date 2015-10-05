@@ -62,7 +62,7 @@ object AgoraMongoClient {
 
     (user, password) match {
       case (Some(userName), Some(userPassword)) =>
-        val credentials = MongoCredential.createMongoCRCredential(
+        val credentials = MongoCredential.createScramSha1Credential(
           userName,
           AgoraConfig.mongoDbDatabase,
           userPassword.toCharArray

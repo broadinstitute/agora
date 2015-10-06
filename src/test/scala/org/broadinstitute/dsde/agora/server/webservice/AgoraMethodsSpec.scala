@@ -16,10 +16,35 @@ import spray.routing.ValidationRejection
 @DoNotDiscover
 class AgoraMethodsSpec extends ApiServiceSpec {
 
+  var testEntity1WithId: AgoraEntity = _
+  var testEntity2WithId: AgoraEntity = _
+  var testEntity3WithId: AgoraEntity = _
+  var testEntity4WithId: AgoraEntity = _
+  var testEntity5WithId: AgoraEntity = _
+  var testEntity6WithId: AgoraEntity = _
+  var testEntity7WithId: AgoraEntity = _
+  var testEntityToBeRedactedWithId: AgoraEntity = _
+
+  override def beforeAll() = {
+    ensureDatabasesAreRunning()
+    testEntity1WithId = agoraBusiness.insert(testEntity1, mockAutheticatedOwner.get)
+    testEntity2WithId = agoraBusiness.insert(testEntity2, mockAutheticatedOwner.get)
+    testEntity3WithId = agoraBusiness.insert(testEntity3, mockAutheticatedOwner.get)
+    testEntity4WithId = agoraBusiness.insert(testEntity4, mockAutheticatedOwner.get)
+    testEntity5WithId = agoraBusiness.insert(testEntity5, mockAutheticatedOwner.get)
+    testEntity6WithId = agoraBusiness.insert(testEntity6, mockAutheticatedOwner.get)
+    testEntity7WithId = agoraBusiness.insert(testEntity7, mockAutheticatedOwner.get)
+    testEntityToBeRedactedWithId = agoraBusiness.insert(testEntityToBeRedacted, mockAutheticatedOwner.get)
+  }
+
+  override def afterAll() = {
+    clearDatabases()
+  }
+
   "Agora" should "return information about a method, including metadata " in {
     Get(ApiUtil.Methods.withLeadingSlash + "/" + namespace1.get + "/" + name1.get + "/"
       + testEntity1WithId.snapshotId.get) ~> methodsService.querySingleRoute ~> check {
-      handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => assert(brief(entity) === testEntity1WithId))
+      handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => assert(entity === testEntity1WithId))
       assert(status === OK)
     }
   }
@@ -156,21 +181,18 @@ class AgoraMethodsSpec extends ApiServiceSpec {
   }
 
   "Agora" should "allow method redaction" in {
-    Delete(ApiUtil.Methods.withLeadingSlash + "/" + testEntityToBeRedactedWithId.get.namespace.get + "/" +
-    testEntityToBeRedactedWithId.get.name.get + "/" + testEntityToBeRedactedWithId.get.snapshotId.get ) ~>
+    Delete(ApiUtil.Methods.withLeadingSlash + "/" + testEntityToBeRedactedWithId.namespace.get + "/" +
+      testEntityToBeRedactedWithId.name.get + "/" + testEntityToBeRedactedWithId.snapshotId.get) ~>
     methodsService.querySingleRoute ~> check {
       assert(body.asString === "1")
     }
   }
 
   "Agora" should "not allow redacted methods to be queried" in {
-    Get(ApiUtil.Methods.withLeadingSlash + "/" + testEntityToBeRedactedWithId.get.namespace.get + "/" +
-      testEntityToBeRedactedWithId.get.name.get + "/" + testEntityToBeRedactedWithId.get.snapshotId.get ) ~>
+    Get(ApiUtil.Methods.withLeadingSlash + "/" + testEntityToBeRedactedWithId.namespace.get + "/" +
+      testEntityToBeRedactedWithId.name.get + "/" + testEntityToBeRedactedWithId.snapshotId.get) ~>
       methodsService.querySingleRoute ~> check {
       assert(body.asString contains "not found")
     }
   }
-
-
-
 }

@@ -1,5 +1,6 @@
 package org.broadinstitute.dsde.agora.server
 
+import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
 
 object AgoraTestData {
@@ -9,7 +10,7 @@ object AgoraTestData {
     markdown * 7 // NB: File is 1.6 Kb, so 7* that is >10kb, our minimal required storage amount.
   }
 
-  val agoraCIOwner = Option("agora-test")
+  val agoraTestOwner = Option("agora-test")
   val namespace1 = Option("broad")
   val namespace2 = Option("hellbender")
   val namespace3 = Option("GATK")
@@ -559,4 +560,101 @@ object AgoraTestData {
     payload = taskConfigPayload3,
     entityType = Option(AgoraEntityType.Configuration)
   )
+
+  val testIntegrationEntity = AgoraEntity(namespace = Option("___test1"),
+    name = Option("testWorkflow"),
+    synopsis = synopsis1,
+    documentation = documentation1,
+    owner = owner1,
+    payload = payload1,
+    entityType = Option(AgoraEntityType.Workflow))
+
+  val testIntegrationEntity2 = AgoraEntity(namespace = Option("___test2"),
+    name = Option("testWorkflow"),
+    synopsis = synopsis1,
+    documentation = documentation1,
+    owner = owner2,
+    payload = payload1,
+    entityType = Option(AgoraEntityType.Workflow))
+
+  val testAgoraEntityWithValidOfficialDockerImageInWdl = new AgoraEntity(namespace = Option("___docker_test"),
+    name = name1,
+    synopsis = synopsis1,
+    documentation = documentation1,
+    owner = mockAutheticatedOwner,
+    payload = payloadWithValidOfficialDockerImageInWdl,
+    entityType = Option(AgoraEntityType.Task)
+  )
+
+  val testAgoraEntityWithInvalidOfficialDockerRepoNameInWdl = new AgoraEntity(namespace = Option("___docker_test"),
+    name = name1,
+    synopsis = synopsis1,
+    documentation = documentation1,
+    owner = mockAutheticatedOwner,
+    payload = payloadWithInvalidOfficialDockerRepoNameInWdl,
+    entityType = Option(AgoraEntityType.Task)
+  )
+
+  val testAgoraEntityWithInvalidOfficialDockerTagNameInWdl = new AgoraEntity(namespace = Option("___docker_test"),
+    name = name1,
+    synopsis = synopsis1,
+    documentation = documentation1,
+    owner = mockAutheticatedOwner,
+    payload = payloadWithInvalidOfficialDockerTagNameInWdl,
+    entityType = Option(AgoraEntityType.Task)
+  )
+
+  val testAgoraEntityWithValidPersonalDockerInWdl = new AgoraEntity(namespace = Option("___docker_test"),
+    name = name1,
+    synopsis = synopsis1,
+    documentation = documentation1,
+    owner = mockAutheticatedOwner,
+    payload = payloadWithValidPersonalDockerImageInWdl,
+    entityType = Option(AgoraEntityType.Task)
+  )
+
+  val testAgoraEntityWithInvalidPersonalDockerUserNameInWdl = new AgoraEntity(namespace = Option("___docker_test"),
+    name = name1,
+    synopsis = synopsis1,
+    documentation = documentation1,
+    owner = mockAutheticatedOwner,
+    payload = payloadWithInvalidPersonalDockerUserNameInWdl,
+    entityType = Option(AgoraEntityType.Task)
+  )
+
+  val testAgoraEntityWithInvalidPersonalDockerRepoNameInWdl = new AgoraEntity(namespace = Option("___docker_test"),
+    name = name1,
+    synopsis = synopsis1,
+    documentation = documentation1,
+    owner = mockAutheticatedOwner,
+    payload = payloadWithInvalidPersonalDockerRepoNameInWdl,
+    entityType = Option(AgoraEntityType.Task)
+  )
+
+  val testAgoraEntityWithInvalidPersonalDockerTagNameInWdl = new AgoraEntity(namespace = Option("___docker_test"),
+    name = name1,
+    synopsis = synopsis1,
+    documentation = documentation1,
+    owner = mockAutheticatedOwner,
+    payload = payloadWithInvalidPersonalDockerTagNameInWdl,
+    entityType = Option(AgoraEntityType.Task)
+  )
+
+  def populateDatabase(agoraBusiness: AgoraBusiness) = {
+    agoraBusiness.insert(testEntity1, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testEntity2, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testEntity3, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testEntity4, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testEntity5, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testEntity6, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testEntity7, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testEntityTaskWc, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testAgoraConfigurationEntity, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testAgoraConfigurationEntity2, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testEntityToBeRedacted, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testEntityToBeRedacted2, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testEntityToBeRedacted3, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testAgoraConfigurationToBeRedacted, mockAutheticatedOwner.get)
+  }
+
 }

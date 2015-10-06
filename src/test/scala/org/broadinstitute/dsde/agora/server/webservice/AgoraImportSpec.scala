@@ -16,6 +16,18 @@ import spray.httpx.unmarshalling._
 
 @DoNotDiscover
 class AgoraImportSpec extends ApiServiceSpec {
+  var testEntityTaskWcWithId: AgoraEntity = _
+
+  override def beforeAll() = {
+    ensureDatabasesAreRunning()
+    testEntityTaskWcWithId = agoraBusiness.insert(testEntityTaskWc, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testEntityWorkflowWithExistentWdlImport, mockAutheticatedOwner.get)
+  }
+
+  override def afterAll() = {
+    clearDatabases()
+  }
+
   "MethodsService" should "return a 400 bad request when posting a WDL with an invalid import statement" in {
     Post(ApiUtil.Methods.withLeadingSlash, testBadAgoraEntityInvalidWdlImportFormat) ~>
       methodsService.postRoute ~> check {
@@ -36,7 +48,7 @@ class AgoraImportSpec extends ApiServiceSpec {
     // Verifying that the pre-loaded task exists...
     Get(ApiUtil.Methods.withLeadingSlash + "/" + testEntityTaskWcWithId.namespace.get + "/" + testEntityTaskWcWithId.name.get + "/"
       + testEntityTaskWcWithId.snapshotId.get) ~> methodsService.querySingleRoute ~> check {
-      handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => assert(brief(entity) === testEntityTaskWcWithId))
+      handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => assert(brief(entity) === brief(testEntityTaskWcWithId)))
       assert(status === OK)
     }
     Post(ApiUtil.Methods.withLeadingSlash, testEntityWorkflowWithExistentWdlImport) ~>

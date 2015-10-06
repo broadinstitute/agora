@@ -13,6 +13,31 @@ import spray.httpx.unmarshalling._
 @DoNotDiscover
 class AgoraProjectionsSpec extends ApiServiceSpec {
 
+  var testEntity1WithId: AgoraEntity = _
+  var testEntity2WithId: AgoraEntity = _
+  var testEntity3WithId: AgoraEntity = _
+  var testEntity4WithId: AgoraEntity = _
+  var testEntity5WithId: AgoraEntity = _
+  var testEntity6WithId: AgoraEntity = _
+  var testEntity7WithId: AgoraEntity = _
+  var testEntityToBeRedactedWithId: AgoraEntity = _
+
+  override def beforeAll() = {
+    ensureDatabasesAreRunning()
+    testEntity1WithId = agoraBusiness.insert(testEntity1, mockAutheticatedOwner.get)
+    testEntity2WithId = agoraBusiness.insert(testEntity2, mockAutheticatedOwner.get)
+    testEntity3WithId = agoraBusiness.insert(testEntity3, mockAutheticatedOwner.get)
+    testEntity4WithId = agoraBusiness.insert(testEntity4, mockAutheticatedOwner.get)
+    testEntity5WithId = agoraBusiness.insert(testEntity5, mockAutheticatedOwner.get)
+    testEntity6WithId = agoraBusiness.insert(testEntity6, mockAutheticatedOwner.get)
+    testEntity7WithId = agoraBusiness.insert(testEntity7, mockAutheticatedOwner.get)
+    testEntityToBeRedactedWithId = agoraBusiness.insert(testEntityToBeRedacted, mockAutheticatedOwner.get)
+  }
+
+  override def afterAll() = {
+    clearDatabases()
+  }
+
   "Agora" should "return only included fields in the entity" in {
     Get(ApiUtil.Methods.withLeadingSlash + "?namespace=" + namespace1.get + "&name=" + name2.get + "&includedField=name&includedField=snapshotId") ~>
       methodsService.queryRoute ~> check {

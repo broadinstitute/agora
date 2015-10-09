@@ -1,14 +1,35 @@
 package org.broadinstitute.dsde.agora.server.dataaccess.permissions
 
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
+import org.broadinstitute.dsde.agora.server.AgoraTestFixture
+import org.broadinstitute.dsde.agora.server.busines.PermissionBusiness
+import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.NamespacePermissionsClient._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{BeforeAndAfterAll, FlatSpec}
-import scala.concurrent.duration._
+import org.scalatest.{DoNotDiscover, BeforeAndAfterAll, FlatSpec}
 
-class NamespacePermissionsClientSpec extends FlatSpec with ScalaFutures with BeforeAndAfterAll {
+@DoNotDiscover
+class NamespacePermissionsClientSpec extends FlatSpec with ScalaFutures with BeforeAndAfterAll with AgoraTestFixture {
+
+  var agoraBusiness: AgoraBusiness = _
+  var permissionBusiness: PermissionBusiness = _
+  var testBatchPermissionEntityWithId: AgoraEntity = _
+
+  override def beforeAll() = {
+    ensureDatabasesAreRunning()
+    agoraBusiness = new AgoraBusiness()
+    permissionBusiness = new PermissionBusiness()
+    agoraBusiness.insert(testEntity1, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testEntity2, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testEntity3, mockAutheticatedOwner.get)
+    testBatchPermissionEntityWithId = agoraBusiness.find(testEntity3, None, Seq(testEntity3.entityType.get), mockAutheticatedOwner.get).head
+  }
+
+  override def afterAll() = {
+    clearDatabases()
+  }
 
   "Agora" should "add namespace permissions." in {
     val insertCount1 = insertNamespacePermission(testEntity1, AccessControl(testEntity1.owner.get, AgoraPermissions(All)))
@@ -64,5 +85,12 @@ class NamespacePermissionsClientSpec extends FlatSpec with ScalaFutures with Bef
   "Agora" should "delete namespace permissions" in {
     val deleteCount = deleteNamespacePermission(testEntity2, testEntity2.owner.get)
     assert(deleteCount == 1)
+  }
+
+  "Agora" should "allow batch permission edits" in {
+    val accessObject1 = new AccessControl(owner1.get, AgoraPermissions(AgoraPermissions.All))
+    val accessObject2 = new AccessControl(owner2.get, AgoraPermissions(AgoraPermissions.Nothing))
+    val rowsEditted = permissionBusiness.batchNamespacePermission(testBatchPermissionEntityWithId, mockAutheticatedOwner.get, List(accessObject1, accessObject2))
+    assert(rowsEditted === 2)
   }
 }

@@ -132,8 +132,7 @@ trait PermissionsClient {
     try {
       Await.result(db.run(addPermissionAction), timeout)
     } catch {
-      case ex:Throwable => throw new Exception(s"User ${userEmail} already has some permissions on ${agoraEntity}. " +
-        s"Consider using PUT to edit the user's permissions.")
+      case ex:Throwable => editPermission(agoraEntity, userAccessObject)
     }
   }
 
@@ -230,7 +229,7 @@ trait PermissionsClient {
 
   def filterEntityByRead(agoraEntities: Seq[AgoraEntity], userEmail: String) = {
     val entitiesThatUserCanReadQuery = for {
-      user <- users if user.email === userEmail
+      user <- users if user.email === userEmail || user.email === "public"
       permission <- permissions if permission.userID === user.id && (
         permission.roles === 1 || permission.roles === 3 || permission.roles === 5 || permission.roles === 7 || permission.roles === 9 ||
         permission.roles === 11 || permission.roles === 13 || permission.roles === 15 || permission.roles === 17 || permission.roles === 19 ||

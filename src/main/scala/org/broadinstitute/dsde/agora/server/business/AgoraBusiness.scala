@@ -17,38 +17,44 @@ import DefaultJsonProtocol._
 class AgoraBusiness {
 
   def insert(agoraEntity: AgoraEntity, username: String): AgoraEntity = {
-    if (NamespacePermissionsClient.getNamespacePermission(agoraEntity, username).canCreate) {
-      validatePayload(agoraEntity, username)
-
-      val entityToInsert = agoraEntity.entityType.get match {
-        case AgoraEntityType.Configuration =>
-          val method = resolveMethodRef(agoraEntity.payload.get)
-          if (!AgoraEntityPermissionsClient.getEntityPermission(method, username).canRead) {
-            throw new AgoraEntityNotFoundException(method)
-          }
-          agoraEntity.addMethodId(method.id.get.toHexString)
-        case _ => agoraEntity
-      }
-      val entityWithId = AgoraDao.createAgoraDao(entityToInsert.entityType).insert(entityToInsert.addDate())
-      val userAccess = new AccessControl(username, AgoraPermissions(All))
-
-      if (!NamespacePermissionsClient.doesEntityExists(agoraEntity)) {
-        NamespacePermissionsClient.addEntity(entityWithId)
-        NamespacePermissionsClient.insertNamespacePermission(entityWithId, userAccess)
-      }
-
-      AgoraEntityPermissionsClient.addEntity(entityWithId)
-      AgoraEntityPermissionsClient.insertEntityPermission(entityWithId, userAccess)
-      entityWithId.addUrl().removeIds()
-    } else {
+    if (!NamespacePermissionsClient.getNamespacePermission(agoraEntity, username).canCreate &&
+        !NamespacePermissionsClient.getNamespacePermission(agoraEntity, "public").canCreate) {
       throw new NamespaceAuthorizationException(AgoraPermissions(Create), agoraEntity, username)
     }
+
+    validatePayload(agoraEntity, username)
+
+    val entityToInsert = agoraEntity.entityType.get match {
+      case AgoraEntityType.Configuration =>
+        val method = resolveMethodRef(agoraEntity.payload.get)
+        if (!AgoraEntityPermissionsClient.getEntityPermission(method, username).canRead &&
+            !AgoraEntityPermissionsClient.getEntityPermission(method, "public").canRead) {
+          throw new AgoraEntityNotFoundException(method)
+        }
+
+        agoraEntity.addMethodId(method.id.get.toHexString)
+      case _ => agoraEntity
+    }
+
+    val entityWithId = AgoraDao.createAgoraDao(entityToInsert.entityType).insert(entityToInsert.addDate())
+    val userAccess = new AccessControl(username, AgoraPermissions(All))
+
+    if (!NamespacePermissionsClient.doesEntityExists(agoraEntity)) {
+      NamespacePermissionsClient.addEntity(entityWithId)
+      NamespacePermissionsClient.insertNamespacePermission(entityWithId, userAccess)
+    }
+
+    AgoraEntityPermissionsClient.addEntity(entityWithId)
+    AgoraEntityPermissionsClient.insertEntityPermission(entityWithId, userAccess)
+    entityWithId.addUrl().removeIds()
   }
 
   def delete(agoraEntity: AgoraEntity, entityTypes: Seq[AgoraEntityType.EntityType], username: String): Int = {
     if (!NamespacePermissionsClient.getNamespacePermission(agoraEntity, username).canRedact &&
-        !NamespacePermissionsClient.isAdmin(username))
+        !NamespacePermissionsClient.getNamespacePermission(agoraEntity, "public").canRedact &&
+        !NamespacePermissionsClient.isAdmin(username)) {
       throw new NamespaceAuthorizationException(AgoraPermissions(Redact), agoraEntity, username)
+    }
 
     // if the entity was a method, then redact all associated configurations
     if (entityTypes equals AgoraEntityType.MethodTypes) {
@@ -61,7 +67,6 @@ class AgoraBusiness {
     }
 
     AgoraEntityPermissionsClient.deleteAllPermissions(agoraEntity)
-
   }
 
   def find(agoraSearch: AgoraEntity,
@@ -83,27 +88,34 @@ class AgoraBusiness {
                  username: String): AgoraEntity = {
     val foundEntity = AgoraDao.createAgoraDao(entityTypes).findSingle(namespace, name, snapshotId)
 
-    if (AgoraEntityPermissionsClient.getEntityPermission(foundEntity, username).canRead)
-      foundEntity.addUrl().removeIds()
-    else
+    if (!AgoraEntityPermissionsClient.getEntityPermission(foundEntity, username).canRead &&
+        !AgoraEntityPermissionsClient.getEntityPermission(foundEntity, "public").canRead) {
       throw new AgoraEntityNotFoundException(foundEntity)
+    }
+
+    foundEntity.addUrl().removeIds()
   }
 
-  def findSingle(entity: AgoraEntity, entityTypes: Seq[AgoraEntityType.EntityType], username: String): AgoraEntity = {
+  def findSingle(entity: AgoraEntity,
+                 entityTypes: Seq[AgoraEntityType.EntityType],
+                 username: String): AgoraEntity = {
     findSingle(entity.namespace.get, entity.name.get, entity.snapshotId.get, entityTypes, username)
   }
 
   private def validatePayload(agoraEntity: AgoraEntity, username: String): Unit = {
     agoraEntity.entityType.get match {
+
       case AgoraEntityType.Task =>
         val namespace = WdlNamespace.load(agoraEntity.payload.get, BackendType.LOCAL)
         // Passed basic validation.  Now check if (any) docker images that are referenced exist
         namespace.tasks.foreach { validateDockerImage }
+
       case AgoraEntityType.Workflow =>
         val resolver = MethodImportResolver(username, this)
         val namespace = WdlNamespace.load(agoraEntity.payload.get, resolver.importResolver _, BackendType.LOCAL)
         // Passed basic validation.  Now check if (any) docker images that are referenced exist
         namespace.tasks.foreach { validateDockerImage }
+
       case AgoraEntityType.Configuration =>
         val json = agoraEntity.payload.get.parseJson
         val fields = json.asJsObject.getFields("methodRepoMethod")

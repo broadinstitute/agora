@@ -1,11 +1,12 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
-import org.broadinstitute.dsde.agora.server.AgoraIntegrationTestData._
+import org.broadinstitute.dsde.agora.server.AgoraTestFixture
 import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
+import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.scalatest.{BeforeAndAfterAll, FlatSpec, DoNotDiscover}
 import spray.http.StatusCodes._
 import spray.httpx.SprayJsonSupport._
@@ -14,7 +15,7 @@ import spray.testkit.{ScalatestRouteTest, RouteTest}
 import scala.concurrent.duration._
 
 @DoNotDiscover
-class AgoraImportIntegrationSpec extends FlatSpec with RouteTest with ScalatestRouteTest with BeforeAndAfterAll {
+class AgoraImportIntegrationSpec extends FlatSpec with RouteTest with ScalatestRouteTest with BeforeAndAfterAll with AgoraTestFixture {
 
   implicit val routeTestTimeout = RouteTestTimeout(20.seconds)
 
@@ -25,6 +26,13 @@ class AgoraImportIntegrationSpec extends FlatSpec with RouteTest with ScalatestR
   val agoraBusiness = new AgoraBusiness()
   val methodsService = new MethodsService() with ActorRefFactoryContext
 
+  override def beforeAll() = {
+    ensureDatabasesAreRunning()
+  }
+
+  override def afterAll() = {
+    clearDatabases()
+  }
 
   def handleError[T](deserialized: Deserialized[T], assertions: (T) => Unit) = {
     if (status.isSuccess) {
@@ -107,8 +115,4 @@ class AgoraImportIntegrationSpec extends FlatSpec with RouteTest with ScalatestR
       assert(responseAs[String] != null)
     }
   }
-
-
-
-
 }

@@ -43,7 +43,7 @@ libraryDependencies ++= Seq(
   "org.aspectj" % "aspectjweaver" % "1.8.6",
   "org.broadinstitute" %% "cromwell" % "0.9" excludeAll ExclusionRule(organization = "com.gettyimages"),
   "org.broadinstitute.dsde.vault" %% "vault-common" % "0.1-15-bf74315",
-  "org.mongodb" %% "casbah" % "2.8.1",
+  "org.mongodb" %% "casbah" % "2.8.2",
   "org.flywaydb" % "flyway-core" % "3.2.1",
   "org.scalaz" %% "scalaz-core" % "7.1.3",
   "org.webjars" % "swagger-ui" % "2.1.2",
@@ -88,22 +88,9 @@ releaseSettings
 
 shellPrompt := { state => "%s| %s> ".format(GitCommand.prompt.apply(state), version.value) }
 
-//test settings
-val integrationTest = inputKey[Unit]("Runs the Agora integration tests.")
-
-val unitTest = inputKey[Unit]("Runs the Agora unit tests.")
-
-integrationTest := {
-  (testOnly in Test).toTask(" org.broadinstitute.dsde.agora.server.AgoraIntegrationTestSuite").value
-}
-
-unitTest := {
-  (testOnly in Test).toTask(" org.broadinstitute.dsde.agora.server.AgoraUnitTestSuite").value
-}
-
-fork in Test:= true
-
 javaOptions in Test ++= Seq("-Dconfig.file=" + Option(System.getenv("TEST_CONFIG")).getOrElse("src/test/resources/reference.conf"))
+
+parallelExecution in Test := false
 
 //assembly settings
 test in assembly := {}

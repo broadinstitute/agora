@@ -18,6 +18,10 @@ class PermissionBusiness {
     NamespacePermissionsClient.insertNamespacePermission(entity, accessObject)
   }
 
+  def batchNamespacePermission(entity: AgoraEntity, requester: String, accessObjectList: List[AccessControl]) = {
+    accessObjectList.map(accessObject => insertNamespacePermission(entity, requester, accessObject)).sum
+  }
+
   def editNamespacePermission(entity: AgoraEntity, requester: String, accessObject: AccessControl) = {
     authorizeNamespaceRequester(entity, requester)
     NamespacePermissionsClient.editNamespacePermission(entity, accessObject)
@@ -36,7 +40,10 @@ class PermissionBusiness {
   def insertEntityPermission(entity: AgoraEntity, requester: String, accessObject: AccessControl) = {
     authorizeEntityRequester(entity, requester)
     AgoraEntityPermissionsClient.insertEntityPermission(entity, accessObject)
+  }
 
+  def batchEntityPermission(entity: AgoraEntity, requester: String, accessObjectList: List[AccessControl]) = {
+    accessObjectList.map(accessObject => insertEntityPermission(entity, requester, accessObject)).sum
   }
 
   def editEntityPermission(entity: AgoraEntity, requester: String, accessObject: AccessControl) = {
@@ -51,12 +58,15 @@ class PermissionBusiness {
   }
 
   def authorizeNamespaceRequester(entity: AgoraEntity, requester: String) = {
-    if (!NamespacePermissionsClient.getNamespacePermission(entity, requester).canManage)
+    if (!NamespacePermissionsClient.getNamespacePermission(entity, requester).canManage &&
+        !NamespacePermissionsClient.getNamespacePermission(entity, "public").canManage)
       throw new NamespaceAuthorizationException(AgoraPermissions(Manage), entity, requester)
   }
 
   def authorizeEntityRequester(entity: AgoraEntity, requester: String) = {
-    if (!AgoraEntityPermissionsClient.getEntityPermission(entity, requester).canManage)
+    if (!AgoraEntityPermissionsClient.getEntityPermission(entity, requester).canManage &&
+        !AgoraEntityPermissionsClient.getEntityPermission(entity, "public").canManage)
       throw new AgoraEntityAuthorizationException(AgoraPermissions(Manage), entity, requester)
   }
+
 }

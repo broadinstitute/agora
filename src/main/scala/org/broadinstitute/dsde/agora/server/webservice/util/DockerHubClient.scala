@@ -20,7 +20,7 @@ object DockerHubClient {
 
   import actorSystem.dispatcher
 
-  val timeout = 5.seconds
+  val timeout = 20.seconds
 
   def pipeline = sendReceive
 

@@ -15,7 +15,7 @@ class Agora() extends LazyLogging with App {
   def start() {
     if (AgoraConfig.kamonInstrumentation) Kamon.start()
     server.startAllServices()
-    logger.info("Agora instance " + AgoraConfig.serverInstanceName + " initialized, Environment: " + AgoraConfig.environment)
+    logger.info("Agora instance " + AgoraConfig.host + " initialized, Environment: " + AgoraConfig.environment)
   }
 
   def stop() {

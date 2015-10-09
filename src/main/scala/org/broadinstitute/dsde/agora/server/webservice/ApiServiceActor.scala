@@ -29,11 +29,11 @@ class ApiServiceActor extends HttpServiceActor with LazyLogging {
   val configurationsService = new ConfigurationsService() with ActorRefFactoryContext
 
 
-  def possibleRoutes = methodsService.routes ~ configurationsService.routes ~
+  def possibleRoutes =  options{ complete(OK) } ~ methodsService.routes ~ configurationsService.routes ~
     get {
       pathSingleSlash {
         getFromResource("swagger/index.html")
-      } ~ getFromResourceDirectory("swagger/") ~ getFromResourceDirectory("META-INF/resources/webjars/swagger-ui/2.1.1/")
+      } ~ getFromResourceDirectory("swagger/") ~ getFromResourceDirectory("META-INF/resources/webjars/swagger-ui/2.1.2/")
     }
 
   def receive = runRoute(possibleRoutes)

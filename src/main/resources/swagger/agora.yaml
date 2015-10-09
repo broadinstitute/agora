@@ -78,7 +78,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
       security:
-        - agora_auth:
+        - authorization:
             - openid
             - email
             - profile
@@ -115,7 +115,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
       security:
-        - agora_auth:
+        - authorization:
             - openid
             - email
             - profile
@@ -158,7 +158,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
       security:
-        - agora_auth:
+        - authorization:
             - openid
             - email
             - profile
@@ -265,7 +265,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
       security:
-        - agora_auth:
+        - authorization:
             - openid
             - email
             - profile
@@ -302,7 +302,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
       security:
-        - agora_auth:
+        - authorization:
             - openid
             - email
             - profile
@@ -342,7 +342,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
       security:
-        - agora_auth:
+        - authorization:
             - openid
             - email
             - profile
@@ -404,7 +404,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
       security:
-        - agora_auth:
+        - authorization:
             - openid
             - email
             - profile
@@ -412,7 +412,9 @@ paths:
       summary: Add a permissions on namespace.
       description: >
         Add a permissions on namespace. Will edit if user already has some
-        permission on namespace.
+        permission on namespace. Can accept a batch. Either url params or
+        a body is required. If both are provdided, the body will override
+        the url params.
       parameters:
         - name: namespace
           in: path
@@ -421,19 +423,29 @@ paths:
           type: string
         - name: user
           in: query
-          description: "User's email."
-          required: true
+          description: "User's email or 'public'."
+          required: false
           type: string
         - name: roles
           in: query
           description: 'List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.'
-          required: true
+          required: false
           type: string
+        - name: list of permissions
+          in: body
+          description: |
+            List of access control objects (user, roles). Can edit or delete (with 'Nothing')
+            permissions using this path as well.
+          required: false
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/AccessControl'
       tags:
         - NamespacePermissions
       responses:
         '200':
-          description: Access control modified.
+          description: Access control modified or list of access controls.
           schema:
             $ref: '#/definitions/AccessControl'
         default:
@@ -441,7 +453,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
       security:
-        - agora_auth:
+        - authorization:
             - openid
             - email
             - profile
@@ -457,7 +469,7 @@ paths:
           type: string
         - name: user
           in: query
-          description: "User's email."
+          description: "User's email or 'public'."
           required: true
           type: string
         - name: roles
@@ -477,7 +489,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
       security:
-        - agora_auth:
+        - authorization:
             - openid
             - email
             - profile
@@ -493,7 +505,7 @@ paths:
           type: string
         - name: user
           in: query
-          description: "User's email of whom to revoke permissions."
+          description: "User's email or 'public'."
           required: true
           type: string
       tags:
@@ -508,7 +520,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
       security:
-        - agora_auth:
+        - authorization:
             - openid
             - email
             - profile
@@ -547,7 +559,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
       security:
-        - agora_auth:
+        - authorization:
             - openid
             - email
             - profile
@@ -574,14 +586,24 @@ paths:
           type: number
         - name: user
           in: query
-          description: "User's email."
-          required: true
+          description: "User's email or 'public'."
+          required: false
           type: string
         - name: roles
           in: query
           description: 'List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.'
-          required: true
+          required: false
           type: string
+        - name: list of permissions
+          in: body
+          description: |
+            List of access control objects (user, roles). Can edit or delete (with 'Nothing')
+            permissions using this path as well.
+          required: false
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/AccessControl'
       tags:
         - Permissions
       responses:
@@ -594,7 +616,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
       security:
-        - agora_auth:
+        - authorization:
             - openid
             - email
             - profile
@@ -620,7 +642,7 @@ paths:
           type: number
         - name: user
           in: query
-          description: "User's email."
+          description: "User's email or 'public'."
           required: true
           type: string
         - name: roles
@@ -640,7 +662,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
       security:
-        - agora_auth:
+        - authorization:
             - openid
             - email
             - profile
@@ -666,7 +688,7 @@ paths:
           type: number
         - name: user
           in: query
-          description: "User's email of whom to revoke permissions."
+          description: "User's email or 'public'."
           required: true
           type: string
       tags:
@@ -681,7 +703,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
       security:
-        - agora_auth:
+        - authorization:
             - openid
             - email
             - profile
@@ -710,7 +732,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
       security:
-        - agora_auth:
+        - authorization:
             - openid
             - email
             - profile
@@ -727,14 +749,24 @@ paths:
           type: string
         - name: user
           in: query
-          description: "User's email."
-          required: true
+          description: "User's email or 'public'."
+          required: false
           type: string
         - name: roles
           in: query
           description: 'List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.'
-          required: true
+          required: false
           type: string
+        - name: list of permissions
+          in: body
+          description: |
+            List of access control objects (user, roles). Can edit or delete (with 'Nothing')
+            permissions using this path as well.
+          required: false
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/AccessControl'
       tags:
         - NamespacePermissions
       responses:
@@ -747,7 +779,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
       security:
-        - agora_auth:
+        - authorization:
             - openid
             - email
             - profile
@@ -763,7 +795,7 @@ paths:
           type: string
         - name: user
           in: query
-          description: "User's email."
+          description: "User's email or 'public'."
           required: true
           type: string
         - name: roles
@@ -783,7 +815,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
       security:
-        - agora_auth:
+        - authorization:
             - openid
             - email
             - profile
@@ -799,7 +831,7 @@ paths:
           type: string
         - name: user
           in: query
-          description: "User's email of whom to revoke permissions."
+          description: "User's email or 'public'."
           required: true
           type: string
       tags:
@@ -814,7 +846,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
       security:
-        - agora_auth:
+        - authorization:
             - openid
             - email
             - profile
@@ -853,7 +885,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
       security:
-        - agora_auth:
+        - authorization:
             - openid
             - email
             - profile
@@ -880,14 +912,24 @@ paths:
           type: number
         - name: user
           in: query
-          description: "User's email."
-          required: true
+          description: "User's email or 'public'."
+          required: false
           type: string
         - name: roles
           in: query
           description: 'List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.'
-          required: true
+          required: false
           type: string
+        - name: list of permissions
+          in: body
+          description: |
+            List of access control objects (user, roles). Can edit or delete (with 'Nothing')
+            permissions using this path as well.
+          required: false
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/AccessControl'
       tags:
         - Permissions
       responses:
@@ -900,7 +942,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
       security:
-        - agora_auth:
+        - authorization:
             - openid
             - email
             - profile
@@ -926,7 +968,7 @@ paths:
           type: number
         - name: user
           in: query
-          description: "User's email."
+          description: "User's email or 'public'."
           required: true
           type: string
         - name: roles
@@ -946,7 +988,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
       security:
-        - agora_auth:
+        - authorization:
             - openid
             - email
             - profile
@@ -972,7 +1014,7 @@ paths:
           type: number
         - name: user
           in: query
-          description: "User's email of whom to revoke permissions."
+          description: "User's email or 'public'."
           required: true
           type: string
       tags:
@@ -987,12 +1029,12 @@ paths:
           schema:
             $ref: '#/definitions/Error'
       security:
-        - agora_auth:
+        - authorization:
             - openid
             - email
             - profile
 securityDefinitions:
-  agora_auth:
+  authorization:
     type: oauth2
     authorizationUrl: 'https://accounts.google.com/o/oauth2/auth'
     flow: implicit
@@ -1147,7 +1189,7 @@ definitions:
     properties:
       user:
         type: string
-        description: "A user's email."
+        description: "A user's email or 'public' to give access to all users."
         default: test-user@broadinstitute.org
       roles:
         type: array

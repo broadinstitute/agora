@@ -18,22 +18,22 @@ import spray.routing.ValidationRejection
 class AgoraConfigurationsSpec extends ApiServiceSpec {
 
   var method1: AgoraEntity = _
-  var origPermission: AgoraPermissions = _
-  var origAccessControl: AccessControl = _
-  var testEntityToBeRedacted2WithId: Option[AgoraEntity] = null
-  var testAgoraConfigurationToBeRedactedWithId: Option[AgoraEntity] = null
+  var testEntityToBeRedacted2WithId: AgoraEntity = _
+  var testAgoraConfigurationToBeRedactedWithId: AgoraEntity = _
 
   override def beforeAll() = {
-    method1 = AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).find(testEntity1).head
-    origPermission = AgoraEntityPermissionsClient.getEntityPermission(method1, AgoraConfig.mockAuthenticatedUserEmail)
-    origAccessControl = new AccessControl(AgoraConfig.mockAuthenticatedUserEmail, origPermission)
-
-    testEntityToBeRedacted2WithId = agoraBusiness.find(testEntityToBeRedacted2, None, Seq(testEntityToBeRedacted2.entityType.get), mockAutheticatedOwner.get).headOption
-    testAgoraConfigurationToBeRedactedWithId = agoraBusiness.find(testAgoraConfigurationToBeRedacted, None, Seq(testAgoraConfigurationToBeRedacted.entityType.get), mockAutheticatedOwner.get).headOption
+    ensureDatabasesAreRunning()
+    method1 = agoraBusiness.insert(testEntity1, mockAutheticatedOwner.get)
+    testEntityToBeRedacted2WithId = agoraBusiness.insert(testEntityToBeRedacted2, mockAutheticatedOwner.get)
+    testAgoraConfigurationToBeRedactedWithId = agoraBusiness.insert(testAgoraConfigurationToBeRedacted, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testEntity2, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testAgoraConfigurationEntity, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testAgoraConfigurationEntity2, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testAgoraConfigurationEntity3, mockAutheticatedOwner.get)
   }
 
   override def afterAll() = {
-    AgoraEntityPermissionsClient.editEntityPermission(method1, origAccessControl)
+    clearDatabases()
   }
 
   "Agora" should "be able to store a task configuration" in {
@@ -135,9 +135,9 @@ class AgoraConfigurationsSpec extends ApiServiceSpec {
 
   "Agora" should "redact methods when it has at least 1 associated configuration" in {
     Delete(ApiUtil.Methods.withLeadingSlash + "/" +
-      testEntityToBeRedacted2WithId.get.namespace.get + "/" +
-      testEntityToBeRedacted2WithId.get.name.get + "/" +
-      testEntityToBeRedacted2WithId.get.snapshotId.get ) ~>
+      testEntityToBeRedacted2WithId.namespace.get + "/" +
+      testEntityToBeRedacted2WithId.name.get + "/" +
+      testEntityToBeRedacted2WithId.snapshotId.get) ~>
     methodsService.querySingleRoute ~>
     check {
       assert(body.asString === "1")
@@ -146,9 +146,9 @@ class AgoraConfigurationsSpec extends ApiServiceSpec {
 
   "Agora" should "redact associated configurations when the referenced method is redacted" in {
     Get(ApiUtil.Configurations.withLeadingSlash + "/" +
-      testAgoraConfigurationToBeRedactedWithId.get.namespace.get + "/" +
-      testAgoraConfigurationToBeRedactedWithId.get.name.get + "/" +
-      testAgoraConfigurationToBeRedactedWithId.get.snapshotId.get ) ~>
+      testAgoraConfigurationToBeRedactedWithId.namespace.get + "/" +
+      testAgoraConfigurationToBeRedactedWithId.name.get + "/" +
+      testAgoraConfigurationToBeRedactedWithId.snapshotId.get) ~>
     configurationsService.querySingleRoute ~>
     check {
       assert(body.asString contains "not found")

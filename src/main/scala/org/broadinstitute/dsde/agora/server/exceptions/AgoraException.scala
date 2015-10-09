@@ -7,6 +7,7 @@ case class AgoraException(message: String = null,
                           cause: Throwable = null,
                           statusCode: StatusCode = StatusCodes.InternalServerError)
   extends Exception(message, cause) with LazyLogging {
-  logger.error(s"Cause: $cause")
-  logger.error(s"Message: $message")
+  override def getMessage: String = {
+    s"Cause: $cause" + " Message: $message"
+  }
 }

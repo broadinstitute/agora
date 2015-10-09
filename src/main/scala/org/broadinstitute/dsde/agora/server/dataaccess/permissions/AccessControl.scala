@@ -15,7 +15,7 @@ object AccessControl {
     if (user.isDefined && roles.isDefined)
       AccessControl(user.get, AgoraPermissions.fromParams(roles.get))
     else
-      throw new IllegalArgumentException("Missing params: user and/or role.")
+      throw new IllegalArgumentException("Missing url params: user and/or roles.")
   }
 }
 

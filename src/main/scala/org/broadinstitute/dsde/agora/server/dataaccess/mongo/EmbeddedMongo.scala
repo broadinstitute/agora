@@ -18,8 +18,9 @@ object EmbeddedMongo extends MongoEmbedDatabase {
   def stopMongo() = {
     println(s"Stopping embedded mongo db instance.")
     mongoStop(mongodProps)
-    //for some unknown reason the mongo db needs to wait a bit before it can be started back up
-    //this is likely a java driver issue and should be revisited when the driver is updated.
-    Thread.sleep(5000)
+  }
+
+  def isRunning: Boolean = {
+    mongodProps != null && mongodProps.mongodProcess.isProcessRunning
   }
 }

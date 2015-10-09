@@ -1,7 +1,8 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
-import org.broadinstitute.dsde.agora.server.AgoraIntegrationTestData._
-import org.broadinstitute.dsde.agora.server.business.{AgoraBusiness}
+import org.broadinstitute.dsde.agora.server.AgoraTestFixture
+import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
+import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
 import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpec}
@@ -11,7 +12,7 @@ import spray.http.StatusCodes._
 import scala.concurrent.duration._
 
 @DoNotDiscover
-class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRouteTest with BeforeAndAfterAll {
+class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRouteTest with BeforeAndAfterAll with AgoraTestFixture {
 
   implicit val routeTestTimeout = RouteTestTimeout(20.seconds)
 
@@ -26,8 +27,13 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
   var agoraEntity2: AgoraEntity = null
 
   override def beforeAll(): Unit = {
-    agoraEntity1 = agoraBusiness.insert(testIntegrationEntity, mockAutheticatedOwner)
-    agoraEntity2 = agoraBusiness.insert(testIntegrationEntity2, owner2)
+    ensureDatabasesAreRunning()
+    agoraEntity1 = agoraBusiness.insert(testIntegrationEntity, mockAutheticatedOwner.get)
+    agoraEntity2 = agoraBusiness.insert(testIntegrationEntity2, owner2.get)
+  }
+
+  override def afterAll(): Unit = {
+    clearDatabases()
   }
 
   "Agora" should "return namespace permissions. list for authorized users" in {
@@ -138,7 +144,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
   "Agora" should "not allow unauthorized users to insert a entity permissions." in {
 
     Post(ApiUtil.Methods.withLeadingSlash + "/" + agoraEntity2.namespace.get + "/" + agoraEntity2.name.get +
-      "/" + agoraEntity2.snapshotId.get + "/" + "permissions" + s"?user=$agoraCIOwner&roles=All") ~>
+      "/" + agoraEntity2.snapshotId.get + "/" + "permissions" + s"?user=$agoraTestOwner&roles=All") ~>
       methodsService.entityPermissionsRoute ~>
       check {
         assert(status == Unauthorized)

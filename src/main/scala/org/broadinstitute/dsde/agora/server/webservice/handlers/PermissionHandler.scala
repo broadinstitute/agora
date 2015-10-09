@@ -30,6 +30,11 @@ class PermissionHandler extends Actor {
       context.parent ! RequestComplete(userAccess)
       context.stop(self)
 
+    case BatchNamespacePermission(_context: RequestContext, entity: AgoraEntity, requester: String, userAccessList: List[AccessControl]) =>
+      val rowsChanged = permissionBusiness.batchNamespacePermission(entity, requester, userAccessList)
+      context.parent ! RequestComplete(userAccessList)
+      context.stop(self)
+
     case EditNamespacePermission(_context: RequestContext, entity: AgoraEntity, requester: String, userAccess: AccessControl) =>
       val rowsChanged = permissionBusiness.editNamespacePermission(entity, requester, userAccess)
       context.parent ! RequestComplete(userAccess)
@@ -48,6 +53,11 @@ class PermissionHandler extends Actor {
     case InsertEntityPermission(_context: RequestContext, entity: AgoraEntity, requester: String, userAccess: AccessControl) =>
       val rowsChanged = permissionBusiness.insertEntityPermission(entity, requester, userAccess)
       context.parent ! RequestComplete(userAccess)
+      context.stop(self)
+
+    case BatchEntityPermission(_context: RequestContext, entity: AgoraEntity, requester: String, userAccessList: List[AccessControl]) =>
+      val rowsChanged = permissionBusiness.batchEntityPermission(entity, requester, userAccessList)
+      context.parent ! RequestComplete(userAccessList)
       context.stop(self)
 
     case EditEntityPermission(_context: RequestContext, entity: AgoraEntity, requester: String, userAccess: AccessControl) =>

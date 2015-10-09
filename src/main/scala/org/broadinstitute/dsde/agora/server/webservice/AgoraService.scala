@@ -3,6 +3,7 @@ package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.actor.Props
 import kamon.spray.KamonTraceDirectives._
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AccessControl
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.handlers.{PermissionHandler, QueryHandler, AddHandler}
@@ -30,19 +31,25 @@ abstract class AgoraService extends HttpService with RouteHelpers {
   def namespacePermissionsRoute =
     matchNamespacePermissionsRoute(path) { (namespace, username) =>
       parameterMap { (params) =>
-        val entity = AgoraEntity(Option(namespace))
+        val agoraEntity = AgoraEntity(Option(namespace))
 
+        // Accept batch POST // TODO: move to transactional support
+        entity(as[List[AccessControl]]) { (listOfAccessControl) =>
+          post { requestContext =>
+            completeBatchNamespacePermissionsPost(requestContext, agoraEntity, listOfAccessControl, username, permissionHandlerProps)
+          }
+        } ~
         get { requestContext =>
-          completeNamespacePermissionsGet(requestContext, entity, username, permissionHandlerProps)
+          completeNamespacePermissionsGet(requestContext, agoraEntity, username, permissionHandlerProps)
         } ~
         post { requestContext =>
-          completeNamespacePermissionsPost(requestContext, entity, params, username, permissionHandlerProps)
+          completeNamespacePermissionsPost(requestContext, agoraEntity, params, username, permissionHandlerProps)
         } ~
         put { requestContext =>
-          completeNamespacePermissionsPut(requestContext, entity, params, username, permissionHandlerProps)
+          completeNamespacePermissionsPut(requestContext, agoraEntity, params, username, permissionHandlerProps)
         } ~
         delete { requestContext =>
-          completeNamespacePermissionsDelete(requestContext, entity, params, username, permissionHandlerProps)
+          completeNamespacePermissionsDelete(requestContext, agoraEntity, params, username, permissionHandlerProps)
         }
 
       }
@@ -51,19 +58,25 @@ abstract class AgoraService extends HttpService with RouteHelpers {
   def entityPermissionsRoute =
     matchEntityPermissionsRoute(path) { (namespace, name, snapshotId, username) =>
       parameterMap { (params) =>
-        val entity = AgoraEntity(Option(namespace), Option(name), Option(snapshotId))
+        val agoraEntity = AgoraEntity(Option(namespace), Option(name), Option(snapshotId))
 
+        // Accept batch POST // TODO: move to transactional support
+        entity(as[List[AccessControl]]) { (listOfAccessControl) =>
+          post { requestContext =>
+            completeBatchEntityPermissionsPost(requestContext, agoraEntity, listOfAccessControl, username, permissionHandlerProps)
+          }
+        } ~
         get { requestContext =>
-          completeEntityPermissionsGet(requestContext, entity, username, permissionHandlerProps)
+          completeEntityPermissionsGet(requestContext, agoraEntity, username, permissionHandlerProps)
         } ~
         post { requestContext =>
-          completeEntityPermissionsPost(requestContext, entity, params, username, permissionHandlerProps)
+          completeEntityPermissionsPost(requestContext, agoraEntity, params, username, permissionHandlerProps)
         } ~
         put { requestContext =>
-          completeEntityPermissionsPut(requestContext, entity, params, username, permissionHandlerProps)
+          completeEntityPermissionsPut(requestContext, agoraEntity, params, username, permissionHandlerProps)
         } ~
         delete { requestContext =>
-          completeEntityPermissionsDelete(requestContext, entity, params, username, permissionHandlerProps)
+          completeEntityPermissionsDelete(requestContext, agoraEntity, params, username, permissionHandlerProps)
         }
 
       }

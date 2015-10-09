@@ -152,6 +152,8 @@ assemblyMergeStrategy in assembly := {
     }
   case "asm-license.txt" | "overview.html" =>
     MergeStrategy.discard
+  case "cobertura.properties" =>
+    MergeStrategy.discard
   case "logback.xml" =>
     MergeStrategy.first
   case _ => MergeStrategy.deduplicate

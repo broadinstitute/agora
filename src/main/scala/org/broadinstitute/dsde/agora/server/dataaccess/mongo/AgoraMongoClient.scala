@@ -58,7 +58,9 @@ object AgoraMongoClient {
   }
 
   private def getMongoClient: MongoClient = {
-    val server = new ServerAddress(AgoraConfig.mongoDbHost, AgoraConfig.mongoDbPort)
+    val serverList = for{ (host, port) <- AgoraConfig.mongoDbHosts zip AgoraConfig.mongoDbPorts } yield {
+      new ServerAddress(host, port)
+    }
 
     val user: Option[String] = AgoraConfig.mongoDbUser
     val password: Option[String] = AgoraConfig.mongoDbPassword
@@ -70,7 +72,7 @@ object AgoraMongoClient {
           AgoraConfig.mongoDbDatabase,
           userPassword.toCharArray
         )
-        MongoClient(server, List(credentials))
+        MongoClient(serverList, List(credentials))
       case _ =>
         MongoClient()
     }

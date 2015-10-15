@@ -4,7 +4,7 @@ import com.typesafe.scalalogging.slf4j.LazyLogging
 import kamon.Kamon
 
 object ProductionAgora extends Agora {
-    start()
+  start()
 }
 
 class Agora() extends LazyLogging with App {

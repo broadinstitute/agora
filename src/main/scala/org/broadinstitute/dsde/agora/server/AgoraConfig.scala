@@ -3,12 +3,14 @@ package org.broadinstitute.dsde.agora.server
 
 import com.typesafe.config.{Config, ConfigFactory}
 import net.ceedubs.ficus.Ficus._
+import net.ceedubs.ficus.readers.ArbitraryTypeReader._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntityType
 import org.broadinstitute.dsde.agora.server.model.AgoraEntityType.EntityType
 import org.broadinstitute.dsde.agora.server.webservice.routes.{AgoraDirectives, MockAgoraDirectives, OpenIdConnectDirectives}
-import scala.slick.jdbc.JdbcBackend.Database
+import slick.jdbc.JdbcBackend.Database
 
 object AgoraConfig {
+
   private val config: Config = ConfigFactory.load()
 
   // Environments
@@ -54,7 +56,10 @@ object AgoraConfig {
 
   // Agora
   private lazy val embeddedUrlPort = config.as[Option[Int]]("embeddedUrl.port")
-  private lazy val embeddedUrlPortStr = embeddedUrlPort match { case None => "" case x: Some[Int] => ":" + x.get }
+  private lazy val embeddedUrlPortStr = embeddedUrlPort match {
+    case None => ""
+    case x: Some[Int] => ":" + x.get
+  }
   private lazy val baseUrl = scheme + "://" + host + embeddedUrlPortStr + "/"
   private lazy val scheme = config.as[Option[String]]("webservice.scheme").getOrElse("http")
   lazy val host = config.as[Option[String]]("webservice.host").getOrElse("localhost")
@@ -68,8 +73,8 @@ object AgoraConfig {
   lazy val kamonInstrumentation = config.as[Option[Boolean]]("kamon.instrumentation").getOrElse(true)
 
   // Mongo
-  lazy val mongoDbHost = config.as[Option[String]]("mongodb.host").getOrElse("localhost")
-  lazy val mongoDbPort = config.as[Option[Int]]("mongodb.port").getOrElse(27017)
+  lazy val mongoDbHosts = config.as[List[String]]("mongodb.hosts")
+  lazy val mongoDbPorts = config.as[List[Int]]("mongodb.ports")
   lazy val mongoDbUser = config.as[Option[String]]("mongodb.user")
   lazy val mongoDbPassword = config.as[Option[String]]("mongodb.password")
   lazy val mongoDbDatabase = config.as[Option[String]]("mongodb.db").getOrElse("agora")

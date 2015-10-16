@@ -11,7 +11,7 @@ object EmbeddedMongo extends MongoEmbedDatabase {
   def startMongo() = {
     println(s"Starting embedded mongo db instance.")
     if (mongodProps == null || !mongodProps.mongodProcess.isProcessRunning) {
-      mongodProps = mongoStart(port = AgoraConfig.mongoDbPort, version = Version.V2_7_1)
+      mongodProps = mongoStart(port = 27017, version = Version.V2_7_1)
     }
   }
 

@@ -39,7 +39,7 @@ class AgoraProjectionsSpec extends ApiServiceSpec {
   }
 
   "Agora" should "return only included fields in the entity" in {
-    Get(ApiUtil.Methods.withLeadingSlash + "?namespace=" + namespace1.get + "&name=" + name2.get + "&includedField=name&includedField=snapshotId") ~>
+    Get(ApiUtil.Methods.withLeadingVersion + "?namespace=" + namespace1.get + "&name=" + name2.get + "&includedField=name&includedField=snapshotId") ~>
       methodsService.queryRoute ~> check {
       handleError(
         entity.as[Seq[AgoraEntity]],
@@ -51,7 +51,7 @@ class AgoraProjectionsSpec extends ApiServiceSpec {
   }
 
   "Agora" should "not return excluded fields in the entity" in {
-    Get(ApiUtil.Methods.withLeadingSlash
+    Get(ApiUtil.Methods.withLeadingVersion
       + "?namespace=" + namespace1.get
       + "&name=" + name2.get
       + "&excludedField=synopsis&excludedField=documentation&excludedField=createDate&excludedField=payload") ~>
@@ -66,7 +66,7 @@ class AgoraProjectionsSpec extends ApiServiceSpec {
   }
 
   "Agora" should "reject the request if you specify required field as an excluded field" in {
-    Get(ApiUtil.Methods.withLeadingSlash
+    Get(ApiUtil.Methods.withLeadingVersion
       + "?namespace=" + namespace1.get
       + "&name=" + name2.get
       + "&excludedField=namespace&excludedField=snapshotId") ~>
@@ -78,7 +78,7 @@ class AgoraProjectionsSpec extends ApiServiceSpec {
   }
 
   "Agora" should "reject the request if you specify both excludedField and includedField" in {
-    Get(ApiUtil.Methods.withLeadingSlash
+    Get(ApiUtil.Methods.withLeadingVersion
       + "?namespace=" + namespace1.get
       + "&name=" + name2.get
       + "&excludedField=synopsis&includedField=documentation") ~>

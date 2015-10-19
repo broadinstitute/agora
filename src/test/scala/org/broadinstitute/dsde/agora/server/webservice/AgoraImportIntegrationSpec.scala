@@ -43,7 +43,7 @@ class AgoraImportIntegrationSpec extends FlatSpec with RouteTest with ScalatestR
   }
 
   "MethodsService" should "return a 201 when posting a WDL with a valid (extant) official docker image" in {
-    Post(ApiUtil.Methods.withLeadingSlash, testAgoraEntityWithValidOfficialDockerImageInWdl) ~>
+    Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntityWithValidOfficialDockerImageInWdl) ~>
       methodsService.postRoute ~> check {
       handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => {
         assert(entity.namespace === testAgoraEntityWithValidOfficialDockerImageInWdl.namespace)
@@ -60,7 +60,7 @@ class AgoraImportIntegrationSpec extends FlatSpec with RouteTest with ScalatestR
   }
 
   "MethodsService" should "return a 400 bad request when posting a WDL with an invalid official docker image (invalid/non-existent repo name)" in {
-    Post(ApiUtil.Methods.withLeadingSlash, testAgoraEntityWithInvalidOfficialDockerRepoNameInWdl) ~>
+    Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntityWithInvalidOfficialDockerRepoNameInWdl) ~>
       methodsService.postRoute ~> check {
       assert(status === BadRequest)
       assert(responseAs[String] != null)
@@ -68,7 +68,7 @@ class AgoraImportIntegrationSpec extends FlatSpec with RouteTest with ScalatestR
   }
 
   "MethodsService" should "return a 400 bad request when posting a WDL with an invalid official docker image (invalid/non-existent tag name)" in {
-    Post(ApiUtil.Methods.withLeadingSlash, testAgoraEntityWithInvalidOfficialDockerTagNameInWdl) ~>
+    Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntityWithInvalidOfficialDockerTagNameInWdl) ~>
       methodsService.postRoute ~> check {
       assert(status === BadRequest)
       assert(responseAs[String] != null)
@@ -76,7 +76,7 @@ class AgoraImportIntegrationSpec extends FlatSpec with RouteTest with ScalatestR
   }
 
   "MethodsService" should "return a 201 when posting a WDL with a valid (extant) personal docker image" in {
-    Post(ApiUtil.Methods.withLeadingSlash, testAgoraEntityWithValidPersonalDockerInWdl) ~>
+    Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntityWithValidPersonalDockerInWdl) ~>
       methodsService.postRoute ~> check {
       handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => {
         assert(entity.namespace === testAgoraEntityWithValidPersonalDockerInWdl.namespace)
@@ -93,7 +93,7 @@ class AgoraImportIntegrationSpec extends FlatSpec with RouteTest with ScalatestR
   }
 
   "MethodsService" should "return a 400 bad request when posting a WDL with an invalid personal docker image (invalid/non-existent user name)" in {
-    Post(ApiUtil.Methods.withLeadingSlash, testAgoraEntityWithInvalidPersonalDockerUserNameInWdl) ~>
+    Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntityWithInvalidPersonalDockerUserNameInWdl) ~>
       methodsService.postRoute ~> check {
       assert(status === BadRequest)
       assert(responseAs[String] != null)
@@ -101,7 +101,7 @@ class AgoraImportIntegrationSpec extends FlatSpec with RouteTest with ScalatestR
   }
 
   "MethodsService" should "return a 400 bad request when posting a WDL with an invalid personal docker image (invalid/non-existent repo name)" in {
-    Post(ApiUtil.Methods.withLeadingSlash, testAgoraEntityWithInvalidPersonalDockerRepoNameInWdl) ~>
+    Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntityWithInvalidPersonalDockerRepoNameInWdl) ~>
       methodsService.postRoute ~> check {
       assert(status === BadRequest)
       assert(responseAs[String] != null)
@@ -109,7 +109,7 @@ class AgoraImportIntegrationSpec extends FlatSpec with RouteTest with ScalatestR
   }
 
   "MethodsService" should "return a 400 bad request when posting a WDL with an invalid personal docker image (invalid/non-existent tag name)" in {
-    Post(ApiUtil.Methods.withLeadingSlash, testAgoraEntityWithInvalidPersonalDockerTagNameInWdl) ~>
+    Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntityWithInvalidPersonalDockerTagNameInWdl) ~>
       methodsService.postRoute ~> check {
       assert(status === BadRequest)
       assert(responseAs[String] != null)

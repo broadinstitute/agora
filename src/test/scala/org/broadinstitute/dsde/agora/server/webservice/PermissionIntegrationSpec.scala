@@ -38,7 +38,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
 
   "Agora" should "return namespace permissions. list for authorized users" in {
 
-    Get(ApiUtil.Methods.withLeadingSlash + "/" + agoraEntity1.namespace.get + "/" + "permissions") ~>
+    Get(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + "permissions") ~>
       methodsService.namespacePermissionsRoute ~>
       check {
         assert(status == OK)
@@ -48,7 +48,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
 
   "Agora" should "not return namespace permissions. list for unauthorized users" in {
 
-    Get(ApiUtil.Methods.withLeadingSlash + "/" + agoraEntity2.namespace.get + "/" + "permissions") ~>
+    Get(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity2.namespace.get + "/" + "permissions") ~>
       methodsService.namespacePermissionsRoute ~>
       check {
         assert(status == Unauthorized)
@@ -57,7 +57,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
 
   "Agora" should "allow authorized users to insert mutiple roles in a single namespace permissions." in {
 
-    Post(ApiUtil.Methods.withLeadingSlash + "/" + agoraEntity1.namespace.get + "/" + "permissions" +
+    Post(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + "permissions" +
       s"?user=$owner2&roles=Read,Create,Manage") ~>
       methodsService.namespacePermissionsRoute ~>
       check {
@@ -68,7 +68,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
 
   "Agora" should "not allow unauthorized users to insert a namespace permissions." in {
 
-    Post(ApiUtil.Methods.withLeadingSlash + "/" + agoraEntity2.namespace.get + "/" + "permissions" +
+    Post(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity2.namespace.get + "/" + "permissions" +
       s"?user=$owner2&roles=All") ~>
       methodsService.namespacePermissionsRoute ~>
       check {
@@ -78,7 +78,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
 
   "Agora" should "only allow authorized users to overwrite existing permissions." in {
 
-    Put(ApiUtil.Methods.withLeadingSlash + "/" + agoraEntity1.namespace.get + "/" + "permissions" +
+    Put(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + "permissions" +
       s"?user=$owner2&roles=Read") ~>
       methodsService.namespacePermissionsRoute ~>
       check {
@@ -89,7 +89,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
 
   "Agora" should "allow authorized users to delete an existing namespace permissions." in {
 
-    Delete(ApiUtil.Methods.withLeadingSlash + "/" + agoraEntity1.namespace.get + "/" + "permissions" +
+    Delete(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + "permissions" +
       s"?user=$owner2&roles=Read") ~>
       methodsService.namespacePermissionsRoute ~>
       check {
@@ -100,7 +100,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
 
   "Agora" should "not allow unauthorized users to delete an existing namespace permissions." in {
 
-    Delete(ApiUtil.Methods.withLeadingSlash + "/" + agoraEntity2.namespace.get + "/" + "permissions" +
+    Delete(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity2.namespace.get + "/" + "permissions" +
       s"?user=$owner2&roles=All") ~>
       methodsService.namespacePermissionsRoute ~>
       check {
@@ -111,7 +111,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
 
   "Agora" should "return entity permissions. list for authorized users" in {
 
-    Get(ApiUtil.Methods.withLeadingSlash + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
+    Get(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
         "/" + agoraEntity1.snapshotId.get + "/" + "permissions") ~>
       methodsService.entityPermissionsRoute ~>
       check {
@@ -122,7 +122,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
 
   "Agora" should "not return entity permissions. list for unauthorized users" in {
 
-    Get(ApiUtil.Methods.withLeadingSlash + "/" + agoraEntity2.namespace.get + "/" + agoraEntity2.name.get +
+    Get(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity2.namespace.get + "/" + agoraEntity2.name.get +
       "/" + agoraEntity2.snapshotId.get + "/" + "permissions") ~>
       methodsService.entityPermissionsRoute ~>
       check {
@@ -132,7 +132,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
 
   "Agora" should "allow authorized users to insert a entity permissions." in {
 
-    Post(ApiUtil.Methods.withLeadingSlash + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
+    Post(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
       "/" + agoraEntity1.snapshotId.get + "/" + "permissions" + s"?user=$owner2&roles=All") ~>
       methodsService.entityPermissionsRoute ~>
       check {
@@ -143,7 +143,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
 
   "Agora" should "not allow unauthorized users to insert a entity permissions." in {
 
-    Post(ApiUtil.Methods.withLeadingSlash + "/" + agoraEntity2.namespace.get + "/" + agoraEntity2.name.get +
+    Post(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity2.namespace.get + "/" + agoraEntity2.name.get +
       "/" + agoraEntity2.snapshotId.get + "/" + "permissions" + s"?user=$agoraTestOwner&roles=All") ~>
       methodsService.entityPermissionsRoute ~>
       check {
@@ -153,7 +153,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
 
   "Agora" should "allow authorized users to edit an existing entity permissions." in {
 
-    Put(ApiUtil.Methods.withLeadingSlash + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
+    Put(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
       "/" + agoraEntity1.snapshotId.get + "/" + "permissions" + s"?user=$owner2&roles=Read") ~>
       methodsService.entityPermissionsRoute ~>
       check {
@@ -164,7 +164,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
 
   "Agora" should "allow authorized users to delete an existing entity permissions." in {
 
-    Delete(ApiUtil.Methods.withLeadingSlash + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
+    Delete(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
       "/" + agoraEntity1.snapshotId.get + "/" + "permissions" + s"?user=$owner2&roles=All") ~>
       methodsService.entityPermissionsRoute ~>
       check {
@@ -175,7 +175,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
 
   "Agora" should "not allow unauthorized users to delete an existing entity permissions." in {
 
-    Delete(ApiUtil.Methods.withLeadingSlash + "/" + agoraEntity2.namespace.get + "/" + agoraEntity2.name.get +
+    Delete(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity2.namespace.get + "/" + agoraEntity2.name.get +
       "/" + agoraEntity2.snapshotId.get + "/" + "permissions" + s"?user=$owner2&roles=All") ~>
       methodsService.entityPermissionsRoute ~>
       check {

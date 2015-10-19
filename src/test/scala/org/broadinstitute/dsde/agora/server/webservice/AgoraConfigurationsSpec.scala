@@ -37,7 +37,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec {
   }
 
   "Agora" should "be able to store a task configuration" in {
-    Post(ApiUtil.Configurations.withLeadingSlash, testAgoraConfigurationEntity3) ~>
+    Post(ApiUtil.Configurations.withLeadingVersion, testAgoraConfigurationEntity3) ~>
       configurationsService.postRoute ~> check {
 
       val referencedMethod = AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(namespace1.get, name1.get, snapshotId1.get)
@@ -64,7 +64,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec {
   }
 
   "Agora" should "populate method references when returning configurations" in {
-    Get(ApiUtil.Configurations.withLeadingSlash) ~>
+    Get(ApiUtil.Configurations.withLeadingVersion) ~>
       configurationsService.queryRoute ~> check {
 
       handleError(entity.as[Seq[AgoraEntity]], (configs: Seq[AgoraEntity]) => {
@@ -114,7 +114,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec {
   "Agora" should "not allow you to post a new configuration if you don't have permission to read the method that it references" in {
     val noPermission = new AccessControl(AgoraConfig.mockAuthenticatedUserEmail, AgoraPermissions(AgoraPermissions.Nothing))
     AgoraEntityPermissionsClient.editEntityPermission(method1, noPermission)
-    Post(ApiUtil.Configurations.withLeadingSlash, testAgoraConfigurationEntity3) ~>
+    Post(ApiUtil.Configurations.withLeadingVersion, testAgoraConfigurationEntity3) ~>
       configurationsService.postRoute ~> check {
         assert(status === NotFound)
     }
@@ -127,14 +127,14 @@ class AgoraConfigurationsSpec extends ApiServiceSpec {
   }
   
   "Agora" should "not allow you to post a new task to the configurations route" in {
-    Post(ApiUtil.Configurations.withLeadingSlash, testEntityTaskWc) ~>
+    Post(ApiUtil.Configurations.withLeadingVersion, testEntityTaskWc) ~>
     configurationsService.postRoute ~> check {
       rejection === ValidationRejection
     }
   }
 
   "Agora" should "redact methods when it has at least 1 associated configuration" in {
-    Delete(ApiUtil.Methods.withLeadingSlash + "/" +
+    Delete(ApiUtil.Methods.withLeadingVersion + "/" +
       testEntityToBeRedacted2WithId.namespace.get + "/" +
       testEntityToBeRedacted2WithId.name.get + "/" +
       testEntityToBeRedacted2WithId.snapshotId.get) ~>
@@ -145,7 +145,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec {
   }
 
   "Agora" should "redact associated configurations when the referenced method is redacted" in {
-    Get(ApiUtil.Configurations.withLeadingSlash + "/" +
+    Get(ApiUtil.Configurations.withLeadingVersion + "/" +
       testAgoraConfigurationToBeRedactedWithId.namespace.get + "/" +
       testAgoraConfigurationToBeRedactedWithId.name.get + "/" +
       testAgoraConfigurationToBeRedactedWithId.snapshotId.get) ~>

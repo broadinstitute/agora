@@ -6,9 +6,11 @@ object ApiUtil {
   val Methods = new ServiceRoute(AgoraConfig.methodsRoute)
   val Configurations = new ServiceRoute(AgoraConfig.configurationsRoute)
 
+  val version = AgoraConfig.version
+
   class ServiceRoute(val path: String) {
-    def withLeadingSlash: String = {
-      "/" + path
+    def withLeadingVersion: String = {
+      "/api/" + version + "/" + path
     }
   }
 }

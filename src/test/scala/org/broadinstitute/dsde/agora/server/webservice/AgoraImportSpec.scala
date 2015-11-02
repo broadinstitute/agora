@@ -29,7 +29,7 @@ class AgoraImportSpec extends ApiServiceSpec {
   }
 
   "MethodsService" should "return a 400 bad request when posting a WDL with an invalid import statement" in {
-    Post(ApiUtil.Methods.withLeadingSlash, testBadAgoraEntityInvalidWdlImportFormat) ~>
+    Post(ApiUtil.Methods.withLeadingVersion, testBadAgoraEntityInvalidWdlImportFormat) ~>
       methodsService.postRoute ~> check {
       assert(status === BadRequest)
       assert(responseAs[String] != null)
@@ -37,7 +37,7 @@ class AgoraImportSpec extends ApiServiceSpec {
   }
 
   "MethodsService" should "return a 404 bad request when posting a WDL with an import statement that references a non-existent method" in {
-    Post(ApiUtil.Methods.withLeadingSlash, testBadAgoraEntityNonExistentWdlImportFormat) ~>
+    Post(ApiUtil.Methods.withLeadingVersion, testBadAgoraEntityNonExistentWdlImportFormat) ~>
       methodsService.postRoute ~> check {
       assert(status === NotFound)
       assert(responseAs[String] != null)
@@ -46,12 +46,12 @@ class AgoraImportSpec extends ApiServiceSpec {
 
   "MethodsService" should "create a method and return with a status of 201 when the WDL contains an import to an existent method" in {
     // Verifying that the pre-loaded task exists...
-    Get(ApiUtil.Methods.withLeadingSlash + "/" + testEntityTaskWcWithId.namespace.get + "/" + testEntityTaskWcWithId.name.get + "/"
+    Get(ApiUtil.Methods.withLeadingVersion + "/" + testEntityTaskWcWithId.namespace.get + "/" + testEntityTaskWcWithId.name.get + "/"
       + testEntityTaskWcWithId.snapshotId.get) ~> methodsService.querySingleRoute ~> check {
       handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => assert(brief(entity) === brief(testEntityTaskWcWithId)))
       assert(status === OK)
     }
-    Post(ApiUtil.Methods.withLeadingSlash, testEntityWorkflowWithExistentWdlImport) ~>
+    Post(ApiUtil.Methods.withLeadingVersion, testEntityWorkflowWithExistentWdlImport) ~>
       methodsService.postRoute ~> check {
       handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => {
         assert(entity.namespace === namespace1)

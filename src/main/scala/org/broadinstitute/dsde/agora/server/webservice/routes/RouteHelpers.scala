@@ -1,14 +1,14 @@
 package org.broadinstitute.dsde.agora.server.webservice.routes
 
 import akka.actor.Props
-import org.broadinstitute.dsde.agora.server.AgoraConfig.authenticationDirectives
+import org.broadinstitute.dsde.agora.server.AgoraConfig.{authenticationDirectives, version}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AccessControl
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraEntityPermissionsClient._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection, AgoraEntityType}
 import org.broadinstitute.dsde.agora.server.webservice.PerRequestCreator
-import org.broadinstitute.dsde.agora.server.webservice.handlers.PermissionHandler
 import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages._
-import spray.routing.{Directive0, Directives, RequestContext}
+import shapeless.HList
+import spray.routing._
 
 import scala.util.Try
 
@@ -28,12 +28,14 @@ trait BaseRoute extends PerRequestCreator with RouteUtil  {
     else
       throw new IllegalArgumentException("Missing params: user and/or role.")
   }
+
+  def versionedPath[L <: HList](pm: PathMatcher[L]): Directive[L] = path("api" / version / pm)
 }
 
 trait NamespacePermissionsRouteHelper extends BaseRoute {
 
   def matchNamespacePermissionsRoute(_path: String) =
-    path(_path / Segment / "permissions") &
+    versionedPath(_path / Segment / "permissions") &
     authenticationDirectives.usernameFromRequest()
 
   def completeNamespacePermissionsGet(context: RequestContext, entity: AgoraEntity, username: String, permissionsHandler: Props) = {
@@ -73,7 +75,7 @@ trait NamespacePermissionsRouteHelper extends BaseRoute {
 trait EntityPermissionsRouteHelper extends BaseRoute {
 
   def matchEntityPermissionsRoute(_path: String) =
-    path(_path / Segment / Segment / IntNumber / "permissions") &
+    versionedPath(_path / Segment / Segment / IntNumber / "permissions") &
     authenticationDirectives.usernameFromRequest()
 
   def completeEntityPermissionsGet(context: RequestContext, entity: AgoraEntity, username: String, permissionsHandler: Props) = {
@@ -113,7 +115,7 @@ trait EntityPermissionsRouteHelper extends BaseRoute {
 trait QuerySingleHelper extends BaseRoute {
 
   def matchQuerySingleRoute(_path: String) =
-    path(_path / Segment / Segment / IntNumber) &
+    versionedPath(_path / Segment / Segment / IntNumber) &
     authenticationDirectives.usernameFromRequest()
 
   def extractOnlyPayloadParameter = extract(_.request.uri.query.get("onlyPayload"))
@@ -149,7 +151,7 @@ trait QueryRouteHelper extends BaseRoute {
 
   def matchQueryRoute(_path: String) =
     get &
-    path(_path) &
+    versionedPath(_path) &
     authenticationDirectives.usernameFromRequest()
 
   def entityFromParams(params: Map[String, List[String]]): AgoraEntity = {
@@ -200,7 +202,7 @@ trait AddRouteHelper extends BaseRoute {
 
   def postPath(_path: String) =
   post &
-  path(_path) &
+  versionedPath(_path) &
   authenticationDirectives.usernameFromRequest()
 
   def validatePostRoute(entity: AgoraEntity, path: String): Directive0 = {

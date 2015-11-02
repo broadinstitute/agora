@@ -42,7 +42,7 @@ class AgoraMethodsSpec extends ApiServiceSpec {
   }
 
   "Agora" should "return information about a method, including metadata " in {
-    Get(ApiUtil.Methods.withLeadingSlash + "/" + namespace1.get + "/" + name1.get + "/"
+    Get(ApiUtil.Methods.withLeadingVersion + "/" + namespace1.get + "/" + name1.get + "/"
       + testEntity1WithId.snapshotId.get) ~> methodsService.querySingleRoute ~> check {
       handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => assert(entity === testEntity1WithId))
       assert(status === OK)
@@ -50,7 +50,7 @@ class AgoraMethodsSpec extends ApiServiceSpec {
   }
 
   "Agora" should "return only payload in plain/text when parameter is set " in {
-    Get(ApiUtil.Methods.withLeadingSlash + "/" + namespace1.get + "/" + name1.get + "/"
+    Get(ApiUtil.Methods.withLeadingVersion + "/" + namespace1.get + "/" + name1.get + "/"
       + testEntity1WithId.snapshotId.get + "?onlyPayload=true") ~> methodsService.querySingleRoute ~>
       check {
         assert(status === OK)
@@ -59,14 +59,14 @@ class AgoraMethodsSpec extends ApiServiceSpec {
   }
 
   "Agora" should "return status 404, mediaType json when nothing matches query by namespace, name, snapshotId" in {
-    Get(ApiUtil.Methods.withLeadingSlash + "/foofoofoofoo/foofoofoo/99999"
+    Get(ApiUtil.Methods.withLeadingVersion + "/foofoofoofoo/foofoofoo/99999"
     ) ~> methodsService.querySingleRoute ~> check {
       assert(status === NotFound)
     }
   }
 
   "Agora" should "return methods matching query by namespace and name" in {
-    Get(ApiUtil.Methods.withLeadingSlash + "?namespace=" + namespace1.get + "&name=" + name2.get) ~>
+    Get(ApiUtil.Methods.withLeadingVersion + "?namespace=" + namespace1.get + "&name=" + name2.get) ~>
       methodsService.queryRoute ~> check {
       handleError(
         entity.as[Seq[AgoraEntity]],
@@ -78,7 +78,7 @@ class AgoraMethodsSpec extends ApiServiceSpec {
   }
 
   "Agora" should "return methods matching query by synopsis and documentation" in {
-    Get(ApiUtil.Methods.withLeadingSlash + "?synopsis=" + uriEncode(synopsis1.get) + "&documentation=" +
+    Get(ApiUtil.Methods.withLeadingVersion + "?synopsis=" + uriEncode(synopsis1.get) + "&documentation=" +
       uriEncode(documentation1.get)) ~>
       methodsService.queryRoute ~>
       check {
@@ -93,7 +93,7 @@ class AgoraMethodsSpec extends ApiServiceSpec {
 
 
   "Agora" should "return methods matching query by owner and payload" in {
-    Get(ApiUtil.Methods.withLeadingSlash + "?owner=" + owner1.get + "&payload=" + uriEncode(payload1.get)) ~>
+    Get(ApiUtil.Methods.withLeadingVersion + "?owner=" + owner1.get + "&payload=" + uriEncode(payload1.get)) ~>
       methodsService.queryRoute ~>
       check {
         handleError(
@@ -105,7 +105,7 @@ class AgoraMethodsSpec extends ApiServiceSpec {
   }
 
   "Agora" should "create a method and return with a status of 201" in {
-    Post(ApiUtil.Methods.withLeadingSlash, testAgoraEntity) ~>
+    Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity) ~>
       methodsService.postRoute ~> check {
       handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => {
         assert(entity.namespace === namespace3)
@@ -122,7 +122,7 @@ class AgoraMethodsSpec extends ApiServiceSpec {
   }
 
   "Agora" should "return a 400 bad request when posting a malformed payload" in {
-    Post(ApiUtil.Methods.withLeadingSlash, testBadAgoraEntity) ~>
+    Post(ApiUtil.Methods.withLeadingVersion, testBadAgoraEntity) ~>
       methodsService.postRoute ~> check {
       assert(status === BadRequest)
       assert(responseAs[String] != null)
@@ -143,7 +143,7 @@ class AgoraMethodsSpec extends ApiServiceSpec {
       contentType = ContentType(`application/json`),
       string = entityJSON)
 
-    Post(ApiUtil.Methods.withLeadingSlash, entity) ~>
+    Post(ApiUtil.Methods.withLeadingVersion, entity) ~>
       wrapWithRejectionHandler {
         methodsService.postRoute
       } ~> check {
@@ -165,7 +165,7 @@ class AgoraMethodsSpec extends ApiServiceSpec {
       contentType = ContentType(`application/json`),
       string = entityJSON)
 
-    Post(ApiUtil.Methods.withLeadingSlash, entity) ~>
+    Post(ApiUtil.Methods.withLeadingVersion, entity) ~>
       wrapWithRejectionHandler {
         methodsService.postRoute
       } ~> check {
@@ -174,14 +174,14 @@ class AgoraMethodsSpec extends ApiServiceSpec {
   }
 
   "Agora" should "not allow you to post a new configuration to the methods route" in {
-    Post(ApiUtil.Methods.withLeadingSlash, testAgoraConfigurationEntity) ~>
+    Post(ApiUtil.Methods.withLeadingVersion, testAgoraConfigurationEntity) ~>
       methodsService.postRoute ~> check {
       rejection === ValidationRejection
     }
   }
 
   "Agora" should "allow method redaction" in {
-    Delete(ApiUtil.Methods.withLeadingSlash + "/" + testEntityToBeRedactedWithId.namespace.get + "/" +
+    Delete(ApiUtil.Methods.withLeadingVersion + "/" + testEntityToBeRedactedWithId.namespace.get + "/" +
       testEntityToBeRedactedWithId.name.get + "/" + testEntityToBeRedactedWithId.snapshotId.get) ~>
     methodsService.querySingleRoute ~> check {
       assert(body.asString === "1")
@@ -189,7 +189,7 @@ class AgoraMethodsSpec extends ApiServiceSpec {
   }
 
   "Agora" should "not allow redacted methods to be queried" in {
-    Get(ApiUtil.Methods.withLeadingSlash + "/" + testEntityToBeRedactedWithId.namespace.get + "/" +
+    Get(ApiUtil.Methods.withLeadingVersion + "/" + testEntityToBeRedactedWithId.namespace.get + "/" +
       testEntityToBeRedactedWithId.name.get + "/" + testEntityToBeRedactedWithId.snapshotId.get) ~>
       methodsService.querySingleRoute ~> check {
       assert(body.asString contains "not found")

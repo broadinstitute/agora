@@ -1,5 +1,6 @@
 package org.broadinstitute.dsde.agora.server
 
+import akka.actor.ActorSystem
 import org.broadinstitute.dsde.agora.server.business.{AgoraBusinessIntegrationSpec, AgoraBusinessTest}
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.MethodsDbTest
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
@@ -21,7 +22,8 @@ class AgoraTestSuite extends Suites(
   new NamespacePermissionsClientSpec,
   new AgoraBusinessIntegrationSpec,
   new AgoraImportIntegrationSpec,
-  new PermissionIntegrationSpec) with BeforeAndAfterAll with AgoraTestFixture {
+  new PermissionIntegrationSpec,
+  new AdminSweeperSpec(ActorSystem("test"))) with BeforeAndAfterAll with AgoraTestFixture {
 
   val agora = new Agora()
 

@@ -72,6 +72,7 @@ object AgoraConfig {
   lazy val webserviceInterface = config.as[Option[String]]("webservice.interface").getOrElse("0.0.0.0")
   lazy val supervisorLogging = config.as[Option[Boolean]]("supervisor.logging").getOrElse(true)
   lazy val kamonInstrumentation = config.as[Option[Boolean]]("kamon.instrumentation").getOrElse(true)
+  lazy val adminSweepInterval = config.as[Option[Int]]("admin.sweep.interval").getOrElse(15)
 
   // Mongo
   lazy val mongoDbHosts = config.as[List[String]]("mongodb.hosts")
@@ -85,8 +86,10 @@ object AgoraConfig {
 
   // Google Credentials
   lazy val gcsProjectId = config.as[String]("gcs.project.id")
-  lazy val gcsServiceAccountUserEmail = config.as[String]("gcs.service.account.email")
-  lazy val gcServiceAccountP12KeyFile = config.as[String]("gcs.service.account.p12.key.file")
+  lazy val gcsServiceAccountEmail = config.as[String]("gcs.service.account.email")
+  lazy val gcsServiceAccountP12KeyFile = config.as[String]("gcs.service.account.p12.key.file")
+  lazy val gcsUserEmail = config.as[String]("gcs.user.email")
+  lazy val adminGoogleGroup = config.as[Option[String]]("admin.google.group")
 
   //Config Settings
   object SwaggerConfig {

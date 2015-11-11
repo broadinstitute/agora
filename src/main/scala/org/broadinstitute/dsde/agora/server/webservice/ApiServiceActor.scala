@@ -1,15 +1,20 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
-import akka.actor.Props
+import akka.actor.SupervisorStrategy.Restart
+import akka.actor.{OneForOneStrategy, Props}
 import com.gettyimages.spray.swagger.SwaggerHttpService
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import com.wordnik.swagger.model.ApiInfo
 import org.broadinstitute.dsde.agora.server.AgoraConfig
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AdminSweeper
+import AdminSweeper.Sweep
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AdminSweeper
 import org.broadinstitute.dsde.agora.server.webservice.configurations.ConfigurationsService
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
 import spray.http.StatusCodes._
 import spray.routing._
 import spray.util.LoggingContext
+import scala.concurrent.duration._
 
 import scala.reflect.runtime.universe._
 
@@ -23,6 +28,28 @@ class ApiServiceActor extends HttpServiceActor with LazyLogging {
 
   trait ActorRefFactoryContext {
     def actorRefFactory = context
+  }
+
+  override val supervisorStrategy =
+    OneForOneStrategy(loggingEnabled = AgoraConfig.supervisorLogging) {
+      case e: Throwable =>
+        logger.error("ApiServiceActor child threw exception. Child will be restarted\n" + e.getMessage)
+        Restart
+    }
+
+  /**
+   * Firecloud system maintains it's set of admins as a google group.
+   *
+   * If such a group is specified in config, poll it at regular intervals
+   *   to synchronize the admins defined in our users table
+   */
+  AgoraConfig.adminGoogleGroup match {
+    case Some(group) =>
+      import context.dispatcher
+      val adminSweeper = actorRefFactory.actorOf(AdminSweeper.props(AdminSweeper.adminsGoogleGroupPoller))
+      val adminScheduler =
+        context.system.scheduler.schedule(5 seconds, AgoraConfig.adminSweepInterval minutes, adminSweeper, Sweep)
+    case None =>
   }
 
   val methodsService = new MethodsService() with ActorRefFactoryContext

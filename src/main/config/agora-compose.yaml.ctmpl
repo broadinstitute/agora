@@ -5,14 +5,14 @@
 app:
   image: {{.Data.app_image}}
   {{.Data.app_dns}}
-  log_driver: {{.Data.log_driver}}
+  log_driver: "{{.Data.log_driver}}"
   {{.Data.app_volumes}}
 proxy:
   extends:
     file: proxy-compose.yaml
     service: proxy
   hostname: {{.Data.proxy_hostname}}
-  log_driver: {{.Data.log_driver}}
+  log_driver: "{{.Data.log_driver}}"
   links:
     - app:app
   environment:

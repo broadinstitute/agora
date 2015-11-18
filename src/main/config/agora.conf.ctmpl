@@ -5,40 +5,40 @@ webservice.interface = {{.Data.webservice_interface}}
 webservice.host = {{.Data.webservice_host}}
 webservice.schema = {{.Data.webservice_schema}}
 
-instance.name = {{.Data.instance_name}}
+instance.name = "{{.Data.instance_name}}"
 mongodb.hosts = {{.Data.mongodb_hosts}}
 mongodb.ports = {{.Data.mongodb_ports}}
-mongodb.user = {{.Data.mongodb_user}}
-mongodb.password = {{.Data.mongodb_password}}
-mongodb.db = {{.Data.mongodb_db}}
+mongodb.user = "{{.Data.mongodb_user}}"
+mongodb.password = "{{.Data.mongodb_password}}"
+mongodb.db = "{{.Data.mongodb_db}}"
 
-environment = {{.Data.environment}}
-mockAuthenticatedUserEmail = {{.Data.mock_authenticated_user_email}}
+environment = "{{.Data.environment}}"
+mockAuthenticatedUserEmail = "{{.Data.mock_authenticated_user_email}}"
 
 swagger {
-  apiDocs = {{.Data.swagger_api_docs}}
-  apiVersion = {{.Data.swagger_api_version}}
-  baseUrl = {{.Data.swagger_base_url}}
-  contact = {{.Data.swagger_contact}}
-  description = {{.Data.swagger_description}}
-  info = {{.Data.swagger_info}}
-  license = {{.Data.swagger_license}}
-  licenseUrl = {{.Data.swagger_license_url}}
-  swaggerVersion = {{.Data.swagger_version}}
-  termsOfServiceUrl = {{.Data.terms_of_service_url}}
+  apiDocs = "{{.Data.swagger_api_docs}}"
+  apiVersion = "{{.Data.swagger_api_version}}"
+  baseUrl = "{{.Data.swagger_base_url}}"
+  contact = "{{.Data.swagger_contact}}"
+  description = "{{.Data.swagger_description}}"
+  info = "{{.Data.swagger_info}}"
+  license = "{{.Data.swagger_license}}"
+  licenseUrl = "{{.Data.swagger_license_url}}"
+  swaggerVersion = "{{.Data.swagger_version}}"
+  termsOfServiceUrl = "{{.Data.terms_of_service_url}}"
 }
 
-gcs.project.id = {{.Data.gcs_project_id}}
-gcs.service.account.email = {{.Data.gcs_service_account_email}}
-gcs.service.account.p12.key.file = {{.Data.gcs_service_account_p12_key_file}}
-gcs.user.email = {{.Data.gcs_user_email}}
-admin.google.group = {{.Data.gcs_admin_google_group}}
+gcs.project.id = "{{.Data.gcs_project_id}}"
+gcs.service.account.email = "{{.Data.gcs_service_account_email}}"
+gcs.service.account.p12.key.file = "{{.Data.gcs_service_account_p12_key_file}}"
+gcs.user.email = "{{.Data.gcs_user_email}}"
+admin.google.group = "{{.Data.gcs_admin_google_group}}"
 
 sqlDatabase = {
-  url = {{.Data.sql_url}}
-  driver = {{.Data.sql_driver}}
-  user = {{.Data.sql_user}}
-  password = {{.Data.sql_password}}
+  url = "{{.Data.sql_url}}"
+  driver = "{{.Data.sql_driver}}"
+  user = "{{.Data.sql_user}}"
+  password = "{{.Data.sql_password}}"
 }
 
 kamon.instrumentation = {{.Data.kamon_instrumentation}}
@@ -74,7 +74,7 @@ kamon {
 
     # Hostname and port in which your StatsD is running. Remember that StatsD packets are sent using UDP and
     # setting unreachable hosts and/or not open ports wont be warned by the Kamon, your data wont go anywhere.
-    hostname = {{.Data.kamon_dashboard_hostname}}
+    hostname = "{{.Data.kamon_dashboard_hostname}}"
     port = {{.Data.kamon_dashboard_port}}
 
     # Interval between metrics data flushes to StatsD. It's value must be equal or greater than the
@@ -109,7 +109,7 @@ kamon {
       # Application prefix for all metrics pushed to StatsD. The default namespacing scheme for metrics follows
       # this pattern:
       #    application.host.entity.entity-name.metric-name
-      application = {{.Data.kamon_application}}
+      application = "{{.Data.kamon_application}}"
 
       # Includes the name of the hostname in the generated metric. When set to false, the scheme for the metrics
       # will look as follows:
@@ -119,7 +119,7 @@ kamon {
       # Allow users to override the name of the hostname reported by kamon. When changed, the scheme for the metrics
       # will have the following pattern:
       #   application.hostname-override-value.entity.entity-name.metric-name
-      hostname-override = {{.Data.kamon_hostname_override}}
+      hostname-override = "{{.Data.kamon_hostname_override}}"
 
       # When the sections that make up the metric names have special characters like dots (very common in dispatcher
       # names) or forward slashes (all actor metrics) we need to sanitize those values before sending them to StatsD
@@ -136,7 +136,7 @@ kamon {
     kamon-statsd {
       auto-start = {{.Data.kamon_auto_start}}
       requires-aspectj = {{.Data.kamon_requires_aspectj}}
-      extension-id = {{.Data.kamon_extension_id}}
+      extension-id = "{{.Data.kamon_extension_id}}"
     }
   }
 }

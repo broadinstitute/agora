@@ -32,6 +32,44 @@ trait PermissionsClient {
     user.isAdmin
   }
 
+  def listAdmins(): Seq[String] = {
+    val adminsQuery = for {
+      user <- users if user.is_admin === true
+    } yield user.email
+
+    try {
+      Await.result(db.run(adminsQuery.result), timeout)
+    } catch {
+      case ex: Throwable =>
+        throw new PermissionNotFoundException(ex.getMessage, ex)
+    }
+  }
+
+  def updateAdmin(userEmail: String, adminStatus: Boolean) = {
+    addUserIfNotInDatabase(userEmail)
+
+    // construct update action
+    val adminsUpdateAction = for {
+      user <- users
+        .filter(_.email === userEmail)
+        .map(_.is_admin)
+        .update(adminStatus)
+    } yield user
+
+    // run update action
+    try {
+      val rowsEdited = Await.result(db.run(adminsUpdateAction), timeout)
+
+      if (rowsEdited == 0)
+        throw new Exception("No rows were edited.")
+      else
+        rowsEdited
+
+    } catch {
+      case ex: Throwable => throw new PermissionNotFoundException(s"Could not make user ${userEmail} admin", ex)
+    }
+  }
+
   // Entities
   def addEntity(entity: AgoraEntity): Future[Int] =
     Await.ready(db.run(entities += EntityDao(alias(entity))), timeout)

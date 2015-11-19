@@ -1,7 +1,7 @@
 
 package org.broadinstitute.dsde.agora.server.dataaccess.permissions
 
-import org.broadinstitute.dsde.agora.server.AgoraTestFixture
+import org.broadinstitute.dsde.agora.server.{AgoraTestData, AgoraTestFixture}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.webservice.ApiServiceSpec
 import org.scalatest.{BeforeAndAfterAll, DoNotDiscover}
@@ -68,5 +68,26 @@ class AgoraPermissionsSpec extends ApiServiceSpec with BeforeAndAfterAll with Ag
     assert(newAuthorization.canRedact === false)
     assert(newAuthorization.canCreate === true)
     assert(newAuthorization.canManage === false)
+  }
+
+  "Agora" should "be able to list admins" in {
+    addAdminUser()
+    val adminUsers = AdminPermissionsClient.listAdminUsers
+    assert(adminUsers.length === 1)
+    assert(adminUsers.head === AgoraTestData.adminUser.get)
+  }
+
+  "Agora" should "be able to update the admin status of a user" in {
+    val adminUser = AgoraTestData.adminUser.get
+
+    // Set adminUsers's admin status false
+    AdminPermissionsClient.updateAdmin(adminUser, false)
+    var adminUsers = AdminPermissionsClient.listAdminUsers
+    assert(adminUsers.length === 0)
+
+    // Set adminUsers's admin status true
+    AdminPermissionsClient.updateAdmin(adminUser, true)
+    adminUsers = AdminPermissionsClient.listAdminUsers
+    assert(adminUsers.length === 1)
   }
 }

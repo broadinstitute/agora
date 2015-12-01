@@ -87,7 +87,7 @@ object AgoraConfig {
   // Google Credentials
   lazy val gcsProjectId = config.as[String]("gcs.project.id")
   lazy val gcsServiceAccountEmail = config.as[String]("gcs.service.account.email")
-  lazy val gcsServiceAccountP12KeyFile = config.as[String]("gcs.service.account.p12.key.file")
+  lazy val gcsServiceAccountPemFile = config.as[String]("gcs.service.account.pem.file")
   lazy val gcsUserEmail = config.as[String]("gcs.user.email")
   lazy val adminGoogleGroup = config.as[Option[String]]("admin.google.group")
 

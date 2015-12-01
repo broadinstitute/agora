@@ -30,7 +30,7 @@ swagger {
 
 gcs.project.id = "{{.Data.gcs_project_id}}"
 gcs.service.account.email = "{{.Data.gcs_service_account_email}}"
-gcs.service.account.p12.key.file = "{{.Data.gcs_service_account_p12_key_file}}"
+gcs.service.account.pem.file = "{{.Data.gcs_service_account_pem_file}}"
 gcs.user.email = "{{.Data.gcs_user_email}}"
 admin.google.group = "{{.Data.gcs_admin_google_group}}"
 

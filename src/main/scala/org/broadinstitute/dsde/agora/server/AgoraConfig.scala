@@ -15,44 +15,22 @@ object AgoraConfig {
 
   // Environments
   val LocalEnvironment = "local"
-  val DevEnvironment = "dev"
-  val StagingEnvironment = "staging"
-  val ProdEnvironment = "prod"
-
-  val Environments = List[String](LocalEnvironment, DevEnvironment, StagingEnvironment, ProdEnvironment)
-
-  lazy val environment = config.as[Option[String]]("environment").getOrElse(LocalEnvironment)
-  if (!Environments.contains(AgoraConfig.environment))
-    throw new IllegalArgumentException("Illegal environment '" + AgoraConfig.environment + "' specified.")
 
   var authenticationDirectives: AgoraDirectives = _
   var usesEmbeddedMongo: Boolean = _
   lazy val mockAuthenticatedUserEmail = config.as[Option[String]]("mockAuthenticatedUserEmail").getOrElse("noone@broadinstitute.org")
 
-  // Local
-  if (environment.equals(LocalEnvironment)) {
-    authenticationDirectives = MockAgoraDirectives
-    usesEmbeddedMongo = true
+  val environment = config.as[Option[String]]("environment")
+  environment match {
+    case Some(env) if env == LocalEnvironment => {
+      authenticationDirectives = MockAgoraDirectives
+      usesEmbeddedMongo = true
+    }
+    case _ => {
+      authenticationDirectives = OpenIdConnectDirectives
+      usesEmbeddedMongo = false
+    }
   }
-
-  // Dev
-  if (environment.equals(DevEnvironment)) {
-    authenticationDirectives = OpenIdConnectDirectives
-    usesEmbeddedMongo = false
-  }
-
-  // Staging
-  if (environment.equals(StagingEnvironment)) {
-    authenticationDirectives = OpenIdConnectDirectives
-    usesEmbeddedMongo = false
-  }
-
-  // Prod
-  if (environment.equals(ProdEnvironment)) {
-    authenticationDirectives = OpenIdConnectDirectives
-    usesEmbeddedMongo = false
-  }
-
 
   // Agora
   private lazy val embeddedUrlPort = config.as[Option[Int]]("embeddedUrl.port")

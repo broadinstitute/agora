@@ -26,6 +26,8 @@ object AgoraTestData {
   val synopsis3 = Option("This is a test configuration")
   val documentation1 = Option("This is the documentation")
   val documentation2 = Option("This is documentation for another method")
+  val taskNamespace2 = Option("taskNamespace2")
+  val taskName2 = Option("taskName2")
 
   val badNamespace = Option("    ")
   val badName = Option("   ")
@@ -244,6 +246,30 @@ object AgoraTestData {
                                       |  "namespace": "ns"
                                       |}""".stripMargin)
 
+  val badConfigPayloadReferencesTask = Option( s"""{
+                                      |  "methodRepoMethod": {
+                                      |    "methodNamespace": "${taskNamespace2.get}",
+                                      |    "methodName": "${taskName2.get}",
+                                      |    "methodVersion": 1
+                                      |  },
+                                      |  "name": "first",
+                                      |  "workspaceName": {
+                                      |    "namespace": "foo",
+                                      |    "name": "bar"
+                                      |  },
+                                      |  "outputs": {
+                                      |
+                                      |  },
+                                      |  "inputs": {
+                                      |    "p": "hi"
+                                      |  },
+                                      |  "rootEntityType": "sample",
+                                      |  "prerequisites": {
+                                      |
+                                      |  },
+                                      |  "namespace": "ns"
+                                      |}""".stripMargin)
+
   val payloadWithValidOfficialDockerImageInWdl = Option( """
                                     |task wc {
                                     |  Array[File]+ files
@@ -351,7 +377,7 @@ object AgoraTestData {
                                                                 |  }
                                                                 |}
                                                                 | """.stripMargin)
-  val testEntity1 = AgoraEntity(namespace = namespace1,
+  val testWorkflow1 = AgoraEntity(namespace = namespace1,
     name = name1,
     synopsis = synopsis1,
     documentation = documentation1,
@@ -359,7 +385,7 @@ object AgoraTestData {
     payload = payload1,
     entityType = Option(AgoraEntityType.Workflow))
 
-  val testEntity2 = AgoraEntity(namespace = namespace2,
+  val testWorkflow2 = AgoraEntity(namespace = namespace2,
     name = name1,
     synopsis = synopsis1,
     documentation = documentation1,
@@ -367,7 +393,7 @@ object AgoraTestData {
     payload = payload1,
     entityType = Option(AgoraEntityType.Workflow))
 
-  val testEntity3 = AgoraEntity(namespace = namespace1,
+  val testWorkflow3 = AgoraEntity(namespace = namespace1,
     name = name2,
     synopsis = synopsis1,
     documentation = documentation1,
@@ -375,7 +401,7 @@ object AgoraTestData {
     payload = payload1,
     entityType = Option(AgoraEntityType.Workflow))
 
-  val testEntity4 = AgoraEntity(namespace = namespace1,
+  val testWorkflow4 = AgoraEntity(namespace = namespace1,
     name = name2,
     synopsis = synopsis2,
     documentation = documentation1,
@@ -383,7 +409,7 @@ object AgoraTestData {
     payload = payload1,
     entityType = Option(AgoraEntityType.Workflow))
 
-  val testEntity5 = AgoraEntity(namespace = namespace1,
+  val testWorkflow5 = AgoraEntity(namespace = namespace1,
     name = name2,
     synopsis = synopsis1,
     documentation = documentation2,
@@ -391,7 +417,7 @@ object AgoraTestData {
     payload = payload1,
     entityType = Option(AgoraEntityType.Workflow))
 
-  val testEntity6 = AgoraEntity(namespace = namespace1,
+  val testWorkflow6 = AgoraEntity(namespace = namespace1,
     name = name2,
     synopsis = synopsis1,
     documentation = documentation1,
@@ -399,7 +425,17 @@ object AgoraTestData {
     payload = payload1,
     entityType = Option(AgoraEntityType.Workflow))
 
-  val testEntity7 = AgoraEntity(namespace = namespace1,
+  val testWorkflow7 = new AgoraEntity(
+    namespace = namespace3,
+    name = name1,
+    synopsis = synopsis1,
+    documentation = documentation1,
+    owner = owner1,
+    payload = payload1,
+    entityType = Option(AgoraEntityType.Workflow)
+  )
+
+  val testTask1 = AgoraEntity(namespace = namespace1,
     name = name2,
     synopsis = synopsis1,
     documentation = documentation1,
@@ -407,7 +443,17 @@ object AgoraTestData {
     payload = payload2,
     entityType = Option(AgoraEntityType.Task))
 
-  val testEntityToBeRedacted = AgoraEntity(namespace = namespace1,
+  val testTask2 = new AgoraEntity(
+    namespace = taskNamespace2,
+    name = taskName2,
+    synopsis = synopsis1,
+    documentation = documentation1,
+    owner = mockAutheticatedOwner,
+    payload = payload2,
+    entityType = Option(AgoraEntityType.Task)
+  )
+
+  val testTaskToBeRedacted1 = AgoraEntity(namespace = namespace1,
     name = name3,
     synopsis = synopsis2,
     documentation = documentation1,
@@ -416,16 +462,7 @@ object AgoraTestData {
     entityType = Option(AgoraEntityType.Task)
   )
 
-  val testEntityToBeRedacted2 = AgoraEntity(namespace = namespace3,
-    name = name3,
-    synopsis = synopsis2,
-    documentation = documentation1,
-    owner = owner1,
-    payload = payload2,
-    entityType = Option(AgoraEntityType.Task)
-  )
-
-  val testEntityToBeRedacted3 = AgoraEntity(namespace = namespace3,
+  val testTaskToBeRedacted2 = AgoraEntity(namespace = namespace3,
     name = name4,
     synopsis = synopsis2,
     documentation = documentation1,
@@ -434,7 +471,16 @@ object AgoraTestData {
     entityType = Option(AgoraEntityType.Task)
   )
 
-  val testEntityWithPublicPermissions = AgoraEntity(namespace = namespace1,
+  val testWorkflowToBeRedacted = AgoraEntity(namespace = namespace3,
+    name = name3,
+    synopsis = synopsis2,
+    documentation = documentation1,
+    owner = owner1,
+    payload = payload1,
+    entityType = Option(AgoraEntityType.Workflow)
+  )
+
+  val testTaskWithPublicPermissions = AgoraEntity(namespace = namespace1,
     name = name4,
     synopsis = synopsis2,
     documentation = documentation1,
@@ -452,17 +498,7 @@ object AgoraTestData {
     entityType = Option(AgoraEntityType.Task)
   )
 
-  val testAgoraEntity = new AgoraEntity(
-    namespace = namespace3,
-    name = name1,
-    synopsis = synopsis1,
-    documentation = documentation1,
-    owner = owner1,
-    payload = payload1,
-    entityType = Option(AgoraEntityType.Workflow)
-  )
-
-  val testBadAgoraEntity = new AgoraEntity(
+  val testBadAgoraTask = new AgoraEntity(
     namespace = namespace1,
     name = name1,
     synopsis = synopsis1,
@@ -472,7 +508,7 @@ object AgoraTestData {
     entityType = Option(AgoraEntityType.Task)
   )
 
-  val testBadAgoraEntityInvalidWdlImportFormat = new AgoraEntity(
+  val testBadWorkflowInvalidWdlImportFormat = new AgoraEntity(
     namespace = namespace1,
     name = name1,
     synopsis = synopsis1,
@@ -482,7 +518,7 @@ object AgoraTestData {
     entityType = Option(AgoraEntityType.Workflow)
   )
 
-  val testBadAgoraEntityNonExistentWdlImportFormat = new AgoraEntity(
+  val testBadWorkflowNonExistentWdlImportFormat = new AgoraEntity(
     namespace = namespace1,
     name = name1,
     synopsis = synopsis1,
@@ -492,7 +528,7 @@ object AgoraTestData {
     entityType = Option(AgoraEntityType.Workflow)
   )
 
-  val testAgoraEntityWithInvalidOfficialDockerImageInWdl = new AgoraEntity(namespace = namespace1,
+  val testTaskWithInvalidOfficialDockerImageInWdl = new AgoraEntity(namespace = namespace1,
     name = name1,
     synopsis = synopsis1,
     documentation = documentation1,
@@ -501,7 +537,7 @@ object AgoraTestData {
     entityType = Option(AgoraEntityType.Task)
   )
 
-  val testEntityWorkflowWithExistentWdlImport = new AgoraEntity(
+  val testWorkflowWithExistentWdlImport = new AgoraEntity(
     namespace = namespace1,
     name = name1,
     synopsis = synopsis1,
@@ -511,7 +547,7 @@ object AgoraTestData {
     entityType = Option(AgoraEntityType.Workflow)
   )
 
-  val testAgoraEntityNonExistent = new AgoraEntity(
+  val testNonExistentWorkflow = new AgoraEntity(
     namespace = namespace1,
     name = nameNonExistent,
     synopsis = synopsis1,
@@ -521,7 +557,7 @@ object AgoraTestData {
     entityType = Option(AgoraEntityType.Workflow)
   )
 
-  val testAgoraConfigurationEntity = new AgoraEntity(
+  val testConfig1 = new AgoraEntity(
     namespace = namespace1,
     name = name1,
     synopsis = synopsis3,
@@ -531,7 +567,7 @@ object AgoraTestData {
     entityType = Option(AgoraEntityType.Configuration)
   )
 
-  val testAgoraConfigurationEntity2 = new AgoraEntity(
+  val testConfig2 = new AgoraEntity(
     namespace = namespace3,
     name = name2,
     synopsis = synopsis3,
@@ -541,9 +577,11 @@ object AgoraTestData {
     entityType = Option(AgoraEntityType.Configuration)
   )
 
-  val testAgoraConfigurationEntity3 = new AgoraEntity(
-    namespace = namespace2,
-    name = name1,
+  val config3Namespace = Option("config3Namespace")
+  val config3Name = Option("config3Name")
+  val testConfig3 = new AgoraEntity(
+    namespace = config3Namespace,
+    name = config3Name,
     synopsis = synopsis3,
     documentation = documentation1,
     owner = owner1,
@@ -551,7 +589,7 @@ object AgoraTestData {
     entityType = Option(AgoraEntityType.Configuration)
   )
 
-  val testAgoraConfigurationToBeRedacted = new AgoraEntity(
+  val testConfigToBeRedacted = new AgoraEntity(
     namespace = namespace3,
     name = name3,
     synopsis = synopsis3,
@@ -561,7 +599,19 @@ object AgoraTestData {
     entityType = Option(AgoraEntityType.Configuration)
   )
 
-  val testIntegrationEntity = AgoraEntity(namespace = Option("___test1"),
+  val testBadConfigNamespace = Option("badConfigNamespace")
+  val testBadConfigName = Option("badConfigName")
+  val testBadConfigReferencesTask = new AgoraEntity(
+    namespace = testBadConfigNamespace,
+    name = testBadConfigName,
+    synopsis = synopsis3,
+    documentation = documentation1,
+    owner = owner1,
+    payload = badConfigPayloadReferencesTask,
+    entityType = Option(AgoraEntityType.Configuration)
+  )
+
+  val testIntegrationWorkflow = AgoraEntity(namespace = Option("___test1"),
     name = Option("testWorkflow"),
     synopsis = synopsis1,
     documentation = documentation1,
@@ -569,7 +619,7 @@ object AgoraTestData {
     payload = payload1,
     entityType = Option(AgoraEntityType.Workflow))
 
-  val testIntegrationEntity2 = AgoraEntity(namespace = Option("___test2"),
+  val testIntegrationWorkflow2 = AgoraEntity(namespace = Option("___test2"),
     name = Option("testWorkflow"),
     synopsis = synopsis1,
     documentation = documentation1,
@@ -577,7 +627,7 @@ object AgoraTestData {
     payload = payload1,
     entityType = Option(AgoraEntityType.Workflow))
 
-  val testAgoraEntityWithValidOfficialDockerImageInWdl = new AgoraEntity(namespace = Option("___docker_test"),
+  val testTaskWithValidOfficialDockerImageInWdl = new AgoraEntity(namespace = Option("___docker_test"),
     name = name1,
     synopsis = synopsis1,
     documentation = documentation1,
@@ -586,7 +636,7 @@ object AgoraTestData {
     entityType = Option(AgoraEntityType.Task)
   )
 
-  val testAgoraEntityWithInvalidOfficialDockerRepoNameInWdl = new AgoraEntity(namespace = Option("___docker_test"),
+  val testTaskWithInvalidOfficialDockerRepoNameInWdl = new AgoraEntity(namespace = Option("___docker_test"),
     name = name1,
     synopsis = synopsis1,
     documentation = documentation1,
@@ -595,7 +645,7 @@ object AgoraTestData {
     entityType = Option(AgoraEntityType.Task)
   )
 
-  val testAgoraEntityWithInvalidOfficialDockerTagNameInWdl = new AgoraEntity(namespace = Option("___docker_test"),
+  val testTaskWithInvalidOfficialDockerTagNameInWdl = new AgoraEntity(namespace = Option("___docker_test"),
     name = name1,
     synopsis = synopsis1,
     documentation = documentation1,
@@ -604,7 +654,7 @@ object AgoraTestData {
     entityType = Option(AgoraEntityType.Task)
   )
 
-  val testAgoraEntityWithValidPersonalDockerInWdl = new AgoraEntity(namespace = Option("___docker_test"),
+  val testTaskWithValidPersonalDockerInWdl = new AgoraEntity(namespace = Option("___docker_test"),
     name = name1,
     synopsis = synopsis1,
     documentation = documentation1,
@@ -613,7 +663,7 @@ object AgoraTestData {
     entityType = Option(AgoraEntityType.Task)
   )
 
-  val testAgoraEntityWithInvalidPersonalDockerUserNameInWdl = new AgoraEntity(namespace = Option("___docker_test"),
+  val testTaskWithInvalidPersonalDockerUserNameInWdl = new AgoraEntity(namespace = Option("___docker_test"),
     name = name1,
     synopsis = synopsis1,
     documentation = documentation1,
@@ -622,7 +672,7 @@ object AgoraTestData {
     entityType = Option(AgoraEntityType.Task)
   )
 
-  val testAgoraEntityWithInvalidPersonalDockerRepoNameInWdl = new AgoraEntity(namespace = Option("___docker_test"),
+  val testTaskWithInvalidPersonalDockerRepoNameInWdl = new AgoraEntity(namespace = Option("___docker_test"),
     name = name1,
     synopsis = synopsis1,
     documentation = documentation1,
@@ -631,7 +681,7 @@ object AgoraTestData {
     entityType = Option(AgoraEntityType.Task)
   )
 
-  val testAgoraEntityWithInvalidPersonalDockerTagNameInWdl = new AgoraEntity(namespace = Option("___docker_test"),
+  val testTaskWithInvalidPersonalDockerTagNameInWdl = new AgoraEntity(namespace = Option("___docker_test"),
     name = name1,
     synopsis = synopsis1,
     documentation = documentation1,
@@ -639,22 +689,4 @@ object AgoraTestData {
     payload = payloadWithInvalidPersonalDockerTagNameInWdl,
     entityType = Option(AgoraEntityType.Task)
   )
-
-  def populateDatabase(agoraBusiness: AgoraBusiness) = {
-    agoraBusiness.insert(testEntity1, mockAutheticatedOwner.get)
-    agoraBusiness.insert(testEntity2, mockAutheticatedOwner.get)
-    agoraBusiness.insert(testEntity3, mockAutheticatedOwner.get)
-    agoraBusiness.insert(testEntity4, mockAutheticatedOwner.get)
-    agoraBusiness.insert(testEntity5, mockAutheticatedOwner.get)
-    agoraBusiness.insert(testEntity6, mockAutheticatedOwner.get)
-    agoraBusiness.insert(testEntity7, mockAutheticatedOwner.get)
-    agoraBusiness.insert(testEntityTaskWc, mockAutheticatedOwner.get)
-    agoraBusiness.insert(testAgoraConfigurationEntity, mockAutheticatedOwner.get)
-    agoraBusiness.insert(testAgoraConfigurationEntity2, mockAutheticatedOwner.get)
-    agoraBusiness.insert(testEntityToBeRedacted, mockAutheticatedOwner.get)
-    agoraBusiness.insert(testEntityToBeRedacted2, mockAutheticatedOwner.get)
-    agoraBusiness.insert(testEntityToBeRedacted3, mockAutheticatedOwner.get)
-    agoraBusiness.insert(testAgoraConfigurationToBeRedacted, mockAutheticatedOwner.get)
-  }
-
 }

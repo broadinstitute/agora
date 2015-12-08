@@ -15,7 +15,7 @@ class AgoraBusinessTest extends FlatSpec with Matchers with BeforeAndAfterAll wi
 
   override protected def beforeAll() = {
     ensureDatabasesAreRunning()
-    agoraBusiness.insert(testEntityToBeRedacted3, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testTaskToBeRedacted2, mockAutheticatedOwner.get)
   }
 
   override protected def afterAll() = {
@@ -37,7 +37,7 @@ class AgoraBusinessTest extends FlatSpec with Matchers with BeforeAndAfterAll wi
   }
 
   "Agora" should "not let users without permissions redact a method" in {
-    val testEntityToBeRedactedWithId3 = agoraBusiness.find(testEntityToBeRedacted3, None, Seq(testEntityToBeRedacted3.entityType.get), mockAutheticatedOwner.get).head
+    val testEntityToBeRedactedWithId3 = agoraBusiness.find(testTaskToBeRedacted2, None, Seq(testTaskToBeRedacted2.entityType.get), mockAutheticatedOwner.get).head
     intercept[NamespaceAuthorizationException] {
       val rowsEdited: Int = agoraBusiness.delete(testEntityToBeRedactedWithId3, AgoraEntityType.MethodTypes, owner2.get)
     }
@@ -45,7 +45,7 @@ class AgoraBusinessTest extends FlatSpec with Matchers with BeforeAndAfterAll wi
 
   "Agora" should "allow admin users to redact any method" in {
     addAdminUser()
-    val testEntityToBeRedactedWithId3 = agoraBusiness.find(testEntityToBeRedacted3, None, Seq(testEntityToBeRedacted3.entityType.get), mockAutheticatedOwner.get).head
+    val testEntityToBeRedactedWithId3 = agoraBusiness.find(testTaskToBeRedacted2, None, Seq(testTaskToBeRedacted2.entityType.get), mockAutheticatedOwner.get).head
     val rowsEdited: Int = agoraBusiness.delete(testEntityToBeRedactedWithId3, AgoraEntityType.MethodTypes, adminUser.get)
     assert(rowsEdited === 1)
   }

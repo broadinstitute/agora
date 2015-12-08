@@ -21,10 +21,10 @@ class NamespacePermissionsClientSpec extends FlatSpec with ScalaFutures with Bef
     ensureDatabasesAreRunning()
     agoraBusiness = new AgoraBusiness()
     permissionBusiness = new PermissionBusiness()
-    agoraBusiness.insert(testEntity1, mockAutheticatedOwner.get)
-    agoraBusiness.insert(testEntity2, mockAutheticatedOwner.get)
-    agoraBusiness.insert(testEntity3, mockAutheticatedOwner.get)
-    testBatchPermissionEntityWithId = agoraBusiness.find(testEntity3, None, Seq(testEntity3.entityType.get), mockAutheticatedOwner.get).head
+    agoraBusiness.insert(testWorkflow1, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testWorkflow2, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testWorkflow3, mockAutheticatedOwner.get)
+    testBatchPermissionEntityWithId = agoraBusiness.find(testWorkflow3, None, Seq(testWorkflow3.entityType.get), mockAutheticatedOwner.get).head
   }
 
   override def afterAll() = {
@@ -32,18 +32,18 @@ class NamespacePermissionsClientSpec extends FlatSpec with ScalaFutures with Bef
   }
 
   "Agora" should "add namespace permissions." in {
-    val insertCount1 = insertNamespacePermission(testEntity1, AccessControl(testEntity1.owner.get, AgoraPermissions(All)))
-    val insertCount2 = insertNamespacePermission(testEntity2, AccessControl(testEntity2.owner.get, AgoraPermissions(All)))
+    val insertCount1 = insertNamespacePermission(testWorkflow1, AccessControl(testWorkflow1.owner.get, AgoraPermissions(All)))
+    val insertCount2 = insertNamespacePermission(testWorkflow2, AccessControl(testWorkflow2.owner.get, AgoraPermissions(All)))
     assert(insertCount1 === 1)
     assert(insertCount2 === 1)
   }
 
   "Agora" should "should silently add a user to the db if not already there." in {
-    insertNamespacePermission(testEntity1, AccessControl(owner3.get, AgoraPermissions(All)))
+    insertNamespacePermission(testWorkflow1, AccessControl(owner3.get, AgoraPermissions(All)))
   }
 
   "Agora" should "return namespace permissions for authorized users." in {
-    val permissions = getNamespacePermission(testEntity1, testEntity1.owner.get)
+    val permissions = getNamespacePermission(testWorkflow1, testWorkflow1.owner.get)
     assert(permissions.canManage)
     assert(permissions.canCreate)
     assert(permissions.canRead)
@@ -52,8 +52,8 @@ class NamespacePermissionsClientSpec extends FlatSpec with ScalaFutures with Bef
   }
 
   "Agora" should "allow creation of namespaces that do not exist" in {
-    val testEntityNewNamespace = testEntity1.copy(namespace = Option("unused_namepace2"))
-    val permissions = getNamespacePermission(testEntityNewNamespace, testEntity2.owner.get)
+    val testEntityNewNamespace = testWorkflow1.copy(namespace = Option("unused_namepace2"))
+    val permissions = getNamespacePermission(testEntityNewNamespace, testWorkflow2.owner.get)
     assert(permissions.canCreate)
     assert(!permissions.canManage)
     assert(!permissions.canRead)
@@ -62,7 +62,7 @@ class NamespacePermissionsClientSpec extends FlatSpec with ScalaFutures with Bef
   }
 
   "Agora" should "give no permissions when namespace exists and user is unauthorized" in {
-    val permissions = getNamespacePermission(testEntity2, testEntity1.owner.get)
+    val permissions = getNamespacePermission(testWorkflow2, testWorkflow1.owner.get)
     assert(!permissions.canCreate)
     assert(!permissions.canManage)
     assert(!permissions.canRead)
@@ -71,10 +71,10 @@ class NamespacePermissionsClientSpec extends FlatSpec with ScalaFutures with Bef
   }
 
   "Agora" should "edit namespace permissions" in {
-    val editCount = editNamespacePermission(testEntity2, AccessControl(testEntity2.owner.get, AgoraPermissions(Redact)))
+    val editCount = editNamespacePermission(testWorkflow2, AccessControl(testWorkflow2.owner.get, AgoraPermissions(Redact)))
     assert(editCount == 1)
 
-    val permissions = getNamespacePermission(testEntity2, testEntity2.owner.get)
+    val permissions = getNamespacePermission(testWorkflow2, testWorkflow2.owner.get)
     assert(permissions.canRedact)
     assert(!permissions.canManage)
     assert(!permissions.canCreate)
@@ -83,7 +83,7 @@ class NamespacePermissionsClientSpec extends FlatSpec with ScalaFutures with Bef
   }
 
   "Agora" should "delete namespace permissions" in {
-    val deleteCount = deleteNamespacePermission(testEntity2, testEntity2.owner.get)
+    val deleteCount = deleteNamespacePermission(testWorkflow2, testWorkflow2.owner.get)
     assert(deleteCount == 1)
   }
 

@@ -27,14 +27,14 @@ class AgoraMethodsSpec extends ApiServiceSpec {
 
   override def beforeAll() = {
     ensureDatabasesAreRunning()
-    testEntity1WithId = agoraBusiness.insert(testEntity1, mockAutheticatedOwner.get)
-    testEntity2WithId = agoraBusiness.insert(testEntity2, mockAutheticatedOwner.get)
-    testEntity3WithId = agoraBusiness.insert(testEntity3, mockAutheticatedOwner.get)
-    testEntity4WithId = agoraBusiness.insert(testEntity4, mockAutheticatedOwner.get)
-    testEntity5WithId = agoraBusiness.insert(testEntity5, mockAutheticatedOwner.get)
-    testEntity6WithId = agoraBusiness.insert(testEntity6, mockAutheticatedOwner.get)
-    testEntity7WithId = agoraBusiness.insert(testEntity7, mockAutheticatedOwner.get)
-    testEntityToBeRedactedWithId = agoraBusiness.insert(testEntityToBeRedacted, mockAutheticatedOwner.get)
+    testEntity1WithId = agoraBusiness.insert(testWorkflow1, mockAutheticatedOwner.get)
+    testEntity2WithId = agoraBusiness.insert(testWorkflow2, mockAutheticatedOwner.get)
+    testEntity3WithId = agoraBusiness.insert(testWorkflow3, mockAutheticatedOwner.get)
+    testEntity4WithId = agoraBusiness.insert(testWorkflow4, mockAutheticatedOwner.get)
+    testEntity5WithId = agoraBusiness.insert(testWorkflow5, mockAutheticatedOwner.get)
+    testEntity6WithId = agoraBusiness.insert(testWorkflow6, mockAutheticatedOwner.get)
+    testEntity7WithId = agoraBusiness.insert(testTask1, mockAutheticatedOwner.get)
+    testEntityToBeRedactedWithId = agoraBusiness.insert(testTaskToBeRedacted1, mockAutheticatedOwner.get)
   }
 
   override def afterAll() = {
@@ -105,7 +105,7 @@ class AgoraMethodsSpec extends ApiServiceSpec {
   }
 
   "Agora" should "create a method and return with a status of 201" in {
-    Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity) ~>
+    Post(ApiUtil.Methods.withLeadingVersion, testWorkflow7) ~>
       methodsService.postRoute ~> check {
       handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => {
         assert(entity.namespace === namespace3)
@@ -122,7 +122,7 @@ class AgoraMethodsSpec extends ApiServiceSpec {
   }
 
   "Agora" should "return a 400 bad request when posting a malformed payload" in {
-    Post(ApiUtil.Methods.withLeadingVersion, testBadAgoraEntity) ~>
+    Post(ApiUtil.Methods.withLeadingVersion, testBadAgoraTask) ~>
       methodsService.postRoute ~> check {
       assert(status === BadRequest)
       assert(responseAs[String] != null)
@@ -174,7 +174,7 @@ class AgoraMethodsSpec extends ApiServiceSpec {
   }
 
   "Agora" should "not allow you to post a new configuration to the methods route" in {
-    Post(ApiUtil.Methods.withLeadingVersion, testAgoraConfigurationEntity) ~>
+    Post(ApiUtil.Methods.withLeadingVersion, testConfig1) ~>
       methodsService.postRoute ~> check {
       rejection === ValidationRejection
     }

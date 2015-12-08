@@ -21,7 +21,7 @@ class AgoraImportSpec extends ApiServiceSpec {
   override def beforeAll() = {
     ensureDatabasesAreRunning()
     testEntityTaskWcWithId = agoraBusiness.insert(testEntityTaskWc, mockAutheticatedOwner.get)
-    agoraBusiness.insert(testEntityWorkflowWithExistentWdlImport, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testWorkflowWithExistentWdlImport, mockAutheticatedOwner.get)
   }
 
   override def afterAll() = {
@@ -29,7 +29,7 @@ class AgoraImportSpec extends ApiServiceSpec {
   }
 
   "MethodsService" should "return a 400 bad request when posting a WDL with an invalid import statement" in {
-    Post(ApiUtil.Methods.withLeadingVersion, testBadAgoraEntityInvalidWdlImportFormat) ~>
+    Post(ApiUtil.Methods.withLeadingVersion, testBadWorkflowInvalidWdlImportFormat) ~>
       methodsService.postRoute ~> check {
       assert(status === BadRequest)
       assert(responseAs[String] != null)
@@ -37,7 +37,7 @@ class AgoraImportSpec extends ApiServiceSpec {
   }
 
   "MethodsService" should "return a 404 bad request when posting a WDL with an import statement that references a non-existent method" in {
-    Post(ApiUtil.Methods.withLeadingVersion, testBadAgoraEntityNonExistentWdlImportFormat) ~>
+    Post(ApiUtil.Methods.withLeadingVersion, testBadWorkflowNonExistentWdlImportFormat) ~>
       methodsService.postRoute ~> check {
       assert(status === NotFound)
       assert(responseAs[String] != null)
@@ -51,7 +51,7 @@ class AgoraImportSpec extends ApiServiceSpec {
       handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => assert(brief(entity) === brief(testEntityTaskWcWithId)))
       assert(status === OK)
     }
-    Post(ApiUtil.Methods.withLeadingVersion, testEntityWorkflowWithExistentWdlImport) ~>
+    Post(ApiUtil.Methods.withLeadingVersion, testWorkflowWithExistentWdlImport) ~>
       methodsService.postRoute ~> check {
       handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => {
         assert(entity.namespace === namespace1)

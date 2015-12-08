@@ -24,15 +24,15 @@ class EntityPermissionsClientSpec extends FlatSpec with ScalaFutures with Before
     ensureDatabasesAreRunning()
     agoraBusiness = new AgoraBusiness()
     permissionBusiness = new PermissionBusiness()
-    agoraBusiness.insert(testEntity1, mockAutheticatedOwner.get)
-    agoraBusiness.insert(testEntity2, mockAutheticatedOwner.get)
-    agoraBusiness.insert(testEntityWithPublicPermissions, mockAutheticatedOwner.get)
-    agoraBusiness.insert(testEntity3, mockAutheticatedOwner.get)
-    agoraBusiness.insert(testEntity4, mockAutheticatedOwner.get)
-    testEntityWithPublicPermissionsWithId = agoraBusiness.find(testEntityWithPublicPermissions, None, Seq(testEntityWithPublicPermissions.entityType.get), mockAutheticatedOwner.get).head;
-    foundTestEntity1 = agoraBusiness.find(testEntity1, None, Seq(testEntity1.entityType.get), mockAutheticatedOwner.get).head
-    foundTestEntity2 = agoraBusiness.find(testEntity2, None, Seq(testEntity2.entityType.get), mockAutheticatedOwner.get).head
-    testBatchPermissionEntity = agoraBusiness.find(testEntity4, None, Seq(testEntity3.entityType.get), mockAutheticatedOwner.get).head
+    agoraBusiness.insert(testWorkflow1, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testWorkflow2, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testTaskWithPublicPermissions, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testWorkflow3, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testWorkflow4, mockAutheticatedOwner.get)
+    testEntityWithPublicPermissionsWithId = agoraBusiness.find(testTaskWithPublicPermissions, None, Seq(testTaskWithPublicPermissions.entityType.get), mockAutheticatedOwner.get).head;
+    foundTestEntity1 = agoraBusiness.find(testWorkflow1, None, Seq(testWorkflow1.entityType.get), mockAutheticatedOwner.get).head
+    foundTestEntity2 = agoraBusiness.find(testWorkflow2, None, Seq(testWorkflow2.entityType.get), mockAutheticatedOwner.get).head
+    testBatchPermissionEntity = agoraBusiness.find(testWorkflow4, None, Seq(testWorkflow3.entityType.get), mockAutheticatedOwner.get).head
   }
 
   override def afterAll() = {
@@ -112,7 +112,7 @@ class EntityPermissionsClientSpec extends FlatSpec with ScalaFutures with Before
   }
 
   "Agora" should "allow public methods to be accessible" in {
-    agoraBusiness.findSingle(testEntityWithPublicPermissionsWithId, Seq(testEntityWithPublicPermissions.entityType.get), owner2.get)
+    agoraBusiness.findSingle(testEntityWithPublicPermissionsWithId, Seq(testTaskWithPublicPermissions.entityType.get), owner2.get)
     assert(1 === 1) //test passes as long as findSingle does not throw permissions error
   }
 

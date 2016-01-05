@@ -21,7 +21,7 @@ libraryDependencies ++= Seq(
   "com.gettyimages" %% "spray-swagger" % "0.5.0",
   "com.github.simplyscala" %% "scalatest-embedmongo" % "0.2.2",
   "com.google.api-client" % "google-api-client" % "1.20.0" excludeAll ExclusionRule(organization = "com.google.guava"),
-  "com.google.apis" % "google-api-services-admin-directory" % "directory_v1-rev53-1.20.0",
+  "com.google.apis" % "google-api-services-admin-directory" % "directory_v1-rev53-1.20.0" excludeAll ExclusionRule(organization = "com.google.guava"),
   "com.h2database" % "h2" % "1.3.175",
   "com.typesafe.akka" %% "akka-actor" % "2.3.4",
   "com.typesafe.akka" %% "akka-slf4j" % "2.3.11",

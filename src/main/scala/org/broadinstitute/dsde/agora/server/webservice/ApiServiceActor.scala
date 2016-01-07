@@ -33,7 +33,7 @@ class ApiServiceActor extends HttpServiceActor with LazyLogging {
   override val supervisorStrategy =
     OneForOneStrategy(loggingEnabled = AgoraConfig.supervisorLogging) {
       case e: Throwable =>
-        logger.error("ApiServiceActor child threw exception. Child will be restarted\n" + e.getMessage)
+        logger.error("ApiServiceActor child threw exception. Child will be restarted", e)
         Restart
     }
 

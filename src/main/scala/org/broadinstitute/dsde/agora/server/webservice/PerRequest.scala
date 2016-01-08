@@ -3,6 +3,7 @@ package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.actor.SupervisorStrategy.Stop
 import akka.actor.{OneForOneStrategy, _}
+import com.typesafe.scalalogging.slf4j.LazyLogging
 import cromwell.parser.WdlParser.SyntaxError
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.exceptions._
@@ -24,7 +25,7 @@ import scala.concurrent.duration._
  * 1) with just a response object
  * 2) with a RequestComplete message which can specify http status code as well as the response
  */
-trait PerRequest extends Actor {
+trait PerRequest extends Actor with LazyLogging {
   import context._
 
   // JSON Serialization Support
@@ -84,6 +85,7 @@ trait PerRequest extends Actor {
         r.complete(BadRequest,AgoraException(e.getMessage, e.getCause, BadRequest))
         Stop
       case e: Throwable =>
+        logger.error("Exception caught by PerRequest: ", e)
         r.complete(InternalServerError, AgoraException(e.getMessage, e.getCause, InternalServerError))
         Stop
     }

@@ -17,7 +17,7 @@ object GoogleApiUtils {
   val emailAddress = AgoraConfig.gcsServiceAccountEmail
   val JSON_FACTORY = JacksonFactory.getDefaultInstance
   val httpTransport = GoogleNetHttpTransport.newTrustedTransport
-  val directoryScopes = Collections.singleton(DirectoryScopes.ADMIN_DIRECTORY_GROUP)
+  val directoryScopes = Collections.singleton(DirectoryScopes.ADMIN_DIRECTORY_GROUP_MEMBER_READONLY)
 
   private def getGroupServiceAccountCredential: Credential = {
     new GoogleCredential.Builder()

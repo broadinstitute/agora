@@ -27,11 +27,7 @@ class AgoraBusiness {
     val entityToInsert = agoraEntity.entityType.get match {
       case AgoraEntityType.Configuration =>
         val method = resolveMethodRef(agoraEntity.payload.get)
-        if (!AgoraEntityPermissionsClient.getEntityPermission(method, username).canRead &&
-            !AgoraEntityPermissionsClient.getEntityPermission(method, "public").canRead) {
-          throw new AgoraEntityNotFoundException(method)
-        }
-
+        validateMethodRef(method, username)
         agoraEntity.addMethodId(method.id.get.toHexString)
       case _ => agoraEntity
     }
@@ -128,6 +124,18 @@ class AgoraBusiness {
     }
   }
 
+  private def validateMethodRef(method: AgoraEntity, username: String) = {
+    if (!AgoraEntityPermissionsClient.getEntityPermission(method, username).canRead &&
+      !AgoraEntityPermissionsClient.getEntityPermission(method, "public").canRead) {
+      throw new AgoraEntityNotFoundException(method)
+    }
+    if (method.entityType.get == AgoraEntityType.Task) {
+      val methodIdentifier = "%s/%s/%s".format(method.namespace.get, method.name.get, method.snapshotId.get)
+      val message = "Configurations can only reference workflows, not tasks. Attempted to reference task %s".format(methodIdentifier)
+      throw new ValidationException(message)
+    }
+  }
+  
   private def validateDockerImage(task: Task) = {
     if (task.runtimeAttributes.docker.isDefined) {
       val dockerImageReference = parseDockerString(task.runtimeAttributes.docker.get)

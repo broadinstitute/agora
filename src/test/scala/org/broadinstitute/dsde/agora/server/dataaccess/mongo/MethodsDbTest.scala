@@ -21,7 +21,7 @@ class MethodsDbTest extends FlatSpec with BeforeAndAfterAll with AgoraTestFixtur
   }
 
   "Agora" should "be able to store a method" in {
-    val entityWithId = agoraDao.insert(testEntity1)
+    val entityWithId = agoraDao.insert(testWorkflow1)
 
     val entity = agoraDao.findSingle(entityWithId)
 
@@ -29,7 +29,7 @@ class MethodsDbTest extends FlatSpec with BeforeAndAfterAll with AgoraTestFixtur
   }
 
   "Agora" should "be able to query by namespace, name and snapshot id (version) and get back a single entity" in {
-    val entityWithId = agoraDao.insert(testEntity1)
+    val entityWithId = agoraDao.insert(testWorkflow1)
     val queryEntity = new AgoraEntity(namespace = namespace1, name = name1, snapshotId = entityWithId.snapshotId, entityType = Option(AgoraEntityType.Workflow))
 
     val entity = agoraDao.findSingle(queryEntity)
@@ -38,8 +38,8 @@ class MethodsDbTest extends FlatSpec with BeforeAndAfterAll with AgoraTestFixtur
   }
 
   "Agora" should "increment the snapshot id number if we insert the same namespace/name entity" in {
-    val entityWithId = agoraDao.insert(testEntity1)
-    val entityWithId2 = agoraDao.insert(testEntity1)
+    val entityWithId = agoraDao.insert(testWorkflow1)
+    val entityWithId2 = agoraDao.insert(testWorkflow1)
 
     val previousVersionEntity = entityWithId.copy(snapshotId = entityWithId2.snapshotId.map(id => id - 1))
 
@@ -51,7 +51,7 @@ class MethodsDbTest extends FlatSpec with BeforeAndAfterAll with AgoraTestFixtur
 
   "Agora" should "not find an entity if it doesn't exist" in {
     val thrown = intercept[AgoraEntityNotFoundException] {
-      agoraDao.findSingle(testAgoraEntityNonExistent)
+      agoraDao.findSingle(testNonExistentWorkflow)
     }
     assert(thrown != null)
   }

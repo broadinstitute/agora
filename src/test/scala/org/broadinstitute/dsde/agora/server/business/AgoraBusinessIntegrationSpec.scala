@@ -18,46 +18,46 @@ class AgoraBusinessIntegrationSpec extends FlatSpec with BeforeAndAfterAll with 
   }
 
   "Agora" should "be able to store a task configuration with a valid (extant) official docker image" in {
-    val entity = agoraBusiness.insert(testAgoraEntityWithValidOfficialDockerImageInWdl, mockAutheticatedOwner.get)
+    val entity = agoraBusiness.insert(testTaskWithValidOfficialDockerImageInWdl, mockAutheticatedOwner.get)
     assert(agoraBusiness.findSingle(entity, Seq(entity.entityType.get), mockAutheticatedOwner.get) === entity)
   }
 
   "Agora" should "be unable to store a task configuration with an invalid docker image (invalid/non-existent repo name)" in {
     val thrown = intercept[DockerImageNotFoundException] {
-      agoraBusiness.insert(testAgoraEntityWithInvalidOfficialDockerRepoNameInWdl, mockAutheticatedOwner.get)
+      agoraBusiness.insert(testTaskWithInvalidOfficialDockerRepoNameInWdl, mockAutheticatedOwner.get)
     }
     assert(thrown != null)
   }
 
   "Agora" should "be unable to store a task configuration with an invalid docker image (invalid/non-existent tag name)" in {
     val thrown = intercept[DockerImageNotFoundException] {
-      agoraBusiness.insert(testAgoraEntityWithInvalidOfficialDockerTagNameInWdl, mockAutheticatedOwner.get)
+      agoraBusiness.insert(testTaskWithInvalidOfficialDockerTagNameInWdl, mockAutheticatedOwner.get)
     }
     assert(thrown != null)
   }
 
   "Agora" should "be able to store a task configuration with a valid (extant) personal docker image" in {
-    val entity = agoraBusiness.insert(testAgoraEntityWithValidPersonalDockerInWdl, mockAutheticatedOwner.get)
+    val entity = agoraBusiness.insert(testTaskWithValidPersonalDockerInWdl, mockAutheticatedOwner.get)
     assert(agoraBusiness.findSingle(entity, Seq(entity.entityType.get), mockAutheticatedOwner.get) === entity)
   }
 
   "Agora" should "be unable to store a task configuration with an invalid personal docker image (invalid/non-existent user name)" in {
     val thrown = intercept[DockerImageNotFoundException] {
-      agoraBusiness.insert(testAgoraEntityWithInvalidPersonalDockerUserNameInWdl, mockAutheticatedOwner.get)
+      agoraBusiness.insert(testTaskWithInvalidPersonalDockerUserNameInWdl, mockAutheticatedOwner.get)
     }
     assert(thrown != null)
   }
 
   "Agora" should "be unable to store a task configuration with an invalid personal docker image (invalid/non-existent repo name)" in {
     val thrown = intercept[DockerImageNotFoundException] {
-      agoraBusiness.insert(testAgoraEntityWithInvalidPersonalDockerRepoNameInWdl, mockAutheticatedOwner.get)
+      agoraBusiness.insert(testTaskWithInvalidPersonalDockerRepoNameInWdl, mockAutheticatedOwner.get)
     }
     assert(thrown != null)
   }
 
   "Agora" should "be unable to store a task configuration with an invalid personal docker image (invalid/non-existent tag name)" in {
     val thrown = intercept[DockerImageNotFoundException] {
-      agoraBusiness.insert(testAgoraEntityWithInvalidPersonalDockerTagNameInWdl, mockAutheticatedOwner.get)
+      agoraBusiness.insert(testTaskWithInvalidPersonalDockerTagNameInWdl, mockAutheticatedOwner.get)
     }
     assert(thrown != null)
   }

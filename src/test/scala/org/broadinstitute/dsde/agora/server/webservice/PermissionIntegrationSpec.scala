@@ -28,8 +28,8 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
 
   override def beforeAll(): Unit = {
     ensureDatabasesAreRunning()
-    agoraEntity1 = agoraBusiness.insert(testIntegrationEntity, mockAutheticatedOwner.get)
-    agoraEntity2 = agoraBusiness.insert(testIntegrationEntity2, owner2.get)
+    agoraEntity1 = agoraBusiness.insert(testIntegrationWorkflow, mockAutheticatedOwner.get)
+    agoraEntity2 = agoraBusiness.insert(testIntegrationWorkflow2, owner2.get)
   }
 
   override def afterAll(): Unit = {

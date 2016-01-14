@@ -24,14 +24,14 @@ class AgoraProjectionsSpec extends ApiServiceSpec {
 
   override def beforeAll() = {
     ensureDatabasesAreRunning()
-    testEntity1WithId = agoraBusiness.insert(testEntity1, mockAutheticatedOwner.get)
-    testEntity2WithId = agoraBusiness.insert(testEntity2, mockAutheticatedOwner.get)
-    testEntity3WithId = agoraBusiness.insert(testEntity3, mockAutheticatedOwner.get)
-    testEntity4WithId = agoraBusiness.insert(testEntity4, mockAutheticatedOwner.get)
-    testEntity5WithId = agoraBusiness.insert(testEntity5, mockAutheticatedOwner.get)
-    testEntity6WithId = agoraBusiness.insert(testEntity6, mockAutheticatedOwner.get)
-    testEntity7WithId = agoraBusiness.insert(testEntity7, mockAutheticatedOwner.get)
-    testEntityToBeRedactedWithId = agoraBusiness.insert(testEntityToBeRedacted, mockAutheticatedOwner.get)
+    testEntity1WithId = agoraBusiness.insert(testWorkflow1, mockAutheticatedOwner.get)
+    testEntity2WithId = agoraBusiness.insert(testWorkflow2, mockAutheticatedOwner.get)
+    testEntity3WithId = agoraBusiness.insert(testWorkflow3, mockAutheticatedOwner.get)
+    testEntity4WithId = agoraBusiness.insert(testWorkflow4, mockAutheticatedOwner.get)
+    testEntity5WithId = agoraBusiness.insert(testWorkflow5, mockAutheticatedOwner.get)
+    testEntity6WithId = agoraBusiness.insert(testWorkflow6, mockAutheticatedOwner.get)
+    testEntity7WithId = agoraBusiness.insert(testTask1, mockAutheticatedOwner.get)
+    testEntityToBeRedactedWithId = agoraBusiness.insert(testTaskToBeRedacted1, mockAutheticatedOwner.get)
   }
 
   override def afterAll() = {

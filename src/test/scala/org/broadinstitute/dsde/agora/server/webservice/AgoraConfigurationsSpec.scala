@@ -17,19 +17,24 @@ import spray.routing.ValidationRejection
 @DoNotDiscover
 class AgoraConfigurationsSpec extends ApiServiceSpec {
 
-  var method1: AgoraEntity = _
+  var workflow1: AgoraEntity = _
+  var workflow2: AgoraEntity = _
+  var workflow3: AgoraEntity = _
   var testEntityToBeRedacted2WithId: AgoraEntity = _
-  var testAgoraConfigurationToBeRedactedWithId: AgoraEntity = _
+  var testConfigToBeRedactedWithId: AgoraEntity = _
 
   override def beforeAll() = {
     ensureDatabasesAreRunning()
-    method1 = agoraBusiness.insert(testEntity1, mockAutheticatedOwner.get)
-    testEntityToBeRedacted2WithId = agoraBusiness.insert(testEntityToBeRedacted2, mockAutheticatedOwner.get)
-    testAgoraConfigurationToBeRedactedWithId = agoraBusiness.insert(testAgoraConfigurationToBeRedacted, mockAutheticatedOwner.get)
-    agoraBusiness.insert(testEntity2, mockAutheticatedOwner.get)
-    agoraBusiness.insert(testAgoraConfigurationEntity, mockAutheticatedOwner.get)
-    agoraBusiness.insert(testAgoraConfigurationEntity2, mockAutheticatedOwner.get)
-    agoraBusiness.insert(testAgoraConfigurationEntity3, mockAutheticatedOwner.get)
+    workflow1 = agoraBusiness.insert(testWorkflow1, mockAutheticatedOwner.get)
+    workflow2 = agoraBusiness.insert(testWorkflow2, mockAutheticatedOwner.get)
+    workflow3 = agoraBusiness.insert(testWorkflow3, mockAutheticatedOwner.get)
+    testEntityToBeRedacted2WithId = agoraBusiness.insert(testWorkflowToBeRedacted, mockAutheticatedOwner.get)
+    testConfigToBeRedactedWithId = agoraBusiness.insert(testConfigToBeRedacted, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testTask2, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testWorkflow2, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testConfig1, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testConfig2, mockAutheticatedOwner.get)
+    agoraBusiness.insert(testConfig3, mockAutheticatedOwner.get)
   }
 
   override def afterAll() = {
@@ -37,21 +42,24 @@ class AgoraConfigurationsSpec extends ApiServiceSpec {
   }
 
   "Agora" should "be able to store a task configuration" in {
-    Post(ApiUtil.Configurations.withLeadingVersion, testAgoraConfigurationEntity3) ~>
+    Post(ApiUtil.Configurations.withLeadingVersion, testConfig3) ~>
       configurationsService.postRoute ~> check {
 
-      val referencedMethod = AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(namespace1.get, name1.get, snapshotId1.get)
+      val referencedWorkflow = AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(
+        workflow1.namespace.get,
+        workflow1.name.get,
+        workflow1.snapshotId.get)
 
       handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => {
-        assert(entity.namespace === namespace2)
-        assert(entity.name === name1)
+        assert(entity.namespace === config3Namespace)
+        assert(entity.name === config3Name)
         assert(entity.synopsis === synopsis3)
         assert(entity.documentation === documentation1)
         assert(entity.owner === owner1)
         assert(entity.payload === taskConfigPayload)
         assert(entity.snapshotId !== None)
         assert(entity.createDate !== None)
-        assert(referencedMethod.id !== None)
+        assert(referencedWorkflow.id !== None)
         assert(entity.method !== None)
 
         val foundMethod = entity.method.get
@@ -63,49 +71,55 @@ class AgoraConfigurationsSpec extends ApiServiceSpec {
     }
   }
 
+  "Agora" should "not allow you to add a configuration that references a task" in {
+    Post(ApiUtil.Configurations.withLeadingVersion, testBadConfigReferencesTask) ~>
+      configurationsService.postRoute ~> check {
+      assert(status === BadRequest)
+    }
+  }
+
   "Agora" should "populate method references when returning configurations" in {
     Get(ApiUtil.Configurations.withLeadingVersion) ~>
       configurationsService.queryRoute ~> check {
 
       handleError(entity.as[Seq[AgoraEntity]], (configs: Seq[AgoraEntity]) => {
-        val method1 = AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(namespace1.get, name1.get, snapshotId1.get)
-        val method2 = AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(namespace2.get, name1.get, snapshotId1.get)
-        val method3 = AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(namespace1.get, name1.get, snapshotId1.get)
+        val workflow2 = AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(namespace2.get, name1.get, snapshotId1.get)
+        val workflow3 = AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(namespace1.get, name2.get, snapshotId1.get)
 
         val config1 = AgoraDao.createAgoraDao(Seq(AgoraEntityType.Configuration)).findSingle(
-          testAgoraConfigurationEntity.namespace.get, testAgoraConfigurationEntity.name.get, 2)
+          testConfig1.namespace.get, testConfig1.name.get, 2)
         val config2 = AgoraDao.createAgoraDao(Seq(AgoraEntityType.Configuration)).findSingle(
-          testAgoraConfigurationEntity2.namespace.get, testAgoraConfigurationEntity2.name.get, 1)
+          testConfig2.namespace.get, testConfig2.name.get, 1)
         val config3 = AgoraDao.createAgoraDao(Seq(AgoraEntityType.Configuration)).findSingle(
-          testAgoraConfigurationEntity3.namespace.get, testAgoraConfigurationEntity3.name.get, 2)
+          testConfig3.namespace.get, testConfig3.name.get, 1)
 
         val foundConfig1 = configs.find(config => namespaceNameIdMatch(config, config1)).get
         val foundConfig2 = configs.find(config => namespaceNameIdMatch(config, config2)).get
         val foundConfig3 = configs.find(config => namespaceNameIdMatch(config, config3)).get
         
-        val methodRef1 = foundConfig1.method.get
-        val methodRef2 = foundConfig2.method.get
-        val methodRef3 = foundConfig3.method.get
+        val workflowRef1 = foundConfig1.method.get
+        val workflowRef2 = foundConfig2.method.get
+        val workflowRef3 = foundConfig3.method.get
 
-        assert(methodRef1.namespace !== None)
-        assert(methodRef1.name !== None)
-        assert(methodRef1.snapshotId !== None)
-        assert(methodRef2.namespace !== None)
-        assert(methodRef2.name !== None)
-        assert(methodRef2.snapshotId !== None)
-        assert(methodRef3.namespace !== None)
-        assert(methodRef3.name !== None)
-        assert(methodRef3.snapshotId !== None)
+        assert(workflowRef1.namespace !== None)
+        assert(workflowRef1.name !== None)
+        assert(workflowRef1.snapshotId !== None)
+        assert(workflowRef2.namespace !== None)
+        assert(workflowRef2.name !== None)
+        assert(workflowRef2.snapshotId !== None)
+        assert(workflowRef3.namespace !== None)
+        assert(workflowRef3.name !== None)
+        assert(workflowRef3.snapshotId !== None)
 
-        assert(methodRef1.namespace === method1.namespace)
-        assert(methodRef1.name === method1.name)
-        assert(methodRef1.snapshotId === method1.snapshotId)
-        assert(methodRef2.namespace === method2.namespace)
-        assert(methodRef2.name === method2.name)
-        assert(methodRef2.snapshotId === method2.snapshotId)
-        assert(methodRef3.namespace === method3.namespace)
-        assert(methodRef3.name === method3.name)
-        assert(methodRef3.snapshotId === method3.snapshotId)
+        assert(workflowRef1.namespace === workflow1.namespace)
+        assert(workflowRef1.name === workflow1.name)
+        assert(workflowRef1.snapshotId === workflow1.snapshotId)
+        assert(workflowRef2.namespace === workflow2.namespace)
+        assert(workflowRef2.name === workflow2.name)
+        assert(workflowRef2.snapshotId === workflow2.snapshotId)
+        assert(workflowRef3.namespace === workflow1.namespace)
+        assert(workflowRef3.name === workflow1.name)
+        assert(workflowRef3.snapshotId === workflow1.snapshotId)
       })
 
     }
@@ -113,8 +127,8 @@ class AgoraConfigurationsSpec extends ApiServiceSpec {
 
   "Agora" should "not allow you to post a new configuration if you don't have permission to read the method that it references" in {
     val noPermission = new AccessControl(AgoraConfig.mockAuthenticatedUserEmail, AgoraPermissions(AgoraPermissions.Nothing))
-    AgoraEntityPermissionsClient.editEntityPermission(method1, noPermission)
-    Post(ApiUtil.Configurations.withLeadingVersion, testAgoraConfigurationEntity3) ~>
+    AgoraEntityPermissionsClient.editEntityPermission(workflow1, noPermission)
+    Post(ApiUtil.Configurations.withLeadingVersion, testConfig3) ~>
       configurationsService.postRoute ~> check {
         assert(status === NotFound)
     }
@@ -146,14 +160,12 @@ class AgoraConfigurationsSpec extends ApiServiceSpec {
 
   "Agora" should "redact associated configurations when the referenced method is redacted" in {
     Get(ApiUtil.Configurations.withLeadingVersion + "/" +
-      testAgoraConfigurationToBeRedactedWithId.namespace.get + "/" +
-      testAgoraConfigurationToBeRedactedWithId.name.get + "/" +
-      testAgoraConfigurationToBeRedactedWithId.snapshotId.get) ~>
+      testConfigToBeRedactedWithId.namespace.get + "/" +
+      testConfigToBeRedactedWithId.name.get + "/" +
+      testConfigToBeRedactedWithId.snapshotId.get) ~>
     configurationsService.querySingleRoute ~>
     check {
       assert(body.asString contains "not found")
     }
   }
-
-
 }

@@ -2,7 +2,7 @@ package org.broadinstitute.dsde.agora.server.business
 
 import cromwell.parser.BackendType
 import cromwell.parser.WdlParser.SyntaxError
-import org.broadinstitute.dsde.agora.server.exceptions.{ValidationException, AgoraException, AgoraEntityNotFoundException, NamespaceAuthorizationException}
+import org.broadinstitute.dsde.agora.server.exceptions.{ValidationException, AgoraEntityNotFoundException, NamespaceAuthorizationException}
 import org.broadinstitute.dsde.agora.server.webservice.util.{DockerImageReference, DockerHubClient}
 
 import cromwell.binding._
@@ -10,9 +10,7 @@ import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.model.{AgoraApiJsonSupport, AgoraEntity, AgoraEntityProjection, AgoraEntityType}
-import spray.json
 import spray.json._
-import DefaultJsonProtocol._
 
 class AgoraBusiness {
 
@@ -129,12 +127,16 @@ class AgoraBusiness {
   }
 
   private def validateDockerImage(task: Task) = {
-    if (task.runtimeAttributes.docker.isDefined) {
-      val dockerImageReference = parseDockerString(task.runtimeAttributes.docker.get)
-      if (dockerImageReference.isDefined) {
-        DockerHubClient.doesDockerImageExist(dockerImageReference.get)
-      }
-    }
+    // Per DSDEEPB-2525, in the interests of expediency, we are disabling docker image validation as we do not support validation of private docker images
+    // When that functionality is added back in, then this is where it should go.
+
+//    if (task.runtimeAttributes.docker.isDefined) {
+//      val dockerImageReference = parseDockerString(task.runtimeAttributes.docker.get)
+//      if (dockerImageReference.isDefined) {
+//        DockerHubClient.doesDockerImageExist(dockerImageReference.get)
+//      }
+//    }
+    true
   }
 
   private def resolveMethodRef(payload: String): AgoraEntity = {

@@ -22,14 +22,14 @@ class AgoraBusinessIntegrationSpec extends FlatSpec with BeforeAndAfterAll with 
     assert(agoraBusiness.findSingle(entity, Seq(entity.entityType.get), mockAutheticatedOwner.get) === entity)
   }
 
-  "Agora" should "be unable to store a task configuration with an invalid docker image (invalid/non-existent repo name)" in {
+  ignore should "be unable to store a task configuration with an invalid docker image (invalid/non-existent repo name)" in {
     val thrown = intercept[DockerImageNotFoundException] {
       agoraBusiness.insert(testAgoraEntityWithInvalidOfficialDockerRepoNameInWdl, mockAutheticatedOwner.get)
     }
     assert(thrown != null)
   }
 
-  "Agora" should "be unable to store a task configuration with an invalid docker image (invalid/non-existent tag name)" in {
+  ignore should "be unable to store a task configuration with an invalid docker image (invalid/non-existent tag name)" in {
     val thrown = intercept[DockerImageNotFoundException] {
       agoraBusiness.insert(testAgoraEntityWithInvalidOfficialDockerTagNameInWdl, mockAutheticatedOwner.get)
     }
@@ -41,21 +41,21 @@ class AgoraBusinessIntegrationSpec extends FlatSpec with BeforeAndAfterAll with 
     assert(agoraBusiness.findSingle(entity, Seq(entity.entityType.get), mockAutheticatedOwner.get) === entity)
   }
 
-  "Agora" should "be unable to store a task configuration with an invalid personal docker image (invalid/non-existent user name)" in {
+  ignore should "be unable to store a task configuration with an invalid personal docker image (invalid/non-existent user name)" in {
     val thrown = intercept[DockerImageNotFoundException] {
       agoraBusiness.insert(testAgoraEntityWithInvalidPersonalDockerUserNameInWdl, mockAutheticatedOwner.get)
     }
     assert(thrown != null)
   }
 
-  "Agora" should "be unable to store a task configuration with an invalid personal docker image (invalid/non-existent repo name)" in {
+  ignore should "be unable to store a task configuration with an invalid personal docker image (invalid/non-existent repo name)" in {
     val thrown = intercept[DockerImageNotFoundException] {
       agoraBusiness.insert(testAgoraEntityWithInvalidPersonalDockerRepoNameInWdl, mockAutheticatedOwner.get)
     }
     assert(thrown != null)
   }
 
-  "Agora" should "be unable to store a task configuration with an invalid personal docker image (invalid/non-existent tag name)" in {
+  ignore should "be unable to store a task configuration with an invalid personal docker image (invalid/non-existent tag name)" in {
     val thrown = intercept[DockerImageNotFoundException] {
       agoraBusiness.insert(testAgoraEntityWithInvalidPersonalDockerTagNameInWdl, mockAutheticatedOwner.get)
     }

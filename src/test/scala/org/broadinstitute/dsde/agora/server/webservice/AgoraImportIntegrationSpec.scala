@@ -59,7 +59,7 @@ class AgoraImportIntegrationSpec extends FlatSpec with RouteTest with ScalatestR
     }
   }
 
-  "MethodsService" should "return a 400 bad request when posting a WDL with an invalid official docker image (invalid/non-existent repo name)" in {
+  ignore should "return a 400 bad request when posting a WDL with an invalid official docker image (invalid/non-existent repo name)" in {
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntityWithInvalidOfficialDockerRepoNameInWdl) ~>
       methodsService.postRoute ~> check {
       assert(status === BadRequest)
@@ -67,7 +67,7 @@ class AgoraImportIntegrationSpec extends FlatSpec with RouteTest with ScalatestR
     }
   }
 
-  "MethodsService" should "return a 400 bad request when posting a WDL with an invalid official docker image (invalid/non-existent tag name)" in {
+  ignore should "return a 400 bad request when posting a WDL with an invalid official docker image (invalid/non-existent tag name)" in {
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntityWithInvalidOfficialDockerTagNameInWdl) ~>
       methodsService.postRoute ~> check {
       assert(status === BadRequest)
@@ -92,7 +92,7 @@ class AgoraImportIntegrationSpec extends FlatSpec with RouteTest with ScalatestR
     }
   }
 
-  "MethodsService" should "return a 400 bad request when posting a WDL with an invalid personal docker image (invalid/non-existent user name)" in {
+  ignore should "return a 400 bad request when posting a WDL with an invalid personal docker image (invalid/non-existent user name)" in {
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntityWithInvalidPersonalDockerUserNameInWdl) ~>
       methodsService.postRoute ~> check {
       assert(status === BadRequest)
@@ -100,7 +100,7 @@ class AgoraImportIntegrationSpec extends FlatSpec with RouteTest with ScalatestR
     }
   }
 
-  "MethodsService" should "return a 400 bad request when posting a WDL with an invalid personal docker image (invalid/non-existent repo name)" in {
+  ignore should "return a 400 bad request when posting a WDL with an invalid personal docker image (invalid/non-existent repo name)" in {
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntityWithInvalidPersonalDockerRepoNameInWdl) ~>
       methodsService.postRoute ~> check {
       assert(status === BadRequest)
@@ -108,7 +108,7 @@ class AgoraImportIntegrationSpec extends FlatSpec with RouteTest with ScalatestR
     }
   }
 
-  "MethodsService" should "return a 400 bad request when posting a WDL with an invalid personal docker image (invalid/non-existent tag name)" in {
+  ignore should "return a 400 bad request when posting a WDL with an invalid personal docker image (invalid/non-existent tag name)" in {
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntityWithInvalidPersonalDockerTagNameInWdl) ~>
       methodsService.postRoute ~> check {
       assert(status === BadRequest)

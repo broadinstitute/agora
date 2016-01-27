@@ -51,7 +51,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
     Get(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity2.namespace.get + "/" + "permissions") ~>
       methodsService.namespacePermissionsRoute ~>
       check {
-        assert(status == Unauthorized)
+        assert(status == Forbidden)
       }
     }
 
@@ -72,7 +72,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
       s"?user=$owner2&roles=All") ~>
       methodsService.namespacePermissionsRoute ~>
       check {
-        assert(status == Unauthorized)
+        assert(status == Forbidden)
       }
   }
 
@@ -104,7 +104,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
       s"?user=$owner2&roles=All") ~>
       methodsService.namespacePermissionsRoute ~>
       check {
-        assert(status == Unauthorized)
+        assert(status == Forbidden)
       }
   }
 
@@ -126,7 +126,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
       "/" + agoraEntity2.snapshotId.get + "/" + "permissions") ~>
       methodsService.entityPermissionsRoute ~>
       check {
-        assert(status == Unauthorized)
+        assert(status == Forbidden)
       }
   }
 
@@ -147,7 +147,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
       "/" + agoraEntity2.snapshotId.get + "/" + "permissions" + s"?user=$agoraTestOwner&roles=All") ~>
       methodsService.entityPermissionsRoute ~>
       check {
-        assert(status == Unauthorized)
+        assert(status == Forbidden)
       }
   }
 
@@ -179,7 +179,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
       "/" + agoraEntity2.snapshotId.get + "/" + "permissions" + s"?user=$owner2&roles=All") ~>
       methodsService.entityPermissionsRoute ~>
       check {
-        assert(status == Unauthorized)
+        assert(status == Forbidden)
       }
   }
 

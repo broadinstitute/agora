@@ -64,10 +64,10 @@ trait PerRequest extends Actor with LazyLogging {
     OneForOneStrategy(loggingEnabled = AgoraConfig.supervisorLogging) {
       //Should make a single Authorization Exception trait to minimize code duplication.
       case e: AgoraEntityAuthorizationException =>
-        r.complete(Unauthorized, AgoraException(e.getMessage, e.getCause, Unauthorized))
+        r.complete(Forbidden, AgoraException(e.getMessage, e.getCause, Forbidden))
         Stop
       case e: NamespaceAuthorizationException =>
-        r.complete(Unauthorized, AgoraException(e.getMessage, e.getCause, Unauthorized))
+        r.complete(Forbidden, AgoraException(e.getMessage, e.getCause, Forbidden))
         Stop
       case e: AgoraEntityNotFoundException =>
         r.complete(NotFound, AgoraException(e.getMessage, e.getCause, NotFound))

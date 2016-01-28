@@ -178,37 +178,42 @@ trait PermissionsClient {
     val userEmail = userAccessObject.user
     val roles = userAccessObject.roles
 
-    addUserIfNotInDatabase(userEmail)
+    roles match {
+      case AgoraPermissions(Nothing) =>
+        deletePermission(agoraEntity, userEmail)
+      case _ =>
+        addUserIfNotInDatabase(userEmail)
 
-    // construct update action
-    val permissionsUpdateAction = for {
-      user <- users
-        .filter(_.email === userEmail)
-        .result
-        .head
+        // construct update action
+        val permissionsUpdateAction = for {
+          user <- users
+            .filter(_.email === userEmail)
+            .result
+            .head
 
-      entity <- entities
-        .filter(_.alias === alias(agoraEntity))
-        .result
-        .head
+          entity <- entities
+            .filter(_.alias === alias(agoraEntity))
+            .result
+            .head
 
-      permission <- permissions
-        .filter(p => p.entityID === entity.id && p.userID === user.id)
-        .map(_.roles)
-        .update(roles.toInt)
-    } yield permission
+          permission <- permissions
+            .filter(p => p.entityID === entity.id && p.userID === user.id)
+            .map(_.roles)
+            .update(roles.toInt)
+        } yield permission
 
-    // run update action
-    try {
-      val rowsEdited = Await.result(db.run(permissionsUpdateAction), timeout)
+        // run update action
+        try {
+          val rowsEdited = Await.result(db.run(permissionsUpdateAction), timeout)
 
-      if (rowsEdited == 0)
-        throw new Exception("No rows were edited.")
-      else
-        rowsEdited
+          if (rowsEdited == 0)
+            throw new Exception("No rows were edited.")
+          else
+            rowsEdited
 
-    } catch {
-      case ex: Throwable => throw new PermissionNotFoundException(s"Could not edit permission", ex)
+        } catch {
+          case ex: Throwable => throw new PermissionNotFoundException(s"Could not edit permission", ex)
+        }
     }
   }
 

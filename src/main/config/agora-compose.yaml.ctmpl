@@ -6,6 +6,7 @@ app:
   image: {{.Data.app_image}}
   {{.Data.app_dns}}
   log_driver: "{{.Data.log_driver}}"
+  restart: always
   environment:
     JAVA_OPTS: {{.Data.env_java_opts}}
   {{.Data.app_volumes}}

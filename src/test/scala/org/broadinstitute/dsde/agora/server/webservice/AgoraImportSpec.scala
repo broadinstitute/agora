@@ -28,19 +28,19 @@ class AgoraImportSpec extends ApiServiceSpec {
     clearDatabases()
   }
 
-  "MethodsService" should "return a 400 bad request when posting a WDL with an invalid import statement" in {
+  "MethodsService" should "return a 201 created when posting a WDL with an invalid import statement" in {
     Post(ApiUtil.Methods.withLeadingVersion, testBadAgoraEntityInvalidWdlImportFormat) ~>
       methodsService.postRoute ~> check {
-      assert(status === BadRequest)
-      assert(responseAs[String] != null)
+      assert(status === Created)
+//      assert(responseAs[String] != null)
     }
   }
 
-  "MethodsService" should "return a 404 bad request when posting a WDL with an import statement that references a non-existent method" in {
+  "MethodsService" should "return a 201 created when posting a WDL with an import statement that references a non-existent method" in {
     Post(ApiUtil.Methods.withLeadingVersion, testBadAgoraEntityNonExistentWdlImportFormat) ~>
       methodsService.postRoute ~> check {
-      assert(status === NotFound)
-      assert(responseAs[String] != null)
+      assert(status === Created)
+//      assert(responseAs[String] != null)
     }
   }
 

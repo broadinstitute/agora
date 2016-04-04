@@ -104,15 +104,17 @@ class AgoraBusiness {
     agoraEntity.entityType.get match {
 
       case AgoraEntityType.Task =>
-        val namespace = WdlNamespace.load(agoraEntity.payload.get, BackendType.LOCAL)
-        // Passed basic validation.  Now check if (any) docker images that are referenced exist
-        namespace.tasks.foreach { validateDockerImage }
+// GAWB-59 remove wdl validation
+//        val namespace = WdlNamespace.load(agoraEntity.payload.get, BackendType.LOCAL)
+//        // Passed basic validation.  Now check if (any) docker images that are referenced exist
+//        namespace.tasks.foreach { validateDockerImage }
 
       case AgoraEntityType.Workflow =>
-        val resolver = MethodImportResolver(username, this)
-        val namespace = WdlNamespace.load(agoraEntity.payload.get, resolver.importResolver _, BackendType.LOCAL)
-        // Passed basic validation.  Now check if (any) docker images that are referenced exist
-        namespace.tasks.foreach { validateDockerImage }
+// GAWB-59 remove wdl validation
+//        val resolver = MethodImportResolver(username, this)
+//        val namespace = WdlNamespace.load(agoraEntity.payload.get, resolver.importResolver _, BackendType.LOCAL)
+//        // Passed basic validation.  Now check if (any) docker images that are referenced exist
+//        namespace.tasks.foreach { validateDockerImage }
 
       case AgoraEntityType.Configuration =>
         val json = agoraEntity.payload.get.parseJson

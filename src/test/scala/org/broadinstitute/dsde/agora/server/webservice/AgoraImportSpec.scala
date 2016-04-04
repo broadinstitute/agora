@@ -1,9 +1,7 @@
 
 package org.broadinstitute.dsde.agora.server.webservice
 
-import cromwell.parser.WdlParser.SyntaxError
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
-import org.broadinstitute.dsde.agora.server.business.{ImportResolverHelper, MethodImportResolver}
 import org.broadinstitute.dsde.agora.server.exceptions.AgoraEntityNotFoundException
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
@@ -67,72 +65,72 @@ class AgoraImportSpec extends ApiServiceSpec {
     }
   }
 
-  "ImportResolverHelper" should "reject import if scheme != methods://" in {
-    val thrown = the[SyntaxError] thrownBy ImportResolverHelper.validateUri("blah://")
-    assert(thrown.getMessage.contains("start with") === true)
-  }
-
-  "ImportResolverHelper" should "reject import if something comes before scheme" in {
-    val thrown = the[SyntaxError] thrownBy ImportResolverHelper.validateUri("foo methods://")
-    assert(thrown.getMessage.contains("start with") === true)
-  }
-
-  "ImportResolverHelper" should "reject import if uri doesn't have 3 parts" in {
-    val thrown = the[SyntaxError] thrownBy ImportResolverHelper.validateUri("methods://")
-    assert(thrown.getMessage.contains("three parts") === true)
-  }
-
-  "ImportResolverHelper" should "reject import if third part is not an integer" in {
-    val thrown = the[SyntaxError] thrownBy ImportResolverHelper.validateUri("methods://foo.bar.baz")
-    assert(thrown.getMessage.contains("integer") === true)
-  }
-
-  "ImportResolverHelper" should "accept a valid import uri" in {
-    noException should be thrownBy ImportResolverHelper.validateUri("methods://foo.bar.2")
-  }
-
-  "ImportResolverHelper.resolve" should "return throw an AgoraEntityNotFoundException if method does not exist" in {
-    val thrown = intercept[AgoraEntityNotFoundException] {
-      ImportResolverHelper.resolve("methods://foo.bar.1", agoraBusiness, mockAutheticatedOwner.get)
-    }
-    assert(thrown != null)
-  }
-
-  "ImportResolverHelper.resolve" should "return the method if it exists" in {
-    val namespace = testEntityTaskWcWithId.namespace.get
-    val name = testEntityTaskWcWithId.name.get
-    val id = testEntityTaskWcWithId.snapshotId.get
-    val method = ImportResolverHelper.resolve(s"methods://$namespace.$name.$id", agoraBusiness, mockAutheticatedOwner.get)
-    assert(method !== None)
-    assert(method.namespace.get === namespace)
-    assert(method.name.get === name)
-    assert(method.snapshotId.get === id)
-  }
-
-  "MethodImportResolver" should "reject import if scheme != methods://" in {
-    val uri = "blah://"
-    val resolver = MethodImportResolver(mockAutheticatedOwner.get, agoraBusiness)
-    val thrown = the[SyntaxError] thrownBy resolver.importResolver(uri)
-    assert(thrown.getMessage.contains("start with") === true)
-  }
-
-  "MethodImportResolver" should "throw an AgoraEntityNotFoundException if method not found" in {
-    val uri = "methods://foo.bar.22"
-    val resolver = MethodImportResolver(mockAutheticatedOwner.get, agoraBusiness)
-    val thrown = intercept[AgoraEntityNotFoundException] {
-      resolver.importResolver(uri)
-    }
-    assert(thrown != null)
-  }
-
-  "MethodImportResolver" should "return payload if method is found" in {
-    val namespace = testEntityTaskWcWithId.namespace.get
-    val name = testEntityTaskWcWithId.name.get
-    val id = testEntityTaskWcWithId.snapshotId.get
-    val uri = s"methods://$namespace.$name.$id"
-    val resolver = MethodImportResolver(mockAutheticatedOwner.get, agoraBusiness)
-    val payload = resolver.importResolver(uri)
-    assert(payload.contains("wc") === true)
-  }
+//  "ImportResolverHelper" should "reject import if scheme != methods://" in {
+//    val thrown = the[SyntaxError] thrownBy ImportResolverHelper.validateUri("blah://")
+//    assert(thrown.getMessage.contains("start with") === true)
+//  }
+//
+//  "ImportResolverHelper" should "reject import if something comes before scheme" in {
+//    val thrown = the[SyntaxError] thrownBy ImportResolverHelper.validateUri("foo methods://")
+//    assert(thrown.getMessage.contains("start with") === true)
+//  }
+//
+//  "ImportResolverHelper" should "reject import if uri doesn't have 3 parts" in {
+//    val thrown = the[SyntaxError] thrownBy ImportResolverHelper.validateUri("methods://")
+//    assert(thrown.getMessage.contains("three parts") === true)
+//  }
+//
+//  "ImportResolverHelper" should "reject import if third part is not an integer" in {
+//    val thrown = the[SyntaxError] thrownBy ImportResolverHelper.validateUri("methods://foo.bar.baz")
+//    assert(thrown.getMessage.contains("integer") === true)
+//  }
+//
+//  "ImportResolverHelper" should "accept a valid import uri" in {
+//    noException should be thrownBy ImportResolverHelper.validateUri("methods://foo.bar.2")
+//  }
+//
+//  "ImportResolverHelper.resolve" should "return throw an AgoraEntityNotFoundException if method does not exist" in {
+//    val thrown = intercept[AgoraEntityNotFoundException] {
+//      ImportResolverHelper.resolve("methods://foo.bar.1", agoraBusiness, mockAutheticatedOwner.get)
+//    }
+//    assert(thrown != null)
+//  }
+//
+//  "ImportResolverHelper.resolve" should "return the method if it exists" in {
+//    val namespace = testEntityTaskWcWithId.namespace.get
+//    val name = testEntityTaskWcWithId.name.get
+//    val id = testEntityTaskWcWithId.snapshotId.get
+//    val method = ImportResolverHelper.resolve(s"methods://$namespace.$name.$id", agoraBusiness, mockAutheticatedOwner.get)
+//    assert(method !== None)
+//    assert(method.namespace.get === namespace)
+//    assert(method.name.get === name)
+//    assert(method.snapshotId.get === id)
+//  }
+//
+//  "MethodImportResolver" should "reject import if scheme != methods://" in {
+//    val uri = "blah://"
+//    val resolver = MethodImportResolver(mockAutheticatedOwner.get, agoraBusiness)
+//    val thrown = the[SyntaxError] thrownBy resolver.importResolver(uri)
+//    assert(thrown.getMessage.contains("start with") === true)
+//  }
+//
+//  "MethodImportResolver" should "throw an AgoraEntityNotFoundException if method not found" in {
+//    val uri = "methods://foo.bar.22"
+//    val resolver = MethodImportResolver(mockAutheticatedOwner.get, agoraBusiness)
+//    val thrown = intercept[AgoraEntityNotFoundException] {
+//      resolver.importResolver(uri)
+//    }
+//    assert(thrown != null)
+//  }
+//
+//  "MethodImportResolver" should "return payload if method is found" in {
+//    val namespace = testEntityTaskWcWithId.namespace.get
+//    val name = testEntityTaskWcWithId.name.get
+//    val id = testEntityTaskWcWithId.snapshotId.get
+//    val uri = s"methods://$namespace.$name.$id"
+//    val resolver = MethodImportResolver(mockAutheticatedOwner.get, agoraBusiness)
+//    val payload = resolver.importResolver(uri)
+//    assert(payload.contains("wc") === true)
+//  }
 
 }

@@ -41,7 +41,7 @@ libraryDependencies ++= Seq(
   "mysql" % "mysql-connector-java" % "5.1.35",
   "net.ceedubs" %% "ficus" % "1.1.2",
   "org.aspectj" % "aspectjweaver" % "1.8.6",
-  "org.broadinstitute" %% "cromwell" % "0.9" excludeAll ExclusionRule(organization = "com.gettyimages"),
+//  "org.broadinstitute" %% "cromwell" % "0.9" excludeAll ExclusionRule(organization = "com.gettyimages"),
   "org.broadinstitute.dsde.vault" %% "vault-common" % "0.1-15-bf74315",
   "org.mongodb" %% "casbah" % "2.8.2",
   "org.flywaydb" % "flyway-core" % "3.2.1",

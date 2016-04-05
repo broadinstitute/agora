@@ -11,7 +11,7 @@ import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpec, Matchers}
 class AgoraBusinessTest extends FlatSpec with Matchers with BeforeAndAfterAll with AgoraTestFixture {
 
   val agoraBusiness = new AgoraBusiness()
-  val methodImportResolver = new MethodImportResolver(agoraTestOwner.get, agoraBusiness)
+//  val methodImportResolver = new MethodImportResolver(agoraTestOwner.get, agoraBusiness)
 
   override protected def beforeAll() = {
     ensureDatabasesAreRunning()
@@ -22,19 +22,19 @@ class AgoraBusinessTest extends FlatSpec with Matchers with BeforeAndAfterAll wi
     clearDatabases()
   }
 
-  "Agora" should "not find a method payload when resolving a WDL import statement if the method has not been added" in {
-    val importString = "methods://broad.nonexistent.5400"
-    intercept[Exception] {
-      methodImportResolver.importResolver(importString)
-    }
-  }
+//  "Agora" should "not find a method payload when resolving a WDL import statement if the method has not been added" in {
+//    val importString = "methods://broad.nonexistent.5400"
+//    intercept[Exception] {
+//      methodImportResolver.importResolver(importString)
+//    }
+//  }
 
-  "Agora" should "throw an exception when trying to resolve a WDL import that is improperly formatted" in {
-    val importString = "methods:broad.nonexistent.5400"
-    intercept[Exception] {
-      methodImportResolver.importResolver(importString)
-    }
-  }
+//  "Agora" should "throw an exception when trying to resolve a WDL import that is improperly formatted" in {
+//    val importString = "methods:broad.nonexistent.5400"
+//    intercept[Exception] {
+//      methodImportResolver.importResolver(importString)
+//    }
+//  }
 
   "Agora" should "not let users without permissions redact a method" in {
     val testEntityToBeRedactedWithId3 = agoraBusiness.find(testEntityToBeRedacted3, None, Seq(testEntityToBeRedacted3.entityType.get), mockAutheticatedOwner.get).head

@@ -3,13 +3,18 @@ package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.actor.Props
 import kamon.spray.KamonTraceDirectives._
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AccessControl
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraEntityPermissionsClient}
+import org.broadinstitute.dsde.agora.server.dataaccess.mongo.AgoraMongoClient._
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
-import org.broadinstitute.dsde.agora.server.webservice.handlers.{PermissionHandler, QueryHandler, AddHandler}
+import org.broadinstitute.dsde.agora.server.webservice.handlers.{AddHandler, PermissionHandler, QueryHandler}
 import org.broadinstitute.dsde.agora.server.webservice.routes.RouteHelpers
+import scala.util.{Failure, Success}
+import spray.http.MediaTypes._
+import spray.http.StatusCodes
 import spray.httpx.SprayJsonSupport._
 import spray.routing.HttpService
+
 
 /**
  * AgoraService defines routes for ApiServiceActor.
@@ -20,7 +25,7 @@ abstract class AgoraService extends HttpService with RouteHelpers {
 
   def path: String
 
-  def routes = namespacePermissionsRoute ~ entityPermissionsRoute ~ querySingleRoute ~ queryRoute ~ postRoute
+  def routes = namespacePermissionsRoute ~ entityPermissionsRoute ~ querySingleRoute ~ queryRoute ~ postRoute ~ statusRoute
 
   def queryHandlerProps = Props(classOf[QueryHandler])
 
@@ -125,6 +130,41 @@ abstract class AgoraService extends HttpService with RouteHelpers {
         }
       }
     }
+
+  // GET /status
+  def statusRoute = path("status") {
+    get {
+      // check mongo db connection
+      onComplete(getMongoDBStatus) {
+        case Success(_) =>
+          // check sql db connection
+          onComplete(AgoraEntityPermissionsClient.sqlDBStatus) {
+            case Success(_) =>
+              respondWithMediaType(`application/json`) {
+                respondWithStatus(StatusCodes.OK) {
+                  complete {
+                    """{"status": "up"}"""
+                  }
+                }
+              }
+            case Failure(e) =>
+              respondWithMediaType(`application/json`) {
+                respondWithStatus(StatusCodes.InternalServerError) {
+                  complete {
+                    s"""{"status": "down", "error": "${e.getMessage}"}"""
+                  }
+                }
+              }
+          }
+        case Failure(e) =>
+          respondWithMediaType(`application/json`) {
+            respondWithStatus(StatusCodes.InternalServerError) {
+              complete {
+                s"""{"status": "down", "error": "${e.getMessage}"}"""
+              }
+            }
+          }
+      }
+    }
+  }
 }
-
-

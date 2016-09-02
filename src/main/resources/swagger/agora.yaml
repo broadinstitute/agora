@@ -6,9 +6,18 @@ info:
 produces:
   - application/json
   - text/plain
-basePath: /api/v1
 paths:
-  /methods:
+  /status:
+    get:
+      summary: Returns status code for connection to database
+      responses:
+        '200':
+          description: OK
+        '500':
+          description: Internal server error
+      tags:
+        - Status
+  /api/v1/methods:
     get:
       summary: List methods
       description: |
@@ -120,7 +129,7 @@ paths:
             - openid
             - email
             - profile
-  '/methods/{namespace}/{name}/{snapshotId}':
+  '/api/v1/methods/{namespace}/{name}/{snapshotId}':
     get:
       summary: Find a single method.
       description: |
@@ -195,7 +204,7 @@ paths:
           description: Error upon redaction
           schema:
             $ref: '#/definitions/Error'
-  /configurations:
+  /api/v1/configurations:
     get:
       summary: List configurations
       description: |
@@ -307,7 +316,7 @@ paths:
             - openid
             - email
             - profile
-  '/configurations/{namespace}/{name}/{snapshotId}':
+  '/api/v1/configurations/{namespace}/{name}/{snapshotId}':
     get:
       summary: Find a single method.
       description: |
@@ -380,7 +389,7 @@ paths:
           description: Error upon redaction
           schema:
             $ref: '#/definitions/Error'
-  '/methods/{namespace}/permissions':
+  '/api/v1/methods/{namespace}/permissions':
     get:
       summary: List permissions on namespace.
       description: |
@@ -525,7 +534,7 @@ paths:
             - openid
             - email
             - profile
-  '/methods/{namespace}/{name}/{snapshotId}/permissions':
+  '/api/v1/methods/{namespace}/{name}/{snapshotId}/permissions':
     get:
       summary: List permissions on a specific method.
       description: |
@@ -708,7 +717,7 @@ paths:
             - openid
             - email
             - profile
-  '/configurations/{namespace}/permissions':
+  '/api/v1/configurations/{namespace}/permissions':
     get:
       summary: List permissions on namespace.
       description: |
@@ -851,7 +860,7 @@ paths:
             - openid
             - email
             - profile
-  '/configurations/{namespace}/{name}/{snapshotId}/permissions':
+  '/api/v1/configurations/{namespace}/{name}/{snapshotId}/permissions':
     get:
       summary: List permissions on a specific method.
       description: |

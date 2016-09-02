@@ -8,6 +8,7 @@ import scala.concurrent.{Future, Await}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import slick.driver.MySQLDriver.api._
+import slick.jdbc.SQLInterpolation
 
 trait PermissionsClient {
 
@@ -294,4 +295,8 @@ trait PermissionsClient {
     )
   }
 
+  def sqlDBStatus() = {
+    val action = sql"select version();".as[String]
+    db.run(action.transactionally) map { _ => Unit }
+  }
 }

@@ -1,7 +1,10 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
 import spray.http.StatusCodes
+import org.scalatest.DoNotDiscover
 
+
+@DoNotDiscover
 class AgoraServiceStatusSpec extends ApiServiceSpec {
 
   override def beforeAll() = {
@@ -13,7 +16,7 @@ class AgoraServiceStatusSpec extends ApiServiceSpec {
   }
 
   // our test sql db is H2, which doesn't allow us to check for version
-  "Agora" should "should not actually be able to test the sql db" in {
+  it should "should not actually be able to test the sql db" in {
     Get(s"/status") ~> apiStatusService.statusRoute ~>
       check {
         assertResult(StatusCodes.InternalServerError) {

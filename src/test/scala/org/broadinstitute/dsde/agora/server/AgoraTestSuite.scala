@@ -9,6 +9,7 @@ import org.broadinstitute.dsde.agora.server.webservice._
 import org.scalatest.{BeforeAndAfterAll, Suites}
 
 class AgoraTestSuite extends Suites(
+  new AgoraServiceStatusSpec,
   new AgoraMethodsSpec,
   new AgoraProjectionsSpec,
   new AgoraImportSpec,

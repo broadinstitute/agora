@@ -7,7 +7,7 @@ import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessContro
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.AgoraMongoClient._
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
-import org.broadinstitute.dsde.agora.server.webservice.handlers.{AddHandler, PermissionHandler, QueryHandler}
+import org.broadinstitute.dsde.agora.server.webservice.handlers.{AddHandler, PermissionHandler, QueryHandler, StatusHandler}
 import org.broadinstitute.dsde.agora.server.webservice.routes.RouteHelpers
 import scala.util.{Failure, Success}
 import spray.http.MediaTypes._
@@ -30,6 +30,8 @@ abstract class AgoraService extends HttpService with RouteHelpers {
   def queryHandlerProps = Props(classOf[QueryHandler])
 
   def addHandlerProps = Props(classOf[AddHandler])
+
+  def statusHandlerProps = Props(classOf[StatusHandler])
 
   def permissionHandlerProps = Props(classOf[PermissionHandler])
 
@@ -133,38 +135,9 @@ abstract class AgoraService extends HttpService with RouteHelpers {
 
   // GET /status
   def statusRoute = path("status") {
-    get {
-      // check mongo db connection
-      onComplete(getMongoDBStatus) {
-        case Success(_) =>
-          // check sql db connection
-          onComplete(AgoraEntityPermissionsClient.sqlDBStatus) {
-            case Success(_) =>
-              respondWithMediaType(`application/json`) {
-                respondWithStatus(StatusCodes.OK) {
-                  complete {
-                    """{"status": "up"}"""
-                  }
-                }
-              }
-            case Failure(e) =>
-              respondWithMediaType(`application/json`) {
-                respondWithStatus(StatusCodes.InternalServerError) {
-                  complete {
-                    s"""{"status": "down", "error": "${e.getMessage}"}"""
-                  }
-                }
-              }
-          }
-        case Failure(e) =>
-          respondWithMediaType(`application/json`) {
-            respondWithStatus(StatusCodes.InternalServerError) {
-              complete {
-                s"""{"status": "down", "error": "${e.getMessage}"}"""
-              }
-            }
-          }
-      }
+    get { requestContext =>
+      // what should message be?
+      perRequest(requestContext, statusHandlerProps, "status")
     }
   }
 }

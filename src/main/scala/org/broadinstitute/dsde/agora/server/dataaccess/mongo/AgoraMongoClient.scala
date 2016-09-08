@@ -81,9 +81,7 @@ object AgoraMongoClient {
 
   }
 
-  def getMongoDBStatus: Future[Unit] = {
-    Future {
-      mongoClient.getDB(AgoraConfig.mongoDbDatabase).getStats()
-    }
+  def getMongoDBStatus: Unit = {
+    mongoClient.getDB(AgoraConfig.mongoDbDatabase).getStats()
   }
 }

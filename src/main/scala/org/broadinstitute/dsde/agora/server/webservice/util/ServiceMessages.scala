@@ -81,4 +81,6 @@ object ServiceMessages {
                  agoraAddRequest: AgoraEntity,
                  username: String)
 
+  case class Status(requestContext: RequestContext)
+
 }

@@ -9,6 +9,8 @@ produces:
 paths:
   /status:
     get:
+      produces:
+      - text/plain
       summary: Returns status code for connection to database
       responses:
         '200':

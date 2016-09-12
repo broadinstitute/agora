@@ -8,9 +8,6 @@ import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages
 import spray.http.StatusCodes._
 import spray.routing.RequestContext
 
-/**
-  * Created by skwalker on 9/6/16.
-  */
 class StatusHandler extends Actor {
   implicit val system = context.system
 
@@ -24,6 +21,8 @@ class StatusHandler extends Actor {
   }
 
   private def getStatus(requestContext: RequestContext): Unit = {
-    context.parent ! RequestComplete(OK, agoraStatus.status())
+    val (up, message) = agoraStatus.status()
+    if (up) context.parent ! RequestComplete(OK, """{"status": "up"}""")
+    else context.parent ! RequestComplete(InternalServerError, message)
   }
 }

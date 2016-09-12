@@ -4,16 +4,13 @@ package org.broadinstitute.dsde.agora.server.webservice
 import akka.actor.Props
 import kamon.spray.KamonTraceDirectives._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraEntityPermissionsClient}
-import org.broadinstitute.dsde.agora.server.dataaccess.mongo.AgoraMongoClient._
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.handlers.{AddHandler, PermissionHandler, QueryHandler, StatusHandler}
 import org.broadinstitute.dsde.agora.server.webservice.routes.RouteHelpers
-import scala.util.{Failure, Success}
-import spray.http.MediaTypes._
-import spray.http.StatusCodes
+import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages.Status
 import spray.httpx.SprayJsonSupport._
-import spray.routing.HttpService
+import spray.routing.{HttpService, RequestContext}
 
 
 /**
@@ -136,8 +133,7 @@ abstract class AgoraService extends HttpService with RouteHelpers {
   // GET /status
   def statusRoute = path("status") {
     get { requestContext =>
-      // what should message be?
-      perRequest(requestContext, statusHandlerProps, "status")
+      perRequest(requestContext, statusHandlerProps, Status(requestContext))
     }
   }
 }

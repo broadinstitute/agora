@@ -295,8 +295,8 @@ trait PermissionsClient {
     )
   }
 
-  def sqlDBStatus() = {
+  def sqlDBStatus(): String = {
     val action = sql"select version();".as[String]
-    db.run(action.transactionally) map { _ => Unit }
+    Await.result(db.run(action.transactionally), timeout)(0)
   }
 }

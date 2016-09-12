@@ -22,7 +22,7 @@ class AgoraServiceStatusSpec extends ApiServiceSpec {
         assertResult(StatusCodes.InternalServerError) {
           status
         }
-        assertResult(s"""{"status": "down", "error": "Function "VERSION" not found; SQL statement:\nselect version(); [90022-175]"}""") {
+        assertResult(s"""{"status": "down", "sql error": "Function "VERSION" not found; SQL statement:\nselect version(); [90022-175]" }""") {
           responseAs[String]
         }
       }

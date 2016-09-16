@@ -163,4 +163,15 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
 
   implicit val AccessControlFormat = jsonFormat2(AccessControl.apply)
 
+  implicit object AgoraStatusFormat extends RootJsonFormat[AgoraStatus] {
+    override def write(obj: AgoraStatus): JsObject = {
+      JsObject("status" -> JsString(if (obj.up) "up" else "down"),
+        "message" -> JsArray(obj.messages.map(JsString(_)).toVector)
+      )
+    }
+
+    override def read(json: JsValue): AgoraStatus = json match {
+      case _ => throw new DeserializationException("Cannot read AgoraStatus in JSON")
+    }
+  }
 }

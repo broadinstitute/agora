@@ -4,11 +4,14 @@ import AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.exceptions.PermissionNotFoundException
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
-import scala.concurrent.{Future, Await}
+
+import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import slick.driver.MySQLDriver.api._
 import slick.jdbc.SQLInterpolation
+
+import scala.util.Try
 
 trait PermissionsClient {
 
@@ -295,8 +298,8 @@ trait PermissionsClient {
     )
   }
 
-  def sqlDBStatus(): String = {
+  def sqlDBStatus(): Try[Unit] = {
     val action = sql"select version();".as[String]
-    Await.result(db.run(action.transactionally), timeout)(0)
+    Try(Await.result(db.run(action.transactionally), timeout))
   }
 }

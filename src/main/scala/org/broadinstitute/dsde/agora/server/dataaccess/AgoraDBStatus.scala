@@ -14,6 +14,6 @@ class AgoraDBStatus {
     val errors = Seq(mongo, sql).collect {
       case (Failure(t)) => t.getMessage
     }
-    if (errors.isEmpty) AgoraStatus(true, Seq()) else AgoraStatus(false, errors)
+    AgoraStatus(errors.isEmpty, errors)
   }
 }

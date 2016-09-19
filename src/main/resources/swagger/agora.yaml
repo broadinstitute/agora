@@ -328,7 +328,7 @@ paths:
             - profile
   '/configurations/{namespace}/{name}/{snapshotId}':
     get:
-      summary: Find a single method. # configuration ??
+      summary: Find a single method configuration.
       description: |
         Returns one method that matches the namespace,
         name, and snapshotId.

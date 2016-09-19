@@ -77,6 +77,7 @@ paths:
         default:
           description: Unexpected error
           schema:
+            type: object
             $ref: '#/definitions/Error'
       security:
         - authorization:
@@ -99,6 +100,7 @@ paths:
           description: Agora Entity
           required: false
           schema:
+            type: object
             $ref: '#/definitions/MethodQuery'
       tags:
         - Methods
@@ -106,14 +108,18 @@ paths:
         '201':
           description: Method successfully added.
           schema:
+            type: object
             $ref: '#/definitions/MethodResponse'
         '400':
           description: Malformed input.
           schema:
+            type: object
+            code: 400
             $ref: '#/definitions/Error'
         '500':
           description: Internal error.
           schema:
+            type: object
             $ref: '#/definitions/Error'
       security:
         - authorization:
@@ -153,10 +159,12 @@ paths:
         '200':
           description: A single method.
           schema:
+            type: object
             $ref: '#/definitions/MethodResponse'
         default:
           description: Unexpected error
           schema:
+            type: object
             $ref: '#/definitions/Error'
       security:
         - authorization:
@@ -194,6 +202,7 @@ paths:
         default:
           description: Error upon redaction
           schema:
+            type: object
             $ref: '#/definitions/Error'
   /configurations:
     get:
@@ -264,6 +273,7 @@ paths:
         default:
           description: Unexpected error
           schema:
+            type: object
             $ref: '#/definitions/Error'
       security:
         - authorization:
@@ -286,6 +296,7 @@ paths:
           description: Agora Entity
           required: false
           schema:
+            type: object
             $ref: '#/definitions/ConfigurationQuery'
       tags:
         - Configurations
@@ -293,14 +304,22 @@ paths:
         '201':
           description: Method successfully added.
           schema:
+            type: object
             $ref: '#/definitions/ConfigurationResponse'
         '400':
           description: Malformed input.
           schema:
+            type: object
             $ref: '#/definitions/Error'
         '500':
           description: Internal error.
           schema:
+            type: object
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            type: object
             $ref: '#/definitions/Error'
       security:
         - authorization:
@@ -309,7 +328,7 @@ paths:
             - profile
   '/configurations/{namespace}/{name}/{snapshotId}':
     get:
-      summary: Find a single method.
+      summary: Find a single method configuration.
       description: |
         Returns one method that matches the namespace,
         name, and snapshotId.
@@ -335,12 +354,12 @@ paths:
         '200':
           description: An array of configurations.
           schema:
-            type: array
-            items:
-              $ref: '#/definitions/ConfigurationResponse'
+            type: object
+            $ref: '#/definitions/ConfigurationResponse'
         default:
           description: Unexpected error
           schema:
+            type: object
             $ref: '#/definitions/Error'
       security:
         - authorization:
@@ -379,6 +398,7 @@ paths:
         default:
           description: Error upon redaction
           schema:
+            type: object
             $ref: '#/definitions/Error'
   '/methods/{namespace}/permissions':
     get:
@@ -399,10 +419,12 @@ paths:
           schema:
             type: array
             items:
+              type: object
               $ref: '#/definitions/AccessControl'
         default:
           description: Unexpected error
           schema:
+            type: object
             $ref: '#/definitions/Error'
       security:
         - authorization:
@@ -448,10 +470,12 @@ paths:
         '200':
           description: Access control modified or list of access controls.
           schema:
+            type: object
             $ref: '#/definitions/AccessControl'
         default:
           description: Unexpected error
           schema:
+            type: object
             $ref: '#/definitions/Error'
       security:
         - authorization:
@@ -484,10 +508,12 @@ paths:
         '200':
           description: Access control modified.
           schema:
+            type: object
             $ref: '#/definitions/AccessControl'
         default:
           description: Unexpected error
           schema:
+            type: object
             $ref: '#/definitions/Error'
       security:
         - authorization:
@@ -515,10 +541,12 @@ paths:
         '200':
           description: Access control modified.
           schema:
+            type: object
             $ref: '#/definitions/AccessControl'
         default:
           description: Unexpected error
           schema:
+            type: object
             $ref: '#/definitions/Error'
       security:
         - authorization:
@@ -558,6 +586,7 @@ paths:
         default:
           description: Unexpected error
           schema:
+            type: object
             $ref: '#/definitions/Error'
       security:
         - authorization:
@@ -611,10 +640,12 @@ paths:
         '200':
           description: Access control modified.
           schema:
+            type: object
             $ref: '#/definitions/AccessControl'
         default:
           description: Unexpected error
           schema:
+            type: object
             $ref: '#/definitions/Error'
       security:
         - authorization:
@@ -657,10 +688,12 @@ paths:
         '200':
           description: Access control modified.
           schema:
+            type: object
             $ref: '#/definitions/AccessControl'
         default:
           description: Unexpected error
           schema:
+            type: object
             $ref: '#/definitions/Error'
       security:
         - authorization:
@@ -698,10 +731,12 @@ paths:
         '200':
           description: Access control modified.
           schema:
+            type: object
             $ref: '#/definitions/AccessControl'
         default:
           description: Unexpected error
           schema:
+            type: object
             $ref: '#/definitions/Error'
       security:
         - authorization:
@@ -731,6 +766,7 @@ paths:
         default:
           description: Unexpected error
           schema:
+            type: object
             $ref: '#/definitions/Error'
       security:
         - authorization:
@@ -774,10 +810,12 @@ paths:
         '200':
           description: Access control modified.
           schema:
+            type: object
             $ref: '#/definitions/AccessControl'
         default:
           description: Unexpected error
           schema:
+            type: object
             $ref: '#/definitions/Error'
       security:
         - authorization:
@@ -810,10 +848,12 @@ paths:
         '200':
           description: Access control modified.
           schema:
+            type: object
             $ref: '#/definitions/AccessControl'
         default:
           description: Unexpected error
           schema:
+            type: object
             $ref: '#/definitions/Error'
       security:
         - authorization:
@@ -841,10 +881,12 @@ paths:
         '200':
           description: Access control modified.
           schema:
+            type: object
             $ref: '#/definitions/AccessControl'
         default:
           description: Unexpected error
           schema:
+            type: object
             $ref: '#/definitions/Error'
       security:
         - authorization:
@@ -884,6 +926,7 @@ paths:
         default:
           description: Unexpected error
           schema:
+            type: object
             $ref: '#/definitions/Error'
       security:
         - authorization:
@@ -937,10 +980,12 @@ paths:
         '200':
           description: Access control modified.
           schema:
+            type: object
             $ref: '#/definitions/AccessControl'
         default:
           description: Unexpected error
           schema:
+            type: object
             $ref: '#/definitions/Error'
       security:
         - authorization:
@@ -983,10 +1028,12 @@ paths:
         '200':
           description: Access control modified.
           schema:
+            type: object
             $ref: '#/definitions/AccessControl'
         default:
           description: Unexpected error
           schema:
+            type: object
             $ref: '#/definitions/Error'
       security:
         - authorization:
@@ -1024,10 +1071,12 @@ paths:
         '200':
           description: Access control modified.
           schema:
+            type: object
             $ref: '#/definitions/AccessControl'
         default:
           description: Unexpected error
           schema:
+            type: object
             $ref: '#/definitions/Error'
       security:
         - authorization:
@@ -1045,6 +1094,7 @@ securityDefinitions:
       profile: profile authorization
 definitions:
   MethodQuery:
+    type: object
     properties:
       namespace:
         type: string
@@ -1076,6 +1126,7 @@ definitions:
         description: Type of the AgoraEntity -- Task or Workflow.
         default: Task
   ConfigurationQuery:
+    type: object
     properties:
       namespace:
         type: string
@@ -1105,6 +1156,7 @@ definitions:
         description: Can only be Configuration.
         default: Configuration
   ConfigurationResponse:
+    type: object
     properties:
       method:
         type: object
@@ -1147,6 +1199,7 @@ definitions:
         description: Type of the AgoraEntity -- Task or Workflow.
         default: Task
   MethodResponse:
+    type: object
     properties:
       namespace:
         type: string
@@ -1187,6 +1240,7 @@ definitions:
         description: Type of the AgoraEntity -- Task or Workflow.
         default: Task
   AccessControl:
+    type: object
     properties:
       user:
         type: string
@@ -1204,11 +1258,12 @@ definitions:
           - Redact
           - Manage
   Error:
+    type: object
     properties:
       code:
         type: integer
-        format: int32
         default: 500
       message:
         type: string
         default: Internal Server Error
+

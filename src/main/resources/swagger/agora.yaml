@@ -10,7 +10,7 @@ paths:
   /status:
     get:
       produces:
-      - text/plain
+      - application/json
       summary: Returns status code for connection to database
       responses:
         '200':

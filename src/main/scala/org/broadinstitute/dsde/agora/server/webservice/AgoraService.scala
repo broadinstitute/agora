@@ -3,13 +3,15 @@ package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.actor.Props
 import kamon.spray.KamonTraceDirectives._
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AccessControl
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraEntityPermissionsClient}
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
-import org.broadinstitute.dsde.agora.server.webservice.handlers.{PermissionHandler, QueryHandler, AddHandler}
+import org.broadinstitute.dsde.agora.server.webservice.handlers.{AddHandler, PermissionHandler, QueryHandler, StatusHandler}
 import org.broadinstitute.dsde.agora.server.webservice.routes.RouteHelpers
+import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages.Status
 import spray.httpx.SprayJsonSupport._
-import spray.routing.HttpService
+import spray.routing.{HttpService, RequestContext}
+
 
 /**
  * AgoraService defines routes for ApiServiceActor.
@@ -20,11 +22,13 @@ abstract class AgoraService extends HttpService with RouteHelpers {
 
   def path: String
 
-  def routes = namespacePermissionsRoute ~ entityPermissionsRoute ~ querySingleRoute ~ queryRoute ~ postRoute
+  def routes = namespacePermissionsRoute ~ entityPermissionsRoute ~ querySingleRoute ~ queryRoute ~ postRoute ~ statusRoute
 
   def queryHandlerProps = Props(classOf[QueryHandler])
 
   def addHandlerProps = Props(classOf[AddHandler])
+
+  def statusHandlerProps = Props(classOf[StatusHandler])
 
   def permissionHandlerProps = Props(classOf[PermissionHandler])
 
@@ -125,6 +129,11 @@ abstract class AgoraService extends HttpService with RouteHelpers {
         }
       }
     }
+
+  // GET /status
+  def statusRoute = path("status") {
+    get { requestContext =>
+      perRequest(requestContext, statusHandlerProps, Status(requestContext))
+    }
+  }
 }
-
-

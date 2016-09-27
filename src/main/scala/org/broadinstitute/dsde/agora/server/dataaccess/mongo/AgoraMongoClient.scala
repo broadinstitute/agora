@@ -6,6 +6,8 @@ import com.mongodb.{MongoCredential, ServerAddress}
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.model.AgoraEntityType
 
+import scala.util.Try
+
 object AgoraMongoClient {
   private val mongoClient = getMongoClient
 
@@ -77,5 +79,9 @@ object AgoraMongoClient {
         MongoClient()
     }
 
+  }
+
+  def getMongoDBStatus: Try[Unit] = {
+    Try(mongoClient.getDB(AgoraConfig.mongoDbDatabase).getStats())
   }
 }

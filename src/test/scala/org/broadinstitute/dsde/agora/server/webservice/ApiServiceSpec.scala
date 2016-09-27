@@ -28,8 +28,15 @@ class ApiServiceSpec extends FlatSpec with Directives with ScalatestRouteTest wi
     def actorRefFactory = system
   }
 
+
+  abstract class StatusService extends AgoraService {
+    override def path = "/status"
+    override def statusRoute = super.statusRoute
+  }
+
   val methodsService = new MethodsService() with ActorRefFactoryContext
   val configurationsService = new ConfigurationsService() with ActorRefFactoryContext
+  val apiStatusService = new StatusService() with ActorRefFactoryContext
 
   def handleError[T](deserialized: Deserialized[T], assertions: (T) => Unit) = {
     if (status.isSuccess) {

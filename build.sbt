@@ -29,11 +29,6 @@ libraryDependencies ++= Seq(
   "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2",
   "com.typesafe.slick" %% "slick" % "3.0.0",
   "com.zaxxer" % "HikariCP" % "2.3.9",
-  "io.kamon" %% "kamon-core" % "0.4.0",
-  "io.kamon" %% "kamon-akka" % "0.4.0",
-  "io.kamon" %% "kamon-spray" % "0.4.0",
-  "io.kamon" %% "kamon-system-metrics" % "0.4.0",
-  "io.kamon" %% "kamon-statsd" % "0.4.0",
   "io.spray" %% "spray-can" % sprayV,
   "io.spray" %% "spray-client" % sprayV,
   "io.spray" %% "spray-json" % "1.3.1", // NB: Not at sprayV. 1.3.2 does not exist.

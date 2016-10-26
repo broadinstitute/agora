@@ -45,7 +45,6 @@ object AgoraConfig {
   lazy val configurationsUrl = baseUrl + configurationsRoute + "/"
   lazy val webserviceInterface = config.as[Option[String]]("webservice.interface").getOrElse("0.0.0.0")
   lazy val supervisorLogging = config.as[Option[Boolean]]("supervisor.logging").getOrElse(true)
-  lazy val kamonInstrumentation = config.as[Option[Boolean]]("kamon.instrumentation").getOrElse(true)
   lazy val adminSweepInterval = config.as[Option[Int]]("admin.sweep.interval").getOrElse(15)
 
   // Mongo

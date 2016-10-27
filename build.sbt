@@ -158,3 +158,6 @@ assemblyMergeStrategy in assembly := {
     MergeStrategy.first
   case _ => MergeStrategy.deduplicate
 }
+
+Revolver.settings.settings
+Revolver.enableDebugging(port = 5051, suspend = false)

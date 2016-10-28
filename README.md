@@ -44,3 +44,21 @@ $ sbt run
 ```
 
 Go to the specified web address in your favorite browser to test that it is operational.
+
+## Running Your Own Agora Web Service Using Docker
+
+Generate Agora configurations using the configurations in FireCloud-Develop:
+
+```
+APP_NAME=agora \ 
+    ENV=local \
+    OUTPUT_DIR=./config \
+    ../firecloud-develop/configure.rb
+```
+
+Launch the generated docker compose file:
+
+```
+docker-compose -p agora -f config/docker-compose.yaml up
+```
+The docker compose configuration is set to point to https://local.broadinstitute.org:30443/

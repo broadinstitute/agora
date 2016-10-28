@@ -82,6 +82,9 @@ object AgoraConfig {
     lazy val licenseUrl = swagger.getString("licenseUrl")
     lazy val baseUrl = swagger.getString("baseUrl")
     lazy val apiDocs = swagger.getString("apiDocs")
+    lazy val clientId = swagger.as[Option[String]]("clientId").getOrElse("clientId")
+    lazy val realm = gcsProjectId
+    lazy val appName = gcsProjectId
   }
 
   def urlFromType(entityType: Option[EntityType]): String = {

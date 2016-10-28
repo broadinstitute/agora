@@ -5,3 +5,6 @@ log
 *.p12
 *.db
 native
+/config
+configure.rb
+agora.jar

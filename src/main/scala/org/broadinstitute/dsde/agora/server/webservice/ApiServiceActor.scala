@@ -11,11 +11,13 @@ import AdminSweeper.Sweep
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AdminSweeper
 import org.broadinstitute.dsde.agora.server.webservice.configurations.ConfigurationsService
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
+import org.parboiled.common.FileUtils
+import spray.http.{ContentType, HttpEntity, MediaTypes}
 import spray.http.StatusCodes._
 import spray.routing._
 import spray.util.LoggingContext
-import scala.concurrent.duration._
 
+import scala.concurrent.duration._
 import scala.reflect.runtime.universe._
 
 object ApiServiceActor {
@@ -55,12 +57,23 @@ class ApiServiceActor extends HttpServiceActor with LazyLogging {
   val methodsService = new MethodsService() with ActorRefFactoryContext
   val configurationsService = new ConfigurationsService() with ActorRefFactoryContext
 
+  def withResourceFileContents(path: String)(innerRoute: String => Route): Route =
+    innerRoute( FileUtils.readAllTextFromResource(path) )
 
   def possibleRoutes =  options{ complete(OK) } ~ methodsService.routes ~ configurationsService.routes ~
     get {
       pathSingleSlash {
-        getFromResource("swagger/index.html")
-      } ~ getFromResourceDirectory("swagger/") ~ getFromResourceDirectory("META-INF/resources/webjars/swagger-ui/2.1.2/")
+        withResourceFileContents("swagger/index.html") { indexHtml =>
+          complete {
+            HttpEntity(ContentType(MediaTypes.`text/html`),
+              indexHtml
+                .replace("your-client-id", AgoraConfig.SwaggerConfig.clientId)
+                .replace("your-realms", AgoraConfig.SwaggerConfig.realm)
+                .replace("your-app-name", AgoraConfig.SwaggerConfig.appName)
+            )
+          }
+        }
+      } ~ getFromResourceDirectory("swagger/") ~ getFromResourceDirectory("META-INF/resources/webjars/swagger-ui/2.2.5/")
     }
 
   def receive = runRoute(possibleRoutes)

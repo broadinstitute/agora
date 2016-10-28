@@ -1,6 +1,6 @@
 #!/bin/bash
-
-set -e
+set -euox pipefail
+IFS=$'\n\t'
 
 cd /agora
-sbt "~reStart --- $JAVA_OPTS"
+sbt ~reStart

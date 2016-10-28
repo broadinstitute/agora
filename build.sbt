@@ -46,7 +46,7 @@ libraryDependencies ++= Seq(
   "org.mongodb" %% "casbah" % "2.8.2",
   "org.flywaydb" % "flyway-core" % "3.2.1",
   "org.scalaz" %% "scalaz-core" % "7.1.3",
-  "org.webjars" % "swagger-ui" % "2.1.2",
+  "org.webjars" % "swagger-ui"  % "2.2.5",
   //---------- Test libraries -------------------//
   "io.spray" %% "spray-testkit" % sprayV % Test,
   "org.scalatest" %% "scalatest" % "2.2.4" % Test
@@ -161,3 +161,8 @@ assemblyMergeStrategy in assembly := {
 
 Revolver.settings.settings
 Revolver.enableDebugging(port = 5051, suspend = false)
+// When JAVA_OPTS are specified in the environment, they are usually meant for the application
+// itself rather than sbt, but they are not passed by default to the application, which is a forked
+// process. This passes them through to the "re-start" command, which is probably what a developer
+// would normally expect.
+javaOptions in reStart := sys.env("JAVA_OPTS").split(" ")

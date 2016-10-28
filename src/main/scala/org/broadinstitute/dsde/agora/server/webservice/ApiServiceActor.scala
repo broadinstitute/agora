@@ -65,25 +65,15 @@ class ApiServiceActor extends HttpServiceActor with LazyLogging {
       pathSingleSlash {
         withResourceFileContents("swagger/index.html") { indexHtml =>
           complete {
-            val swaggerOptions =
-              """
-                |        validatorUrl: null,
-                |        apisSorter: "alpha",
-                |        operationsSorter: "alpha",
-              """.stripMargin
             HttpEntity(ContentType(MediaTypes.`text/html`),
               indexHtml
                 .replace("your-client-id", AgoraConfig.SwaggerConfig.clientId)
                 .replace("your-realms", AgoraConfig.SwaggerConfig.realm)
                 .replace("your-app-name", AgoraConfig.SwaggerConfig.appName)
-                .replace("scopeSeparator: \",\"", "scopeSeparator: \" \"")
-                .replace("jsonEditor: false,", "jsonEditor: false," + swaggerOptions)
-                .replace("url = \"http://petstore.swagger.io/v2/swagger.json\";",
-                  "url = '/api-docs';")
             )
           }
         }
-      } ~ getFromResourceDirectory("swagger/") ~ getFromResourceDirectory("META-INF/resources/webjars/swagger-ui/2.1.2/")
+      } ~ getFromResourceDirectory("swagger/") ~ getFromResourceDirectory("META-INF/resources/webjars/swagger-ui/2.2.5/")
     }
 
   def receive = runRoute(possibleRoutes)

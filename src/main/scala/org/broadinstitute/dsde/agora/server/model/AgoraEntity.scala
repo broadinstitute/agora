@@ -101,6 +101,7 @@ case class AgoraEntity(namespace: Option[String] = None,
                        synopsis: Option[String] = None,
                        documentation: Option[String] = None,
                        owner: Option[String] = None,
+                       managers: Option[Seq[String]] = None,
                        createDate: Option[DateTime] = None,
                        payload: Option[String] = None,
                        url: Option[String] = None,
@@ -140,6 +141,10 @@ case class AgoraEntity(namespace: Option[String] = None,
 
   def addEntityType(entityType: Option[AgoraEntityType.EntityType]): AgoraEntity = {
     copy(entityType = entityType)
+  }
+
+  def addManagers(managers: Seq[String]): AgoraEntity = {
+    copy(managers = Some(managers))
   }
 }
 

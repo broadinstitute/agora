@@ -126,6 +126,25 @@ trait PermissionsClient {
 
   }
 
+  def listOwners(agoraEntity: AgoraEntity): Seq[String] = {
+    val permissionsQuery = for {
+      entity <- entities if entity.alias === alias(agoraEntity)
+      _permissions <- permissions if _permissions.entityID === entity.id // && _permissions.roles===Manage
+      user <- users if user.id === _permissions.userID
+    } yield ( user.email, _permissions.roles) //s"${user.email} : ${_permissions.roles}")
+
+    val permissionsFuture = db.run(permissionsQuery.result)
+
+    val permissionsRole = permissionsFuture.map { objects: Seq[(String, Int)] =>
+      objects.filter { obj =>
+        AgoraPermissions(obj._2).canManage
+      }.map { obj => obj._1 }
+    } recover {
+      case ex: Throwable => throw new PermissionNotFoundException(s"Could not find owner? ", ex)
+    }
+    Await.result(permissionsRole, timeout)
+  }
+
   def listPermissions(agoraEntity: AgoraEntity): Seq[AccessControl] = {
     // Construct query
     val permissionsQuery = for {

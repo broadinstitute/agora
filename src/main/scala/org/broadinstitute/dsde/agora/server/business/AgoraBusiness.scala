@@ -1,10 +1,9 @@
 package org.broadinstitute.dsde.agora.server.business
 
-import org.broadinstitute.dsde.agora.server.exceptions.{ValidationException, AgoraEntityNotFoundException, NamespaceAuthorizationException}
-import org.broadinstitute.dsde.agora.server.webservice.util.{DockerImageReference, DockerHubClient}
-
+import org.broadinstitute.dsde.agora.server.exceptions.{AgoraEntityNotFoundException, NamespaceAuthorizationException, ValidationException}
+import org.broadinstitute.dsde.agora.server.webservice.util.{DockerHubClient, DockerImageReference}
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AgoraPermissions, _}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.model.{AgoraApiJsonSupport, AgoraEntity, AgoraEntityProjection, AgoraEntityType}
 import spray.json._
@@ -74,6 +73,12 @@ class AgoraBusiness {
       .map(entity => entity.addUrl().removeIds())
 
     AgoraEntityPermissionsClient.filterEntityByRead(entities, username)
+
+    // I think I should be doing this in the filter...?
+    entities.map { entity =>
+      entity.addManagers(AgoraEntityPermissionsClient.listEntityOwners(entity))
+    }
+
   }
 
   def findSingle(namespace: String,

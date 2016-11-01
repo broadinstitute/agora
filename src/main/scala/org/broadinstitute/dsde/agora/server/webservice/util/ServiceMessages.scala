@@ -39,6 +39,9 @@ object ServiceMessages {
                                    entity: AgoraEntity,
                                    username: String)
 
+  case class ListEntityOwners(requestContext: RequestContext,
+                              entity: AgoraEntity)
+
   case class InsertEntityPermission(requestContext: RequestContext,
                                     entity: AgoraEntity,
                                     username: String,

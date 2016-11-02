@@ -101,14 +101,14 @@ case class AgoraEntity(namespace: Option[String] = None,
                        synopsis: Option[String] = None,
                        documentation: Option[String] = None,
                        owner: Option[String] = None,
-                       managers: Option[Seq[String]] = None,
                        createDate: Option[DateTime] = None,
                        payload: Option[String] = None,
                        url: Option[String] = None,
                        entityType: Option[AgoraEntityType.EntityType] = None,
                        id: Option[ObjectId] = None,
                        methodId: Option[ObjectId] = None,
-                       method: Option[AgoraEntity] = None) {
+                       method: Option[AgoraEntity] = None,
+                       managers: Option[Seq[String]] = None) {
 
   AgoraEntity.validate(this) match {
     case Success(_) => this

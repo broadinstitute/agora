@@ -166,7 +166,7 @@ trait QueryRouteHelper extends BaseRoute {
     val url         = params.getOrElse("url", Nil).headOption
     val _type       = params.getOrElse("entityType", Nil).headOption.toAgoraEntityOption
 
-    AgoraEntity(namespace, name, _id, synopsis, docs, owner, managers=None, createDate = None, payload, url, _type)
+    AgoraEntity(namespace, name, _id, synopsis, docs, owner, createDate=None, payload, url, _type)
   }
 
   def validateEntityType(params: Map[String, List[String]], path: String): Directive0 = {

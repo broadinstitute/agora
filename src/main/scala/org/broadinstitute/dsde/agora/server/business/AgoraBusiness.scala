@@ -74,11 +74,6 @@ class AgoraBusiness {
 
     AgoraEntityPermissionsClient.filterEntityByRead(entities, username)
 
-    // I think I should be doing this in the filter...?
-    entities.map { entity =>
-      entity.addManagers(AgoraEntityPermissionsClient.listEntityOwners(entity))
-    }
-
   }
 
   def findSingle(namespace: String,
@@ -94,6 +89,7 @@ class AgoraBusiness {
     }
 
     foundEntity.addUrl().removeIds()
+    foundEntity.addManagers(AgoraEntityPermissionsClient.listOwners(foundEntity))
   }
 
   def findSingle(entity: AgoraEntity,

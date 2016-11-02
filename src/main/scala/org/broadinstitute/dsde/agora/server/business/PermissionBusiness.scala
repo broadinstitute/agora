@@ -38,7 +38,6 @@ class PermissionBusiness {
   }
 
   def listEntityOwners(entity: AgoraEntity) = {
-    // do some authorization?
     AgoraEntityPermissionsClient.listEntityOwners(entity)
   }
 

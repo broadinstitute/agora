@@ -1,7 +1,6 @@
 package org.broadinstitute.dsde.agora.server.business
 
 import org.broadinstitute.dsde.agora.server.exceptions.{AgoraEntityNotFoundException, NamespaceAuthorizationException, ValidationException}
-import org.broadinstitute.dsde.agora.server.webservice.util.{DockerHubClient, DockerImageReference}
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
@@ -81,14 +80,9 @@ class AgoraBusiness {
                  entityTypes: Seq[AgoraEntityType.EntityType],
                  username: String): AgoraEntity = {
     val foundEntity = AgoraDao.createAgoraDao(entityTypes).findSingle(namespace, name, snapshotId)
-
-    if (!AgoraEntityPermissionsClient.getEntityPermission(foundEntity, username).canRead &&
-        !AgoraEntityPermissionsClient.getEntityPermission(foundEntity, "public").canRead) {
-      throw new AgoraEntityNotFoundException(foundEntity)
-    }
-
-    foundEntity.addUrl().removeIds()
-    foundEntity.addManagers(AgoraEntityPermissionsClient.listOwners(foundEntity))
+    val entities = AgoraEntityPermissionsClient.filterEntityByRead(Seq(foundEntity), username)
+    if (entities.size == 0) throw new AgoraEntityNotFoundException(foundEntity)
+    else entities.head.addUrl().removeIds().addManagers(AgoraEntityPermissionsClient.listOwners(foundEntity))
   }
 
   def findSingle(entity: AgoraEntity,

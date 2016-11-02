@@ -131,7 +131,7 @@ trait PermissionsClient {
       entity <- entities if entity.alias === alias(agoraEntity)
       _permissions <- permissions if _permissions.entityID === entity.id // && _permissions.roles===Manage
       user <- users if user.id === _permissions.userID
-    } yield ( user.email, _permissions.roles) //s"${user.email} : ${_permissions.roles}")
+    } yield ( user.email, _permissions.roles)
 
     val permissionsFuture = db.run(permissionsQuery.result)
 

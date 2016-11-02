@@ -50,11 +50,6 @@ class PermissionHandler extends Actor {
       context.parent ! RequestComplete(permissions)
       context.stop(self)
 
-    case ListEntityOwners(_context: RequestContext, entity: AgoraEntity) =>
-      val owners = permissionBusiness.listEntityOwners(entity)
-      context.parent ! RequestComplete(owners)
-      context.stop(self)
-
     case InsertEntityPermission(_context: RequestContext, entity: AgoraEntity, requester: String, userAccess: AccessControl) =>
       val rowsChanged = permissionBusiness.insertEntityPermission(entity, requester, userAccess)
       context.parent ! RequestComplete(userAccess)

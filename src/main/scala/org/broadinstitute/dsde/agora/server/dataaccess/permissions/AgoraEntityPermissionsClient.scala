@@ -13,9 +13,6 @@ object AgoraEntityPermissionsClient extends PermissionsClient {
   def listEntityPermissions(entity: AgoraEntity) =
     listPermissions(entity)
 
-  def listEntityOwners(entity: AgoraEntity) =
-    listOwners(entity)
-
   def insertEntityPermission(entity: AgoraEntity, userAccess: AccessControl) =
     insertPermission(entity, userAccess)
 

@@ -78,18 +78,9 @@ trait EntityPermissionsRouteHelper extends BaseRoute {
     versionedPath(_path / Segment / Segment / IntNumber / "permissions") &
     authenticationDirectives.usernameFromRequest()
 
-  def matchEntityOwnersRoute(_path: String) =
-    versionedPath(_path / Segment / Segment / IntNumber / "owners") &
-    authenticationDirectives.usernameFromRequest()
-
   def completeEntityPermissionsGet(context: RequestContext, entity: AgoraEntity, username: String, permissionsHandler: Props) = {
     addUserIfNotInDatabase(username)
     val message = ListEntityPermissions(context, entity, username)
-    perRequest(context, permissionsHandler, message)
-  }
-
-  def completeEntityOwnersGet(context: RequestContext, entity: AgoraEntity, permissionsHandler: Props) = {
-    val message = ListEntityOwners(context, entity)
     perRequest(context, permissionsHandler, message)
   }
 

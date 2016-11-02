@@ -37,10 +37,6 @@ class PermissionBusiness {
     AgoraEntityPermissionsClient.listEntityPermissions(entity)
   }
 
-  def listEntityOwners(entity: AgoraEntity) = {
-    AgoraEntityPermissionsClient.listEntityOwners(entity)
-  }
-
   def insertEntityPermission(entity: AgoraEntity, requester: String, accessObject: AccessControl) = {
     authorizeEntityRequester(entity, requester)
     AgoraEntityPermissionsClient.insertEntityPermission(entity, accessObject)

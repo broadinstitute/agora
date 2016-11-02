@@ -22,7 +22,7 @@ abstract class AgoraService extends HttpService with RouteHelpers {
 
   def path: String
 
-  def routes = namespacePermissionsRoute ~ entityPermissionsRoute ~ entityOwnersRoute ~ querySingleRoute ~ queryRoute ~ postRoute ~ statusRoute
+  def routes = namespacePermissionsRoute ~ entityPermissionsRoute ~ querySingleRoute ~ queryRoute ~ postRoute ~ statusRoute
 
   def queryHandlerProps = Props(classOf[QueryHandler])
 
@@ -85,15 +85,6 @@ abstract class AgoraService extends HttpService with RouteHelpers {
 
       }
     }
-
-  def entityOwnersRoute = matchEntityOwnersRoute(path) { (namespace, name, snapshotId, username) =>
-    parameterMap { (params) =>
-      val agoraEntity = AgoraEntity(Option(namespace), Option(name), Option(snapshotId))
-      get { requestContext =>
-        completeEntityOwnersGet(requestContext, agoraEntity, permissionHandlerProps)
-      }
-    }
-  }
 
   // GET http://root.com/methods/<namespace>/<name>/<snapshotId>?onlyPayload=true
   // GET http://root.com/configurations/<namespace>/<name>/<snapshotId>

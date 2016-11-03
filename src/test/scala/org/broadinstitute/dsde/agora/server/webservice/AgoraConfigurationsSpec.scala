@@ -23,13 +23,13 @@ class AgoraConfigurationsSpec extends ApiServiceSpec {
 
   override def beforeAll() = {
     ensureDatabasesAreRunning()
-    method1 = agoraBusiness.insert(testEntity1, mockAutheticatedOwner.get)
-    testEntityToBeRedacted2WithId = agoraBusiness.insert(testEntityToBeRedacted2, mockAutheticatedOwner.get)
-    testAgoraConfigurationToBeRedactedWithId = agoraBusiness.insert(testAgoraConfigurationToBeRedacted, mockAutheticatedOwner.get)
-    agoraBusiness.insert(testEntity2, mockAutheticatedOwner.get)
-    agoraBusiness.insert(testAgoraConfigurationEntity, mockAutheticatedOwner.get)
-    agoraBusiness.insert(testAgoraConfigurationEntity2, mockAutheticatedOwner.get)
-    agoraBusiness.insert(testAgoraConfigurationEntity3, mockAutheticatedOwner.get)
+    method1 = agoraBusiness.insert(testEntity1, mockAuthenticatedOwner.get)
+    testEntityToBeRedacted2WithId = agoraBusiness.insert(testEntityToBeRedacted2, mockAuthenticatedOwner.get)
+    testAgoraConfigurationToBeRedactedWithId = agoraBusiness.insert(testAgoraConfigurationToBeRedacted, mockAuthenticatedOwner.get)
+    agoraBusiness.insert(testEntity2, mockAuthenticatedOwner.get)
+    agoraBusiness.insert(testAgoraConfigurationEntity, mockAuthenticatedOwner.get)
+    agoraBusiness.insert(testAgoraConfigurationEntity2, mockAuthenticatedOwner.get)
+    agoraBusiness.insert(testAgoraConfigurationEntity3, mockAuthenticatedOwner.get)
   }
 
   override def afterAll() = {

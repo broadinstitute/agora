@@ -22,7 +22,7 @@ $ sbt package
 You can additionally run unit test through:
 
 ```
-$ sbt unitTest
+$ sbt test -Dconfig.file=src/main/resources/reference.conf
 ```
 
 and integration test using:

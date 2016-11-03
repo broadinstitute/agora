@@ -108,7 +108,7 @@ case class AgoraEntity(namespace: Option[String] = None,
                        id: Option[ObjectId] = None,
                        methodId: Option[ObjectId] = None,
                        method: Option[AgoraEntity] = None,
-                       managers: Option[Seq[String]] = None) {
+                       managers: Seq[String] = Seq()) {
 
   AgoraEntity.validate(this) match {
     case Success(_) => this
@@ -144,7 +144,7 @@ case class AgoraEntity(namespace: Option[String] = None,
   }
 
   def addManagers(managers: Seq[String]): AgoraEntity = {
-    copy(managers = Some(managers))
+    copy(managers = managers)
   }
 }
 

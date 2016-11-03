@@ -24,15 +24,15 @@ class EntityPermissionsClientSpec extends FlatSpec with ScalaFutures with Before
     ensureDatabasesAreRunning()
     agoraBusiness = new AgoraBusiness()
     permissionBusiness = new PermissionBusiness()
-    agoraBusiness.insert(testEntity1, mockAutheticatedOwner.get)
-    agoraBusiness.insert(testEntity2, mockAutheticatedOwner.get)
-    agoraBusiness.insert(testEntityWithPublicPermissions, mockAutheticatedOwner.get)
-    agoraBusiness.insert(testEntity3, mockAutheticatedOwner.get)
-    agoraBusiness.insert(testEntity4, mockAutheticatedOwner.get)
-    testEntityWithPublicPermissionsWithId = agoraBusiness.find(testEntityWithPublicPermissions, None, Seq(testEntityWithPublicPermissions.entityType.get), mockAutheticatedOwner.get).head;
-    foundTestEntity1 = agoraBusiness.find(testEntity1, None, Seq(testEntity1.entityType.get), mockAutheticatedOwner.get).head
-    foundTestEntity2 = agoraBusiness.find(testEntity2, None, Seq(testEntity2.entityType.get), mockAutheticatedOwner.get).head
-    testBatchPermissionEntity = agoraBusiness.find(testEntity4, None, Seq(testEntity3.entityType.get), mockAutheticatedOwner.get).head
+    agoraBusiness.insert(testEntity1, mockAuthenticatedOwner.get)
+    agoraBusiness.insert(testEntity2, mockAuthenticatedOwner.get)
+    agoraBusiness.insert(testEntityWithPublicPermissions, mockAuthenticatedOwner.get)
+    agoraBusiness.insert(testEntity3, mockAuthenticatedOwner.get)
+    agoraBusiness.insert(testEntity4, mockAuthenticatedOwner.get)
+    testEntityWithPublicPermissionsWithId = agoraBusiness.find(testEntityWithPublicPermissions, None, Seq(testEntityWithPublicPermissions.entityType.get), mockAuthenticatedOwner.get).head;
+    foundTestEntity1 = agoraBusiness.find(testEntity1, None, Seq(testEntity1.entityType.get), mockAuthenticatedOwner.get).head
+    foundTestEntity2 = agoraBusiness.find(testEntity2, None, Seq(testEntity2.entityType.get), mockAuthenticatedOwner.get).head
+    testBatchPermissionEntity = agoraBusiness.find(testEntity4, None, Seq(testEntity3.entityType.get), mockAuthenticatedOwner.get).head
   }
 
   override def afterAll() = {
@@ -119,7 +119,7 @@ class EntityPermissionsClientSpec extends FlatSpec with ScalaFutures with Before
   "Agora" should "allow batch permission edits" in {
     val accessObject1 = new AccessControl(owner1.get, AgoraPermissions(AgoraPermissions.All))
     val accessObject2 = new AccessControl(owner2.get, AgoraPermissions(AgoraPermissions.Nothing))
-    val rowsEditted = permissionBusiness.batchEntityPermission(testBatchPermissionEntity, mockAutheticatedOwner.get, List(accessObject1, accessObject2))
+    val rowsEditted = permissionBusiness.batchEntityPermission(testBatchPermissionEntity, mockAuthenticatedOwner.get, List(accessObject1, accessObject2))
     assert(rowsEditted === 2)
   }
 

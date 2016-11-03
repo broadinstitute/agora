@@ -18,8 +18,8 @@ class AgoraImportSpec extends ApiServiceSpec {
 
   override def beforeAll() = {
     ensureDatabasesAreRunning()
-    testEntityTaskWcWithId = agoraBusiness.insert(testEntityTaskWc, mockAutheticatedOwner.get)
-    agoraBusiness.insert(testEntityWorkflowWithExistentWdlImport, mockAutheticatedOwner.get)
+    testEntityTaskWcWithId = agoraBusiness.insert(testEntityTaskWc, mockAuthenticatedOwner.get)
+    agoraBusiness.insert(testEntityWorkflowWithExistentWdlImport, mockAuthenticatedOwner.get)
   }
 
   override def afterAll() = {

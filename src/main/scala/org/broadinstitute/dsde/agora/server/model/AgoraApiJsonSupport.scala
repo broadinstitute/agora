@@ -76,7 +76,7 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
       if (entity.synopsis.nonEmpty) map += ("synopsis" -> JsString(entity.synopsis.get))
       if (entity.documentation.nonEmpty) map += ("documentation" -> JsString(entity.documentation.get))
       if (entity.owner.nonEmpty) map += ("owner" -> JsString(entity.owner.get))
-      if (entity.managers.size > 0) map += ("owners" -> JsArray(entity.managers.map(JsString(_)).toVector))
+      if (entity.managers.size > 0) map += ("managers" -> JsArray(entity.managers.map(JsString(_)).toVector))
       if (entity.createDate.nonEmpty) map += ("createDate" -> entity.createDate.get.toJson)
       if (entity.payload.nonEmpty) map += ("payload" -> JsString(entity.payload.get))
       if (entity.url.nonEmpty) map += ("url" -> JsString(entity.url.get))

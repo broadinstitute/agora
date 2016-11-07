@@ -18,9 +18,9 @@ class AgoraBusinessIntegrationSpec extends FlatSpec with BeforeAndAfterAll with 
   }
 
   "Agora" should "be able to store a task configuration with a valid (extant) official docker image" in {
-    val entity = agoraBusiness.insert(testAgoraEntityWithValidOfficialDockerImageInWdl, mockAuthenticatedOwner.get)
+    val entity = agoraBusiness.insert(testAgoraEntityWithValidOfficialDockerImageInWdl, mockAuthenticatedOwner.get).addManagers(Seq(mockAuthenticatedOwner.get))
     val actual = agoraBusiness.findSingle(entity, Seq(entity.entityType.get), mockAuthenticatedOwner.get)
-    assert(actual === entity.addManagers(Seq(mockAuthenticatedOwner.get)))
+    assert(actual === entity)
   }
 
   ignore should "be unable to store a task configuration with an invalid docker image (invalid/non-existent repo name)" in {
@@ -38,8 +38,8 @@ class AgoraBusinessIntegrationSpec extends FlatSpec with BeforeAndAfterAll with 
   }
 
   "Agora" should "be able to store a task configuration with a valid (extant) personal docker image" in {
-    val entity = agoraBusiness.insert(testAgoraEntityWithValidPersonalDockerInWdl, mockAuthenticatedOwner.get)
-    assert(agoraBusiness.findSingle(entity, Seq(entity.entityType.get), mockAuthenticatedOwner.get) === entity.addManagers(Seq(mockAuthenticatedOwner.get)))
+    val entity = agoraBusiness.insert(testAgoraEntityWithValidPersonalDockerInWdl, mockAuthenticatedOwner.get).addManagers(Seq(mockAuthenticatedOwner.get))
+    assert(agoraBusiness.findSingle(entity, Seq(entity.entityType.get), mockAuthenticatedOwner.get) === entity)
   }
 
   ignore should "be unable to store a task configuration with an invalid personal docker image (invalid/non-existent user name)" in {

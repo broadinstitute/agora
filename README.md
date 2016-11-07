@@ -22,8 +22,10 @@ $ sbt package
 You can additionally run unit test through:
 
 ```
-$ sbt test -Dconfig.file=src/main/resources/reference.conf
+$ sbt test
 ```
+
+Make sure your config file isn't using the actual dev databases...
 
 and integration test using:
 

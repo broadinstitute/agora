@@ -127,22 +127,17 @@ trait PermissionsClient {
   }
 
   def listOwners(agoraEntity: AgoraEntity): Seq[String] = {
+    // you're a manager if your role & (1 << 4) != 0 (and I think we're in the range from 0-32) so basically 16-31 inclusive
     val permissionsQuery = for {
       entity <- entities if entity.alias === alias(agoraEntity)
-      _permissions <- permissions if _permissions.entityID === entity.id // && _permissions.roles===Manage
+      _permissions <- permissions if _permissions.entityID === entity.id && (_permissions.roles inSetBind List.range(16, 32))
       user <- users if user.id === _permissions.userID
-    } yield ( user.email, _permissions.roles)
-
-    val permissionsFuture = db.run(permissionsQuery.result)
-
-    val permissionsRole = permissionsFuture.map { objects: Seq[(String, Int)] =>
-      objects.filter { obj =>
-        AgoraPermissions(obj._2).canManage
-      }.map { obj => obj._1 }
-    } recover {
-      case ex: Throwable => throw new PermissionNotFoundException(s"Could not find owner? ", ex)
+    } yield user.email
+    try {
+      Await.result(db.run(permissionsQuery.result), timeout)
+    } catch {
+      case ex: Throwable => throw new PermissionNotFoundException(s"Couldn't find any managers. ", ex)
     }
-    Await.result(permissionsRole, timeout)
   }
 
   def listPermissions(agoraEntity: AgoraEntity): Seq[AccessControl] = {

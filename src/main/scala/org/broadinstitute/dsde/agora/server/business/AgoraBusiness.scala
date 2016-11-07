@@ -81,8 +81,10 @@ class AgoraBusiness {
                  username: String): AgoraEntity = {
     val foundEntity = AgoraDao.createAgoraDao(entityTypes).findSingle(namespace, name, snapshotId)
     val entities = AgoraEntityPermissionsClient.filterEntityByRead(Seq(foundEntity), username)
-    if (entities.size == 0) throw new AgoraEntityNotFoundException(foundEntity)
-    else entities.head.addUrl().removeIds().addManagers(AgoraEntityPermissionsClient.listOwners(foundEntity))
+    entities match {
+      case Seq(ae: AgoraEntity) => ae.addUrl().removeIds().addManagers(AgoraEntityPermissionsClient.listOwners(foundEntity))
+      case _ => throw new AgoraEntityNotFoundException(foundEntity)
+    }
   }
 
   def findSingle(entity: AgoraEntity,

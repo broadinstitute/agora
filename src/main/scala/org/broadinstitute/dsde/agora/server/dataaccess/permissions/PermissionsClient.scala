@@ -127,11 +127,10 @@ trait PermissionsClient {
   }
 
   def listOwners(agoraEntity: AgoraEntity): Seq[String] = {
-    // you're a manager if your role & (1 << 4) != 0 (and I think we're in the range from 0-32) so basically 16-31 inclusive
     val permissionsQuery = for {
       entity <- entities if entity.alias === alias(agoraEntity)
-      _permissions <- permissions if _permissions.entityID === entity.id && (_permissions.roles inSetBind List.range(16, 32))
-      user <- users if user.id === _permissions.userID
+      permission <- permissions if permission.entityID === entity.id && (permission.roles >= AgoraPermissions.Manage)
+      user <- users if user.id === permission.userID
     } yield user.email
     try {
       Await.result(db.run(permissionsQuery.result), timeout)

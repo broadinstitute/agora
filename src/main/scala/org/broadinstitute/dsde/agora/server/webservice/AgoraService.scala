@@ -36,6 +36,7 @@ abstract class AgoraService extends HttpService with RouteHelpers {
     matchNamespacePermissionsRoute(path) { (namespace, username) =>
       parameterMap { (params) =>
         val agoraEntity = AgoraEntity(Option(namespace))
+
         // Accept batch POST // TODO: move to transactional support
         entity(as[List[AccessControl]]) { (listOfAccessControl) =>
           post { requestContext =>

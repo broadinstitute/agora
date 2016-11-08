@@ -21,10 +21,10 @@ class NamespacePermissionsClientSpec extends FlatSpec with ScalaFutures with Bef
     ensureDatabasesAreRunning()
     agoraBusiness = new AgoraBusiness()
     permissionBusiness = new PermissionBusiness()
-    agoraBusiness.insert(testEntity1, mockAutheticatedOwner.get)
-    agoraBusiness.insert(testEntity2, mockAutheticatedOwner.get)
-    agoraBusiness.insert(testEntity3, mockAutheticatedOwner.get)
-    testBatchPermissionEntityWithId = agoraBusiness.find(testEntity3, None, Seq(testEntity3.entityType.get), mockAutheticatedOwner.get).head
+    agoraBusiness.insert(testEntity1, mockAuthenticatedOwner.get)
+    agoraBusiness.insert(testEntity2, mockAuthenticatedOwner.get)
+    agoraBusiness.insert(testEntity3, mockAuthenticatedOwner.get)
+    testBatchPermissionEntityWithId = agoraBusiness.find(testEntity3, None, Seq(testEntity3.entityType.get), mockAuthenticatedOwner.get).head
   }
 
   override def afterAll() = {
@@ -90,7 +90,7 @@ class NamespacePermissionsClientSpec extends FlatSpec with ScalaFutures with Bef
   "Agora" should "allow batch permission edits" in {
     val accessObject1 = new AccessControl(owner1.get, AgoraPermissions(AgoraPermissions.All))
     val accessObject2 = new AccessControl(owner2.get, AgoraPermissions(AgoraPermissions.Nothing))
-    val rowsEditted = permissionBusiness.batchNamespacePermission(testBatchPermissionEntityWithId, mockAutheticatedOwner.get, List(accessObject1, accessObject2))
+    val rowsEditted = permissionBusiness.batchNamespacePermission(testBatchPermissionEntityWithId, mockAuthenticatedOwner.get, List(accessObject1, accessObject2))
     assert(rowsEditted === 2)
   }
 }

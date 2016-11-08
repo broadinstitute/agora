@@ -126,6 +126,19 @@ trait PermissionsClient {
 
   }
 
+  def listOwners(agoraEntity: AgoraEntity): Seq[String] = {
+    val permissionsQuery = for {
+      entity <- entities if entity.alias === alias(agoraEntity)
+      permission <- permissions if permission.entityID === entity.id && (permission.roles >= AgoraPermissions.Manage)
+      user <- users if user.id === permission.userID
+    } yield user.email
+    try {
+      Await.result(db.run(permissionsQuery.result), timeout)
+    } catch {
+      case ex: Throwable => throw new PermissionNotFoundException(s"Couldn't find any managers. ", ex)
+    }
+  }
+
   def listPermissions(agoraEntity: AgoraEntity): Seq[AccessControl] = {
     // Construct query
     val permissionsQuery = for {

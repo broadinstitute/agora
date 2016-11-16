@@ -24,7 +24,7 @@ class ManagerPermissionSpec extends FlatSpec with ScalaFutures with BeforeAndAft
     documentation = documentation1,
     owner = testEntity1.owner,
     payload = payload1,
-    entityType = Option(AgoraEntityType.Configuration))
+    entityType = Option(AgoraEntityType.Task))
 
 
   override def beforeAll() = {
@@ -35,7 +35,6 @@ class ManagerPermissionSpec extends FlatSpec with ScalaFutures with BeforeAndAft
 
   override def afterAll() = {
     clearDatabases()
-    // stopDatabases()
   }
 
   "Agora" should "not delete the last manager namespace permission." in {

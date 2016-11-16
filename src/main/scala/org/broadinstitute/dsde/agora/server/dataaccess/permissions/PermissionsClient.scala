@@ -1,16 +1,14 @@
 package org.broadinstitute.dsde.agora.server.dataaccess.permissions
 
-import AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.AgoraConfig
-import org.broadinstitute.dsde.agora.server.exceptions.PermissionNotFoundException
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
+import org.broadinstitute.dsde.agora.server.exceptions.{AgoraException, PermissionNotFoundException}
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
+import slick.driver.MySQLDriver.api._
 
-import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import slick.driver.MySQLDriver.api._
-import slick.jdbc.SQLInterpolation
-
+import scala.concurrent.{Await, Future}
 import scala.util.Try
 
 trait PermissionsClient {
@@ -45,7 +43,7 @@ trait PermissionsClient {
       Await.result(db.run(adminsQuery.result), timeout)
     } catch {
       case ex: Throwable =>
-        throw new PermissionNotFoundException(ex.getMessage, ex)
+        throw PermissionNotFoundException(ex.getMessage, ex)
     }
   }
 
@@ -70,7 +68,7 @@ trait PermissionsClient {
         rowsEdited
 
     } catch {
-      case ex: Throwable => throw new PermissionNotFoundException(s"Could not make user ${userEmail} admin", ex)
+      case ex: Throwable => throw PermissionNotFoundException(s"Could not make user $userEmail admin", ex)
     }
   }
 
@@ -121,7 +119,7 @@ trait PermissionsClient {
         AgoraPermissions(permissionResult.get.roles)
 
     } catch {
-      case ex: Throwable => throw new PermissionNotFoundException(s"Could not get permission", ex)
+      case ex: Throwable => throw PermissionNotFoundException(s"Could not get permission", ex)
     }
 
   }
@@ -135,7 +133,7 @@ trait PermissionsClient {
     try {
       Await.result(db.run(permissionsQuery.result), timeout)
     } catch {
-      case ex: Throwable => throw new PermissionNotFoundException(s"Couldn't find any managers. ", ex)
+      case ex: Throwable => throw PermissionNotFoundException(s"Couldn't find any managers. ", ex)
     }
   }
 
@@ -156,7 +154,7 @@ trait PermissionsClient {
 
     // if unsuccessful, throw exception
     } recover {
-      case ex: Throwable => throw new PermissionNotFoundException(s"Could not list permissions", ex)
+      case ex: Throwable => throw PermissionNotFoundException(s"Could not list permissions", ex)
     }
 
     Await.result(accessControls, timeout)
@@ -191,13 +189,23 @@ trait PermissionsClient {
     }
   }
 
+  private def findRemainingManagers(agoraEntity: AgoraEntity, userToRemove: String): Set[AccessControl] = {
+    listPermissions(agoraEntity).
+      filter(_.roles.canManage).
+      filterNot(_.user.equalsIgnoreCase(userToRemove)).
+      toSet
+  }
+
   def editPermission(agoraEntity: AgoraEntity, userAccessObject: AccessControl): Int = {
     val userEmail = userAccessObject.user
     val roles = userAccessObject.roles
 
     roles match {
       case AgoraPermissions(Nothing) =>
-        deletePermission(agoraEntity, userEmail)
+        findRemainingManagers(agoraEntity, userEmail).size match {
+          case x if x > 0 => deletePermission(agoraEntity, userEmail)
+          case _ => 0
+        }
       case _ =>
         addUserIfNotInDatabase(userEmail)
 
@@ -229,13 +237,17 @@ trait PermissionsClient {
             rowsEdited
 
         } catch {
-          case ex: Throwable => throw new PermissionNotFoundException(s"Could not edit permission", ex)
+          case ex: Throwable => throw PermissionNotFoundException(s"Could not edit permission", ex)
         }
     }
   }
 
   def deletePermission(agoraEntity: AgoraEntity, userToRemove: String): Int = {
     addUserIfNotInDatabase(userToRemove)
+
+    if (findRemainingManagers(agoraEntity, userToRemove).size < 1) {
+      throw AgoraException(s"Can not delete all manage permissions on an entity")
+    }
 
     // construct update action
     val permissionsUpdateAction = for {
@@ -264,7 +276,7 @@ trait PermissionsClient {
         rowsEdited
 
     } catch {
-      case ex: Throwable => throw new PermissionNotFoundException(s"Could not delete permission", ex)
+      case ex: Throwable => throw PermissionNotFoundException(s"Could not delete permission", ex)
     }
   }
 
@@ -283,7 +295,7 @@ trait PermissionsClient {
     try {
       Await.result(db.run(deleteQuery), timeout)
     } catch {
-      case ex: Throwable => throw new PermissionNotFoundException(s"Could not delete permissions", ex)
+      case ex: Throwable => throw PermissionNotFoundException(s"Could not delete permissions", ex)
     }
   }
 

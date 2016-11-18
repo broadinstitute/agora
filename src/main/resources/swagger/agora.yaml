@@ -126,7 +126,6 @@ paths:
           description: Malformed input.
           schema:
             type: object
-            code: 400
             $ref: '#/definitions/Error'
         '500':
           description: Internal error.
@@ -522,6 +521,11 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/AccessControl'
+        '409':
+          description: Conflict error.
+          schema:
+            type: object
+            $ref: '#/definitions/Error'
         default:
           description: Unexpected error
           schema:
@@ -555,6 +559,11 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/AccessControl'
+        '409':
+          description: Conflict error.
+          schema:
+            type: object
+            $ref: '#/definitions/Error'
         default:
           description: Unexpected error
           schema:
@@ -745,6 +754,11 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/AccessControl'
+        '409':
+          description: Conflict error.
+          schema:
+            type: object
+            $ref: '#/definitions/Error'
         default:
           description: Unexpected error
           schema:
@@ -895,6 +909,11 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/AccessControl'
+        '409':
+          description: Conflict error.
+          schema:
+            type: object
+            $ref: '#/definitions/Error'
         default:
           description: Unexpected error
           schema:
@@ -1085,6 +1104,11 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/AccessControl'
+        '409':
+          description: Conflict error.
+          schema:
+            type: object
+            $ref: '#/definitions/Error'
         default:
           description: Unexpected error
           schema:

@@ -10,6 +10,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.util.Try
+import spray.http.StatusCodes._
 
 trait PermissionsClient {
 
@@ -246,7 +247,8 @@ trait PermissionsClient {
     addUserIfNotInDatabase(userToRemove)
 
     if (findRemainingManagers(agoraEntity, userToRemove).size < 1) {
-      throw AgoraException(s"Can not delete all manage permissions on an entity")
+      val m = "Can not delete all manage permissions on an entity"
+      throw AgoraException(m, new Exception(m), Conflict)
     }
 
     // construct update action

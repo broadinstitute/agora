@@ -197,16 +197,20 @@ trait PermissionsClient {
       toSet
   }
 
+  private def hasRemainingManagers(agoraEntity: AgoraEntity, userToRemove: String): Boolean = {
+    findRemainingManagers(agoraEntity, userToRemove).nonEmpty
+  }
+
   def editPermission(agoraEntity: AgoraEntity, userAccessObject: AccessControl): Int = {
     val userEmail = userAccessObject.user
     val roles = userAccessObject.roles
 
     roles match {
       case AgoraPermissions(Nothing) =>
-        findRemainingManagers(agoraEntity, userEmail).size match {
-          case x if x > 0 => deletePermission(agoraEntity, userEmail)
-          case _ => 0
-        }
+        if (hasRemainingManagers(agoraEntity, userEmail))
+          deletePermission(agoraEntity, userEmail)
+        else
+          0
       case _ =>
         addUserIfNotInDatabase(userEmail)
 
@@ -246,7 +250,7 @@ trait PermissionsClient {
   def deletePermission(agoraEntity: AgoraEntity, userToRemove: String): Int = {
     addUserIfNotInDatabase(userToRemove)
 
-    if (findRemainingManagers(agoraEntity, userToRemove).size < 1) {
+    if (!hasRemainingManagers(agoraEntity, userToRemove)) {
       val m = "Can not delete all manage permissions on an entity"
       throw AgoraException(m, new Exception(m), Conflict)
     }

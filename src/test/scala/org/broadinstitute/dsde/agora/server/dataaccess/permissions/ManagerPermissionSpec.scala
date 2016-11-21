@@ -39,13 +39,15 @@ class ManagerPermissionSpec extends FlatSpec with ScalaFutures with BeforeAndAft
 
   "Agora" should "not delete the last manager namespace permission." in {
     agoraBusiness.insert(testEntity, mockAuthenticatedOwner.get)
-    insertNamespacePermission(testEntity, AccessControl(testEntity1.owner.get, AgoraPermissions(All)))
-    insertNamespacePermission(testEntity, AccessControl(testEntity2.owner.get, AgoraPermissions(All)))
+    insertNamespacePermission(testEntity, AccessControl(adminUser.get, AgoraPermissions(All)))
+    insertNamespacePermission(testEntity, AccessControl(owner1.get, AgoraPermissions(All)))
+    insertNamespacePermission(testEntity, AccessControl(owner2.get, AgoraPermissions(Read)))
+    insertNamespacePermission(testEntity, AccessControl(owner3.get, AgoraPermissions(ReadWrite)))
 
     deleteNamespacePermission(testEntity, mockAuthenticatedOwner.get)
-    deleteNamespacePermission(testEntity, testEntity1.owner.get)
+    deleteNamespacePermission(testEntity, adminUser.get)
     val exception = intercept[AgoraException] {
-      deleteNamespacePermission(testEntity, testEntity2.owner.get)
+      deleteNamespacePermission(testEntity, owner1.get)
     }
     assert(exception != null)
   }

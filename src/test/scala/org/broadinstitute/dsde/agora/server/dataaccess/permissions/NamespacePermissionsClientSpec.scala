@@ -95,6 +95,14 @@ class NamespacePermissionsClientSpec extends FlatSpec with ScalaFutures with Bef
     assert(rowsEditted === 2)
   }
 
+  "Agora" should "prevent a user from overwriting their own namespace permission" in {
+    val accessObject = new AccessControl(owner1.get, AgoraPermissions(AgoraPermissions.All))
+    val exception = intercept[AgoraException] {
+      permissionBusiness.insertNamespacePermission(testEntity1, owner1.get, accessObject)
+    }
+    assert(exception != null)
+  }
+
   "Agora" should "prevent a user from modifying their own namespace permission" in {
     val accessObject = new AccessControl(owner1.get, AgoraPermissions(AgoraPermissions.All))
     val exception = intercept[AgoraException] {

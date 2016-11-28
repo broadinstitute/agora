@@ -4,7 +4,6 @@ import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessContro
 import AgoraPermissions.Manage
 import org.broadinstitute.dsde.agora.server.exceptions.{AgoraEntityAuthorizationException, AgoraException, NamespaceAuthorizationException}
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
-import spray.http.StatusCodes
 import spray.http.StatusCodes.Conflict
 
 
@@ -16,6 +15,8 @@ class PermissionBusiness {
   }
 
   def insertNamespacePermission(entity: AgoraEntity, requester: String, accessObject: AccessControl): Int = {
+    // Inserts can result in an edit in the DAO layer
+    checkSameRequester(requester, accessObject.user)
     authorizeNamespaceRequester(entity, requester)
     NamespacePermissionsClient.insertNamespacePermission(entity, accessObject)
   }
@@ -42,6 +43,8 @@ class PermissionBusiness {
   }
 
   def insertEntityPermission(entity: AgoraEntity, requester: String, accessObject: AccessControl): Int = {
+    // Inserts can result in an edit in the DAO layer
+    checkSameRequester(requester, accessObject.user)
     authorizeEntityRequester(entity, requester)
     AgoraEntityPermissionsClient.insertEntityPermission(entity, accessObject)
   }

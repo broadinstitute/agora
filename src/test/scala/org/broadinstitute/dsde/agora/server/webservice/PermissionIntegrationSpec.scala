@@ -68,6 +68,18 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
       }
   }
 
+  "Agora" should "not allow authorized users to POST over their own namespace permissions." in {
+
+    Post(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + "permissions" +
+      s"?user=${mockAuthenticatedOwner.get}&roles=Read") ~>
+      methodsService.namespacePermissionsRoute ~>
+      check {
+        assert(status == Conflict)
+      }
+  }
+
+
+
   "Agora" should "not allow unauthorized users to insert a namespace permissions." in {
 
     Post(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity2.namespace.get + "/" + "permissions" +
@@ -160,6 +172,16 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
       check {
         assert(status == OK)
         assert(body.asString contains "Manage")
+      }
+  }
+
+  "Agora" should "not allow authorized users to POST over their own entity permissions." in {
+
+    Post(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
+      "/" + agoraEntity1.snapshotId.get + "/" + "permissions" + s"?user=${mockAuthenticatedOwner.get}&roles=Read") ~>
+      methodsService.entityPermissionsRoute ~>
+      check {
+        assert(status == Conflict)
       }
   }
 

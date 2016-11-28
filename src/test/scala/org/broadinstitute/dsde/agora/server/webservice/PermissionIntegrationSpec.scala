@@ -87,6 +87,16 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
       }
   }
 
+  "Agora" should "not allow authorized users to overwrite their own namespace permissions." in {
+
+    Put(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + "permissions" +
+      s"?user=${mockAuthenticatedOwner.get}&roles=Read") ~>
+      methodsService.namespacePermissionsRoute ~>
+      check {
+        assert(status == Conflict)
+      }
+  }
+
   "Agora" should "allow authorized users to delete an existing namespace permissions." in {
 
     Delete(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + "permissions" +
@@ -95,6 +105,16 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
       check {
         assert(status == OK)
         assert(body.asString contains "[]")
+      }
+  }
+
+  "Agora" should "not allow authorized users to delete their own namespace permissions." in {
+
+    Delete(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + "permissions" +
+      s"?user=${mockAuthenticatedOwner.get}&roles=Read") ~>
+      methodsService.namespacePermissionsRoute ~>
+      check {
+        assert(status == Conflict)
       }
   }
 
@@ -162,6 +182,16 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
       }
   }
 
+  "Agora" should "not allow authorized users to edit their own entity permissions." in {
+
+    Put(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
+      "/" + agoraEntity1.snapshotId.get + "/" + "permissions" + s"?user=${mockAuthenticatedOwner.get}&roles=Read") ~>
+      methodsService.entityPermissionsRoute ~>
+      check {
+        assert(status == Conflict)
+      }
+  }
+
   "Agora" should "allow authorized users to delete an existing entity permissions." in {
 
     Delete(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
@@ -170,6 +200,16 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
       check {
         assert(status == OK)
         assert(body.asString contains "[]")
+      }
+  }
+
+  "Agora" should "not allow authorized users to delete an their own entity permissions." in {
+
+    Delete(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
+      "/" + agoraEntity1.snapshotId.get + "/" + "permissions" + s"?user=${mockAuthenticatedOwner.get}&roles=All") ~>
+      methodsService.entityPermissionsRoute ~>
+      check {
+        assert(status == Conflict)
       }
   }
 

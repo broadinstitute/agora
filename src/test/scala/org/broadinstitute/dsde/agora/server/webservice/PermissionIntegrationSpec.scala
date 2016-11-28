@@ -57,7 +57,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
       }
     }
 
-  "Agora" should "allow authorized users to insert mutiple roles in a single namespace permissions." in {
+  "Agora" should "allow authorized users to insert multiple roles in a single namespace permissions." in {
 
     Post(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + "permissions" +
       s"?user=$owner2&roles=Read,Create,Manage") ~>

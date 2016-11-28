@@ -2,13 +2,14 @@ package org.broadinstitute.dsde.agora.server.dataaccess.permissions
 
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.AgoraTestFixture
-import org.broadinstitute.dsde.agora.server.busines.PermissionBusiness
+import org.broadinstitute.dsde.agora.server.business.PermissionBusiness
 import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraEntityPermissionsClient._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
+import org.broadinstitute.dsde.agora.server.exceptions.AgoraException
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{DoNotDiscover, BeforeAndAfterAll, FlatSpec}
+import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpec}
 
 @DoNotDiscover
 class EntityPermissionsClientSpec extends FlatSpec with ScalaFutures with BeforeAndAfterAll with AgoraTestFixture {
@@ -121,6 +122,22 @@ class EntityPermissionsClientSpec extends FlatSpec with ScalaFutures with Before
     val accessObject2 = new AccessControl(owner2.get, AgoraPermissions(AgoraPermissions.Nothing))
     val rowsEditted = permissionBusiness.batchEntityPermission(testBatchPermissionEntity, mockAuthenticatedOwner.get, List(accessObject1, accessObject2))
     assert(rowsEditted === 2)
+  }
+
+  "Agora" should "prevent a user from modifying their own entity permission" in {
+    val accessObject = new AccessControl(mockAuthenticatedOwner.get, AgoraPermissions(AgoraPermissions.All))
+    val exception = intercept[AgoraException] {
+      permissionBusiness.editEntityPermission(testBatchPermissionEntity, mockAuthenticatedOwner.get, accessObject)
+    }
+    assert(exception != null)
+  }
+
+  "Agora" should "prevent a user from deleting their own entity permission" in {
+    val accessObject = new AccessControl(mockAuthenticatedOwner.get, AgoraPermissions(AgoraPermissions.All))
+    val exception = intercept[AgoraException] {
+      permissionBusiness.deleteEntityPermission(testBatchPermissionEntity, mockAuthenticatedOwner.get, mockAuthenticatedOwner.get)
+    }
+    assert(exception != null)
   }
 
 }

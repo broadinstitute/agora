@@ -2,7 +2,7 @@ package org.broadinstitute.dsde.agora.server.dataaccess.permissions
 
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.AgoraTestFixture
-import org.broadinstitute.dsde.agora.server.busines.PermissionBusiness
+import org.broadinstitute.dsde.agora.server.business.PermissionBusiness
 import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.NamespacePermissionsClient._

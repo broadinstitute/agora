@@ -2,13 +2,14 @@ package org.broadinstitute.dsde.agora.server.dataaccess.permissions
 
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.AgoraTestFixture
-import org.broadinstitute.dsde.agora.server.busines.PermissionBusiness
+import org.broadinstitute.dsde.agora.server.business.PermissionBusiness
 import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.NamespacePermissionsClient._
+import org.broadinstitute.dsde.agora.server.exceptions.AgoraException
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{DoNotDiscover, BeforeAndAfterAll, FlatSpec}
+import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpec}
 
 @DoNotDiscover
 class NamespacePermissionsClientSpec extends FlatSpec with ScalaFutures with BeforeAndAfterAll with AgoraTestFixture {
@@ -93,4 +94,21 @@ class NamespacePermissionsClientSpec extends FlatSpec with ScalaFutures with Bef
     val rowsEditted = permissionBusiness.batchNamespacePermission(testBatchPermissionEntityWithId, mockAuthenticatedOwner.get, List(accessObject1, accessObject2))
     assert(rowsEditted === 2)
   }
+
+  "Agora" should "prevent a user from modifying their own namespace permission" in {
+    val accessObject = new AccessControl(owner1.get, AgoraPermissions(AgoraPermissions.All))
+    val exception = intercept[AgoraException] {
+      permissionBusiness.editNamespacePermission(testEntity1, owner1.get, accessObject)
+    }
+    assert(exception != null)
+  }
+
+  "Agora" should "prevent a user from deleting their own namespace permission" in {
+    val accessObject = new AccessControl(owner1.get, AgoraPermissions(AgoraPermissions.All))
+    val exception = intercept[AgoraException] {
+      permissionBusiness.deleteNamespacePermission(testEntity1, owner1.get, owner1.get)
+    }
+    assert(exception != null)
+  }
+
 }

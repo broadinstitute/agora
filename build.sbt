@@ -45,7 +45,6 @@ libraryDependencies ++= Seq(
   "org.broadinstitute.dsde.vault" %% "vault-common" % "0.1-15-bf74315",
   "org.mongodb" %% "casbah" % "2.8.2",
   "org.flywaydb" % "flyway-core" % "4.0.3",
-  "org.flywaydb" % "flyway-sbt" % "4.0.3",
   "org.scalaz" %% "scalaz-core" % "7.1.3",
   "org.webjars" % "swagger-ui"  % "2.2.5",
   //---------- Test libraries -------------------//
@@ -65,7 +64,10 @@ releaseSettings
 
 shellPrompt := { state => "%s| %s> ".format(GitCommand.prompt.apply(state), version.value) }
 
-javaOptions in Test ++= Seq("-Dconfig.file=src/test/resources/reference.conf")
+// We need to fork the tests and provide the correct config so that users do not accidentally
+// provide a config that points to a real database.
+javaOptions in Test := Seq("-Dconfig.file=src/test/resources/reference.conf")
+fork in Test := true
 
 parallelExecution in Test := false
 

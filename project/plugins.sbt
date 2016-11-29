@@ -1,6 +1,6 @@
 resolvers += "Flyway" at "https://flywaydb.org/repo"
 
-addSbtPlugin("org.flywaydb" % "flyway-sbt" % "3.2.1")
+addSbtPlugin("org.flywaydb" % "flyway-sbt" % "4.0.3")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "0.6.4")
 

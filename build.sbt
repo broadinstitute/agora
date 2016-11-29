@@ -44,7 +44,8 @@ libraryDependencies ++= Seq(
 //  "org.broadinstitute" %% "cromwell" % "0.9" excludeAll ExclusionRule(organization = "com.gettyimages"),
   "org.broadinstitute.dsde.vault" %% "vault-common" % "0.1-15-bf74315",
   "org.mongodb" %% "casbah" % "2.8.2",
-  "org.flywaydb" % "flyway-core" % "3.2.1",
+  "org.flywaydb" % "flyway-core" % "4.0.3",
+  "org.flywaydb" % "flyway-sbt" % "4.0.3",
   "org.scalaz" %% "scalaz-core" % "7.1.3",
   "org.webjars" % "swagger-ui"  % "2.2.5",
   //---------- Test libraries -------------------//
@@ -52,43 +53,19 @@ libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "2.2.4" % Test
 )
 
-Seq(flywaySettings: _*)
-
 //These can be overrided with system properties:
 // i.e: sbt -Dflyway.url=jdbc:mysql://DB_HOST:DB_PORT/DB_NAME -Dflyway.user=root -Dflyway.password=abc123
 flywayUrl := "jdbc:h2:file:local"
 
 flywayUser := "root"
 
-lazy val safeClean = taskKey[Unit]("DO NOT RUN IN PRODUCTION! Deletes the entire database with flywayClean. DO NOT RUN IN PRODUCTION!")
-
-safeClean := println("""
-                       |__        ___    ____  _   _ ___ _   _  ____ _
-                       |\ \      / / \  |  _ \| \ | |_ _| \ | |/ ___| |
-                       | \ \ /\ / / _ \ | |_) |  \| || ||  \| | |  _| |
-                       |  \ V  V / ___ \|  _ <| |\  || || |\  | |_| |_|
-                       |   \_/\_/_/   \_\_| \_\_| \_|___|_| \_|\____(_)
-                       |
-                       |
-                       | This will permanently DELETE EVERYTHING in the database.
-                       | Do you really want to delete the entire database?
-                       | If so, then remove the line:
-                       |
-                       | `addCommandAlias("flywayClean", "safeClean")`
-                       |
-                       | in the build.sbt file and rerun `sbt flywayClean`
-                       |
-                       | """.stripMargin)
-
-// Wrapper around flywayClean for safety.
-
-addCommandAlias("flywayClean", "safeClean")
+flywayCleanDisabled := true
 
 releaseSettings
 
 shellPrompt := { state => "%s| %s> ".format(GitCommand.prompt.apply(state), version.value) }
 
-javaOptions in Test ++= Seq("-Dconfig.file=" + Option(System.getenv("TEST_CONFIG")).getOrElse("src/test/resources/reference.conf"))
+javaOptions in Test ++= Seq("-Dconfig.file=src/test/resources/reference.conf")
 
 parallelExecution in Test := false
 
@@ -161,8 +138,9 @@ assemblyMergeStrategy in assembly := {
 
 Revolver.settings.settings
 Revolver.enableDebugging(port = 5051, suspend = false)
+
 // When JAVA_OPTS are specified in the environment, they are usually meant for the application
 // itself rather than sbt, but they are not passed by default to the application, which is a forked
 // process. This passes them through to the "re-start" command, which is probably what a developer
 // would normally expect.
-javaOptions in reStart := sys.env("JAVA_OPTS").split(" ")
+javaOptions in reStart ++= sys.env("JAVA_OPTS").split(" ").toSeq

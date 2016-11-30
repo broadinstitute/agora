@@ -6,7 +6,7 @@ import org.broadinstitute.dsde.agora.server.business.PermissionBusiness
 import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraEntityPermissionsClient._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
-import org.broadinstitute.dsde.agora.server.exceptions.AgoraException
+import org.broadinstitute.dsde.agora.server.exceptions.PermissionModificationException
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpec}
@@ -21,7 +21,7 @@ class EntityPermissionsClientSpec extends FlatSpec with ScalaFutures with Before
   var testEntityWithPublicPermissionsWithId: AgoraEntity = _
   var testBatchPermissionEntity: AgoraEntity = _
 
-  override def beforeAll() = {
+  override def beforeAll(): Unit = {
     ensureDatabasesAreRunning()
     agoraBusiness = new AgoraBusiness()
     permissionBusiness = new PermissionBusiness()
@@ -30,13 +30,13 @@ class EntityPermissionsClientSpec extends FlatSpec with ScalaFutures with Before
     agoraBusiness.insert(testEntityWithPublicPermissions, mockAuthenticatedOwner.get)
     agoraBusiness.insert(testEntity3, mockAuthenticatedOwner.get)
     agoraBusiness.insert(testEntity4, mockAuthenticatedOwner.get)
-    testEntityWithPublicPermissionsWithId = agoraBusiness.find(testEntityWithPublicPermissions, None, Seq(testEntityWithPublicPermissions.entityType.get), mockAuthenticatedOwner.get).head;
+    testEntityWithPublicPermissionsWithId = agoraBusiness.find(testEntityWithPublicPermissions, None, Seq(testEntityWithPublicPermissions.entityType.get), mockAuthenticatedOwner.get).head
     foundTestEntity1 = agoraBusiness.find(testEntity1, None, Seq(testEntity1.entityType.get), mockAuthenticatedOwner.get).head
     foundTestEntity2 = agoraBusiness.find(testEntity2, None, Seq(testEntity2.entityType.get), mockAuthenticatedOwner.get).head
     testBatchPermissionEntity = agoraBusiness.find(testEntity4, None, Seq(testEntity3.entityType.get), mockAuthenticatedOwner.get).head
   }
 
-  override def afterAll() = {
+  override def afterAll(): Unit = {
     clearDatabases()
   }
 
@@ -126,7 +126,7 @@ class EntityPermissionsClientSpec extends FlatSpec with ScalaFutures with Before
 
   "Agora" should "prevent a user from overwriting their own entity permission" in {
     val accessObject = new AccessControl(mockAuthenticatedOwner.get, AgoraPermissions(AgoraPermissions.Nothing))
-    val exception = intercept[AgoraException] {
+    val exception = intercept[PermissionModificationException] {
       permissionBusiness.insertEntityPermission(testBatchPermissionEntity, mockAuthenticatedOwner.get, accessObject)
     }
     assert(exception != null)
@@ -134,15 +134,14 @@ class EntityPermissionsClientSpec extends FlatSpec with ScalaFutures with Before
 
   "Agora" should "prevent a user from modifying their own entity permission" in {
     val accessObject = new AccessControl(mockAuthenticatedOwner.get, AgoraPermissions(AgoraPermissions.Nothing))
-    val exception = intercept[AgoraException] {
+    val exception = intercept[PermissionModificationException] {
       permissionBusiness.editEntityPermission(testBatchPermissionEntity, mockAuthenticatedOwner.get, accessObject)
     }
     assert(exception != null)
   }
 
   "Agora" should "prevent a user from deleting their own entity permission" in {
-    val accessObject = new AccessControl(mockAuthenticatedOwner.get, AgoraPermissions(AgoraPermissions.All))
-    val exception = intercept[AgoraException] {
+    val exception = intercept[PermissionModificationException] {
       permissionBusiness.deleteEntityPermission(testBatchPermissionEntity, mockAuthenticatedOwner.get, mockAuthenticatedOwner.get)
     }
     assert(exception != null)

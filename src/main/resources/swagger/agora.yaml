@@ -483,8 +483,8 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/AccessControl'
-        '409':
-          description: Conflict error.
+        '400':
+          description: Bad Request.
           schema:
             type: object
             $ref: '#/definitions/Error'
@@ -526,8 +526,8 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/AccessControl'
-        '409':
-          description: Conflict error.
+        '400':
+          description: Bad Request.
           schema:
             type: object
             $ref: '#/definitions/Error'
@@ -564,8 +564,8 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/AccessControl'
-        '409':
-          description: Conflict error.
+        '400':
+          description: Bad Request.
           schema:
             type: object
             $ref: '#/definitions/Error'
@@ -668,8 +668,8 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/AccessControl'
-        '409':
-          description: Conflict error.
+        '400':
+          description: Bad Request.
           schema:
             type: object
             $ref: '#/definitions/Error'
@@ -721,8 +721,8 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/AccessControl'
-        '409':
-          description: Conflict error.
+        '400':
+          description: Bad Request.
           schema:
             type: object
             $ref: '#/definitions/Error'
@@ -769,8 +769,8 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/AccessControl'
-        '409':
-          description: Conflict error.
+        '400':
+          description: Bad Request.
           schema:
             type: object
             $ref: '#/definitions/Error'
@@ -853,8 +853,8 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/AccessControl'
-        '409':
-          description: Conflict error.
+        '400':
+          description: Bad Request.
           schema:
             type: object
             $ref: '#/definitions/Error'
@@ -896,8 +896,8 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/AccessControl'
-        '409':
-          description: Conflict error.
+        '400':
+          description: Bad Request.
           schema:
             type: object
             $ref: '#/definitions/Error'
@@ -934,8 +934,8 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/AccessControl'
-        '409':
-          description: Conflict error.
+        '400':
+          description: Bad Request.
           schema:
             type: object
             $ref: '#/definitions/Error'
@@ -1038,8 +1038,8 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/AccessControl'
-        '409':
-          description: Conflict error.
+        '400':
+          description: Bad Request.
           schema:
             type: object
             $ref: '#/definitions/Error'
@@ -1091,8 +1091,8 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/AccessControl'
-        '409':
-          description: Conflict error.
+        '400':
+          description: Bad Request.
           schema:
             type: object
             $ref: '#/definitions/Error'
@@ -1139,8 +1139,8 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/AccessControl'
-        '409':
-          description: Conflict error.
+        '400':
+          description: Bad Request.
           schema:
             type: object
             $ref: '#/definitions/Error'

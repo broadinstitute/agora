@@ -2,11 +2,10 @@ package org.broadinstitute.dsde.agora.server.dataaccess.permissions
 
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.AgoraTestFixture
-import org.broadinstitute.dsde.agora.server.business.PermissionBusiness
-import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
+import org.broadinstitute.dsde.agora.server.business.{AgoraBusiness, PermissionBusiness}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.NamespacePermissionsClient._
-import org.broadinstitute.dsde.agora.server.exceptions.AgoraException
+import org.broadinstitute.dsde.agora.server.exceptions.PermissionModificationException
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpec}
@@ -18,7 +17,7 @@ class NamespacePermissionsClientSpec extends FlatSpec with ScalaFutures with Bef
   var permissionBusiness: PermissionBusiness = _
   var testBatchPermissionEntityWithId: AgoraEntity = _
 
-  override def beforeAll() = {
+  override def beforeAll(): Unit = {
     ensureDatabasesAreRunning()
     agoraBusiness = new AgoraBusiness()
     permissionBusiness = new PermissionBusiness()
@@ -28,7 +27,7 @@ class NamespacePermissionsClientSpec extends FlatSpec with ScalaFutures with Bef
     testBatchPermissionEntityWithId = agoraBusiness.find(testEntity3, None, Seq(testEntity3.entityType.get), mockAuthenticatedOwner.get).head
   }
 
-  override def afterAll() = {
+  override def afterAll(): Unit = {
     clearDatabases()
   }
 
@@ -97,7 +96,7 @@ class NamespacePermissionsClientSpec extends FlatSpec with ScalaFutures with Bef
 
   "Agora" should "prevent a user from overwriting their own namespace permission" in {
     val accessObject = new AccessControl(owner1.get, AgoraPermissions(AgoraPermissions.Nothing))
-    val exception = intercept[AgoraException] {
+    val exception = intercept[PermissionModificationException] {
       permissionBusiness.insertNamespacePermission(testEntity1, owner1.get, accessObject)
     }
     assert(exception != null)
@@ -105,15 +104,14 @@ class NamespacePermissionsClientSpec extends FlatSpec with ScalaFutures with Bef
 
   "Agora" should "prevent a user from modifying their own namespace permission" in {
     val accessObject = new AccessControl(owner1.get, AgoraPermissions(AgoraPermissions.Nothing))
-    val exception = intercept[AgoraException] {
+    val exception = intercept[PermissionModificationException] {
       permissionBusiness.editNamespacePermission(testEntity1, owner1.get, accessObject)
     }
     assert(exception != null)
   }
 
   "Agora" should "prevent a user from deleting their own namespace permission" in {
-    val accessObject = new AccessControl(owner1.get, AgoraPermissions(AgoraPermissions.All))
-    val exception = intercept[AgoraException] {
+    val exception = intercept[PermissionModificationException] {
       permissionBusiness.deleteNamespacePermission(testEntity1, owner1.get, owner1.get)
     }
     assert(exception != null)

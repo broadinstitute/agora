@@ -84,6 +84,9 @@ trait PerRequest extends Actor with LazyLogging {
       case e: ValidationException =>
         r.complete(BadRequest,AgoraException(e.getMessage, e.getCause, BadRequest))
         Stop
+      case e: PermissionModificationException =>
+        r.complete(BadRequest,AgoraException(e.getMessage, e.getCause, BadRequest))
+        Stop
       case e: AgoraException =>
         r.complete(e.statusCode, e)
         Stop

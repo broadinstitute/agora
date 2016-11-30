@@ -74,7 +74,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
       s"?user=${mockAuthenticatedOwner.get}&roles=Read") ~>
       methodsService.namespacePermissionsRoute ~>
       check {
-        assert(status == Conflict)
+        assert(status == BadRequest)
       }
   }
 
@@ -107,7 +107,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
       s"?user=${mockAuthenticatedOwner.get}&roles=Read") ~>
       methodsService.namespacePermissionsRoute ~>
       check {
-        assert(status == Conflict)
+        assert(status == BadRequest)
       }
   }
 
@@ -128,7 +128,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
       s"?user=${mockAuthenticatedOwner.get}&roles=Read") ~>
       methodsService.namespacePermissionsRoute ~>
       check {
-        assert(status == Conflict)
+        assert(status == BadRequest)
       }
   }
 
@@ -181,7 +181,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
       "/" + agoraEntity1.snapshotId.get + "/" + "permissions" + s"?user=${mockAuthenticatedOwner.get}&roles=Read") ~>
       methodsService.entityPermissionsRoute ~>
       check {
-        assert(status == Conflict)
+        assert(status == BadRequest)
       }
   }
 
@@ -212,7 +212,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
       "/" + agoraEntity1.snapshotId.get + "/" + "permissions" + s"?user=${mockAuthenticatedOwner.get}&roles=Read") ~>
       methodsService.entityPermissionsRoute ~>
       check {
-        assert(status == Conflict)
+        assert(status == BadRequest)
       }
   }
 
@@ -233,7 +233,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
       "/" + agoraEntity1.snapshotId.get + "/" + "permissions" + s"?user=${mockAuthenticatedOwner.get}&roles=All") ~>
       methodsService.entityPermissionsRoute ~>
       check {
-        assert(status == Conflict)
+        assert(status == BadRequest)
       }
   }
 

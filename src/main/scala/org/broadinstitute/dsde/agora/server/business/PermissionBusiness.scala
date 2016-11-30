@@ -2,10 +2,8 @@ package org.broadinstitute.dsde.agora.server.business
 
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraEntityPermissionsClient, AgoraPermissions, NamespacePermissionsClient}
 import AgoraPermissions.Manage
-import org.broadinstitute.dsde.agora.server.exceptions.{AgoraEntityAuthorizationException, AgoraException, NamespaceAuthorizationException}
+import org.broadinstitute.dsde.agora.server.exceptions.{AgoraEntityAuthorizationException, PermissionModificationException, NamespaceAuthorizationException}
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
-import spray.http.StatusCodes.Conflict
-
 
 class PermissionBusiness {
 
@@ -83,8 +81,7 @@ class PermissionBusiness {
 
   private def checkSameRequester(requester: String, userToModify: String):Unit = {
     if (requester.equalsIgnoreCase(userToModify)) {
-      val m = "Unable to remove access control for current user"
-      throw AgoraException(m, new Exception(m), Conflict)
+      throw PermissionModificationException()
     }
   }
 
@@ -92,8 +89,7 @@ class PermissionBusiness {
     currentACL match {
       case Some(x) =>
         if (x.user.equalsIgnoreCase(newACL.user) && x.roles != newACL.roles) {
-          val m = "Unable to modify access control for current user"
-          throw AgoraException(m, new Exception(m), Conflict)
+          throw PermissionModificationException()
         }
       case _ => Unit
     }

@@ -21,7 +21,6 @@ class AgoraTestSuite extends Suites(
   new AgoraPermissionsSpec,
   new EntityPermissionsClientSpec,
   new NamespacePermissionsClientSpec,
-  new ManagerPermissionSpec,
   new AgoraBusinessIntegrationSpec,
   new AgoraImportIntegrationSpec,
   new PermissionIntegrationSpec,

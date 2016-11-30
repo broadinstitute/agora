@@ -44,7 +44,6 @@ libraryDependencies ++= Seq(
 //  "org.broadinstitute" %% "cromwell" % "0.9" excludeAll ExclusionRule(organization = "com.gettyimages"),
   "org.broadinstitute.dsde.vault" %% "vault-common" % "0.1-15-bf74315",
   "org.mongodb" %% "casbah" % "2.8.2",
-  "org.flywaydb" % "flyway-core" % "4.0.3",
   "org.scalaz" %% "scalaz-core" % "7.1.3",
   "org.webjars" % "swagger-ui"  % "2.2.5",
   //---------- Test libraries -------------------//

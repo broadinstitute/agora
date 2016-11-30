@@ -5,11 +5,10 @@ import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraEntityPermissionsClient, AgoraPermissions}
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
-import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
+import org.broadinstitute.dsde.agora.server.model.{AgoraEntityType, AgoraEntity}
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
 import org.scalatest.DoNotDiscover
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import spray.http.StatusCodes._
 import spray.httpx.SprayJsonSupport._
 import spray.httpx.unmarshalling._
@@ -113,8 +112,6 @@ class AgoraConfigurationsSpec extends ApiServiceSpec {
   }
 
   "Agora" should "not allow you to post a new configuration if you don't have permission to read the method that it references" in {
-    // Have to have at least 1 remaining "manage" permission when trying to edit/delete
-    AgoraEntityPermissionsClient.insertEntityPermission(method1, AccessControl(testEntity1.owner.get, AgoraPermissions(All)))
     val noPermission = new AccessControl(AgoraConfig.mockAuthenticatedUserEmail, AgoraPermissions(AgoraPermissions.Nothing))
     AgoraEntityPermissionsClient.editEntityPermission(method1, noPermission)
     Post(ApiUtil.Configurations.withLeadingVersion, testAgoraConfigurationEntity3) ~>

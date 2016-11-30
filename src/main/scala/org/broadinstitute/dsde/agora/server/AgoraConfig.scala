@@ -1,9 +1,7 @@
-
 package org.broadinstitute.dsde.agora.server
 
 import com.typesafe.config.{Config, ConfigFactory}
 import net.ceedubs.ficus.Ficus._
-import net.ceedubs.ficus.readers.ArbitraryTypeReader._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntityType
 import org.broadinstitute.dsde.agora.server.model.AgoraEntityType.EntityType
 import org.broadinstitute.dsde.agora.server.webservice.routes.{AgoraDirectives, MockAgoraDirectives, OpenIdConnectDirectives}
@@ -14,7 +12,7 @@ object AgoraConfig {
   private val config: Config = ConfigFactory.load()
 
   // Environments
-  val LocalEnvironment = "local"
+  val TestEnvironment = "test"
 
   var authenticationDirectives: AgoraDirectives = _
   var usesEmbeddedMongo: Boolean = _
@@ -22,14 +20,12 @@ object AgoraConfig {
 
   val environment = config.as[Option[String]]("environment")
   environment match {
-    case Some(env) if env == LocalEnvironment => {
+    case Some(env) if env == TestEnvironment =>
       authenticationDirectives = MockAgoraDirectives
       usesEmbeddedMongo = true
-    }
-    case _ => {
+    case _ =>
       authenticationDirectives = OpenIdConnectDirectives
       usesEmbeddedMongo = false
-    }
   }
 
   // Agora

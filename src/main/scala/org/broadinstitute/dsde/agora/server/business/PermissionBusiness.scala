@@ -8,7 +8,7 @@ import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 class PermissionBusiness {
 
   def listNamespacePermissions(entity: AgoraEntity, requester: String): Seq[AccessControl] = {
-    authorizeNamespaceRequester(getNamespaceACLs(entity, requester), entity, requester)
+    authorizeNamespaceRequester(entity, requester)
     NamespacePermissionsClient.listNamespacePermissions(entity)
   }
 
@@ -28,7 +28,7 @@ class PermissionBusiness {
 
   def deleteNamespacePermission(entity: AgoraEntity, requester: String, userToRemove: String): Int = {
     checkSameRequester(requester, userToRemove)
-    authorizeNamespaceRequester(getNamespaceACLs(entity, requester), entity, requester)
+    authorizeNamespaceRequester(entity, requester)
     NamespacePermissionsClient.deleteNamespacePermission(entity, userToRemove)
   }
 
@@ -59,11 +59,6 @@ class PermissionBusiness {
   }
 
 
-  private def authorizeNamespaceRequester(acls: Seq[AccessControl], entity: AgoraEntity, requester: String): Unit = {
-    if (!acls.exists(_.roles.canManage))
-      throw NamespaceAuthorizationException(AgoraPermissions(Manage), entity, requester)
-  }
-
   /**
     * Utility method to both authorize the namespace requester and check that the requester is not modifying their own
     * permissions
@@ -75,13 +70,13 @@ class PermissionBusiness {
       throw NamespaceAuthorizationException(AgoraPermissions(Manage), entity, requester)
   }
 
-  private def authorizeEntityRequester(entity: AgoraEntity, requester: String): Unit = {
-    authorizeEntityRequester(getEntityACLs(entity, requester), entity, requester)
+  private def authorizeNamespaceRequester(entity: AgoraEntity, requester: String): Unit = {
+    authorizeNamespaceRequester(getNamespaceACLs(entity, requester), entity, requester)
   }
 
-  private def authorizeEntityRequester(acls: Seq[AccessControl], entity: AgoraEntity, requester: String): Unit = {
+  private def authorizeNamespaceRequester(acls: Seq[AccessControl], entity: AgoraEntity, requester: String): Unit = {
     if (!acls.exists(_.roles.canManage))
-      throw AgoraEntityAuthorizationException(AgoraPermissions(Manage), entity, requester)
+      throw NamespaceAuthorizationException(AgoraPermissions(Manage), entity, requester)
   }
 
   /**
@@ -92,6 +87,15 @@ class PermissionBusiness {
     val currentACLs = getEntityACLs(entity, requester)
     checkSameRequesterAndPermissions(currentACLs.find(acl => acl.user.equals(requester)), accessObject)
     authorizeEntityRequester(currentACLs, entity, requester)
+  }
+
+  private def authorizeEntityRequester(entity: AgoraEntity, requester: String): Unit = {
+    authorizeEntityRequester(getEntityACLs(entity, requester), entity, requester)
+  }
+
+  private def authorizeEntityRequester(acls: Seq[AccessControl], entity: AgoraEntity, requester: String): Unit = {
+    if (!acls.exists(_.roles.canManage))
+      throw AgoraEntityAuthorizationException(AgoraPermissions(Manage), entity, requester)
   }
 
   private def checkSameRequester(requester: String, userToModify: String):Unit = {

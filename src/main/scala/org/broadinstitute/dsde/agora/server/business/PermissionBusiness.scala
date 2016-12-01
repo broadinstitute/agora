@@ -33,7 +33,7 @@ class PermissionBusiness {
   }
 
   def listEntityPermissions(entity: AgoraEntity, requester: String): Seq[AccessControl] = {
-    authorizeEntityRequester(getEntityACLs(entity, requester), entity, requester)
+    authorizeEntityRequester(entity, requester)
     AgoraEntityPermissionsClient.listEntityPermissions(entity)
   }
 
@@ -54,7 +54,7 @@ class PermissionBusiness {
 
   def deleteEntityPermission(entity: AgoraEntity, requester: String, userToRemove: String): Int = {
     checkSameRequester(requester, userToRemove)
-    authorizeEntityRequester(getEntityACLs(entity, requester), entity, requester)
+    authorizeEntityRequester(entity, requester)
     AgoraEntityPermissionsClient.deleteEntityPermission(entity, userToRemove)
   }
 
@@ -73,6 +73,10 @@ class PermissionBusiness {
     checkSameRequesterAndPermissions(namespaceACLs.find(acl => acl.user.equals(requester)), accessObject)
     if (!namespaceACLs.exists(_.roles.canManage))
       throw NamespaceAuthorizationException(AgoraPermissions(Manage), entity, requester)
+  }
+
+  private def authorizeEntityRequester(entity: AgoraEntity, requester: String): Unit = {
+    authorizeEntityRequester(getEntityACLs(entity, requester), entity, requester)
   }
 
   private def authorizeEntityRequester(acls: Seq[AccessControl], entity: AgoraEntity, requester: String): Unit = {

@@ -13,10 +13,7 @@ class PermissionBusiness {
   }
 
   def insertNamespacePermission(entity: AgoraEntity, requester: String, accessObject: AccessControl): Int = {
-    // Inserts can result in an edit in the DAO layer
-    val namespaceACLs = getNamespaceACLs(entity, requester)
-    checkSameRequesterAndPermissions(namespaceACLs.find(acl => acl.user.equals(requester)), accessObject)
-    authorizeNamespaceRequester(namespaceACLs, entity, requester)
+    authorizeNamespaceRequester(entity, requester, accessObject)
     NamespacePermissionsClient.insertNamespacePermission(entity, accessObject)
   }
 
@@ -25,9 +22,7 @@ class PermissionBusiness {
   }
 
   def editNamespacePermission(entity: AgoraEntity, requester: String, accessObject: AccessControl): Int = {
-    val namespaceACLs = getNamespaceACLs(entity, requester)
-    checkSameRequesterAndPermissions(namespaceACLs.find(acl => acl.user.equals(requester)), accessObject)
-    authorizeNamespaceRequester(namespaceACLs, entity, requester)
+    authorizeNamespaceRequester(entity, requester, accessObject)
     NamespacePermissionsClient.editNamespacePermission(entity, accessObject)
   }
 
@@ -43,10 +38,7 @@ class PermissionBusiness {
   }
 
   def insertEntityPermission(entity: AgoraEntity, requester: String, accessObject: AccessControl): Int = {
-    // Inserts can result in an edit in the DAO layer
-    val entityACLs = getEntityACLs(entity, requester)
-    checkSameRequesterAndPermissions(entityACLs.find(acl => acl.user.equals(requester)), accessObject)
-    authorizeEntityRequester(entityACLs, entity, requester)
+    authorizeEntityRequester(entity, requester, accessObject)
     AgoraEntityPermissionsClient.insertEntityPermission(entity, accessObject)
   }
 
@@ -55,9 +47,7 @@ class PermissionBusiness {
   }
 
   def editEntityPermission(entity: AgoraEntity, requester: String, accessObject: AccessControl): Int = {
-    val entityACLs = getEntityACLs(entity, requester)
-    checkSameRequesterAndPermissions(entityACLs.find(acl => acl.user.equals(requester)), accessObject)
-    authorizeEntityRequester(entityACLs, entity, requester)
+    authorizeEntityRequester(entity, requester, accessObject)
     AgoraEntityPermissionsClient.editEntityPermission(entity, accessObject)
 
   }
@@ -74,9 +64,30 @@ class PermissionBusiness {
       throw NamespaceAuthorizationException(AgoraPermissions(Manage), entity, requester)
   }
 
+  /**
+    * Utility method to both authorize the namespace requester and check that the requester is not modifying their own
+    * permissions
+    */
+  private def authorizeNamespaceRequester(entity: AgoraEntity, requester: String, accessObject: AccessControl): Unit = {
+    val namespaceACLs = getNamespaceACLs(entity, requester)
+    checkSameRequesterAndPermissions(namespaceACLs.find(acl => acl.user.equals(requester)), accessObject)
+    if (!namespaceACLs.exists(_.roles.canManage))
+      throw NamespaceAuthorizationException(AgoraPermissions(Manage), entity, requester)
+  }
+
   private def authorizeEntityRequester(acls: Seq[AccessControl], entity: AgoraEntity, requester: String): Unit = {
     if (!acls.exists(_.roles.canManage))
       throw AgoraEntityAuthorizationException(AgoraPermissions(Manage), entity, requester)
+  }
+
+  /**
+    * Utility method to both authorize the entity requester and check that the requester is not modifying their own
+    * permissions
+    */
+  private def authorizeEntityRequester(entity: AgoraEntity, requester: String, accessObject: AccessControl): Unit = {
+    val currentACLs = getEntityACLs(entity, requester)
+    checkSameRequesterAndPermissions(currentACLs.find(acl => acl.user.equals(requester)), accessObject)
+    authorizeEntityRequester(currentACLs, entity, requester)
   }
 
   private def checkSameRequester(requester: String, userToModify: String):Unit = {

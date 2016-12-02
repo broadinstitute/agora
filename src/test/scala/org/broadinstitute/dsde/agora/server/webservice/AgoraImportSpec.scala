@@ -11,13 +11,13 @@ import spray.httpx.unmarshalling._
 class AgoraImportSpec extends ApiServiceSpec {
   var testEntityTaskWcWithId: AgoraEntity = _
 
-  override def beforeAll() = {
+  override def beforeAll(): Unit = {
     ensureDatabasesAreRunning()
     testEntityTaskWcWithId = agoraBusiness.insert(testEntityTaskWc, mockAuthenticatedOwner.get)
     agoraBusiness.insert(testEntityWorkflowWithExistentWdlImport, mockAuthenticatedOwner.get)
   }
 
-  override def afterAll() = {
+  override def afterAll(): Unit = {
     clearDatabases()
   }
 

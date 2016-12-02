@@ -13,10 +13,10 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 trait AgoraTestFixture {
-  val timeout = 10.seconds
+  val timeout: FiniteDuration = 10.seconds
   var db: Database = _
 
-  def startDatabases() = {
+  def startDatabases(): Seq[Unit] = {
     EmbeddedMongo.startMongo()
 
     println("Connecting to test sql database.")
@@ -29,20 +29,20 @@ trait AgoraTestFixture {
     Await.result(setupFuture, timeout)
   }
 
-  def stopDatabases() = {
+  def stopDatabases(): Unit = {
     clearDatabases()
     EmbeddedMongo.stopMongo()
     println("Disconnecting from sql database.")
     db.close()
   }
 
-  def ensureMongoDatabaseIsRunning() = {
+  def ensureMongoDatabaseIsRunning(): Any = {
     if (!EmbeddedMongo.isRunning) {
       startDatabases()
     }
   }
 
-  def clearMongoCollections(collections: Seq[MongoCollection] = Seq()) = {
+  def clearMongoCollections(collections: Seq[MongoCollection] = Seq()): Unit = {
     if (EmbeddedMongo.isRunning) {
       println("Clearing mongo database.")
       val allCollections = AgoraMongoClient.getAllCollections ++ collections
@@ -82,7 +82,7 @@ trait AgoraTestFixture {
     )
   }
 
-  def ensureSqlDatabaseIsRunning() = {
+  def ensureSqlDatabaseIsRunning(): Seq[Unit] = {
     println("Connecting to test sql database.")
     db = AgoraConfig.sqlDatabase
 
@@ -90,24 +90,24 @@ trait AgoraTestFixture {
     Await.result(createTableIfNotExists(entities, users, permissions), timeout)
   }
 
-  def clearSqlDatabase() = {
+  def clearSqlDatabase(): Seq[AnyVal] = {
     println("Clearing sql database.")
     Await.result(deleteFromTableIfExists(permissions), timeout)
     Await.result(deleteFromTableIfExists(users), timeout)
     Await.result(deleteFromTableIfExists(entities), timeout)
   }
 
-  def ensureDatabasesAreRunning() = {
+  def ensureDatabasesAreRunning(): Seq[Unit] = {
     ensureMongoDatabaseIsRunning()
     ensureSqlDatabaseIsRunning()
   }
 
-  def clearDatabases() = {
+  def clearDatabases(): Seq[AnyVal] = {
     clearMongoCollections()
     clearSqlDatabase()
   }
 
-  def addAdminUser() = {
+  def addAdminUser(): Int = {
     Await.result(db.run(users += UserDao(adminUser.get, isAdmin = true)), timeout)
   }
 }

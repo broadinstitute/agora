@@ -8,11 +8,11 @@ import org.scalatest.{BeforeAndAfterAll, FlatSpec}
 class AgoraBusinessIntegrationSpec extends FlatSpec with BeforeAndAfterAll with AgoraTestFixture {
   val agoraBusiness = new AgoraBusiness()
 
-  override protected def beforeAll() = {
+  override def beforeAll(): Unit = {
     ensureDatabasesAreRunning()
   }
 
-  override protected def afterAll() = {
+  override def afterAll(): Unit = {
     clearDatabases()
   }
 

@@ -4,11 +4,11 @@ import spray.http.StatusCodes
 
 class AgoraServiceStatusSpec extends ApiServiceSpec {
 
-  override def beforeAll() = {
+  override def beforeAll(): Unit = {
     ensureDatabasesAreRunning()
   }
 
-  override def afterAll() = {
+  override def afterAll(): Unit = {
     clearDatabases()
   }
 

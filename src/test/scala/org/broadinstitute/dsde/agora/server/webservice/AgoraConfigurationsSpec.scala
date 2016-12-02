@@ -18,7 +18,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec {
   var testEntityToBeRedacted2WithId: AgoraEntity = _
   var testAgoraConfigurationToBeRedactedWithId: AgoraEntity = _
 
-  override def beforeAll() = {
+  override def beforeAll(): Unit = {
     ensureDatabasesAreRunning()
     method1 = agoraBusiness.insert(testEntity1, mockAuthenticatedOwner.get)
     testEntityToBeRedacted2WithId = agoraBusiness.insert(testEntityToBeRedacted2, mockAuthenticatedOwner.get)
@@ -29,7 +29,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec {
     agoraBusiness.insert(testAgoraConfigurationEntity3, mockAuthenticatedOwner.get)
   }
 
-  override def afterAll() = {
+  override def afterAll(): Unit = {
     clearDatabases()
   }
 

@@ -8,14 +8,14 @@ import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
 import org.scalatest.{BeforeAndAfterAll, FlatSpec}
 
 class MethodsDbTest extends FlatSpec with BeforeAndAfterAll with AgoraTestFixture {
-  val mongoTestCollection = AgoraMongoClient.getCollection("test")
-  val agoraDao = AgoraDao.createAgoraDao(mongoTestCollection)
+  private val mongoTestCollection = AgoraMongoClient.getCollection("test")
+  private val agoraDao = AgoraDao.createAgoraDao(mongoTestCollection)
 
-  override protected def beforeAll() = {
+  override def beforeAll(): Unit = {
     ensureMongoDatabaseIsRunning()
   }
 
-  override protected def afterAll() = {
+  override def afterAll(): Unit = {
     clearMongoCollections(Seq(mongoTestCollection))
   }
 

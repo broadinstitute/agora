@@ -1,5 +1,6 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
+import akka.actor.ActorSystem
 import org.broadinstitute.dsde.agora.server.AgoraTestFixture
 import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
@@ -8,36 +9,36 @@ import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
 import org.scalatest._
 import spray.http.StatusCodes._
 import spray.httpx.unmarshalling._
-import spray.routing.{Directives, ExceptionHandler, MalformedRequestContentRejection, RejectionHandler}
+import spray.routing._
 import spray.testkit.ScalatestRouteTest
 
 class ApiServiceSpec extends FlatSpec with Directives with ScalatestRouteTest with AgoraTestFixture {
 
   val agoraBusiness = new AgoraBusiness()
 
-  val wrapWithExceptionHandler = handleExceptions(ExceptionHandler {
+  val wrapWithExceptionHandler: Directive0 = handleExceptions(ExceptionHandler {
     case e: IllegalArgumentException => complete(BadRequest, e.getMessage)
   })
 
-  val wrapWithRejectionHandler = handleRejections(RejectionHandler {
+  val wrapWithRejectionHandler: Directive0 = handleRejections(RejectionHandler {
     case MalformedRequestContentRejection(message, cause) :: _ => complete(BadRequest, message)
   })
 
   trait ActorRefFactoryContext {
-    def actorRefFactory = system
+    def actorRefFactory: ActorSystem = system
   }
 
 
   abstract class StatusService extends AgoraService {
     override def path = "/status"
-    override def statusRoute = super.statusRoute
+    override def statusRoute: Route = super.statusRoute
   }
 
   val methodsService = new MethodsService() with ActorRefFactoryContext
   val configurationsService = new ConfigurationsService() with ActorRefFactoryContext
   val apiStatusService = new StatusService() with ActorRefFactoryContext
 
-  def handleError[T](deserialized: Deserialized[T], assertions: (T) => Unit) = {
+  def handleError[T](deserialized: Deserialized[T], assertions: (T) => Unit): Unit = {
     if (status.isSuccess) {
       if (deserialized.isRight) assertions(deserialized.right.get) else failTest(deserialized.left.get.toString)
     } else {

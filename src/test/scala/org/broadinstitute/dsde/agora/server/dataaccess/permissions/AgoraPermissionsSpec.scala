@@ -7,11 +7,11 @@ import org.scalatest.BeforeAndAfterAll
 
 class AgoraPermissionsSpec extends ApiServiceSpec with BeforeAndAfterAll with AgoraTestFixture {
 
-  override protected def beforeAll() = {
+  override def beforeAll(): Unit = {
     ensureDatabasesAreRunning()
   }
 
-  override protected def afterAll() = {
+  override def afterAll(): Unit = {
     clearDatabases()
   }
 
@@ -79,12 +79,12 @@ class AgoraPermissionsSpec extends ApiServiceSpec with BeforeAndAfterAll with Ag
     val adminUser = AgoraTestData.adminUser.get
 
     // Set adminUsers's admin status false
-    AdminPermissionsClient.updateAdmin(adminUser, false)
+    AdminPermissionsClient.updateAdmin(adminUser, adminStatus = false)
     var adminUsers = AdminPermissionsClient.listAdminUsers
     assert(adminUsers.length === 0)
 
     // Set adminUsers's admin status true
-    AdminPermissionsClient.updateAdmin(adminUser, true)
+    AdminPermissionsClient.updateAdmin(adminUser, adminStatus = true)
     adminUsers = AdminPermissionsClient.listAdminUsers
     assert(adminUsers.length === 1)
   }

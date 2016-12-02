@@ -655,7 +655,7 @@ object AgoraTestData {
     entityType = Option(AgoraEntityType.Task)
   )
 
-  def populateDatabase(agoraBusiness: AgoraBusiness) = {
+  def populateDatabase(agoraBusiness: AgoraBusiness): Unit = {
     agoraBusiness.insert(testEntity1, mockAuthenticatedOwner.get)
     agoraBusiness.insert(testEntity2, mockAuthenticatedOwner.get)
     agoraBusiness.insert(testEntity3, mockAuthenticatedOwner.get)

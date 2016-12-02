@@ -1,5 +1,6 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
+import akka.actor.ActorSystem
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.AgoraTestFixture
 import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
@@ -20,21 +21,21 @@ class AgoraImportIntegrationSpec extends FlatSpec with RouteTest with ScalatestR
   implicit val routeTestTimeout = RouteTestTimeout(20.seconds)
 
   trait ActorRefFactoryContext {
-    def actorRefFactory = system
+    def actorRefFactory: ActorSystem = system
   }
 
   val agoraBusiness = new AgoraBusiness()
   val methodsService = new MethodsService() with ActorRefFactoryContext
 
-  override def beforeAll() = {
+  override def beforeAll(): Unit = {
     ensureDatabasesAreRunning()
   }
 
-  override def afterAll() = {
+  override def afterAll(): Unit = {
     clearDatabases()
   }
 
-  def handleError[T](deserialized: Deserialized[T], assertions: (T) => Unit) = {
+  def handleError[T](deserialized: Deserialized[T], assertions: (T) => Unit): Unit = {
     if (status.isSuccess) {
       if (deserialized.isRight) assertions(deserialized.right.get) else failTest(deserialized.left.get.toString)
     } else {

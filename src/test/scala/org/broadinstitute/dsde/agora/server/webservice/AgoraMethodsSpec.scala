@@ -22,7 +22,7 @@ class AgoraMethodsSpec extends ApiServiceSpec {
   var testEntity7WithId: AgoraEntity = _
   var testEntityToBeRedactedWithId: AgoraEntity = _
 
-  override def beforeAll() = {
+  override def beforeAll(): Unit = {
     ensureDatabasesAreRunning()
     testEntity1WithId = agoraBusiness.insert(testEntity1, mockAuthenticatedOwner.get)
     testEntity2WithId = agoraBusiness.insert(testEntity2, mockAuthenticatedOwner.get)
@@ -34,7 +34,7 @@ class AgoraMethodsSpec extends ApiServiceSpec {
     testEntityToBeRedactedWithId = agoraBusiness.insert(testEntityToBeRedacted, mockAuthenticatedOwner.get)
   }
 
-  override def afterAll() = {
+  override def afterAll(): Unit = {
     clearDatabases()
   }
 

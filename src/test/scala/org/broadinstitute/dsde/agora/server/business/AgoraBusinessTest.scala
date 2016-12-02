@@ -10,12 +10,12 @@ class AgoraBusinessTest extends FlatSpec with Matchers with BeforeAndAfterAll wi
 
   val agoraBusiness = new AgoraBusiness()
 
-  override protected def beforeAll() = {
+  override def beforeAll(): Unit = {
     ensureDatabasesAreRunning()
     agoraBusiness.insert(testEntityToBeRedacted3, mockAuthenticatedOwner.get)
   }
 
-  override protected def afterAll() = {
+  override def afterAll(): Unit = {
     clearDatabases()
   }
 

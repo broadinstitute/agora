@@ -16,11 +16,11 @@ object AdminSweeperSpec {
 
 class AdminSweeperSpec extends TestKit(ActorSystem()) with WordSpecLike with Matchers with BeforeAndAfterAll with AgoraTestFixture with ImplicitSender {
 
-  override protected def beforeAll() = {
+  override def beforeAll(): Unit = {
     ensureDatabasesAreRunning()
   }
 
-  override protected def afterAll() = {
+  override def afterAll(): Unit = {
     clearDatabases()
   }
 

@@ -126,7 +126,6 @@ paths:
           description: Malformed input.
           schema:
             type: object
-            code: 400
             $ref: '#/definitions/Error'
         '500':
           description: Internal error.
@@ -484,6 +483,11 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/AccessControl'
+        '400':
+          description: Bad Request.
+          schema:
+            type: object
+            $ref: '#/definitions/Error'
         default:
           description: Unexpected error
           schema:
@@ -522,6 +526,11 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/AccessControl'
+        '400':
+          description: Bad Request.
+          schema:
+            type: object
+            $ref: '#/definitions/Error'
         default:
           description: Unexpected error
           schema:
@@ -555,6 +564,11 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/AccessControl'
+        '400':
+          description: Bad Request.
+          schema:
+            type: object
+            $ref: '#/definitions/Error'
         default:
           description: Unexpected error
           schema:
@@ -654,6 +668,11 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/AccessControl'
+        '400':
+          description: Bad Request.
+          schema:
+            type: object
+            $ref: '#/definitions/Error'
         default:
           description: Unexpected error
           schema:
@@ -702,6 +721,11 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/AccessControl'
+        '400':
+          description: Bad Request.
+          schema:
+            type: object
+            $ref: '#/definitions/Error'
         default:
           description: Unexpected error
           schema:
@@ -745,6 +769,11 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/AccessControl'
+        '400':
+          description: Bad Request.
+          schema:
+            type: object
+            $ref: '#/definitions/Error'
         default:
           description: Unexpected error
           schema:
@@ -824,6 +853,11 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/AccessControl'
+        '400':
+          description: Bad Request.
+          schema:
+            type: object
+            $ref: '#/definitions/Error'
         default:
           description: Unexpected error
           schema:
@@ -862,6 +896,11 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/AccessControl'
+        '400':
+          description: Bad Request.
+          schema:
+            type: object
+            $ref: '#/definitions/Error'
         default:
           description: Unexpected error
           schema:
@@ -895,6 +934,11 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/AccessControl'
+        '400':
+          description: Bad Request.
+          schema:
+            type: object
+            $ref: '#/definitions/Error'
         default:
           description: Unexpected error
           schema:
@@ -994,6 +1038,11 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/AccessControl'
+        '400':
+          description: Bad Request.
+          schema:
+            type: object
+            $ref: '#/definitions/Error'
         default:
           description: Unexpected error
           schema:
@@ -1042,6 +1091,11 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/AccessControl'
+        '400':
+          description: Bad Request.
+          schema:
+            type: object
+            $ref: '#/definitions/Error'
         default:
           description: Unexpected error
           schema:
@@ -1085,6 +1139,11 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/AccessControl'
+        '400':
+          description: Bad Request.
+          schema:
+            type: object
+            $ref: '#/definitions/Error'
         default:
           description: Unexpected error
           schema:

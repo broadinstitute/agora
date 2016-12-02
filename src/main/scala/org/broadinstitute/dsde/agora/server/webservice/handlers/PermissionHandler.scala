@@ -1,7 +1,7 @@
 package org.broadinstitute.dsde.agora.server.webservice.handlers
 
 import akka.actor.Actor
-import org.broadinstitute.dsde.agora.server.busines.PermissionBusiness
+import org.broadinstitute.dsde.agora.server.business.PermissionBusiness
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AgoraPermissions, AccessControl}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity

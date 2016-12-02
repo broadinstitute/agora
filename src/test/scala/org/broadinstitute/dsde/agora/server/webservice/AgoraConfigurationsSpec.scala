@@ -79,7 +79,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec {
         val foundConfig1 = configs.find(config => namespaceNameIdMatch(config, config1)).get
         val foundConfig2 = configs.find(config => namespaceNameIdMatch(config, config2)).get
         val foundConfig3 = configs.find(config => namespaceNameIdMatch(config, config3)).get
-        
+
         val methodRef1 = foundConfig1.method.get
         val methodRef2 = foundConfig2.method.get
         val methodRef3 = foundConfig3.method.get
@@ -113,19 +113,19 @@ class AgoraConfigurationsSpec extends ApiServiceSpec {
     AgoraEntityPermissionsClient.editEntityPermission(method1, noPermission)
     Post(ApiUtil.Configurations.withLeadingVersion, testAgoraConfigurationEntity3) ~>
       configurationsService.postRoute ~> check {
-        assert(status === NotFound)
+      assert(status === NotFound)
     }
   }
 
   private def namespaceNameIdMatch(entity1: AgoraEntity, entity2: AgoraEntity): Boolean = {
     entity1.namespace == entity2.namespace &&
-    entity1.name == entity2.name &&
-    entity1.snapshotId == entity2.snapshotId
+      entity1.name == entity2.name &&
+      entity1.snapshotId == entity2.snapshotId
   }
-  
+
   "Agora" should "not allow you to post a new task to the configurations route" in {
     Post(ApiUtil.Configurations.withLeadingVersion, testEntityTaskWc) ~>
-    configurationsService.postRoute ~> check {
+      configurationsService.postRoute ~> check {
       rejection === ValidationRejection
     }
   }
@@ -135,10 +135,10 @@ class AgoraConfigurationsSpec extends ApiServiceSpec {
       testEntityToBeRedacted2WithId.namespace.get + "/" +
       testEntityToBeRedacted2WithId.name.get + "/" +
       testEntityToBeRedacted2WithId.snapshotId.get) ~>
-    methodsService.querySingleRoute ~>
-    check {
-      assert(body.asString === "1")
-    }
+      methodsService.querySingleRoute ~>
+      check {
+        assert(body.asString === "1")
+      }
   }
 
   "Agora" should "redact associated configurations when the referenced method is redacted" in {
@@ -146,10 +146,10 @@ class AgoraConfigurationsSpec extends ApiServiceSpec {
       testAgoraConfigurationToBeRedactedWithId.namespace.get + "/" +
       testAgoraConfigurationToBeRedactedWithId.name.get + "/" +
       testAgoraConfigurationToBeRedactedWithId.snapshotId.get) ~>
-    configurationsService.querySingleRoute ~>
-    check {
-      assert(body.asString contains "not found")
-    }
+      configurationsService.querySingleRoute ~>
+      check {
+        assert(body.asString contains "not found")
+      }
   }
 
 

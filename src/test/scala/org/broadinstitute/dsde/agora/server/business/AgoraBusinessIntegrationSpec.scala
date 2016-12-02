@@ -5,7 +5,7 @@ import org.broadinstitute.dsde.agora.server.AgoraTestFixture
 import org.broadinstitute.dsde.agora.server.exceptions.DockerImageNotFoundException
 import org.scalatest.{BeforeAndAfterAll, FlatSpec}
 
-class AgoraBusinessIntegrationSpec extends FlatSpec with BeforeAndAfterAll with AgoraTestFixture  {
+class AgoraBusinessIntegrationSpec extends FlatSpec with BeforeAndAfterAll with AgoraTestFixture {
   val agoraBusiness = new AgoraBusiness()
 
   override protected def beforeAll() = {

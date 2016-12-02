@@ -44,7 +44,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
       check {
         assert(status == OK)
         assert(body.asString contains "Manage")
-    }
+      }
   }
 
   "Agora" should "not return namespace permissions. list for unauthorized users" in {
@@ -54,7 +54,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
       check {
         assert(status == Forbidden)
       }
-    }
+  }
 
   "Agora" should "allow authorized users to insert multiple roles in a single namespace permissions." in {
 
@@ -145,7 +145,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
   "Agora" should "return entity permissions. list for authorized users" in {
 
     Get(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
-        "/" + agoraEntity1.snapshotId.get + "/" + "permissions") ~>
+      "/" + agoraEntity1.snapshotId.get + "/" + "permissions") ~>
       methodsService.entityPermissionsRoute ~>
       check {
         assert(status == OK)

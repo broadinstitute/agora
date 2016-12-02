@@ -44,313 +44,328 @@ object AgoraTestData {
   val adminUser = Option("admin@broadinstitute.org")
   val mockAuthenticatedOwner = Option(AgoraConfig.mockAuthenticatedUserEmail)
 
-  val payload1 = Option( """task grep {
-                           |  String pattern
-                           |  String? flags
-                           |  File file_name
-                           |
-                           |  command {
-                           |    grep ${pattern} ${flags} ${file_name}
-                           |  }
-                           |  output {
-                           |    File out = "stdout"
-                           |  }
-                           |  runtime {
-                           |    memory: "2 MB"
-                           |    cpu: 1
-                           |    defaultDisks: "mydisk 3 LOCAL_SSD"
-                           |  }
-                           |}
-                           |
-                           |task wc {
-                           |  Array[File]+ files
-                           |
-                           |  command {
-                           |    wc -l ${sep=' ' files} | tail -1 | cut -d' ' -f 2
-                           |  }
-                           |  output {
-                           |    Int count = read_int("stdout")
-                           |  }
-                           |}
-                           |
-                           |workflow scatter_gather_grep_wc {
-                           |  Array[File] input_files
-                           |
-                           |  scatter(f in input_files) {
-                           |    call grep {
-                           |      input: file_name = f
-                           |    }
-                           |  }
-                           |  call wc {
-                           |    input: files = grep.out
-                           |  }
-                           |}
-                           |
-                           |
-                           | """.stripMargin)
+  val payload1 = Option(
+    """task grep {
+      |  String pattern
+      |  String? flags
+      |  File file_name
+      |
+      |  command {
+      |    grep ${pattern} ${flags} ${file_name}
+      |  }
+      |  output {
+      |    File out = "stdout"
+      |  }
+      |  runtime {
+      |    memory: "2 MB"
+      |    cpu: 1
+      |    defaultDisks: "mydisk 3 LOCAL_SSD"
+      |  }
+      |}
+      |
+      |task wc {
+      |  Array[File]+ files
+      |
+      |  command {
+      |    wc -l ${sep=' ' files} | tail -1 | cut -d' ' -f 2
+      |  }
+      |  output {
+      |    Int count = read_int("stdout")
+      |  }
+      |}
+      |
+      |workflow scatter_gather_grep_wc {
+      |  Array[File] input_files
+      |
+      |  scatter(f in input_files) {
+      |    call grep {
+      |      input: file_name = f
+      |    }
+      |  }
+      |  call wc {
+      |    input: files = grep.out
+      |  }
+      |}
+      |
+      |
+      | """.stripMargin)
   val payload2 = Option("task test { command { test } }")
-  val payloadWcTask = Option( """
-                                |task wc {
-                                |  Array[File]+ files
-                                |
-                                |  command {
-                                |    wc -l ${sep=' ' files} | tail -1 | cut -d' ' -f 2
-                                |  }
-                                |  output {
-                                |    Int count = read_int("stdout")
-                                |  }
-                                |}
-                                |
-                                | """.stripMargin)
-  val payloadReferencingExternalMethod = Option( """
-                                                   |import "methods://broad.wc.1"
-                                                   |
-                                                   |task grep {
-                                                   |  String pattern
-                                                   |  String? flags
-                                                   |  File file_name
-                                                   |
-                                                   |  command {
-                                                   |    grep ${pattern} ${flags} ${file_name}
-                                                   |  }
-                                                   |  output {
-                                                   |    File out = "stdout"
-                                                   |  }
-                                                   |  runtime {
-                                                   |    memory: "2 MB"
-                                                   |    cpu: 1
-                                                   |    defaultDisks: "mydisk 3 LOCAL_SSD"
-                                                   |  }
-                                                   |}
-                                                   |
-                                                   |workflow scatter_gather_grep_wc {
-                                                   |  Array[File] input_files
-                                                   |  scatter(f in input_files) {
-                                                   |    call grep {
-                                                   |      input: file_name = f
-                                                   |    }
-                                                   |  }
-                                                   |  call wc {
-                                                   |    input: files = grep.out
-                                                   |  }
-                                                   |}
-                                                   | """.stripMargin)
+  val payloadWcTask = Option(
+    """
+      |task wc {
+      |  Array[File]+ files
+      |
+      |  command {
+      |    wc -l ${sep=' ' files} | tail -1 | cut -d' ' -f 2
+      |  }
+      |  output {
+      |    Int count = read_int("stdout")
+      |  }
+      |}
+      |
+      | """.stripMargin)
+  val payloadReferencingExternalMethod = Option(
+    """
+      |import "methods://broad.wc.1"
+      |
+      |task grep {
+      |  String pattern
+      |  String? flags
+      |  File file_name
+      |
+      |  command {
+      |    grep ${pattern} ${flags} ${file_name}
+      |  }
+      |  output {
+      |    File out = "stdout"
+      |  }
+      |  runtime {
+      |    memory: "2 MB"
+      |    cpu: 1
+      |    defaultDisks: "mydisk 3 LOCAL_SSD"
+      |  }
+      |}
+      |
+      |workflow scatter_gather_grep_wc {
+      |  Array[File] input_files
+      |  scatter(f in input_files) {
+      |    call grep {
+      |      input: file_name = f
+      |    }
+      |  }
+      |  call wc {
+      |    input: files = grep.out
+      |  }
+      |}
+      | """.stripMargin)
   val badPayload = Option("task test {")
-  val badPayloadInvalidImport = Option( """
-                                          |import "invalid_syntax_for_tool"
-                                          |import "broad.wc.1"
-                                          |
-                                          |workflow scatter_gather_grep_wc {
-                                          |  Array[File] input_files
-                                          |  scatter(f in input_files) {
-                                          |    call grep {
-                                          |      input: file_name = f
-                                          |    }
-                                          |  }
-                                          |  call wc {
-                                          |    input: files = grep.out
-                                          |  }
-                                          |}
-                                          |
-                                          | """.stripMargin)
-  val badPayloadNonExistentImport = Option( """
-                                              |import "methods://broad.non_existent_grep.1"
-                                              |import "broad.wc.1"
-                                              |
-                                              |workflow scatter_gather_grep_wc {
-                                              |  Array[File] input_files
-                                              |  scatter(f in input_files) {
-                                              |    call grep {
-                                              |      input: file_name = f
-                                              |    }
-                                              |  }
-                                              |  call wc {
-                                              |    input: files = grep.out
-                                              |  }
-                                              |}
-                                              |
-                                              | """.stripMargin)
+  val badPayloadInvalidImport = Option(
+    """
+      |import "invalid_syntax_for_tool"
+      |import "broad.wc.1"
+      |
+      |workflow scatter_gather_grep_wc {
+      |  Array[File] input_files
+      |  scatter(f in input_files) {
+      |    call grep {
+      |      input: file_name = f
+      |    }
+      |  }
+      |  call wc {
+      |    input: files = grep.out
+      |  }
+      |}
+      |
+      | """.stripMargin)
+  val badPayloadNonExistentImport = Option(
+    """
+      |import "methods://broad.non_existent_grep.1"
+      |import "broad.wc.1"
+      |
+      |workflow scatter_gather_grep_wc {
+      |  Array[File] input_files
+      |  scatter(f in input_files) {
+      |    call grep {
+      |      input: file_name = f
+      |    }
+      |  }
+      |  call wc {
+      |    input: files = grep.out
+      |  }
+      |}
+      |
+      | """.stripMargin)
 
-  val taskConfigPayload = Option( s"""{
-                                    |  "methodRepoMethod": {
-                                    |    "methodNamespace": "${namespace1.get}",
-                                    |    "methodName": "${name1.get}",
-                                    |    "methodVersion": 1
+  val taskConfigPayload = Option(
+    s"""{
+       |  "methodRepoMethod": {
+       |    "methodNamespace": "${namespace1.get}",
+       |    "methodName": "${name1.get}",
+       |    "methodVersion": 1
+       |  },
+       |  "name": "first",
+       |  "workspaceName": {
+       |    "namespace": "foo",
+       |    "name": "bar"
+       |  },
+       |  "outputs": {
+       |
                                     |  },
-                                    |  "name": "first",
-                                    |  "workspaceName": {
-                                    |    "namespace": "foo",
-                                    |    "name": "bar"
+       |  "inputs": {
+       |    "p": "hi"
+       |  },
+       |  "rootEntityType": "sample",
+       |  "prerequisites": {
+       |
                                     |  },
-                                    |  "outputs": {
-                                    |
-                                    |  },
-                                    |  "inputs": {
-                                    |    "p": "hi"
-                                    |  },
-                                    |  "rootEntityType": "sample",
-                                    |  "prerequisites": {
-                                    |
-                                    |  },
-                                    |  "namespace": "ns"
-                                    |}""".stripMargin)
+       |  "namespace": "ns"
+       |}""".stripMargin)
 
-  val taskConfigPayload2 = Option( s"""{
-                                    |  "methodRepoMethod": {
-                                    |    "methodNamespace": "${namespace2.get}",
-                                    |    "methodName": "${name1.get}",
-                                    |    "methodVersion": 1
+  val taskConfigPayload2 = Option(
+    s"""{
+       |  "methodRepoMethod": {
+       |    "methodNamespace": "${namespace2.get}",
+       |    "methodName": "${name1.get}",
+       |    "methodVersion": 1
+       |  },
+       |  "name": "first",
+       |  "workspaceName": {
+       |    "namespace": "foo",
+       |    "name": "bar"
+       |  },
+       |  "outputs": {
+       |
                                     |  },
-                                    |  "name": "first",
-                                    |  "workspaceName": {
-                                    |    "namespace": "foo",
-                                    |    "name": "bar"
+       |  "inputs": {
+       |    "p": "hi"
+       |  },
+       |  "rootEntityType": "sample",
+       |  "prerequisites": {
+       |
                                     |  },
-                                    |  "outputs": {
-                                    |
-                                    |  },
-                                    |  "inputs": {
-                                    |    "p": "hi"
-                                    |  },
-                                    |  "rootEntityType": "sample",
-                                    |  "prerequisites": {
-                                    |
-                                    |  },
-                                    |  "namespace": "ns"
-                                    |}""".stripMargin)
+       |  "namespace": "ns"
+       |}""".stripMargin)
 
 
-  val taskConfigPayload3 = Option( s"""{
-                                      |  "methodRepoMethod": {
-                                      |    "methodNamespace": "${namespace3.get}",
-                                      |    "methodName": "${name3.get}",
-                                      |    "methodVersion": 1
+  val taskConfigPayload3 = Option(
+    s"""{
+       |  "methodRepoMethod": {
+       |    "methodNamespace": "${namespace3.get}",
+       |    "methodName": "${name3.get}",
+       |    "methodVersion": 1
+       |  },
+       |  "name": "first",
+       |  "workspaceName": {
+       |    "namespace": "foo",
+       |    "name": "bar"
+       |  },
+       |  "outputs": {
+       |
                                       |  },
-                                      |  "name": "first",
-                                      |  "workspaceName": {
-                                      |    "namespace": "foo",
-                                      |    "name": "bar"
+       |  "inputs": {
+       |    "p": "hi"
+       |  },
+       |  "rootEntityType": "sample",
+       |  "prerequisites": {
+       |
                                       |  },
-                                      |  "outputs": {
-                                      |
-                                      |  },
-                                      |  "inputs": {
-                                      |    "p": "hi"
-                                      |  },
-                                      |  "rootEntityType": "sample",
-                                      |  "prerequisites": {
-                                      |
-                                      |  },
-                                      |  "namespace": "ns"
-                                      |}""".stripMargin)
+       |  "namespace": "ns"
+       |}""".stripMargin)
 
-  val payloadWithValidOfficialDockerImageInWdl = Option( """
-                                    |task wc {
-                                    |  Array[File]+ files
-                                    |  command {
-                                    |    wc -l ${sep=' ' files} | tail -1 | cut -d' ' -f 2
-                                    |  }
-                                    |  output {
-                                    |    Int count = read_int("stdout")
-                                    |  }
-                                    |  runtime {
-                                    |    docker: "ubuntu:latest"
-                                    |  }
-                                    |}
-                                    | """.stripMargin)
-  val payloadWithInvalidOfficialDockerRepoNameInWdl = Option( """
-                                                                |task wc {
-                                                                |  Array[File]+ files
-                                                                |  command {
-                                                                |    wc -l ${sep=' ' files} | tail -1 | cut -d' ' -f 2
-                                                                |  }
-                                                                |  output {
-                                                                |    Int count = read_int("stdout")
-                                                                |  }
-                                                                |  runtime {
-                                                                |    docker: "ubuntu_doesnotexist:latest"
-                                                                |  }
-                                                                |}
-                                                                | """.stripMargin)
-  val payloadWithInvalidOfficialDockerTagNameInWdl = Option( """
-                                                             |task wc {
-                                                             |  Array[File]+ files
-                                                             |  command {
-                                                             |    wc -l ${sep=' ' files} | tail -1 | cut -d' ' -f 2
-                                                             |  }
-                                                             |  output {
-                                                             |    Int count = read_int("stdout")
-                                                             |  }
-                                                             |  runtime {
-                                                             |    docker: "ubuntu:ggrant_latest"
-                                                             |  }
-                                                             |}
-                                                             | """.stripMargin)
-  val payloadWithValidPersonalDockerImageInWdl = Option( """
-                                                           |task wc {
-                                                           |  Array[File]+ files
-                                                           |  command {
-                                                           |    wc -l ${sep=' ' files} | tail -1 | cut -d' ' -f 2
-                                                           |  }
-                                                           |  output {
-                                                           |    Int count = read_int("stdout")
-                                                           |  }
-                                                           |  runtime {
-                                                           |    docker: "broadinstitute/scala-baseimage"
-                                                           |  }
-                                                           |}
-                                                           | """.stripMargin)
-  val payloadWithInvalidPersonalDockerUserNameInWdl = Option( """
-                                                               |task wc {
-                                                               |  Array[File]+ files
-                                                               |  command {
-                                                               |    wc -l ${sep=' ' files} | tail -1 | cut -d' ' -f 2
-                                                               |  }
-                                                               |  output {
-                                                               |    Int count = read_int("stdout")
-                                                               |  }
-                                                               |  runtime {
-                                                               |    docker: "broadinstitute_doesnotexist/scala-baseimage:latest"
-                                                               |    memory: "2 MB"
-                                                               |    cpu: 1
-                                                               |    defaultDisks: "mydisk 3 LOCAL_SSD"
-                                                               |  }
-                                                               |}
-                                                               | """.stripMargin)
-  val payloadWithInvalidPersonalDockerRepoNameInWdl = Option( """
-                                                                |task wc {
-                                                                |  Array[File]+ files
-                                                                |  command {
-                                                                |    wc -l ${sep=' ' files} | tail -1 | cut -d' ' -f 2
-                                                                |  }
-                                                                |  output {
-                                                                |    Int count = read_int("stdout")
-                                                                |  }
-                                                                |  runtime {
-                                                                |    docker: "broadinstitute/scala-baseimage_doesnotexist:latest"
-                                                                |    memory: "2 MB"
-                                                                |    cpu: 1
-                                                                |    defaultDisks: "mydisk 3 LOCAL_SSD"
-                                                                |  }
-                                                                |}
-                                                                | """.stripMargin)
-  val payloadWithInvalidPersonalDockerTagNameInWdl = Option( """
-                                                                |task wc {
-                                                                |  Array[File]+ files
-                                                                |  command {
-                                                                |    wc -l ${sep=' ' files} | tail -1 | cut -d' ' -f 2
-                                                                |  }
-                                                                |  output {
-                                                                |    Int count = read_int("stdout")
-                                                                |  }
-                                                                |  runtime {
-                                                                |    docker: "broadinstitute/scala-baseimage:latest_doesnotexist"
-                                                                |    memory: "2 MB"
-                                                                |    cpu: 1
-                                                                |    defaultDisks: "mydisk 3 LOCAL_SSD"
-                                                                |  }
-                                                                |}
-                                                                | """.stripMargin)
+  val payloadWithValidOfficialDockerImageInWdl = Option(
+    """
+      |task wc {
+      |  Array[File]+ files
+      |  command {
+      |    wc -l ${sep=' ' files} | tail -1 | cut -d' ' -f 2
+      |  }
+      |  output {
+      |    Int count = read_int("stdout")
+      |  }
+      |  runtime {
+      |    docker: "ubuntu:latest"
+      |  }
+      |}
+      | """.stripMargin)
+  val payloadWithInvalidOfficialDockerRepoNameInWdl = Option(
+    """
+      |task wc {
+      |  Array[File]+ files
+      |  command {
+      |    wc -l ${sep=' ' files} | tail -1 | cut -d' ' -f 2
+      |  }
+      |  output {
+      |    Int count = read_int("stdout")
+      |  }
+      |  runtime {
+      |    docker: "ubuntu_doesnotexist:latest"
+      |  }
+      |}
+      | """.stripMargin)
+  val payloadWithInvalidOfficialDockerTagNameInWdl = Option(
+    """
+      |task wc {
+      |  Array[File]+ files
+      |  command {
+      |    wc -l ${sep=' ' files} | tail -1 | cut -d' ' -f 2
+      |  }
+      |  output {
+      |    Int count = read_int("stdout")
+      |  }
+      |  runtime {
+      |    docker: "ubuntu:ggrant_latest"
+      |  }
+      |}
+      | """.stripMargin)
+  val payloadWithValidPersonalDockerImageInWdl = Option(
+    """
+      |task wc {
+      |  Array[File]+ files
+      |  command {
+      |    wc -l ${sep=' ' files} | tail -1 | cut -d' ' -f 2
+      |  }
+      |  output {
+      |    Int count = read_int("stdout")
+      |  }
+      |  runtime {
+      |    docker: "broadinstitute/scala-baseimage"
+      |  }
+      |}
+      | """.stripMargin)
+  val payloadWithInvalidPersonalDockerUserNameInWdl = Option(
+    """
+      |task wc {
+      |  Array[File]+ files
+      |  command {
+      |    wc -l ${sep=' ' files} | tail -1 | cut -d' ' -f 2
+      |  }
+      |  output {
+      |    Int count = read_int("stdout")
+      |  }
+      |  runtime {
+      |    docker: "broadinstitute_doesnotexist/scala-baseimage:latest"
+      |    memory: "2 MB"
+      |    cpu: 1
+      |    defaultDisks: "mydisk 3 LOCAL_SSD"
+      |  }
+      |}
+      | """.stripMargin)
+  val payloadWithInvalidPersonalDockerRepoNameInWdl = Option(
+    """
+      |task wc {
+      |  Array[File]+ files
+      |  command {
+      |    wc -l ${sep=' ' files} | tail -1 | cut -d' ' -f 2
+      |  }
+      |  output {
+      |    Int count = read_int("stdout")
+      |  }
+      |  runtime {
+      |    docker: "broadinstitute/scala-baseimage_doesnotexist:latest"
+      |    memory: "2 MB"
+      |    cpu: 1
+      |    defaultDisks: "mydisk 3 LOCAL_SSD"
+      |  }
+      |}
+      | """.stripMargin)
+  val payloadWithInvalidPersonalDockerTagNameInWdl = Option(
+    """
+      |task wc {
+      |  Array[File]+ files
+      |  command {
+      |    wc -l ${sep=' ' files} | tail -1 | cut -d' ' -f 2
+      |  }
+      |  output {
+      |    Int count = read_int("stdout")
+      |  }
+      |  runtime {
+      |    docker: "broadinstitute/scala-baseimage:latest_doesnotexist"
+      |    memory: "2 MB"
+      |    cpu: 1
+      |    defaultDisks: "mydisk 3 LOCAL_SSD"
+      |  }
+      |}
+      | """.stripMargin)
   val testEntity1 = AgoraEntity(namespace = namespace1,
     name = name1,
     synopsis = synopsis1,

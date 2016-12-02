@@ -1,19 +1,18 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
+import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import akka.actor.ActorSystem
 import org.broadinstitute.dsde.agora.server.AgoraTestFixture
 import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
-import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
-import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
-import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpec}
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
-import spray.testkit.{RouteTest, ScalatestRouteTest}
+import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
+import org.scalatest.{BeforeAndAfterAll, FlatSpec}
 import spray.http.StatusCodes._
+import spray.testkit.{RouteTest, ScalatestRouteTest}
 
 import scala.concurrent.duration._
 
-@DoNotDiscover
 class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRouteTest with BeforeAndAfterAll with AgoraTestFixture {
 
   implicit val routeTestTimeout = RouteTestTimeout(20.seconds)

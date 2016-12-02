@@ -1,11 +1,7 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
-import org.broadinstitute.dsde.agora.server.model.AgoraStatus
 import spray.http.StatusCodes
-import org.scalatest.DoNotDiscover
 
-
-@DoNotDiscover
 class AgoraServiceStatusSpec extends ApiServiceSpec {
 
   override def beforeAll() = {

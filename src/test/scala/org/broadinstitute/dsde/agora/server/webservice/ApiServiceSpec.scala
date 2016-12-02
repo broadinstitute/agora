@@ -5,13 +5,12 @@ import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.configurations.ConfigurationsService
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
-import org.scalatest.{DoNotDiscover, _}
+import org.scalatest._
 import spray.http.StatusCodes._
 import spray.httpx.unmarshalling._
 import spray.routing.{Directives, ExceptionHandler, MalformedRequestContentRejection, RejectionHandler}
 import spray.testkit.ScalatestRouteTest
 
-@DoNotDiscover
 class ApiServiceSpec extends FlatSpec with Directives with ScalatestRouteTest with AgoraTestFixture {
 
   val agoraBusiness = new AgoraBusiness()

@@ -1,12 +1,10 @@
-
 package org.broadinstitute.dsde.agora.server.dataaccess.permissions
 
-import org.broadinstitute.dsde.agora.server.{AgoraTestData, AgoraTestFixture}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.webservice.ApiServiceSpec
-import org.scalatest.{BeforeAndAfterAll, DoNotDiscover}
+import org.broadinstitute.dsde.agora.server.{AgoraTestData, AgoraTestFixture}
+import org.scalatest.BeforeAndAfterAll
 
-@DoNotDiscover
 class AgoraPermissionsSpec extends ApiServiceSpec with BeforeAndAfterAll with AgoraTestFixture {
 
   override protected def beforeAll() = {

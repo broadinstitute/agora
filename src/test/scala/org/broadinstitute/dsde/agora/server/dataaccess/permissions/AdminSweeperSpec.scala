@@ -1,10 +1,11 @@
 package org.broadinstitute.dsde.agora.server.dataaccess.permissions
 
 import akka.actor.ActorSystem
-import akka.testkit.{ImplicitSender, TestKit, TestActorRef}
+import akka.testkit.{ImplicitSender, TestActorRef, TestKit}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AdminSweeper.Sweep
 import org.broadinstitute.dsde.agora.server.{AgoraTestData, AgoraTestFixture}
-import org.scalatest.{DoNotDiscover, WordSpecLike, Matchers, BeforeAndAfterAll}
+import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
+
 import scala.concurrent.duration._
 
 object AdminSweeperSpec {
@@ -13,7 +14,6 @@ object AdminSweeperSpec {
   }
 }
 
-@DoNotDiscover
 class AdminSweeperSpec(_system: ActorSystem) extends TestKit(_system) with WordSpecLike with Matchers with BeforeAndAfterAll with AgoraTestFixture with ImplicitSender {
 
   override protected def beforeAll() = {

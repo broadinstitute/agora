@@ -2,10 +2,9 @@ package org.broadinstitute.dsde.agora.server.model
 
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport.UserInfoResponseFormat
 import org.broadinstitute.dsde.agora.server.webservice.util.AgoraOpenAMClient.UserInfoResponse
-import org.scalatest.{DoNotDiscover, FlatSpec}
+import org.scalatest.FlatSpec
 import spray.json._
 
-@DoNotDiscover
 class AgoraApiJsonSupportTest extends FlatSpec with DefaultJsonProtocol {
 
   "AgoraApiJsonSupport" should "convert UserInfoResponse to JSON and back when mail is not empty" in {

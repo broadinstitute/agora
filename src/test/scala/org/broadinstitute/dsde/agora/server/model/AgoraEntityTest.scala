@@ -2,9 +2,8 @@ package org.broadinstitute.dsde.agora.server.model
 
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
-import org.scalatest.{DoNotDiscover, FlatSpec}
+import org.scalatest.FlatSpec
 
-@DoNotDiscover
 class AgoraEntityTest extends FlatSpec {
 
   "Agora" should "create not throw exceptions on valid a valid entity" in {

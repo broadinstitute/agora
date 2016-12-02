@@ -8,9 +8,8 @@ import org.broadinstitute.dsde.agora.server.dataaccess.permissions.NamespacePerm
 import org.broadinstitute.dsde.agora.server.exceptions.PermissionModificationException
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpec}
+import org.scalatest.{BeforeAndAfterAll, FlatSpec}
 
-@DoNotDiscover
 class NamespacePermissionsClientSpec extends FlatSpec with ScalaFutures with BeforeAndAfterAll with AgoraTestFixture {
 
   var agoraBusiness: AgoraBusiness = _

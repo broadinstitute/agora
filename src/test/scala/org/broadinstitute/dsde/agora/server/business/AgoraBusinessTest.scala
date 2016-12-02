@@ -2,12 +2,10 @@ package org.broadinstitute.dsde.agora.server.business
 
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.AgoraTestFixture
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{UserDao, users}
 import org.broadinstitute.dsde.agora.server.exceptions.NamespaceAuthorizationException
 import org.broadinstitute.dsde.agora.server.model.AgoraEntityType
-import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpec, Matchers}
+import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 
-@DoNotDiscover
 class AgoraBusinessTest extends FlatSpec with Matchers with BeforeAndAfterAll with AgoraTestFixture {
 
   val agoraBusiness = new AgoraBusiness()

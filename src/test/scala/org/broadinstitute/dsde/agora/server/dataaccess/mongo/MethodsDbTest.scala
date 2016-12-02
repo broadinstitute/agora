@@ -5,9 +5,8 @@ import org.broadinstitute.dsde.agora.server.AgoraTestFixture
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
 import org.broadinstitute.dsde.agora.server.exceptions.AgoraEntityNotFoundException
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
-import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpec}
+import org.scalatest.{BeforeAndAfterAll, FlatSpec}
 
-@DoNotDiscover
 class MethodsDbTest extends FlatSpec with BeforeAndAfterAll with AgoraTestFixture {
   val mongoTestCollection = AgoraMongoClient.getCollection("test")
   val agoraDao = AgoraDao.createAgoraDao(mongoTestCollection)

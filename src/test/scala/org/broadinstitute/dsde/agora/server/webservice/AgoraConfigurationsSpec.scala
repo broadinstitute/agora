@@ -1,20 +1,17 @@
-
 package org.broadinstitute.dsde.agora.server.webservice
 
 import org.broadinstitute.dsde.agora.server.AgoraConfig
+import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraEntityPermissionsClient, AgoraPermissions}
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
-import org.broadinstitute.dsde.agora.server.model.{AgoraEntityType, AgoraEntity}
+import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
-import org.scalatest.DoNotDiscover
-import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import spray.http.StatusCodes._
 import spray.httpx.SprayJsonSupport._
 import spray.httpx.unmarshalling._
 import spray.routing.ValidationRejection
 
-@DoNotDiscover
 class AgoraConfigurationsSpec extends ApiServiceSpec {
 
   var method1: AgoraEntity = _

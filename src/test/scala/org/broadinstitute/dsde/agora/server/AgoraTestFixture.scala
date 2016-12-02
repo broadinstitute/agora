@@ -3,6 +3,7 @@ package org.broadinstitute.dsde.agora.server
 
 import com.mongodb.casbah.MongoCollection
 import com.mongodb.casbah.commons.MongoDBObject
+import com.typesafe.scalalogging.slf4j.LazyLogging
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.{AgoraMongoClient, EmbeddedMongo}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{UserDao, entities, permissions, users}
@@ -12,27 +13,27 @@ import slick.jdbc.meta.MTable
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-trait AgoraTestFixture {
+trait AgoraTestFixture extends LazyLogging {
   val timeout: FiniteDuration = 10.seconds
   var db: Database = _
 
   def startDatabases(): Seq[Unit] = {
     EmbeddedMongo.startMongo()
 
-    println("Connecting to test sql database.")
+    logger.info("Connecting to test sql database.")
     db = AgoraConfig.sqlDatabase
     clearDatabases()
 
     val setupFuture = createTableIfNotExists(entities, permissions, users)
 
-    println("Populating sql database.")
+    logger.info("Populating sql database.")
     Await.result(setupFuture, timeout)
   }
 
   def stopDatabases(): Unit = {
     clearDatabases()
     EmbeddedMongo.stopMongo()
-    println("Disconnecting from sql database.")
+    logger.info("Disconnecting from sql database.")
     db.close()
   }
 
@@ -44,7 +45,7 @@ trait AgoraTestFixture {
 
   def clearMongoCollections(collections: Seq[MongoCollection] = Seq()): Unit = {
     if (EmbeddedMongo.isRunning) {
-      println("Clearing mongo database.")
+      logger.info("Clearing mongo database.")
       val allCollections = AgoraMongoClient.getAllCollections ++ collections
       allCollections.foreach(collection => {
         collection.remove(MongoDBObject.empty)
@@ -83,15 +84,15 @@ trait AgoraTestFixture {
   }
 
   def ensureSqlDatabaseIsRunning(): Seq[Unit] = {
-    println("Connecting to test sql database.")
+    logger.info("Connecting to test sql database.")
     db = AgoraConfig.sqlDatabase
 
-    println("Populating sql database.")
+    logger.info("Populating sql database.")
     Await.result(createTableIfNotExists(entities, users, permissions), timeout)
   }
 
   def clearSqlDatabase(): Seq[AnyVal] = {
-    println("Clearing sql database.")
+    logger.info("Clearing sql database.")
     Await.result(deleteFromTableIfExists(permissions), timeout)
     Await.result(deleteFromTableIfExists(users), timeout)
     Await.result(deleteFromTableIfExists(entities), timeout)

@@ -9,47 +9,28 @@ It's a methods repository!
 
 Agora is written in [Scala](http://www.scala-lang.org/), uses [Akka](http://akka.io/)/[Spray](http://spray.io/) for its web framework, and is built using [SBT](www.scala-sbt.org/).
 
-## Building and testing the Agora Web Service
+## Testing and Running the Agora Web Service
 
 To obtain and build the app, perform the following commands:
 
 ```
 $ git clone https://github.com/broadinstitute/agora.git
 $ cd agora
-$ sbt package
 ```
 
-You can additionally run unit test through:
+## Unit Tests
 
 ```
-$ sbt test
+$ sbt clean test
 ```
 
-Make sure your config file isn't using the actual dev databases...
-
-and integration test using:
-
-```
-$ sbt integrationTest
-```
-
-## Running Your Own Agora Web Service
-
-Assuming you have already built as per the instructions above, create a file called "/etc/agora.conf", with the appropriate configuration information populated.
-An example, with defaults, can found in ```src/main/resources/reference.conf```.
-Move application.conf to ```src/main/resources/```
-Start a mongo database.
-Finally, run the following command to start the server:
-
-```
-$ sbt run
-```
-
-Go to the specified web address in your favorite browser to test that it is operational.
+The unit tests run in forked mode against a test configuration to 
+prevent accidentally hitting real databases.  
 
 ## Running Your Own Agora Web Service Using Docker
 
-Generate Agora configurations using the configurations in FireCloud-Develop:
+Generate Agora configurations using the configurations defined 
+in FireCloud-Develop:
 
 ```
 APP_NAME=agora \ 
@@ -63,4 +44,5 @@ Launch the generated docker compose file:
 ```
 docker-compose -p agora -f config/docker-compose.yaml up
 ```
-The docker compose configuration is set to point to https://local.broadinstitute.org:30443/
+The docker compose configuration is set to point to 
+[https://local.broadinstitute.org:30443](https://local.broadinstitute.org:30443)

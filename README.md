@@ -18,7 +18,7 @@ $ git clone https://github.com/broadinstitute/agora.git
 $ cd agora
 $ sbt package
 ```
-
+     
 You can additionally run unit test through:
 
 ```

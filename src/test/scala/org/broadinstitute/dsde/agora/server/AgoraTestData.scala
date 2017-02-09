@@ -32,6 +32,7 @@ object AgoraTestData {
 
   val badNamespace = Option("    ")
   val badName = Option("   ")
+  val badNameWithIllegalChars = Option("does it work?")
   val badId = Option(-10)
   val badSynopsis = Option("a" * 81)
 

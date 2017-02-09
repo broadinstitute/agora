@@ -11,6 +11,10 @@ class AgoraEntityTest extends FlatSpec {
     assert(AgoraEntity(namespace1, name1, snapshotId1, synopsis1) === AgoraEntity(namespace1, name1, snapshotId1, synopsis1))
   }
 
+  "Agora" should "create not throw exceptions when synopsis and documentation are omitted" in {
+    assert(AgoraEntity(namespace1, name1, snapshotId1) === AgoraEntity(namespace1, name1, snapshotId1))
+  }
+
   "Agora" should "validate agoraEntity namespace is not empty" in {
     val ex = intercept[IllegalArgumentException] {
       AgoraEntity(badNamespace)
@@ -18,9 +22,23 @@ class AgoraEntityTest extends FlatSpec {
     assert(ex.getMessage contains "Namespace")
   }
 
+  "Agora" should "validate agoraEntity namespace does not contain illegal chars" in {
+    val ex = intercept[IllegalArgumentException] {
+      AgoraEntity(badNameWithIllegalChars)
+    }
+    assert(ex.getMessage contains "Namespace")
+  }
+
   "Agora" should "validate agoraEntity name is not empty" in {
     val ex = intercept[IllegalArgumentException] {
       AgoraEntity(name = badName)
+    }
+    assert(ex.getMessage contains "Name")
+  }
+
+  "Agora" should "validate agoraEntity name does not contain illegal chars" in {
+    val ex = intercept[IllegalArgumentException] {
+      AgoraEntity(name = badNameWithIllegalChars)
     }
     assert(ex.getMessage contains "Name")
   }

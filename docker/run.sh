@@ -1,4 +1,5 @@
 #!/bin/bash
 
 set -e
-java $JAVA_OPTS -Dconfig.file=/etc/agora.conf -jar /agora/agora.jar
+java $JAVA_OPTS -Dconfig.file=/etc/agora.conf -javaagent:/agora/agora.jar -agentpath:/jprofiler9/bin/linux-x64/libjprofilerti.so=port=8849,nowait -jar /agora/agora.jar
+

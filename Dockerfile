@@ -6,6 +6,9 @@ FROM broadinstitute/scala-baseimage
 # Expose the port used by Agora webservice
 EXPOSE 8000
 
+#jprofiler
+RUN wget http://download-aws.ej-technologies.com/jprofiler/jprofiler_linux_9_2.tar.gz && tar -xvf jprofiler_linux_9_2.tar.gz && rm jprofiler_linux_9_2.tar.gz
+
 # Install Agora
 ADD . /agora
 RUN ["/bin/bash", "-c", "/agora/docker/install.sh /agora"]

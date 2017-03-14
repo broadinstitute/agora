@@ -1,15 +1,17 @@
 package org.broadinstitute.dsde.agora.server.business
 
 import org.broadinstitute.dsde.agora.server.exceptions.{AgoraEntityNotFoundException, NamespaceAuthorizationException, ValidationException}
-import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
+import org.broadinstitute.dsde.agora.server.dataaccess.{AgoraDao, WriteAction}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.model.{AgoraApiJsonSupport, AgoraEntity, AgoraEntityProjection, AgoraEntityType}
+import slick.dbio.Effect.Write
+import slick.dbio.{DBIO, DBIOAction, Effect, NoStream}
 import spray.json._
 
 class AgoraBusiness {
 
-  def insert(agoraEntity: AgoraEntity, username: String): AgoraEntity = {
+  def insert(agoraEntity: AgoraEntity, username: String): ReadWriteAction[AgoraEntity] = {
     if (!NamespacePermissionsClient.getNamespacePermission(agoraEntity, username).canCreate &&
         !NamespacePermissionsClient.getNamespacePermission(agoraEntity, "public").canCreate) {
       throw new NamespaceAuthorizationException(AgoraPermissions(Create), agoraEntity, username)
@@ -32,14 +34,24 @@ class AgoraBusiness {
     val entityWithId = AgoraDao.createAgoraDao(entityToInsert.entityType).insert(entityToInsert.addDate())
     val userAccess = new AccessControl(username, AgoraPermissions(All))
 
-    if (!NamespacePermissionsClient.doesEntityExists(agoraEntity)) {
-      NamespacePermissionsClient.addEntity(entityWithId)
-      NamespacePermissionsClient.insertNamespacePermission(entityWithId, userAccess)
+    def updateThing(bool: Boolean, entity: AgoraEntity): WriteAction[Unit] = {
+      if(bool) {
+        NamespacePermissionsClient.addEntity(entity) andThen
+          NamespacePermissionsClient.insertNamespacePermission(entityWithId, userAccess)
+      } else {
+        DBIO.successful(())
+      }
     }
 
-    AgoraEntityPermissionsClient.addEntity(entityWithId)
-    AgoraEntityPermissionsClient.insertEntityPermission(entityWithId, userAccess)
-    entityWithId.addUrl().removeIds()
+
+    for {
+      existsInNamespace <- NamespacePermissionsClient.doesEntityExists(agoraEntity)
+      _ <- updateThing(existsInNamespace, entityWithId)
+      _ <- AgoraEntityPermissionsClient.addEntity(entityWithId)
+      _ <- AgoraEntityPermissionsClient.insertEntityPermission(entityWithId, userAccess)
+    } yield {
+      entityWithId.addUrl().removeIds()
+    }
   }
 
   def delete(agoraEntity: AgoraEntity, entityTypes: Seq[AgoraEntityType.EntityType], username: String): Int = {

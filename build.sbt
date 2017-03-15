@@ -15,8 +15,6 @@ resolvers += "artifactory-releases" at artifactory + "libs-release"
 
 resolvers += "artifactory-snapshots" at artifactory + "libs-snapshot"
 
-resolvers += "Flyway" at "https://flywaydb.org/repo"
-
 libraryDependencies ++= Seq(
   "ch.qos.logback" % "logback-classic" % "1.1.3",
   "com.gettyimages" %% "spray-swagger" % "0.5.0",

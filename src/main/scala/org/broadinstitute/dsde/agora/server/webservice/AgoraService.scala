@@ -2,7 +2,6 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.actor.Props
-import kamon.spray.KamonTraceDirectives._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraEntityPermissionsClient}
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
@@ -91,15 +90,13 @@ abstract class AgoraService extends HttpService with RouteHelpers {
   def querySingleRoute =
     matchQuerySingleRoute(path) { (namespace, name, snapshotId, username) =>
       extractOnlyPayloadParameter { (onlyPayload) =>
-        traceName("querySingleRoute") {
-          val entity = AgoraEntity(Option(namespace), Option(name), Option(snapshotId))
+        val entity = AgoraEntity(Option(namespace), Option(name), Option(snapshotId))
 
-          get { requestContext =>
-            completeWithPerRequest(requestContext, entity, username, toBool(onlyPayload), path, queryHandlerProps)
-          } ~
-          delete { requestContext =>
-            completeEntityDelete(requestContext, entity, username, path, queryHandlerProps)
-          }
+        get { requestContext =>
+          completeWithPerRequest(requestContext, entity, username, toBool(onlyPayload), path, queryHandlerProps)
+        } ~
+        delete { requestContext =>
+          completeEntityDelete(requestContext, entity, username, path, queryHandlerProps)
         }
       }
     }
@@ -110,9 +107,7 @@ abstract class AgoraService extends HttpService with RouteHelpers {
     matchQueryRoute(path) { (username) =>
       parameterMultiMap { params =>
         validateEntityType(params, path) {
-          traceName("queryRoute") {
-            requestContext => completeWithPerRequest(requestContext, params, username, path, queryHandlerProps)
-          }
+          requestContext => completeWithPerRequest(requestContext, params, username, path, queryHandlerProps)
         }
       }
     }
@@ -123,9 +118,7 @@ abstract class AgoraService extends HttpService with RouteHelpers {
     postPath(path) { (username) =>
       entity(as[AgoraEntity]) { agoraEntity =>
         validatePostRoute(agoraEntity, path) {
-          traceName("postRoute") {
-            requestContext => completeWithPerRequest(requestContext, agoraEntity, username, path, addHandlerProps)
-          }
+          requestContext => completeWithPerRequest(requestContext, agoraEntity, username, path, addHandlerProps)
         }
       }
     }

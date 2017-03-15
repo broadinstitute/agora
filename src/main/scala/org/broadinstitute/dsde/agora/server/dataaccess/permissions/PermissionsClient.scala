@@ -8,12 +8,16 @@ import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-
+import slick.driver.MySQLDriver.api._
+import slick.jdbc.SQLInterpolation
 
 import scala.util.{Failure, Success, Try}
 
 trait PermissionsClient {
-  import AgoraConfig.sqlDatabase.profile.api._
+
+  val db = AgoraConfig.sqlDatabase.db
+  val driver: JdbcProfile = AgoraConfig.sqlDatabase.driver
+  import driver.api._
 
   val timeout = 10.seconds
 
@@ -233,6 +237,7 @@ trait PermissionsClient {
           result <- permissions
             .filter(p => p.entityID === entity.id && p.userID === user.id)
             .delete
+          
         } yield result
 
         permissionsUpdateAction flatMap { rowsEdited =>

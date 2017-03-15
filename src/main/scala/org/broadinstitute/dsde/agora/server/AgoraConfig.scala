@@ -5,8 +5,9 @@ import net.ceedubs.ficus.Ficus._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntityType
 import org.broadinstitute.dsde.agora.server.model.AgoraEntityType.EntityType
 import org.broadinstitute.dsde.agora.server.webservice.routes.{AgoraDirectives, MockAgoraDirectives, OpenIdConnectDirectives}
-import slick.basic.DatabaseConfig
-import slick.jdbc.JdbcProfile
+import slick.backend.DatabaseConfig
+import slick.profile.JdbcProfile
+import slick.jdbc.JdbcBackend.Database
 
 object AgoraConfig {
 

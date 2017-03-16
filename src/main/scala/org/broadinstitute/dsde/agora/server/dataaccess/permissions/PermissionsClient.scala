@@ -9,7 +9,6 @@ import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import slick.driver.MySQLDriver.api._
-import slick.jdbc.SQLInterpolation
 
 import scala.util.Try
 

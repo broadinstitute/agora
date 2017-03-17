@@ -73,7 +73,7 @@ trait AgoraTestFixture {
       tables map { table =>
         db.run(MTable.getTables(table.baseTableRow.tableName)).flatMap { result =>
           if (result.nonEmpty) {
-            db.run(table.delete)
+            db.run(sqlu"delete from #${table.baseTableRow.tableName}")
           } else {
             Future.successful(())
           }

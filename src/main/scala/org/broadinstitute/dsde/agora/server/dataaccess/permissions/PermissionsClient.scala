@@ -4,8 +4,6 @@ import AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.exceptions.PermissionNotFoundException
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
-import slick.basic.DatabaseConfig
-import slick.jdbc.{JdbcProfile, MySQLProfile}
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global

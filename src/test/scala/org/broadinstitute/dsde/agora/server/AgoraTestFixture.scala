@@ -20,7 +20,7 @@ trait AgoraTestFixture {
     EmbeddedMongo.startMongo()
 
     println("Connecting to test sql database.")
-    db = AgoraConfig.sqlDatabase
+    db = AgoraConfig.sqlDatabase.db
     clearDatabases()
 
     val setupFuture = createTableIfNotExists(entities, permissions, users)
@@ -84,7 +84,7 @@ trait AgoraTestFixture {
 
   def ensureSqlDatabaseIsRunning() = {
     println("Connecting to test sql database.")
-    db = AgoraConfig.sqlDatabase
+    db = AgoraConfig.sqlDatabase.db
 
     println("Populating sql database.")
     Await.result(createTableIfNotExists(entities, users, permissions), timeout)

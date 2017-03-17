@@ -13,9 +13,8 @@ import scala.concurrent.duration._
 import scala.util.Try
 
 trait PermissionsClient {
-
-  val db: MySQLProfile = AgoraConfig.sqlDatabase.profile
-  import db.api._
+  import AgoraConfig.sqlDatabase.profile.api._
+  val db = AgoraConfig.sqlDatabase.db
 
   val timeout = 10.seconds
 

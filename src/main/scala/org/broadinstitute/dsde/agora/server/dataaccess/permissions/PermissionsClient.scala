@@ -249,7 +249,9 @@ trait PermissionsClient {
         .result
         .head
 
-      result <- permissions.filter(p => p.entityID === entity.id && p.userID === user.id).delete
+      result <- permissions
+        .filter(p => p.entityID === entity.id && p.userID === user.id)
+        .delete
     } yield result
 
     // run update action

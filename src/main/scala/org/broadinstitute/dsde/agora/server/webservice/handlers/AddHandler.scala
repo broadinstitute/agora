@@ -15,7 +15,7 @@ import spray.routing.RequestContext
  * It then handles the returns from the business layer and completes the request. It is responsible for adding a method
  * or method configuration to the methods repository.
  */
-class AddHandler extends Actor {
+class AddHandler(foo: String) extends Actor {
   implicit val system = context.system
 
   val agoraBusiness = new AgoraBusiness()

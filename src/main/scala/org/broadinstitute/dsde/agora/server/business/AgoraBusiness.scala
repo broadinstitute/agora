@@ -1,35 +1,44 @@
 package org.broadinstitute.dsde.agora.server.business
 
 import org.broadinstitute.dsde.agora.server.exceptions.{AgoraEntityNotFoundException, NamespaceAuthorizationException, ValidationException}
-import org.broadinstitute.dsde.agora.server.dataaccess.{AgoraDao, WriteAction}
+import org.broadinstitute.dsde.agora.server.dataaccess.{AgoraDao, ReadWriteAction, WriteAction}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.model.{AgoraApiJsonSupport, AgoraEntity, AgoraEntityProjection, AgoraEntityType}
-import slick.dbio.Effect.Write
+import slick.dbio.Effect.{Read, Write}
 import slick.dbio.{DBIO, DBIOAction, Effect, NoStream}
 import spray.json._
 
 class AgoraBusiness {
 
   def insert(agoraEntity: AgoraEntity, username: String): ReadWriteAction[AgoraEntity] = {
-    if (!NamespacePermissionsClient.getNamespacePermission(agoraEntity, username).canCreate &&
-        !NamespacePermissionsClient.getNamespacePermission(agoraEntity, "public").canCreate) {
-      throw new NamespaceAuthorizationException(AgoraPermissions(Create), agoraEntity, username)
-    }
+    DBIO.sequence(Seq(NamespacePermissionsClient.getNamespacePermission(agoraEntity, username), NamespacePermissionsClient.getNamespacePermission(agoraEntity, "public"))) map { namespacePerms =>
+      if (!namespacePerms.exists(_.canCreate)) {
+        throw new NamespaceAuthorizationException(AgoraPermissions(Create), agoraEntity, username)
+      }
 
-    validatePayload(agoraEntity, username)
+      validatePayload(agoraEntity, username)
 
-    val entityToInsert = agoraEntity.entityType.get match {
-      case AgoraEntityType.Configuration =>
-        val method = resolveMethodRef(agoraEntity.payload.get)
-        if (!AgoraEntityPermissionsClient.getEntityPermission(method, username).canRead &&
+      val entityToInsert = agoraEntity.entityType.get match {
+        case AgoraEntityType.Configuration =>
+
+          //FIXME: this goes to Mongo inside a SQL transaction :(
+          val method = resolveMethodRef(agoraEntity.payload.get)
+
+
+          if (!AgoraEntityPermissionsClient.getEntityPermission(method, username).canRead &&
             !AgoraEntityPermissionsClient.getEntityPermission(method, "public").canRead) {
-          throw new AgoraEntityNotFoundException(method)
-        }
+            throw new AgoraEntityNotFoundException(method)
+          }
 
-        agoraEntity.addMethodId(method.id.get.toHexString)
-      case _ => agoraEntity
+          agoraEntity.addMethodId(method.id.get.toHexString)
+        case _ => agoraEntity
+      }
     }
+
+
+
+
 
     val entityWithId = AgoraDao.createAgoraDao(entityToInsert.entityType).insert(entityToInsert.addDate())
     val userAccess = new AccessControl(username, AgoraPermissions(All))

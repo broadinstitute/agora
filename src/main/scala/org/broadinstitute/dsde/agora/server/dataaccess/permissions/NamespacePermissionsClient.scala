@@ -1,8 +1,9 @@
 package org.broadinstitute.dsde.agora.server.dataaccess.permissions
 
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
+import slick.jdbc.JdbcProfile
 
-class NamespacePermissionsClient extends PermissionsClient {
+class NamespacePermissionsClient(profile: JdbcProfile) extends PermissionsClient(profile) {
 
   def alias(entity: AgoraEntity) =
     entity.namespace.get
@@ -21,5 +22,4 @@ class NamespacePermissionsClient extends PermissionsClient {
 
   def deleteNamespacePermission(entity: AgoraEntity, userEmail: String) =
     deletePermission(entity, userEmail)
-
 }

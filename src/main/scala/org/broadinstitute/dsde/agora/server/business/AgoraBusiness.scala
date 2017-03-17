@@ -9,7 +9,7 @@ import slick.dbio.Effect.{Read, Write}
 import slick.dbio.{DBIO, DBIOAction, Effect, NoStream}
 import spray.json._
 
-class AgoraBusiness {
+class AgoraBusiness(dataSource: PermissionsDataSource) {
 
   def insert(agoraEntity: AgoraEntity, username: String): ReadWriteAction[AgoraEntity] = {
     DBIO.sequence(Seq(NamespacePermissionsClient.getNamespacePermission(agoraEntity, username), NamespacePermissionsClient.getNamespacePermission(agoraEntity, "public"))) map { namespacePerms =>

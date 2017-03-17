@@ -1,26 +1,32 @@
 package org.broadinstitute.dsde.agora.server.dataaccess.permissions
 
 import org.broadinstitute.dsde.agora.server.dataaccess.ReadWriteAction
-import slick.backend.DatabaseConfig
-import slick.driver.{JdbcDriver, MySQLDriver}
-import slick.jdbc.TransactionIsolation
+import slick.basic.DatabaseConfig
+import slick.jdbc.{JdbcProfile, TransactionIsolation}
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
-class DataAccess {
-  val namespacePermissionsClient = new NamespacePermissionsClient()
-  val agoraEntityPermissionsClient = new AgoraEntityPermissionsClient()
+class DataAccess(profile: JdbcProfile) {
+  val namespacePermissionsClient = new NamespacePermissionsClient(profile)
+  val agoraEntityPermissionsClient = new AgoraEntityPermissionsClient(profile)
 }
 
-class PermissionsDataSource(databaseConfig: DatabaseConfig[MySQLDriver]) {
-  import databaseConfig.driver.api._
-
+class PermissionsDataSource(databaseConfig: DatabaseConfig[JdbcProfile]) {
+  val profile = databaseConfig.profile
   val db = databaseConfig.db
-  val dataAccess = new DataAccess() // <- probably db goes in here
+
+  import profile.api._
+
+  val dataAccess = new DataAccess(profile) // <- probably db goes in here
 
   def inTransaction[T](f: (DataAccess) => ReadWriteAction[T], isolationLevel: TransactionIsolation = TransactionIsolation.RepeatableRead): Future[T] = {
-    //database.run(f(dataAccess).transactionally) <-- https://github.com/slick/slick/issues/1274
+    //FIXME: still needs custom executor. see rawls:
+    // https://github.com/broadinstitute/rawls/blob/develop/core/src/main/scala/org/broadinstitute/dsde/rawls/dataaccess/DataSource.scala#L52
     Future(Await.result(db.run(f(dataAccess).transactionally.withTransactionIsolation(isolationLevel)), Duration.Inf))
+  }
+
+  def close(): Unit = {
+    db.close()
   }
 }

@@ -5,19 +5,15 @@ import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.dataaccess.{ReadAction, ReadWriteAction, WriteAction}
 import org.broadinstitute.dsde.agora.server.exceptions.PermissionNotFoundException
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
+import slick.jdbc.JdbcProfile
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import slick.driver.MySQLDriver.api._
-import slick.jdbc.SQLInterpolation
-
+import slick.driver.MySQLDriver
 import scala.util.{Failure, Success, Try}
 
-trait PermissionsClient {
-
-  val db = AgoraConfig.sqlDatabase.db
-  val driver: JdbcProfile = AgoraConfig.sqlDatabase.driver
-  import driver.api._
+abstract class PermissionsClient(profile: JdbcProfile) {
+  import profile.api._
 
   val timeout = 10.seconds
 

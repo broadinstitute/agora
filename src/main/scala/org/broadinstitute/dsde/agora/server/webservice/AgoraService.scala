@@ -2,7 +2,7 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.actor.Props
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraEntityPermissionsClient}
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraEntityPermissionsClient, PermissionsDataSource}
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.handlers.{AddHandler, PermissionHandler, QueryHandler, StatusHandler}
@@ -17,7 +17,7 @@ import spray.routing.{HttpService, RequestContext}
  *
  * Concrete implementations are MethodsService and ConfigurationsService.
  */
-abstract class AgoraService extends HttpService with RouteHelpers {
+abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extends HttpService with RouteHelpers {
 
   def path: String
 
@@ -25,7 +25,7 @@ abstract class AgoraService extends HttpService with RouteHelpers {
 
   def queryHandlerProps = Props(classOf[QueryHandler])
 
-  def addHandlerProps = Props(classOf[AddHandler])
+  def addHandlerProps = Props(classOf[AddHandler], permissionsDataSource)
 
   def statusHandlerProps = Props(classOf[StatusHandler])
 

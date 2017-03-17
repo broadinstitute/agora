@@ -237,12 +237,6 @@ trait PermissionsClient {
   def deletePermission(agoraEntity: AgoraEntity, userToRemove: String): Int = {
     addUserIfNotInDatabase(userToRemove)
 
-    def deleteQ(entityRec: EntityDao, user: UserDao) = {
-      val q = permissions.filter(p => p.entityID === entityRec.id && p.userID === user.id).delete
-      println(q)
-      q
-    }
-
     // construct update action
     val permissionsUpdateAction = for {
       user <- users
@@ -255,7 +249,7 @@ trait PermissionsClient {
         .result
         .head
 
-      result <- deleteQ(entity, user)
+      result <- permissions.filter(p => p.entityID === entity.id && p.userID === user.id).delete
     } yield result
 
     // run update action

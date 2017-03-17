@@ -4,17 +4,19 @@ import AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.exceptions.PermissionNotFoundException
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
+import slick.basic.DatabaseConfig
+import slick.jdbc.{JdbcProfile, MySQLProfile}
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import slick.driver.MySQLDriver.api._
-
 import scala.util.Try
 
 trait PermissionsClient {
 
-  val db = AgoraConfig.sqlDatabase
+  val db: MySQLProfile = AgoraConfig.sqlDatabase.profile
+  import db.api._
+
   val timeout = 10.seconds
 
   def alias(entity: AgoraEntity): String
@@ -236,6 +238,12 @@ trait PermissionsClient {
   def deletePermission(agoraEntity: AgoraEntity, userToRemove: String): Int = {
     addUserIfNotInDatabase(userToRemove)
 
+    def deleteQ(entityRec: EntityDao, user: UserDao) = {
+      val q = permissions.filter(p => p.entityID === entityRec.id && p.userID === user.id).delete
+      println(q)
+      q
+    }
+
     // construct update action
     val permissionsUpdateAction = for {
       user <- users
@@ -248,9 +256,7 @@ trait PermissionsClient {
         .result
         .head
 
-      result <- permissions
-        .filter(p => p.entityID === entity.id && p.userID === user.id)
-        .delete
+      result <- deleteQ(entity, user)
     } yield result
 
     // run update action

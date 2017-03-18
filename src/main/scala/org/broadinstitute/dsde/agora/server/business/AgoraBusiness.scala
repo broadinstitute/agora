@@ -9,58 +9,65 @@ import slick.dbio.Effect.{Read, Write}
 import slick.dbio.{DBIO, DBIOAction, Effect, NoStream}
 import spray.json._
 
-class AgoraBusiness(dataSource: PermissionsDataSource) {
+class AgoraBusiness(permissionsDataSource: PermissionsDataSource) {
 
   def insert(agoraEntity: AgoraEntity, username: String): ReadWriteAction[AgoraEntity] = {
-    DBIO.sequence(Seq(NamespacePermissionsClient.getNamespacePermission(agoraEntity, username), NamespacePermissionsClient.getNamespacePermission(agoraEntity, "public"))) map { namespacePerms =>
-      if (!namespacePerms.exists(_.canCreate)) {
-        throw new NamespaceAuthorizationException(AgoraPermissions(Create), agoraEntity, username)
-      }
+    permissionsDataSource.inTransaction { ds =>
 
-      validatePayload(agoraEntity, username)
+      //TODO: with-ify this (it's used further down too)
+      DBIO.sequence(Seq(ds.nsPerms.getNamespacePermission(agoraEntity, username), ds.nsPerms.getNamespacePermission(agoraEntity, "public"))) map { namespacePerms =>
+        //can we create in this namespace?
+        if (!namespacePerms.exists(_.canCreate)) {
+          throw NamespaceAuthorizationException(AgoraPermissions(Create), agoraEntity, username)
+        }
+      //TODO: I think we can close the DBIO.sequence map here
 
-      val entityToInsert = agoraEntity.entityType.get match {
-        case AgoraEntityType.Configuration =>
+        //TODO: with-ify this
+        validatePayload(agoraEntity, username)
 
-          //FIXME: this goes to Mongo inside a SQL transaction :(
-          val method = resolveMethodRef(agoraEntity.payload.get)
+        val entityToInsert = agoraEntity.entityType.get match {
+          case AgoraEntityType.Configuration =>
 
+            //FIXME: this goes to Mongo inside a SQL transaction :(
+            val method = resolveMethodRef(agoraEntity.payload.get)
 
-          if (!AgoraEntityPermissionsClient.getEntityPermission(method, username).canRead &&
-            !AgoraEntityPermissionsClient.getEntityPermission(method, "public").canRead) {
-            throw new AgoraEntityNotFoundException(method)
-          }
+            //TODO: with-ify this
+            DBIO.sequence(Seq( ds.aePerms.getEntityPermission(method, username), ds.aePerms.getEntityPermission(method, "public") )) map { agoraEntityPerms =>
+              //can we see the method we're referencing?
+              if(!agoraEntityPerms.exists(_.canRead)) {
+                throw new AgoraEntityNotFoundException(method)
+              }
+            }
 
-          agoraEntity.addMethodId(method.id.get.toHexString)
-        case _ => agoraEntity
-      }
-    }
-
-
-
-
-
-    val entityWithId = AgoraDao.createAgoraDao(entityToInsert.entityType).insert(entityToInsert.addDate())
-    val userAccess = new AccessControl(username, AgoraPermissions(All))
-
-    def updateThing(bool: Boolean, entity: AgoraEntity): WriteAction[Unit] = {
-      if(bool) {
-        NamespacePermissionsClient.addEntity(entity) andThen
-          NamespacePermissionsClient.insertNamespacePermission(entityWithId, userAccess)
-      } else {
-        DBIO.successful(())
+            agoraEntity.addMethodId(method.id.get.toHexString)
+          case _ => agoraEntity
+        }
       }
     }
 
+    //TODO: all of this crap needs to be pulled into the map too
+      val entityWithId = AgoraDao.createAgoraDao(entityToInsert.entityType).insert(entityToInsert.addDate())
+      val userAccess = new AccessControl(username, AgoraPermissions(All))
 
-    for {
-      existsInNamespace <- NamespacePermissionsClient.doesEntityExists(agoraEntity)
-      _ <- updateThing(existsInNamespace, entityWithId)
-      _ <- AgoraEntityPermissionsClient.addEntity(entityWithId)
-      _ <- AgoraEntityPermissionsClient.insertEntityPermission(entityWithId, userAccess)
-    } yield {
-      entityWithId.addUrl().removeIds()
-    }
+      def updateThing(bool: Boolean, entity: AgoraEntity): WriteAction[Unit] = {
+        if (bool) {
+          NamespacePermissionsClient.addEntity(entity) andThen
+            NamespacePermissionsClient.insertNamespacePermission(entityWithId, userAccess)
+        } else {
+          DBIO.successful(())
+        }
+      }
+
+
+      for {
+        existsInNamespace <- NamespacePermissionsClient.doesEntityExists(agoraEntity)
+        _ <- updateThing(existsInNamespace, entityWithId)
+        _ <- AgoraEntityPermissionsClient.addEntity(entityWithId)
+        _ <- AgoraEntityPermissionsClient.insertEntityPermission(entityWithId, userAccess)
+      } yield {
+        entityWithId.addUrl().removeIds()
+      }
+
   }
 
   def delete(agoraEntity: AgoraEntity, entityTypes: Seq[AgoraEntityType.EntityType], username: String): Int = {

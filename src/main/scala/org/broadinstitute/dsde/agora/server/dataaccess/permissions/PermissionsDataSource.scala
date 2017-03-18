@@ -8,8 +8,8 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
 class DataAccess(profile: JdbcProfile) {
-  val namespacePermissionsClient = new NamespacePermissionsClient(profile)
-  val agoraEntityPermissionsClient = new AgoraEntityPermissionsClient(profile)
+  val nsPerms = new NamespacePermissionsClient(profile)
+  val aePerms = new AgoraEntityPermissionsClient(profile)
 }
 
 class PermissionsDataSource(databaseConfig: DatabaseConfig[JdbcProfile]) {

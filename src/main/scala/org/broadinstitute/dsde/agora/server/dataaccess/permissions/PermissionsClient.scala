@@ -8,12 +8,13 @@ import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+import slick.driver.MySQLDriver.api._
+
 import scala.util.Try
 
 trait PermissionsClient {
-  import AgoraConfig.sqlDatabase.profile.api._
-  val db = AgoraConfig.sqlDatabase.db
 
+  val db = AgoraConfig.sqlDatabase
   val timeout = 10.seconds
 
   def alias(entity: AgoraEntity): String

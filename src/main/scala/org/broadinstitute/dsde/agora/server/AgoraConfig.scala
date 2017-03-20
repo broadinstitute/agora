@@ -5,8 +5,7 @@ import net.ceedubs.ficus.Ficus._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntityType
 import org.broadinstitute.dsde.agora.server.model.AgoraEntityType.EntityType
 import org.broadinstitute.dsde.agora.server.webservice.routes.{AgoraDirectives, MockAgoraDirectives, OpenIdConnectDirectives}
-import slick.basic.DatabaseConfig
-import slick.jdbc.JdbcProfile
+import slick.jdbc.JdbcBackend.Database
 
 object AgoraConfig {
 
@@ -56,7 +55,7 @@ object AgoraConfig {
   lazy val mongoDbDatabase = config.as[Option[String]]("mongodb.db").getOrElse("agora")
 
   // SQL
-  lazy val sqlDatabase = DatabaseConfig.forConfig[JdbcProfile]("sqlDatabase")
+  lazy val sqlDatabase = Database.forConfig("sqlDatabase")
 
   // Google Credentials
   lazy val gcsProjectId = config.as[String]("gcs.project.id")

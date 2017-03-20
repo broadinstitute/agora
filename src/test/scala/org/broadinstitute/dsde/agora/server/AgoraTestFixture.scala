@@ -20,7 +20,7 @@ trait AgoraTestFixture {
     EmbeddedMongo.startMongo()
 
     println("Connecting to test sql database.")
-    db = AgoraConfig.sqlDatabase.db
+    db = AgoraConfig.sqlDatabase
     clearDatabases()
 
     val setupFuture = createTableIfNotExists(entities, permissions, users)
@@ -73,7 +73,7 @@ trait AgoraTestFixture {
       tables map { table =>
         db.run(MTable.getTables(table.baseTableRow.tableName)).flatMap { result =>
           if (result.nonEmpty) {
-            db.run(sqlu"delete from #${table.baseTableRow.tableName}")
+            db.run(table.delete)
           } else {
             Future.successful(())
           }
@@ -84,7 +84,7 @@ trait AgoraTestFixture {
 
   def ensureSqlDatabaseIsRunning() = {
     println("Connecting to test sql database.")
-    db = AgoraConfig.sqlDatabase.db
+    db = AgoraConfig.sqlDatabase
 
     println("Populating sql database.")
     Await.result(createTableIfNotExists(entities, users, permissions), timeout)

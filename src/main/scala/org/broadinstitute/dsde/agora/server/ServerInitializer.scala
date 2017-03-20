@@ -29,7 +29,7 @@ class ServerInitializer extends LazyLogging {
       EmbeddedMongo.stopMongo()
 
     println("Closing connection to sql db.")
-    AgoraConfig.sqlDatabase.db.close()
+    AgoraConfig.sqlDatabase.close()
 
     stopAndCatchExceptions(stopWebServiceActors())
   }

@@ -14,7 +14,7 @@ import scala.util.{Failure, Success, Try}
 
 class AgoraBusiness(permissionsDataSource: PermissionsDataSource) {
 
-  def checkNamespacePermission[T](db: DataAccess, agoraEntity: AgoraEntity, username: String, permLevel: AgoraPermissions)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
+  private def checkNamespacePermission[T](db: DataAccess, agoraEntity: AgoraEntity, username: String, permLevel: AgoraPermissions)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
     DBIO.sequence(Seq(db.nsPerms.getNamespacePermission(agoraEntity, username), db.nsPerms.getNamespacePermission(agoraEntity, "public"))) flatMap { namespacePerms =>
       if (!namespacePerms.exists(_.hasPermission(permLevel))) {
         DBIO.failed(NamespaceAuthorizationException(permLevel, agoraEntity, username))
@@ -24,7 +24,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) {
     }
   }
 
-  def checkEntityPermission[T](db: DataAccess, agoraEntity: AgoraEntity, username: String, permLevel: AgoraPermissions)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
+  private def checkEntityPermission[T](db: DataAccess, agoraEntity: AgoraEntity, username: String, permLevel: AgoraPermissions)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
     DBIO.sequence(Seq(db.aePerms.getEntityPermission(agoraEntity, username), db.aePerms.getEntityPermission(agoraEntity, "public"))) flatMap { entityPerms =>
       if (!entityPerms.exists(_.hasPermission(permLevel))) {
         DBIO.failed(AgoraEntityNotFoundException(agoraEntity))
@@ -34,7 +34,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) {
     }
   }
 
-  def createNamespaceIfNonexistent(db: DataAccess, entity: AgoraEntity, entityWithId: AgoraEntity, userAccess: AccessControl): ReadWriteAction[Unit] = {
+  private def createNamespaceIfNonexistent(db: DataAccess, entity: AgoraEntity, entityWithId: AgoraEntity, userAccess: AccessControl): ReadWriteAction[Unit] = {
     db.nsPerms.doesEntityExists(entity) map { exists =>
       if(exists) {
         db.nsPerms.addEntity(entity) andThen
@@ -42,6 +42,37 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) {
       } else {
         DBIO.successful(())
       }
+    }
+  }
+
+  private def checkValidPayload[T](agoraEntity: AgoraEntity, username: String)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
+    Try(agoraEntity.entityType.get match {
+
+      case AgoraEntityType.Task =>
+      // GAWB-59 remove wdl validation
+      //        val namespace = WdlNamespace.load(agoraEntity.payload.get, BackendType.LOCAL)
+      //        // Passed basic validation.  Now check if (any) docker images that are referenced exist
+      //        namespace.tasks.foreach { validateDockerImage }
+
+      case AgoraEntityType.Workflow =>
+      // GAWB-59 remove wdl validation
+      //        val resolver = MethodImportResolver(username, this)
+      //        val namespace = WdlNamespace.load(agoraEntity.payload.get, resolver.importResolver _, BackendType.LOCAL)
+      //        // Passed basic validation.  Now check if (any) docker images that are referenced exist
+      //        namespace.tasks.foreach { validateDockerImage }
+
+      case AgoraEntityType.Configuration =>
+        val json = agoraEntity.payload.get.parseJson
+        val fields = json.asJsObject.getFields("methodRepoMethod")
+        if(fields.size != 1) throw new ValidationException("Configuration payload must define at least one field named 'methodRepoMethod'.")
+
+        val subFields = fields(0).asJsObject.getFields("methodNamespace", "methodName", "methodVersion")
+        if(!subFields(0).isInstanceOf[JsString]) throw new ValidationException("Configuration methodRepoMethod must include a 'methodNamespace' key with a string value")
+        if(!subFields(1).isInstanceOf[JsString]) throw new ValidationException("Configuration methodRepoMethod must include a 'methodName' key with a string value")
+        if(!subFields(2).isInstanceOf[JsNumber]) throw new ValidationException("Configuration methodRepoMethod must include a 'methodVersion' key with a JSNumber value")
+    }) match {
+      case Success(_) => op
+      case Failure(regret) => DBIO.failed(regret)
     }
   }
 
@@ -130,37 +161,6 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) {
                  entityTypes: Seq[AgoraEntityType.EntityType],
                  username: String): AgoraEntity = {
     findSingle(entity.namespace.get, entity.name.get, entity.snapshotId.get, entityTypes, username)
-  }
-
-  private def checkValidPayload[T](agoraEntity: AgoraEntity, username: String)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
-    Try(agoraEntity.entityType.get match {
-
-      case AgoraEntityType.Task =>
-// GAWB-59 remove wdl validation
-//        val namespace = WdlNamespace.load(agoraEntity.payload.get, BackendType.LOCAL)
-//        // Passed basic validation.  Now check if (any) docker images that are referenced exist
-//        namespace.tasks.foreach { validateDockerImage }
-
-      case AgoraEntityType.Workflow =>
-// GAWB-59 remove wdl validation
-//        val resolver = MethodImportResolver(username, this)
-//        val namespace = WdlNamespace.load(agoraEntity.payload.get, resolver.importResolver _, BackendType.LOCAL)
-//        // Passed basic validation.  Now check if (any) docker images that are referenced exist
-//        namespace.tasks.foreach { validateDockerImage }
-
-      case AgoraEntityType.Configuration =>
-        val json = agoraEntity.payload.get.parseJson
-        val fields = json.asJsObject.getFields("methodRepoMethod")
-        if(fields.size != 1) throw new ValidationException("Configuration payload must define at least one field named 'methodRepoMethod'.")
-
-        val subFields = fields(0).asJsObject.getFields("methodNamespace", "methodName", "methodVersion")
-        if(!subFields(0).isInstanceOf[JsString]) throw new ValidationException("Configuration methodRepoMethod must include a 'methodNamespace' key with a string value")
-        if(!subFields(1).isInstanceOf[JsString]) throw new ValidationException("Configuration methodRepoMethod must include a 'methodName' key with a string value")
-        if(!subFields(2).isInstanceOf[JsNumber]) throw new ValidationException("Configuration methodRepoMethod must include a 'methodVersion' key with a JSNumber value")
-    }) match {
-      case Success(_) => op
-      case Failure(regret) => DBIO.failed(regret)
-    }
   }
 
 //  private def validateDockerImage(task: Task) = {

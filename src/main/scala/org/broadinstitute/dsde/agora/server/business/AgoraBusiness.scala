@@ -83,24 +83,22 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) {
     }
   }
 
-  def delete(agoraEntity: AgoraEntity, entityTypes: Seq[AgoraEntityType.EntityType], username: String): Int = {
-    if (!NamespacePermissionsClient.getNamespacePermission(agoraEntity, username).canRedact &&
-        !NamespacePermissionsClient.getNamespacePermission(agoraEntity, "public").canRedact &&
-        !NamespacePermissionsClient.isAdmin(username)) {
-      throw new NamespaceAuthorizationException(AgoraPermissions(Redact), agoraEntity, username)
-    }
-
-    // if the entity was a method, then redact all associated configurations
-    if (entityTypes equals AgoraEntityType.MethodTypes) {
-
+  def delete(agoraEntity: AgoraEntity, entityTypes: Seq[AgoraEntityType.EntityType], username: String): Future[Int] = {
+    //list of associated configurations. Goes to Mongo so we do it outside the sql txn
+    val configurations = if (entityTypes equals AgoraEntityType.MethodTypes) {
       val dao = AgoraDao.createAgoraDao(entityTypes)
       val entityWithId = dao.findSingle(agoraEntity.namespace.get, agoraEntity.name.get, agoraEntity.snapshotId.get)
-      val configurations = dao.findConfigurations(entityWithId.id.get)
-
-      configurations.foreach {config => AgoraEntityPermissionsClient.deleteAllPermissions(config)}
+      dao.findConfigurations(entityWithId.id.get)
+    } else {
+      Seq()
     }
 
-    AgoraEntityPermissionsClient.deleteAllPermissions(agoraEntity)
+    permissionsDataSource.inTransaction { db =>
+      checkNamespacePermission(db, agoraEntity, username, AgoraPermissions(Redact)) {
+        DBIO.sequence(configurations map { config => db.aePerms.deleteAllPermissions(config) }) andThen
+          db.aePerms.deleteAllPermissions(agoraEntity)
+      }
+    }
   }
 
   def find(agoraSearch: AgoraEntity,

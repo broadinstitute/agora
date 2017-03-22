@@ -18,7 +18,7 @@ class PermissionsDataSource(databaseConfig: DatabaseConfig[JdbcProfile]) {
 
   import profile.api._
 
-  val dataAccess = new DataAccess(profile) // <- probably db goes in here
+  val dataAccess = new DataAccess(profile)
 
   def inTransaction[T](f: (DataAccess) => ReadWriteAction[T], isolationLevel: TransactionIsolation = TransactionIsolation.RepeatableRead): Future[T] = {
     //FIXME: still needs custom executor. see rawls:

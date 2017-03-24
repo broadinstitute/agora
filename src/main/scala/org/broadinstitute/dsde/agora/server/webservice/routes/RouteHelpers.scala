@@ -19,8 +19,6 @@ trait RouteHelpers extends QuerySingleHelper
   with NamespacePermissionsRouteHelper
 
 trait BaseRoute extends PerRequestCreator with RouteUtil  {
-  implicit val executionContext = actorRefFactory.dispatcher
-
   def getUserFromParams(params: Map[String, String]): String = {
     val user = params.get("user")
     if (user.isDefined)

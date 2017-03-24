@@ -4,6 +4,8 @@ package org.broadinstitute.dsde.agora.server.webservice
 import akka.actor.SupervisorStrategy.Stop
 import akka.actor.{OneForOneStrategy, _}
 import com.typesafe.scalalogging.slf4j.LazyLogging
+
+import scala.concurrent.ExecutionContext
 //import cromwell.parser.WdlParser.SyntaxError
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.exceptions._
@@ -135,6 +137,7 @@ object PerRequest {
  */
 trait PerRequestCreator {
   implicit def actorRefFactory: ActorRefFactory
+  implicit val executionContext: ExecutionContext
 
   def perRequest(r: RequestContext, props: Props, message: AnyRef, name: String = java.lang.Thread.currentThread.getStackTrace()(1).getMethodName, timeout: Duration = 1.minutes) =
     actorRefFactory.actorOf(Props(new WithProps(r, props, message, name + System.nanoTime(), timeout)), name + System.nanoTime())

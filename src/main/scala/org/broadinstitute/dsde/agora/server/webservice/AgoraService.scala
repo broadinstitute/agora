@@ -18,6 +18,7 @@ import spray.routing.{HttpService, RequestContext}
  * Concrete implementations are MethodsService and ConfigurationsService.
  */
 abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extends HttpService with RouteHelpers {
+  override implicit val executionContext = scala.concurrent.ExecutionContext.Implicits.global
 
   def path: String
 

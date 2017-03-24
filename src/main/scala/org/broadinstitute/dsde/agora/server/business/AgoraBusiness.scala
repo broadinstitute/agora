@@ -2,17 +2,17 @@ package org.broadinstitute.dsde.agora.server.business
 
 import org.broadinstitute.dsde.agora.server.exceptions.{AgoraEntityNotFoundException, NamespaceAuthorizationException, ValidationException}
 import org.broadinstitute.dsde.agora.server.dataaccess.{AgoraDao, ReadWriteAction, WriteAction}
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{entities, _}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.model.{AgoraApiJsonSupport, AgoraEntity, AgoraEntityProjection, AgoraEntityType}
 import slick.dbio.Effect.{Read, Write}
 import slick.dbio.{DBIO, DBIOAction, Effect, NoStream}
 import spray.json._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
-class AgoraBusiness(permissionsDataSource: PermissionsDataSource) {
+class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: ExecutionContext) {
 
   private def checkNamespacePermission[T](db: DataAccess, agoraEntity: AgoraEntity, username: String, permLevel: AgoraPermissions)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
     DBIO.sequence(Seq(db.nsPerms.getNamespacePermission(agoraEntity, username), db.nsPerms.getNamespacePermission(agoraEntity, "public"))) flatMap { namespacePerms =>
@@ -135,31 +135,35 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) {
   def find(agoraSearch: AgoraEntity,
            agoraProjection: Option[AgoraEntityProjection],
            entityTypes: Seq[AgoraEntityType.EntityType],
-           username: String): Seq[AgoraEntity] = {
+           username: String): Future[Seq[AgoraEntity]] = {
 
     val entities = AgoraDao.createAgoraDao(entityTypes)
       .find(agoraSearch, agoraProjection)
       .map(entity => entity.addUrl().removeIds())
 
-    AgoraEntityPermissionsClient.filterEntityByRead(entities, username)
+    permissionsDataSource.inTransaction { db =>
+      db.aePerms.filterEntityByRead(entities, username)
+    }
   }
 
   def findSingle(namespace: String,
                  name: String,
                  snapshotId: Int,
                  entityTypes: Seq[AgoraEntityType.EntityType],
-                 username: String): AgoraEntity = {
+                 username: String): Future[AgoraEntity] = {
     val foundEntity = AgoraDao.createAgoraDao(entityTypes).findSingle(namespace, name, snapshotId)
-    val entities = AgoraEntityPermissionsClient.filterEntityByRead(Seq(foundEntity), username)
-    entities match {
-      case Seq(ae: AgoraEntity) => ae.addUrl().removeIds().addManagers(AgoraEntityPermissionsClient.listOwners(foundEntity))
-      case _ => throw new AgoraEntityNotFoundException(foundEntity)
+
+    permissionsDataSource.inTransaction { db =>
+      db.aePerms.filterEntityByRead(Seq(foundEntity), username) flatMap {
+        case Seq(ae: AgoraEntity) => db.aePerms.listOwners(foundEntity) map { owners => ae.addUrl().removeIds().addManagers(owners) }
+        case _ => DBIO.failed(AgoraEntityNotFoundException(foundEntity))
+      }
     }
   }
 
   def findSingle(entity: AgoraEntity,
                  entityTypes: Seq[AgoraEntityType.EntityType],
-                 username: String): AgoraEntity = {
+                 username: String): Future[AgoraEntity] = {
     findSingle(entity.namespace.get, entity.name.get, entity.snapshotId.get, entityTypes, username)
   }
 

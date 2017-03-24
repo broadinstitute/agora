@@ -11,15 +11,17 @@ import spray.http.StatusCodes._
 import spray.httpx.SprayJsonSupport._
 import spray.routing.RequestContext
 
+import scala.concurrent.ExecutionContext
+
 /**
  * AddHandler is an actor that receives web service requests and calls AgoraBusiness logic.
  * It then handles the returns from the business layer and completes the request. It is responsible for adding a method
  * or method configuration to the methods repository.
  */
-class AddHandler(dataSource: PermissionsDataSource) extends Actor {
+class AddHandler(dataSource: PermissionsDataSource)(implicit ec: ExecutionContext) extends Actor {
   implicit val system = context.system
 
-  val agoraBusiness = new AgoraBusiness(dataSource)
+  val agoraBusiness = new AgoraBusiness(dataSource)(ec)
 
   def receive = {
     case ServiceMessages.Add(requestContext: RequestContext, agoraAddRequest: AgoraEntity, username: String) =>

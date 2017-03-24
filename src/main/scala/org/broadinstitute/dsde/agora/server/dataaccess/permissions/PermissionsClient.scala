@@ -5,6 +5,8 @@ import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.dataaccess.{ReadAction, ReadWriteAction, WriteAction}
 import org.broadinstitute.dsde.agora.server.exceptions.PermissionNotFoundException
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
+import slick.dbio.DBIOAction
+import slick.dbio.Effect.Read
 import slick.jdbc.JdbcProfile
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -262,7 +264,7 @@ abstract class PermissionsClient(profile: JdbcProfile) {
     }
   }
 
-  def filterEntityByRead(agoraEntities: Seq[AgoraEntity], userEmail: String) = {
+  def filterEntityByRead(agoraEntities: Seq[AgoraEntity], userEmail: String): ReadAction[Seq[AgoraEntity]] = {
     val entitiesThatUserCanReadQuery = for {
       user <- users if user.email === userEmail || user.email === "public"
       permission <- permissions if permission.userID === user.id && (

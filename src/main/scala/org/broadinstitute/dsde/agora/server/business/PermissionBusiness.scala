@@ -102,11 +102,9 @@ class PermissionBusiness(permissionsDataSource: PermissionsDataSource)(implicit 
   private def authNamespaceRequester[T](db: DataAccess, entity: AgoraEntity, requester: String, accessObject: AccessControl)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
     withNamespaceACLs(db, entity, requester) { namespaceACLs =>
       checkSameRequesterAndPermissions(namespaceACLs.find(acl => acl.user.equals(requester)), accessObject)
-      //FIXME: I think this can just be switched with a Try(authorizeNamespaceRequester)
-      if (!namespaceACLs.exists(_.roles.canManage)) {
-        DBIOAction.failed(NamespaceAuthorizationException(AgoraPermissions(Manage), entity, requester))
-      } else {
-        op
+      Try(authorizeNamespaceRequester(namespaceACLs, entity, requester)) match {
+        case Success(_) => op
+        case Failure(regret) => DBIOAction.failed(regret)
       }
     }
   }
@@ -138,11 +136,15 @@ class PermissionBusiness(permissionsDataSource: PermissionsDataSource)(implicit 
         case Failure(regret) => DBIOAction.failed(regret)
       }
     }
-
   }
 
-  private def authorizeEntityRequester(entity: AgoraEntity, requester: String): Unit = {
-    authorizeEntityRequester(getEntityACLs(entity, requester), entity, requester)
+  private def authEntityRequester[T](db: DataAccess, entity: AgoraEntity, requester: String)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
+    withEntityACLs(db, entity, requester) { entityACLs =>
+      Try( authorizeEntityRequester(entityACLs, entity, requester) ) match {
+        case Success(_) => op
+        case Failure(regret) => DBIOAction.failed(regret)
+      }
+    }
   }
 
   private def authorizeEntityRequester(acls: Seq[AccessControl], entity: AgoraEntity, requester: String): Unit = {

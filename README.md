@@ -33,6 +33,15 @@ and integration test using:
 $ sbt integrationTest
 ```
 
+### Building with docker
+
+To build the `broadinstitute/agora` docker image, run
+```
+$ ./docker/build.sh jar -d build
+```
+
+This builds the agora jar, and copies it into the docker image (see `Dockerfile`).
+
 ## Running Your Own Agora Web Service
 
 Assuming you have already built as per the instructions above, create a file called "/etc/agora.conf", with the appropriate configuration information populated.

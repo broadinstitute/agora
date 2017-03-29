@@ -21,7 +21,7 @@ abstract class PermissionsClient(profile: JdbcProfile) {
 
   def alias(entity: AgoraEntity): String
 
-  def withPermissionNotFoundException[T, E](errorString: String = "Could not get permission")( op: => DBIOAction[T, NoStream, E with Effect] ): DBIOAction[T, NoStream, E with Effect] = {
+  def withPermissionNotFoundException[T](errorString: String = "Could not get permission")( op: => ReadWriteAction[T] ): ReadWriteAction[T] = {
     op.asTry flatMap {
       case Success(permission) => DBIO.successful(permission)
       case Failure(ex) => DBIO.failed(new PermissionNotFoundException(errorString, ex))
@@ -40,7 +40,7 @@ abstract class PermissionsClient(profile: JdbcProfile) {
     }
   }
 
-  def listAdmins(): ReadAction[Seq[String]] = {
+  def listAdmins(): ReadWriteAction[Seq[String]] = {
     withPermissionNotFoundException() {
       val adminsQuery = for {
         user <- users if user.is_admin === true
@@ -123,7 +123,7 @@ abstract class PermissionsClient(profile: JdbcProfile) {
     }
   }
 
-  def listOwners(agoraEntity: AgoraEntity): ReadAction[Seq[String]] = {
+  def listOwners(agoraEntity: AgoraEntity): ReadWriteAction[Seq[String]] = {
     withPermissionNotFoundException("Couldn't find any managers.") {
       val permissionsQuery = for {
         entity <- entities if entity.alias === alias(agoraEntity)
@@ -135,7 +135,7 @@ abstract class PermissionsClient(profile: JdbcProfile) {
     }
   }
 
-  def listPermissions(agoraEntity: AgoraEntity): ReadAction[Seq[AccessControl]] = {
+  def listPermissions(agoraEntity: AgoraEntity): ReadWriteAction[Seq[AccessControl]] = {
     withPermissionNotFoundException("Could not list permissions") {
       // Construct query
       val permissionsQuery = for {

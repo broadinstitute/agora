@@ -204,5 +204,4 @@ class PermissionBusiness(permissionsDataSource: PermissionsDataSource)(implicit 
       op(filteredPerms)
     }
   }
-
 }

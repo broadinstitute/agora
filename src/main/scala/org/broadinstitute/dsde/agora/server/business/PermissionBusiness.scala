@@ -65,33 +65,52 @@ class PermissionBusiness(permissionsDataSource: PermissionsDataSource)(implicit 
 
   def listEntityPermissions(entity: AgoraEntity, requester: String): Future[Seq[AccessControl]] = {
     permissionsDataSource.inTransaction { db =>
-
+      authEntityRequester(db, entity, requester) {
+        db.aePerms.listEntityPermissions(entity)
+      }
     }
-    authorizeEntityRequester(entity, requester)
-    AgoraEntityPermissionsClient.listEntityPermissions(entity)
   }
 
-  def insertEntityPermission(entity: AgoraEntity, requester: String, accessObject: AccessControl): Int = {
-    authorizeEntityRequester(entity, requester, accessObject)
-    AgoraEntityPermissionsClient.insertEntityPermission(entity, accessObject)
+  def insertEntityPermission(entity: AgoraEntity, requester: String, accessObject: AccessControl): Future[Int] = {
+    permissionsDataSource.inTransaction { db =>
+      authEntityRequester(db, entity, requester, accessObject) {
+        db.aePerms.insertEntityPermission(entity, accessObject)
+      }
+    }
   }
 
-  def batchEntityPermission(entity: AgoraEntity, requester: String, accessObjectList: List[AccessControl]): Int = {
-    // Batch authorize, then batch insert.
-    accessObjectList.foreach(accessObject => authorizeEntityRequester(entity, requester, accessObject))
-    accessObjectList.map(accessObject => AgoraEntityPermissionsClient.insertEntityPermission(entity, accessObject)).sum
+  def batchEntityPermission(entity: AgoraEntity, requester: String, accessObjectList: List[AccessControl]): Future[Int] = {
+    def authOne(db: DataAccess, accessObject: AccessControl) = {
+      authEntityRequester(db, entity, requester, accessObject) {
+        DBIOAction.successful()
+      }
+    }
+    permissionsDataSource.inTransaction { db =>
+      // Batch authorize, then batch insert.
+      DBIOAction.sequence( accessObjectList.map(accessObject => authOne(db, accessObject)) ) andThen
+        DBIOAction.sequence( accessObjectList.map(accessObject => db.aePerms.insertEntityPermission(entity, accessObject)) ) map { _.sum }
+    }
   }
 
-  def editEntityPermission(entity: AgoraEntity, requester: String, accessObject: AccessControl): Int = {
-    authorizeEntityRequester(entity, requester, accessObject)
-    AgoraEntityPermissionsClient.editEntityPermission(entity, accessObject)
-
+  def editEntityPermission(entity: AgoraEntity, requester: String, accessObject: AccessControl): Future[Int] = {
+    permissionsDataSource.inTransaction { db =>
+      authEntityRequester(db, entity, requester, accessObject) {
+        db.aePerms.editEntityPermission(entity, accessObject)
+      }
+    }
   }
 
-  def deleteEntityPermission(entity: AgoraEntity, requester: String, userToRemove: String): Int = {
-    checkSameRequester(requester, userToRemove)
-    authorizeEntityRequester(entity, requester)
-    AgoraEntityPermissionsClient.deleteEntityPermission(entity, userToRemove)
+  def deleteEntityPermission(entity: AgoraEntity, requester: String, userToRemove: String): Future[Int] = {
+    Try(checkSameRequester(requester, userToRemove)) match {
+      case Failure(regret) => Future.failed(regret)
+      case Success(_) => {
+        permissionsDataSource.inTransaction { db =>
+          authEntityRequester(db, entity, requester) {
+            db.aePerms.deleteEntityPermission(entity, userToRemove)
+          }
+        }
+      }
+    }
   }
 
 

@@ -121,26 +121,22 @@ class PermissionBusiness(permissionsDataSource: PermissionsDataSource)(implicit 
   private def authNamespaceRequester[T](db: DataAccess, entity: AgoraEntity, requester: String, accessObject: AccessControl)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
     withNamespaceACLs(db, entity, requester) { namespaceACLs =>
       checkSameRequesterAndPermissions(namespaceACLs.find(acl => acl.user.equals(requester)), accessObject)
-      Try(authorizeNamespaceRequester(namespaceACLs, entity, requester)) match {
-        case Success(_) => op
-        case Failure(regret) => DBIOAction.failed(regret)
-      }
+      authorizeNamespaceRequester(db, namespaceACLs, entity, requester) flatMap { _ => op }
     }
   }
 
   private def authNamespaceRequester[T](db: DataAccess, entity: AgoraEntity, requester: String)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
     withNamespaceACLs(db, entity, requester) { namespaceACLs =>
-      Try( authorizeNamespaceRequester(namespaceACLs, entity, requester) ) match {
-        case Success(_) => op
-        case Failure(regret) => DBIOAction.failed(regret)
-      }
+      authorizeNamespaceRequester(db, namespaceACLs, entity, requester) flatMap { _ => op }
     }
 
   }
 
-  private def authorizeNamespaceRequester(acls: Seq[AccessControl], entity: AgoraEntity, requester: String): Unit = {
-    if (!acls.exists(_.roles.canManage))
-      throw NamespaceAuthorizationException(AgoraPermissions(Manage), entity, requester)
+  private def authorizeNamespaceRequester(db: DataAccess, acls: Seq[AccessControl], entity: AgoraEntity, requester: String): ReadWriteAction[Unit] = {
+    db.nsPerms.addUserIfNotInDatabase(requester) map { _ =>
+      if (!acls.exists(_.roles.canManage))
+        throw NamespaceAuthorizationException(AgoraPermissions(Manage), entity, requester)
+    }
   }
 
   /**
@@ -150,25 +146,21 @@ class PermissionBusiness(permissionsDataSource: PermissionsDataSource)(implicit 
   private def authEntityRequester[T](db: DataAccess, entity: AgoraEntity, requester: String, accessObject: AccessControl)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
     withEntityACLs(db, entity, requester) { entityACLs =>
       checkSameRequesterAndPermissions(entityACLs.find(acl => acl.user.equals(requester)), accessObject)
-      Try(authorizeEntityRequester(entityACLs, entity, requester)) match {
-        case Success(_) => op
-        case Failure(regret) => DBIOAction.failed(regret)
-      }
+      authorizeEntityRequester(db, entityACLs, entity, requester) flatMap { _ => op }
     }
   }
 
   private def authEntityRequester[T](db: DataAccess, entity: AgoraEntity, requester: String)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
     withEntityACLs(db, entity, requester) { entityACLs =>
-      Try( authorizeEntityRequester(entityACLs, entity, requester) ) match {
-        case Success(_) => op
-        case Failure(regret) => DBIOAction.failed(regret)
-      }
+      authorizeEntityRequester(db, entityACLs, entity, requester) flatMap { _ => op }
     }
   }
 
-  private def authorizeEntityRequester(acls: Seq[AccessControl], entity: AgoraEntity, requester: String): Unit = {
-    if (!acls.exists(_.roles.canManage))
-      throw AgoraEntityAuthorizationException(AgoraPermissions(Manage), entity, requester)
+  private def authorizeEntityRequester(db: DataAccess, acls: Seq[AccessControl], entity: AgoraEntity, requester: String): ReadWriteAction[Unit] = {
+    db.aePerms.addUserIfNotInDatabase(requester) map { _ =>
+      if (!acls.exists(_.roles.canManage))
+        throw AgoraEntityAuthorizationException(AgoraPermissions(Manage), entity, requester)
+    }
   }
 
   private def checkSameRequester(requester: String, userToModify: String):Unit = {

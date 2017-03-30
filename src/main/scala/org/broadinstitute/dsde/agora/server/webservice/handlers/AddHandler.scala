@@ -1,17 +1,17 @@
 package org.broadinstitute.dsde.agora.server.webservice.handlers
 
 import akka.actor.Actor
-import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
+import org.broadinstitute.dsde.agora.server.business.{AgoraBusiness, PermissionBusiness}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
-import org.broadinstitute.dsde.agora.server.webservice.PerRequest.RequestComplete
+import org.broadinstitute.dsde.agora.server.webservice.PerRequest.{PerRequestMessage, RequestComplete}
 import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages
 import spray.http.StatusCodes._
 import spray.httpx.SprayJsonSupport._
 import spray.routing.RequestContext
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * AddHandler is an actor that receives web service requests and calls AgoraBusiness logic.
@@ -21,6 +21,7 @@ import scala.concurrent.ExecutionContext
 class AddHandler(dataSource: PermissionsDataSource)(implicit ec: ExecutionContext) extends Actor {
   implicit val system = context.system
 
+  val permissionBusiness = new PermissionBusiness(dataSource)(ec)
   val agoraBusiness = new AgoraBusiness(dataSource)(ec)
 
   def receive = {
@@ -29,7 +30,10 @@ class AddHandler(dataSource: PermissionsDataSource)(implicit ec: ExecutionContex
       context.stop(self)
   }
 
-  private def add(requestContext: RequestContext, agoraEntity: AgoraEntity, username: String): Unit = {
-    context.parent ! RequestComplete(Created, agoraBusiness.insert(agoraEntity, username))
+  private def add(requestContext: RequestContext, agoraEntity: AgoraEntity, username: String): Future[PerRequestMessage] = {
+    permissionBusiness.addUserIfNotInDatabase(username) flatMap {
+      context.parent ! RequestComplete(Created, agoraBusiness.insert(agoraEntity, username))
+    }
+
   }
 }

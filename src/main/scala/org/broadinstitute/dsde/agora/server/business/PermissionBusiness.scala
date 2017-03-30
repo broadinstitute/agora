@@ -12,6 +12,12 @@ import scala.util.{Failure, Success, Try}
 
 class PermissionBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: ExecutionContext) {
 
+  def addUserIfNotInDatabase(username: String): Future[Unit] = {
+    permissionsDataSource.inTransaction { db =>
+      db.aePerms.addUserIfNotInDatabase(username) map { _ => () }
+    }
+  }
+
   def listNamespacePermissions(entity: AgoraEntity, requester: String): Future[Seq[AccessControl]] = {
     permissionsDataSource.inTransaction { db =>
       authNamespaceRequester(db, entity, requester) {
@@ -133,7 +139,8 @@ class PermissionBusiness(permissionsDataSource: PermissionsDataSource)(implicit 
   }
 
   private def authorizeNamespaceRequester(db: DataAccess, acls: Seq[AccessControl], entity: AgoraEntity, requester: String): ReadWriteAction[Unit] = {
-    db.nsPerms.addUserIfNotInDatabase(requester) map { _ =>
+    //NOTE: The use of aePerms here seems wrong, but it's not!
+    db.aePerms.addUserIfNotInDatabase(requester) map { _ =>
       if (!acls.exists(_.roles.canManage))
         throw NamespaceAuthorizationException(AgoraPermissions(Manage), entity, requester)
     }

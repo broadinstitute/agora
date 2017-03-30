@@ -114,7 +114,6 @@ trait QuerySingleHelper extends BaseRoute {
                               onlyPayload: Boolean,
                               path: String,
                               queryHandler: Props): Unit = {
-    addUserIfNotInDatabase(username)
     val entityTypes = AgoraEntityType.byPath(path)
     val message = QuerySingle(context, entity, entityTypes, username, onlyPayload)
 
@@ -126,7 +125,6 @@ trait QuerySingleHelper extends BaseRoute {
                             username: String,
                             path: String,
                             queryHandler: Props): Unit = {
-    addUserIfNotInDatabase(username)
     val entityTypes = AgoraEntityType.byPath(path)
     val message = Delete(context, entity, entityTypes, username)
 
@@ -177,7 +175,6 @@ trait QueryRouteHelper extends BaseRoute {
                              username: String,
                              path: String,
                              queryHandler: Props): Unit = {
-    addUserIfNotInDatabase(username)
     val entity = entityFromParams(params)
     val entityType = AgoraEntityType.byPath(path)
     val projection = projectionFromParams(params)
@@ -204,7 +201,6 @@ trait AddRouteHelper extends BaseRoute {
                              username: String,
                              path: String,
                              addHandler: Props ) = {
-    addUserIfNotInDatabase(username)
     val entityWithType = AgoraEntityType.byPath(path) match {
       case AgoraEntityType.Configuration => entity.addEntityType(Option(AgoraEntityType.Configuration))
       case _ => entity

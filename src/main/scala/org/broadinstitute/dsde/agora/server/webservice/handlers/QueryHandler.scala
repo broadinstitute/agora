@@ -1,13 +1,15 @@
 package org.broadinstitute.dsde.agora.server.webservice.handlers
 
 import akka.actor.Actor
-import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
+import org.broadinstitute.dsde.agora.server.business.{AgoraBusiness, PermissionBusiness}
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection, AgoraEntityType}
 import org.broadinstitute.dsde.agora.server.webservice.PerRequest._
 import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages._
 import spray.httpx.SprayJsonSupport._
 import spray.routing.RequestContext
+
+import scala.concurrent.Future
 
 /**
  * QueryHandler is an actor that receives web service requests and calls AgoraBusiness logic.
@@ -18,6 +20,7 @@ class QueryHandler extends Actor {
   implicit val system = context.system
 
   val agoraBusiness = new AgoraBusiness()
+  val permissionBusiness = new PermissionBusiness()
 
   def receive = {
     case QuerySingle(requestContext: RequestContext,
@@ -48,27 +51,33 @@ class QueryHandler extends Actor {
             entity: AgoraEntity,
             entityTypes: Seq[AgoraEntityType.EntityType],
             username: String,
-            onlyPayload: Boolean): Unit = {
-    val foundEntity = agoraBusiness.findSingle(entity, entityTypes, username: String)
-    if (onlyPayload) context.parent ! RequestComplete(foundEntity.payload)
-    else context.parent ! RequestComplete(foundEntity)
+            onlyPayload: Boolean): Future[PerRequestMessage] = {
+    permissionBusiness.addUserIfNotInDatabase(username) flatMap {
+      val foundEntity = agoraBusiness.findSingle(entity, entityTypes, username: String)
+      if (onlyPayload) context.parent ! RequestComplete(foundEntity.payload)
+      else context.parent ! RequestComplete(foundEntity)
+    }
   }
 
   def query(requestContext: RequestContext,
             agoraSearch: AgoraEntity,
             agoraProjection: Option[AgoraEntityProjection],
             entityTypes: Seq[AgoraEntityType.EntityType],
-            username: String): Unit = {
-    val entities = agoraBusiness.find(agoraSearch, agoraProjection, entityTypes, username)
-    context.parent ! RequestComplete(entities)
+            username: String): Future[PerRequestMessage] = {
+    permissionBusiness.addUserIfNotInDatabase(username) flatMap {
+      val entities = agoraBusiness.find(agoraSearch, agoraProjection, entityTypes, username)
+      context.parent ! RequestComplete(entities)
+    }
   }
 
   def delete(requestContext: RequestContext,
               entity: AgoraEntity,
               entityTypes: Seq[AgoraEntityType.EntityType],
-              username: String): Unit = {
-    val rowsDeleted = agoraBusiness.delete(entity, entityTypes, username)
-    context.parent ! RequestComplete(rowsDeleted.toString)
+              username: String): Future[PerRequestMessage] = {
+    permissionBusiness.addUserIfNotInDatabase(username) flatMap {
+      val rowsDeleted = agoraBusiness.delete(entity, entityTypes, username)
+      context.parent ! RequestComplete(rowsDeleted.toString)
+    }
   }
 
 }

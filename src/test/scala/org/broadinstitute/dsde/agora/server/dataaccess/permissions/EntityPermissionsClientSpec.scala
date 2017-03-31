@@ -42,15 +42,15 @@ class EntityPermissionsClientSpec extends FlatSpec with ScalaFutures with Before
 
   "Agora" should "add entity permissions." in {
 
-    val counts = runInDB { db =>
-      DBIOAction.sequence(Seq(
-        db.aePerms.insertEntityPermission(foundTestEntity1, AccessControl(foundTestEntity1.owner.get, AgoraPermissions(All))),
-        db.aePerms.insertEntityPermission(foundTestEntity2, AccessControl(foundTestEntity2.owner.get, AgoraPermissions(All)))
-      ))
+    val insertCount1 = runInDB { db =>
+      db.aePerms.insertEntityPermission(foundTestEntity1, AccessControl(foundTestEntity1.owner.get, AgoraPermissions(All)))
+    }
+    val insertCount2 = runInDB { db =>
+      db.aePerms.insertEntityPermission(foundTestEntity2, AccessControl(foundTestEntity2.owner.get, AgoraPermissions(All)))
     }
 
-    assert(counts(1) == 1)
-    assert(counts(2) == 1)
+    assert(insertCount1 == 1)
+    assert(insertCount2 == 1)
   }
 
   "Agora" should "should silently add a user to the db if not already there." in {

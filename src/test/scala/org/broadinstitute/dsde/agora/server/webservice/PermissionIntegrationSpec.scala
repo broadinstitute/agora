@@ -22,16 +22,15 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
     def actorRefFactory: ActorSystem = system
   }
 
-  val methodsService = new MethodsService() with ActorRefFactoryContext
-  val agoraBusiness = new AgoraBusiness()
+  val methodsService = new MethodsService(permsDataSource) with ActorRefFactoryContext
 
   var agoraEntity1: AgoraEntity = _
   var agoraEntity2: AgoraEntity = _
 
   override def beforeAll(): Unit = {
     ensureDatabasesAreRunning()
-    agoraEntity1 = agoraBusiness.insert(testIntegrationEntity, mockAuthenticatedOwner.get)
-    agoraEntity2 = agoraBusiness.insert(testIntegrationEntity2, owner2.get)
+    agoraEntity1 = patiently(agoraBusiness.insert(testIntegrationEntity, mockAuthenticatedOwner.get))
+    agoraEntity2 = patiently(agoraBusiness.insert(testIntegrationEntity2, owner2.get))
   }
 
   override def afterAll(): Unit = {

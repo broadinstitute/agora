@@ -15,6 +15,8 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 trait AgoraTestFixture {
+  import scala.concurrent.ExecutionContext.Implicits.global
+
   val timeout = 10.seconds
   var db: Database = _
   var permsDataSource: PermissionsDataSource = _
@@ -62,7 +64,6 @@ trait AgoraTestFixture {
   }
 
   private def createTableIfNotExists(tables: TableQuery[_ <: Table[_]]*) = {
-    import scala.concurrent.ExecutionContext.Implicits.global
     Future.sequence(
       tables map { table =>
         db.run(MTable.getTables(table.baseTableRow.tableName)).flatMap { result =>
@@ -77,7 +78,6 @@ trait AgoraTestFixture {
   }
 
   private def deleteFromTableIfExists(tables: TableQuery[_ <: Table[_]]*): Future[Seq[AnyVal]] = {
-    import scala.concurrent.ExecutionContext.Implicits.global
     Future.sequence(
       tables map { table =>
         db.run(MTable.getTables(table.baseTableRow.tableName)).flatMap { result =>

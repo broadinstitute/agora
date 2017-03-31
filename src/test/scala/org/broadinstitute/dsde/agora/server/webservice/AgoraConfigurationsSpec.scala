@@ -3,9 +3,9 @@ package org.broadinstitute.dsde.agora.server.webservice
 
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraEntityPermissionsClient, AgoraPermissions}
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraPermissions}
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
-import org.broadinstitute.dsde.agora.server.model.{AgoraEntityType, AgoraEntity}
+import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
 import org.scalatest.DoNotDiscover
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
@@ -13,6 +13,8 @@ import spray.http.StatusCodes._
 import spray.httpx.SprayJsonSupport._
 import spray.httpx.unmarshalling._
 import spray.routing.ValidationRejection
+
+import scala.concurrent.Future
 
 @DoNotDiscover
 class AgoraConfigurationsSpec extends ApiServiceSpec {
@@ -23,13 +25,16 @@ class AgoraConfigurationsSpec extends ApiServiceSpec {
 
   override def beforeAll() = {
     ensureDatabasesAreRunning()
-    method1 = agoraBusiness.insert(testEntity1, mockAuthenticatedOwner.get)
-    testEntityToBeRedacted2WithId = agoraBusiness.insert(testEntityToBeRedacted2, mockAuthenticatedOwner.get)
-    testAgoraConfigurationToBeRedactedWithId = agoraBusiness.insert(testAgoraConfigurationToBeRedacted, mockAuthenticatedOwner.get)
-    agoraBusiness.insert(testEntity2, mockAuthenticatedOwner.get)
-    agoraBusiness.insert(testAgoraConfigurationEntity, mockAuthenticatedOwner.get)
-    agoraBusiness.insert(testAgoraConfigurationEntity2, mockAuthenticatedOwner.get)
-    agoraBusiness.insert(testAgoraConfigurationEntity3, mockAuthenticatedOwner.get)
+    method1 = patiently(agoraBusiness.insert(testEntity1, mockAuthenticatedOwner.get))
+    testEntityToBeRedacted2WithId = patiently(agoraBusiness.insert(testEntityToBeRedacted2, mockAuthenticatedOwner.get))
+    testAgoraConfigurationToBeRedactedWithId = patiently(agoraBusiness.insert(testAgoraConfigurationToBeRedacted, mockAuthenticatedOwner.get))
+
+    patiently(Future.sequence(Seq(
+      agoraBusiness.insert(testEntity2, mockAuthenticatedOwner.get),
+      agoraBusiness.insert(testAgoraConfigurationEntity, mockAuthenticatedOwner.get),
+      agoraBusiness.insert(testAgoraConfigurationEntity2, mockAuthenticatedOwner.get),
+      agoraBusiness.insert(testAgoraConfigurationEntity3, mockAuthenticatedOwner.get)
+    )))
   }
 
   override def afterAll() = {
@@ -113,7 +118,9 @@ class AgoraConfigurationsSpec extends ApiServiceSpec {
 
   "Agora" should "not allow you to post a new configuration if you don't have permission to read the method that it references" in {
     val noPermission = new AccessControl(AgoraConfig.mockAuthenticatedUserEmail, AgoraPermissions(AgoraPermissions.Nothing))
-    AgoraEntityPermissionsClient.editEntityPermission(method1, noPermission)
+    runInDB { db =>
+      db.aePerms.editEntityPermission(method1, noPermission)
+    }
     Post(ApiUtil.Configurations.withLeadingVersion, testAgoraConfigurationEntity3) ~>
       configurationsService.postRoute ~> check {
         assert(status === NotFound)

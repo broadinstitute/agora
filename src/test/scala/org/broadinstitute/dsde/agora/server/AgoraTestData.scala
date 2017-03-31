@@ -3,6 +3,8 @@ package org.broadinstitute.dsde.agora.server
 import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
 
+import scala.concurrent.Future
+
 object AgoraTestData {
   def getBigDocumentation: String = {
     // Read contents of a test markdown file into a single string.
@@ -641,20 +643,23 @@ object AgoraTestData {
   )
 
   def populateDatabase(agoraBusiness: AgoraBusiness) = {
-    agoraBusiness.insert(testEntity1, mockAuthenticatedOwner.get)
-    agoraBusiness.insert(testEntity2, mockAuthenticatedOwner.get)
-    agoraBusiness.insert(testEntity3, mockAuthenticatedOwner.get)
-    agoraBusiness.insert(testEntity4, mockAuthenticatedOwner.get)
-    agoraBusiness.insert(testEntity5, mockAuthenticatedOwner.get)
-    agoraBusiness.insert(testEntity6, mockAuthenticatedOwner.get)
-    agoraBusiness.insert(testEntity7, mockAuthenticatedOwner.get)
-    agoraBusiness.insert(testEntityTaskWc, mockAuthenticatedOwner.get)
-    agoraBusiness.insert(testAgoraConfigurationEntity, mockAuthenticatedOwner.get)
-    agoraBusiness.insert(testAgoraConfigurationEntity2, mockAuthenticatedOwner.get)
-    agoraBusiness.insert(testEntityToBeRedacted, mockAuthenticatedOwner.get)
-    agoraBusiness.insert(testEntityToBeRedacted2, mockAuthenticatedOwner.get)
-    agoraBusiness.insert(testEntityToBeRedacted3, mockAuthenticatedOwner.get)
-    agoraBusiness.insert(testAgoraConfigurationToBeRedacted, mockAuthenticatedOwner.get)
+    import scala.concurrent.ExecutionContext.Implicits.global
+    Future.sequence( Seq(
+      agoraBusiness.insert(testEntity1, mockAuthenticatedOwner.get),
+      agoraBusiness.insert(testEntity2, mockAuthenticatedOwner.get),
+      agoraBusiness.insert(testEntity3, mockAuthenticatedOwner.get),
+      agoraBusiness.insert(testEntity4, mockAuthenticatedOwner.get),
+      agoraBusiness.insert(testEntity5, mockAuthenticatedOwner.get),
+      agoraBusiness.insert(testEntity6, mockAuthenticatedOwner.get),
+      agoraBusiness.insert(testEntity7, mockAuthenticatedOwner.get),
+      agoraBusiness.insert(testEntityTaskWc, mockAuthenticatedOwner.get),
+      agoraBusiness.insert(testAgoraConfigurationEntity, mockAuthenticatedOwner.get),
+      agoraBusiness.insert(testAgoraConfigurationEntity2, mockAuthenticatedOwner.get),
+      agoraBusiness.insert(testEntityToBeRedacted, mockAuthenticatedOwner.get),
+      agoraBusiness.insert(testEntityToBeRedacted2, mockAuthenticatedOwner.get),
+      agoraBusiness.insert(testEntityToBeRedacted3, mockAuthenticatedOwner.get),
+      agoraBusiness.insert(testAgoraConfigurationToBeRedacted, mockAuthenticatedOwner.get)
+    ))
   }
 
 }

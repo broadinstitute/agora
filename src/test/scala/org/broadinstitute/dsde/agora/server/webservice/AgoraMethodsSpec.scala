@@ -27,14 +27,14 @@ class AgoraMethodsSpec extends ApiServiceSpec {
 
   override def beforeAll() = {
     ensureDatabasesAreRunning()
-    testEntity1WithId = agoraBusiness.insert(testEntity1, mockAuthenticatedOwner.get)
-    testEntity2WithId = agoraBusiness.insert(testEntity2, mockAuthenticatedOwner.get)
-    testEntity3WithId = agoraBusiness.insert(testEntity3, mockAuthenticatedOwner.get)
-    testEntity4WithId = agoraBusiness.insert(testEntity4, mockAuthenticatedOwner.get)
-    testEntity5WithId = agoraBusiness.insert(testEntity5, mockAuthenticatedOwner.get)
-    testEntity6WithId = agoraBusiness.insert(testEntity6, mockAuthenticatedOwner.get)
-    testEntity7WithId = agoraBusiness.insert(testEntity7, mockAuthenticatedOwner.get)
-    testEntityToBeRedactedWithId = agoraBusiness.insert(testEntityToBeRedacted, mockAuthenticatedOwner.get)
+    testEntity1WithId = patiently(agoraBusiness.insert(testEntity1, mockAuthenticatedOwner.get))
+    testEntity2WithId = patiently(agoraBusiness.insert(testEntity2, mockAuthenticatedOwner.get))
+    testEntity3WithId = patiently(agoraBusiness.insert(testEntity3, mockAuthenticatedOwner.get))
+    testEntity4WithId = patiently(agoraBusiness.insert(testEntity4, mockAuthenticatedOwner.get))
+    testEntity5WithId = patiently(agoraBusiness.insert(testEntity5, mockAuthenticatedOwner.get))
+    testEntity6WithId = patiently(agoraBusiness.insert(testEntity6, mockAuthenticatedOwner.get))
+    testEntity7WithId = patiently(agoraBusiness.insert(testEntity7, mockAuthenticatedOwner.get))
+    testEntityToBeRedactedWithId = patiently(agoraBusiness.insert(testEntityToBeRedacted, mockAuthenticatedOwner.get))
   }
 
   override def afterAll() = {

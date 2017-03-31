@@ -138,21 +138,20 @@ class EntityPermissionsClientSpec extends FlatSpec with ScalaFutures with Before
   }
 
   "Agora" should "allow public methods to be accessible" in {
-    agoraBusiness.findSingle(testEntityWithPublicPermissionsWithId, Seq(testEntityWithPublicPermissions.entityType.get), owner2.get)
-    assert(1 === 1) //test passes as long as findSingle does not throw permissions error
+    patiently(agoraBusiness.findSingle(testEntityWithPublicPermissionsWithId, Seq(testEntityWithPublicPermissions.entityType.get), owner2.get))
   }
 
   "Agora" should "allow batch permission edits" in {
     val accessObject1 = new AccessControl(owner1.get, AgoraPermissions(AgoraPermissions.All))
     val accessObject2 = new AccessControl(owner2.get, AgoraPermissions(AgoraPermissions.Nothing))
-    val rowsEditted = permissionBusiness.batchEntityPermission(testBatchPermissionEntity, mockAuthenticatedOwner.get, List(accessObject1, accessObject2))
-    assert(rowsEditted === 2)
+    val rowsEditted = patiently(permissionBusiness.batchEntityPermission(testBatchPermissionEntity, mockAuthenticatedOwner.get, List(accessObject1, accessObject2)))
+    assert(rowsEditted == 2)
   }
 
   "Agora" should "prevent a user from overwriting their own entity permission" in {
     val accessObject = new AccessControl(mockAuthenticatedOwner.get, AgoraPermissions(AgoraPermissions.Nothing))
     val exception = intercept[PermissionModificationException] {
-      permissionBusiness.insertEntityPermission(testBatchPermissionEntity, mockAuthenticatedOwner.get, accessObject)
+      patiently(permissionBusiness.insertEntityPermission(testBatchPermissionEntity, mockAuthenticatedOwner.get, accessObject))
     }
     assert(exception != null)
   }
@@ -160,14 +159,14 @@ class EntityPermissionsClientSpec extends FlatSpec with ScalaFutures with Before
   "Agora" should "prevent a user from modifying their own entity permission" in {
     val accessObject = new AccessControl(mockAuthenticatedOwner.get, AgoraPermissions(AgoraPermissions.Nothing))
     val exception = intercept[PermissionModificationException] {
-      permissionBusiness.editEntityPermission(testBatchPermissionEntity, mockAuthenticatedOwner.get, accessObject)
+      patiently(permissionBusiness.editEntityPermission(testBatchPermissionEntity, mockAuthenticatedOwner.get, accessObject))
     }
     assert(exception != null)
   }
 
   "Agora" should "prevent a user from deleting their own entity permission" in {
     val exception = intercept[PermissionModificationException] {
-      permissionBusiness.deleteEntityPermission(testBatchPermissionEntity, mockAuthenticatedOwner.get, mockAuthenticatedOwner.get)
+      patiently(permissionBusiness.deleteEntityPermission(testBatchPermissionEntity, mockAuthenticatedOwner.get, mockAuthenticatedOwner.get))
     }
     assert(exception != null)
   }

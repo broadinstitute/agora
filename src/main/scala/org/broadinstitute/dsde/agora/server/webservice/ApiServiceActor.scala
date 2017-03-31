@@ -50,7 +50,7 @@ class ApiServiceActor(permissionsDataSource: PermissionsDataSource) extends Http
   AgoraConfig.adminGoogleGroup match {
     case Some(group) =>
       import context.dispatcher
-      val adminSweeper = actorRefFactory.actorOf(AdminSweeper.props(AdminSweeper.adminsGoogleGroupPoller))
+      val adminSweeper = actorRefFactory.actorOf(AdminSweeper.props(AdminSweeper.adminsGoogleGroupPoller, permissionsDataSource))
       val adminScheduler =
         context.system.scheduler.schedule(5 seconds, AgoraConfig.adminSweepInterval minutes, adminSweeper, Sweep)
     case None =>

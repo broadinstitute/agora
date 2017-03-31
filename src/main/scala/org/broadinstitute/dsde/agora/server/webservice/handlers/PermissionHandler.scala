@@ -1,29 +1,32 @@
 package org.broadinstitute.dsde.agora.server.webservice.handlers
 
 import akka.actor.Actor
+import akka.pattern._
 import org.broadinstitute.dsde.agora.server.business.PermissionBusiness
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AgoraPermissions, AccessControl}
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraPermissions, PermissionsDataSource}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.PerRequest.RequestComplete
 import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages._
 import spray.routing.RequestContext
 
+import scala.concurrent.ExecutionContext
 
-class PermissionHandler extends Actor {
+
+class PermissionHandler(dataSource: PermissionsDataSource)(implicit ec: ExecutionContext) extends Actor {
 
   // JSON Serialization Support
   import spray.httpx.SprayJsonSupport._
   import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 
   implicit val system = context.system
-  val permissionBusiness = new PermissionBusiness()
+  val permissionBusiness = new PermissionBusiness(dataSource)(ec)
 
   def receive = {
     case ListNamespacePermissions(_context: RequestContext, entity: AgoraEntity, requester: String) =>
-      val permissions = permissionBusiness.listNamespacePermissions(entity, requester)
-      context.parent ! RequestComplete(permissions)
-      context.stop(self)
+      (permissionBusiness.listNamespacePermissions(entity, requester) map { permissions =>
+        RequestComplete(permissions)
+      }) pipeTo context.parent
 
     case InsertNamespacePermission(_context: RequestContext, entity: AgoraEntity, requester: String, userAccess: AccessControl) =>
       val rowsChanged = permissionBusiness.insertNamespacePermission(entity, requester, userAccess)

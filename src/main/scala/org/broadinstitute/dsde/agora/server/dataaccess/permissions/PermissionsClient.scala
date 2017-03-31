@@ -6,7 +6,7 @@ import org.broadinstitute.dsde.agora.server.dataaccess.{ReadAction, ReadWriteAct
 import org.broadinstitute.dsde.agora.server.exceptions.PermissionNotFoundException
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import slick.dbio.DBIOAction
-import slick.dbio.Effect.Read
+import slick.dbio.Effect.{Read, Transactional}
 import slick.jdbc.JdbcProfile
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -50,7 +50,7 @@ abstract class PermissionsClient(profile: JdbcProfile) {
     }
   }
 
-  def updateAdmin(userEmail: String, adminStatus: Boolean) = {
+  def updateAdmin(userEmail: String, adminStatus: Boolean): ReadWriteAction[Int] = {
     withPermissionNotFoundException(s"Could not make user ${userEmail} admin") {
       for {
         _ <- addUserIfNotInDatabase(userEmail)
@@ -285,6 +285,6 @@ abstract class PermissionsClient(profile: JdbcProfile) {
   }
 
   def sqlDBStatus() = {
-    sql"select version();".as[String].transactionally
+    sql"select version();".as[String]
   }
 }

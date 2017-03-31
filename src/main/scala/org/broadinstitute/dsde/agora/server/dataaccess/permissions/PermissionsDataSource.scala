@@ -13,6 +13,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 class DataAccess(profile: JdbcProfile) {
   val nsPerms = new NamespacePermissionsClient(profile)
   val aePerms = new AgoraEntityPermissionsClient(profile)
+  val admPerms = new AdminPermissionsClient(profile)
 }
 
 class PermissionsDataSource(databaseConfig: DatabaseConfig[JdbcProfile]) {

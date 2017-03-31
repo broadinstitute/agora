@@ -3,7 +3,6 @@ package org.broadinstitute.dsde.agora.server.webservice.routes
 import akka.actor.Props
 import org.broadinstitute.dsde.agora.server.AgoraConfig.{authenticationDirectives, version}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AccessControl
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraEntityPermissionsClient._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection, AgoraEntityType}
 import org.broadinstitute.dsde.agora.server.webservice.PerRequestCreator
 import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages._

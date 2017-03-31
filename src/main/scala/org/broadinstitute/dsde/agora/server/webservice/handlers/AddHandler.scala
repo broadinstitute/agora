@@ -1,6 +1,7 @@
 package org.broadinstitute.dsde.agora.server.webservice.handlers
 
 import akka.actor.Actor
+import akka.pattern._
 import org.broadinstitute.dsde.agora.server.business.{AgoraBusiness, PermissionBusiness}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
@@ -26,14 +27,12 @@ class AddHandler(dataSource: PermissionsDataSource)(implicit ec: ExecutionContex
 
   def receive = {
     case ServiceMessages.Add(requestContext: RequestContext, agoraAddRequest: AgoraEntity, username: String) =>
-      add(requestContext, agoraAddRequest, username)
-      context.stop(self)
+      add(requestContext, agoraAddRequest, username) pipeTo context.parent
   }
 
   private def add(requestContext: RequestContext, agoraEntity: AgoraEntity, username: String): Future[PerRequestMessage] = {
-    permissionBusiness.addUserIfNotInDatabase(username) flatMap {
-      context.parent ! RequestComplete(Created, agoraBusiness.insert(agoraEntity, username))
+    permissionBusiness.addUserIfNotInDatabase(username) flatMap { _ =>
+      agoraBusiness.insert(agoraEntity, username) map( RequestComplete(Created, _) )
     }
-
   }
 }

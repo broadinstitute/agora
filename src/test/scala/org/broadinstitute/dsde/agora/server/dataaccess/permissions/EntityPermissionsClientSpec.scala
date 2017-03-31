@@ -21,6 +21,7 @@ class EntityPermissionsClientSpec extends FlatSpec with ScalaFutures with Before
   var testBatchPermissionEntity: AgoraEntity = _
 
   override def beforeAll(): Unit = {
+    import scala.concurrent.ExecutionContext.Implicits.global
     ensureDatabasesAreRunning()
 
     patiently(Future.sequence(Seq(

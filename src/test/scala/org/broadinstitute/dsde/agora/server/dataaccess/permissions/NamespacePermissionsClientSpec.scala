@@ -16,6 +16,7 @@ class NamespacePermissionsClientSpec extends FlatSpec with ScalaFutures with Bef
   var testBatchPermissionEntityWithId: AgoraEntity = _
 
   override def beforeAll(): Unit = {
+    import scala.concurrent.ExecutionContext.Implicits.global
     ensureDatabasesAreRunning()
     patiently(Future.sequence(Seq(
       agoraBusiness.insert(testEntity1, mockAuthenticatedOwner.get),

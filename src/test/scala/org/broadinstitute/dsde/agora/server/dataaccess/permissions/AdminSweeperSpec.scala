@@ -28,10 +28,14 @@ class AdminSweeperSpec(_system: ActorSystem) extends TestKit(_system) with WordS
     "be able to synchronize it's list of admins via the AdminSweeper" in {
     addAdminUser()
 
-    val adminSweeper = TestActorRef(AdminSweeper.props(AdminSweeperSpec.getMockAdminsList))
+    val adminSweeper = TestActorRef(AdminSweeper.props(AdminSweeperSpec.getMockAdminsList, permsDataSource))
     within(30 seconds) {
       adminSweeper ! Sweep
-      awaitAssert(AdminPermissionsClient.listAdminUsers === AdminSweeperSpec.getMockAdminsList)
+      awaitAssert{
+        runInDB { db =>
+          db.admPerms.listAdminUsers
+        } == AdminSweeperSpec.getMockAdminsList
+      }
     }
   }
 

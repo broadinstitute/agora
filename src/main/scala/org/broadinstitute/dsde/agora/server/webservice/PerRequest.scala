@@ -1,6 +1,7 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
 
+import akka.actor.Status.Failure
 import akka.actor.SupervisorStrategy.Stop
 import akka.actor.{OneForOneStrategy, _}
 import com.typesafe.scalalogging.slf4j.LazyLogging
@@ -46,6 +47,7 @@ trait PerRequest extends Actor with LazyLogging {
     case RequestComplete_(response, marshaller) => complete(response)(marshaller)
     case RequestCompleteWithHeaders_(response, headers, marshaller) => complete(response, headers: _*)(marshaller)
     case ReceiveTimeout => complete(GatewayTimeout)
+    case Failure(t) => handleException(t)
     case x =>
       system.log.error("Unsupported response message sent to PerRequest actor: " + Option(x).getOrElse("null").toString)
       complete(InternalServerError)
@@ -64,34 +66,33 @@ trait PerRequest extends Actor with LazyLogging {
 
   override val supervisorStrategy =
     OneForOneStrategy(loggingEnabled = AgoraConfig.supervisorLogging) {
+      case e => {
+        handleException(e)
+        Stop
+      }
+    }
+
+  def handleException(t: Throwable) = t match {
       //Should make a single Authorization Exception trait to minimize code duplication.
       case e: AgoraEntityAuthorizationException =>
         r.complete(Forbidden, AgoraException(e.getMessage, e.getCause, Forbidden))
-        Stop
       case e: NamespaceAuthorizationException =>
         r.complete(Forbidden, AgoraException(e.getMessage, e.getCause, Forbidden))
-        Stop
       case e: AgoraEntityNotFoundException =>
         r.complete(NotFound, AgoraException(e.getMessage, e.getCause, NotFound))
-        Stop
       case e: DockerImageNotFoundException =>
         r.complete(BadRequest, AgoraException(e.getMessage, e.getCause, BadRequest))
-        Stop
       case e: PermissionNotFoundException =>
         r.complete(BadRequest, AgoraException(e.getMessage, e.getCause, BadRequest))
-        Stop
 //      case e: SyntaxError =>
 //        r.complete(BadRequest, AgoraException(e.getMessage, e.getCause, BadRequest))
 //        Stop
       case e: ValidationException =>
         r.complete(BadRequest,AgoraException(e.getMessage, e.getCause, BadRequest))
-        Stop
       case e: PermissionModificationException =>
         r.complete(BadRequest,AgoraException(e.getMessage, e.getCause, BadRequest))
-        Stop
       case e: AgoraException =>
         r.complete(e.statusCode, e)
-        Stop
       case e: Throwable =>
         logger.error("Exception caught by PerRequest: ", e)
         r.complete(InternalServerError, AgoraException(e.getMessage, e.getCause, InternalServerError))

@@ -24,13 +24,13 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
 
   def routes = namespacePermissionsRoute ~ entityPermissionsRoute ~ querySingleRoute ~ queryRoute ~ postRoute ~ statusRoute
 
-  def queryHandlerProps = Props(classOf[QueryHandler])
+  def queryHandlerProps = Props(classOf[QueryHandler], permissionsDataSource)
 
   def addHandlerProps = Props(classOf[AddHandler], permissionsDataSource)
 
-  def statusHandlerProps = Props(classOf[StatusHandler])
+  def statusHandlerProps = Props(classOf[StatusHandler], permissionsDataSource)
 
-  def permissionHandlerProps = Props(classOf[PermissionHandler])
+  def permissionHandlerProps = Props(classOf[PermissionHandler], permissionsDataSource, executionContext)
 
   def namespacePermissionsRoute =
     matchNamespacePermissionsRoute(path) { (namespace, username) =>

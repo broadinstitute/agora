@@ -20,17 +20,17 @@ class EntityPermissionsClientSpec extends FlatSpec with ScalaFutures with Before
   var testEntityWithPublicPermissionsWithId: AgoraEntity = _
   var testBatchPermissionEntity: AgoraEntity = _
 
+
   override def beforeAll(): Unit = {
     import scala.concurrent.ExecutionContext.Implicits.global
     ensureDatabasesAreRunning()
 
-    patiently(Future.sequence(Seq(
-      agoraBusiness.insert(testEntity1, mockAuthenticatedOwner.get),
-      agoraBusiness.insert(testEntity2, mockAuthenticatedOwner.get),
-      agoraBusiness.insert(testEntityWithPublicPermissions, mockAuthenticatedOwner.get),
-      agoraBusiness.insert(testEntity3, mockAuthenticatedOwner.get),
-      agoraBusiness.insert(testEntity4, mockAuthenticatedOwner.get)
-    )))
+    patiently(agoraBusiness.insert(testEntity1, mockAuthenticatedOwner.get))
+    patiently(agoraBusiness.insert(testEntity2, mockAuthenticatedOwner.get))
+    patiently(agoraBusiness.insert(testEntityWithPublicPermissions, mockAuthenticatedOwner.get))
+    patiently(agoraBusiness.insert(testEntity3, mockAuthenticatedOwner.get))
+    patiently(agoraBusiness.insert(testEntity4, mockAuthenticatedOwner.get))
+
     testEntityWithPublicPermissionsWithId = patiently(agoraBusiness.find(testEntityWithPublicPermissions, None, Seq(testEntityWithPublicPermissions.entityType.get), mockAuthenticatedOwner.get)).head
     foundTestEntity1 = patiently(agoraBusiness.find(testEntity1, None, Seq(testEntity1.entityType.get), mockAuthenticatedOwner.get)).head
     foundTestEntity2 = patiently(agoraBusiness.find(testEntity2, None, Seq(testEntity2.entityType.get), mockAuthenticatedOwner.get)).head

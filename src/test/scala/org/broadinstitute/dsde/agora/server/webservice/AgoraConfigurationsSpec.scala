@@ -29,12 +29,10 @@ class AgoraConfigurationsSpec extends ApiServiceSpec {
     testEntityToBeRedacted2WithId = patiently(agoraBusiness.insert(testEntityToBeRedacted2, mockAuthenticatedOwner.get))
     testAgoraConfigurationToBeRedactedWithId = patiently(agoraBusiness.insert(testAgoraConfigurationToBeRedacted, mockAuthenticatedOwner.get))
 
-    patiently(Future.sequence(Seq(
-      agoraBusiness.insert(testEntity2, mockAuthenticatedOwner.get),
-      agoraBusiness.insert(testAgoraConfigurationEntity, mockAuthenticatedOwner.get),
-      agoraBusiness.insert(testAgoraConfigurationEntity2, mockAuthenticatedOwner.get),
-      agoraBusiness.insert(testAgoraConfigurationEntity3, mockAuthenticatedOwner.get)
-    )))
+    patiently(agoraBusiness.insert(testEntity2, mockAuthenticatedOwner.get))
+    patiently(agoraBusiness.insert(testAgoraConfigurationEntity, mockAuthenticatedOwner.get))
+    patiently(agoraBusiness.insert(testAgoraConfigurationEntity2, mockAuthenticatedOwner.get))
+    patiently(agoraBusiness.insert(testAgoraConfigurationEntity3, mockAuthenticatedOwner.get))
   }
 
   override def afterAll() = {

@@ -1,7 +1,7 @@
 package org.broadinstitute.dsde.agora.server.business
 
 import org.broadinstitute.dsde.agora.server.exceptions.{AgoraEntityNotFoundException, NamespaceAuthorizationException, ValidationException}
-import org.broadinstitute.dsde.agora.server.dataaccess.{AgoraDao, ReadWriteAction, WriteAction}
+import org.broadinstitute.dsde.agora.server.dataaccess.{AgoraDao, ReadAction, ReadWriteAction, WriteAction}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{entities, _}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.model.{AgoraApiJsonSupport, AgoraEntity, AgoraEntityProjection, AgoraEntityType}
@@ -35,10 +35,11 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
   }
 
   private def createNamespaceIfNonexistent(db: DataAccess, entity: AgoraEntity, entityWithId: AgoraEntity, userAccess: AccessControl): ReadWriteAction[Unit] = {
-    db.nsPerms.doesEntityExists(entity) map { exists =>
-      if(exists) {
-        db.nsPerms.addEntity(entity) andThen
-          db.nsPerms.insertNamespacePermission(entityWithId, userAccess)
+    db.nsPerms.doesEntityExists(entity) flatMap { exists =>
+      if(!exists) {
+        db.nsPerms.addEntity(entity) flatMap { _ =>
+          db.nsPerms.insertNamespacePermission(entityWithId, userAccess) map { _ => () }
+        }
       } else {
         DBIO.successful(())
       }

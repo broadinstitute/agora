@@ -8,6 +8,7 @@ import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import slick.dbio.DBIOAction
 import slick.dbio.Effect.{Read, Transactional}
 import slick.jdbc.JdbcProfile
+import slick.sql.FixedSqlStreamingAction
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -136,6 +137,18 @@ abstract class PermissionsClient(profile: JdbcProfile) {
 
       permissionsQuery.result
     }
+  }
+
+  def dumpUsers(): ReadWriteAction[Seq[UserDao]] = {
+    users.result
+  }
+
+  def dumpEntities(): ReadWriteAction[Seq[EntityDao]] = {
+    entities.result
+  }
+
+  def dumpPermissions(): ReadWriteAction[Seq[PermissionDao]] = {
+    permissions.result
   }
 
   def listPermissions(agoraEntity: AgoraEntity): ReadWriteAction[Seq[AccessControl]] = {

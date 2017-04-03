@@ -1,5 +1,6 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
+import akka.actor.ActorSystem
 import org.broadinstitute.dsde.agora.server.AgoraTestFixture
 import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
@@ -12,8 +13,12 @@ import spray.httpx.unmarshalling._
 import spray.routing.{Directives, ExceptionHandler, MalformedRequestContentRejection, RejectionHandler}
 import spray.testkit.ScalatestRouteTest
 
+import scala.concurrent.duration._
+
 @DoNotDiscover
 class ApiServiceSpec extends FlatSpec with Directives with ScalatestRouteTest with AgoraTestFixture {
+
+  implicit val routeTestTimeout = RouteTestTimeout(5.seconds)
 
   val wrapWithExceptionHandler = handleExceptions(ExceptionHandler {
     case e: IllegalArgumentException => complete(BadRequest, e.getMessage)

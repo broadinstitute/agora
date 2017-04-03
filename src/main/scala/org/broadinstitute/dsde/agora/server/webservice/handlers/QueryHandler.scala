@@ -18,7 +18,7 @@ import scala.concurrent.{ExecutionContext, Future}
  * It then handles the returns from the business layer and completes the request. It is responsible for querying the
  * methods repository for methods and method configurations.
  */
-class QueryHandler(dataSource: PermissionsDataSource)(implicit ec: ExecutionContext) extends Actor {
+class QueryHandler(dataSource: PermissionsDataSource, implicit val ec: ExecutionContext) extends Actor {
   implicit val system = context.system
 
   val agoraBusiness = new AgoraBusiness(dataSource)(ec)

@@ -15,7 +15,7 @@ import spray.routing.RequestContext
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class StatusHandler(dataSource: PermissionsDataSource)(implicit ec: ExecutionContext) extends Actor {
+class StatusHandler(dataSource: PermissionsDataSource, implicit val ec: ExecutionContext) extends Actor {
   implicit val system = context.system
 
   val agoraStatus = new AgoraDBStatus(dataSource)(ec)

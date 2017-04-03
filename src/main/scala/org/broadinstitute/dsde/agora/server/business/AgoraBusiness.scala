@@ -14,8 +14,24 @@ import scala.util.{Failure, Success, Try}
 
 class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: ExecutionContext) {
 
-  private def checkNamespacePermission[T](db: DataAccess, agoraEntity: AgoraEntity, username: String, permLevel: AgoraPermissions)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
-    DBIO.sequence(Seq(db.nsPerms.getNamespacePermission(agoraEntity, username), db.nsPerms.getNamespacePermission(agoraEntity, "public"))) flatMap { namespacePerms =>
+  //Creates a fake extra permission with the desired permission level conditional on checkAdmin and the user being an admin
+  private def makeDummyAdminPermission(checkAdmin: Boolean, permClient: PermissionsClient, username: String, permLevel: AgoraPermissions) = {
+    if(checkAdmin) {
+      permClient.isAdmin(username) map {
+        case true => permLevel
+        case false => AgoraPermissions(Nothing)
+      }
+    } else {
+      DBIO.successful(AgoraPermissions(Nothing))
+    }
+  }
+
+  private def checkNamespacePermission[T](db: DataAccess, agoraEntity: AgoraEntity, username: String, permLevel: AgoraPermissions, checkAdmin: Boolean = false)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
+    //if we're supposed to check if the user is an admin, create a fake action
+    val admAction = makeDummyAdminPermission(checkAdmin, db.nsPerms, username, permLevel)
+
+    DBIO.sequence(Seq(db.nsPerms.getNamespacePermission(agoraEntity, username), db.nsPerms.getNamespacePermission(agoraEntity, "public"), admAction)) flatMap { namespacePerms =>
+      db.nsPerms.isAdmin(username)
       if (!namespacePerms.exists(_.hasPermission(permLevel))) {
         DBIO.failed(NamespaceAuthorizationException(permLevel, agoraEntity, username))
       } else {
@@ -126,7 +142,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     }
 
     permissionsDataSource.inTransaction { db =>
-      checkNamespacePermission(db, agoraEntity, username, AgoraPermissions(Redact)) {
+      checkNamespacePermission(db, agoraEntity, username, AgoraPermissions(Redact), checkAdmin = true) { //admins can redact anything
         DBIO.sequence(configurations map { config => db.aePerms.deleteAllPermissions(config) }) andThen
           db.aePerms.deleteAllPermissions(agoraEntity)
       }

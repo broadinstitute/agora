@@ -14,7 +14,7 @@ class AgoraBusinessTest extends FlatSpec with Matchers with BeforeAndAfterAll wi
 
   override protected def beforeAll() = {
     ensureDatabasesAreRunning()
-    agoraBusiness.insert(testEntityToBeRedacted3, mockAuthenticatedOwner.get)
+    patiently(agoraBusiness.insert(testEntityToBeRedacted3, mockAuthenticatedOwner.get))
   }
 
   override protected def afterAll() = {

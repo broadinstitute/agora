@@ -19,7 +19,7 @@ import scala.concurrent.{ExecutionContext, Future}
  * It then handles the returns from the business layer and completes the request. It is responsible for adding a method
  * or method configuration to the methods repository.
  */
-class AddHandler(dataSource: PermissionsDataSource)(implicit ec: ExecutionContext) extends Actor {
+class AddHandler(dataSource: PermissionsDataSource, implicit val ec: ExecutionContext) extends Actor {
   implicit val system = context.system
 
   val permissionBusiness = new PermissionBusiness(dataSource)(ec)

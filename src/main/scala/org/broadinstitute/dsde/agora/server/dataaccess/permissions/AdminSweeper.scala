@@ -34,8 +34,10 @@ object AdminSweeper {
  * Intended to be run via a scheduler from the parent actor
  * TODO- Implement bulk transactions for better scalability. Currently runs a DB transaction for each user whose admin status needs changing.
  */
-class AdminSweeper(pollAdmins: () => List[String], permissionsDataSource: PermissionsDataSource)(implicit ec: ExecutionContext) extends Actor {
+class AdminSweeper(pollAdmins: () => List[String], permissionsDataSource: PermissionsDataSource) extends Actor {
   import AdminSweeper.Sweep
+  implicit val executionContext = scala.concurrent.ExecutionContext.Implicits.global
+
   def receive = {
     case Sweep => synchronizeAdmins
   }

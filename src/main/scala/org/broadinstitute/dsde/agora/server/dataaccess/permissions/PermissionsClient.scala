@@ -1,18 +1,13 @@
 package org.broadinstitute.dsde.agora.server.dataaccess.permissions
 
 import AgoraPermissions._
-import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.dataaccess.{ReadAction, ReadWriteAction, WriteAction}
 import org.broadinstitute.dsde.agora.server.exceptions.PermissionNotFoundException
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
-import slick.dbio.DBIOAction
-import slick.dbio.Effect.{Read, Transactional}
 import slick.jdbc.JdbcProfile
-import slick.sql.FixedSqlStreamingAction
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import slick.driver.MySQLDriver
 import scala.util.{Failure, Success, Try}
 
 abstract class PermissionsClient(profile: JdbcProfile) {

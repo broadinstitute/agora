@@ -92,24 +92,6 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     }
   }
 
-  def delete(agoraEntity: AgoraEntity, entityTypes: Seq[AgoraEntityType.EntityType], username: String): Future[Int] = {
-    //list of associated configurations. Goes to Mongo so we do it outside the sql txn
-    val configurations = if (entityTypes equals AgoraEntityType.MethodTypes) {
-      val dao = AgoraDao.createAgoraDao(entityTypes)
-      val entityWithId = dao.findSingle(agoraEntity.namespace.get, agoraEntity.name.get, agoraEntity.snapshotId.get)
-      dao.findConfigurations(entityWithId.id.get)
-    } else {
-      Seq()
-    }
-
-    permissionsDataSource.inTransaction { db =>
-      checkNamespacePermission(db, agoraEntity, username, AgoraPermissions(Redact), checkAdmin = true) { //admins can redact anything
-        DBIO.sequence(configurations map { config => db.aePerms.deleteAllPermissions(config) }) andThen
-          db.aePerms.deleteAllPermissions(agoraEntity)
-      }
-    }
-  }
-
   def insert(agoraEntity: AgoraEntity, username: String): Future[AgoraEntity] = {
     //this goes to Mongo, so do this outside the permissions txn
     val configReferencedMethodOpt = agoraEntity.entityType.get match {
@@ -144,6 +126,24 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
             }
           }
         }
+      }
+    }
+  }
+
+  def delete(agoraEntity: AgoraEntity, entityTypes: Seq[AgoraEntityType.EntityType], username: String): Future[Int] = {
+    //list of associated configurations. Goes to Mongo so we do it outside the sql txn
+    val configurations = if (entityTypes equals AgoraEntityType.MethodTypes) {
+      val dao = AgoraDao.createAgoraDao(entityTypes)
+      val entityWithId = dao.findSingle(agoraEntity.namespace.get, agoraEntity.name.get, agoraEntity.snapshotId.get)
+      dao.findConfigurations(entityWithId.id.get)
+    } else {
+      Seq()
+    }
+
+    permissionsDataSource.inTransaction { db =>
+      checkNamespacePermission(db, agoraEntity, username, AgoraPermissions(Redact), checkAdmin = true) { //admins can redact anything
+        DBIO.sequence(configurations map { config => db.aePerms.deleteAllPermissions(config) }) andThen
+          db.aePerms.deleteAllPermissions(agoraEntity)
       }
     }
   }

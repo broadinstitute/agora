@@ -292,11 +292,8 @@ abstract class PermissionsClient(profile: JdbcProfile) {
     } yield entity
 
     entitiesThatUserCanReadQuery.result map { entitiesThatCanBeRead =>
-      entitiesThatCanBeRead.map(_.alias)
-    } map { aliasedAgoraEntitiesWithReadPermissions =>
-      agoraEntities.filter(agoraEntity =>
-        aliasedAgoraEntitiesWithReadPermissions.contains(alias(agoraEntity))
-      )
+      val aliasedAgoraEntitiesWithReadPermissions = entitiesThatCanBeRead.map(_.alias) //this map is a seq map, not a dbio map
+      agoraEntities.filter(agoraEntity => aliasedAgoraEntitiesWithReadPermissions.contains(alias(agoraEntity)))
     }
   }
 

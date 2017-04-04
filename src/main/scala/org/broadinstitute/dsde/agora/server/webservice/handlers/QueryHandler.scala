@@ -37,15 +37,13 @@ class QueryHandler(dataSource: PermissionsDataSource, implicit val ec: Execution
                agoraProjection: Option[AgoraEntityProjection],
                entityTypes: Seq[AgoraEntityType.EntityType],
                username: String) =>
-      query(requestContext, agoraSearch, agoraProjection, entityTypes, username)
-      context.stop(self)
+      query(requestContext, agoraSearch, agoraProjection, entityTypes, username) pipeTo context.parent
 
     case Delete(requestContext: RequestContext,
                 entity: AgoraEntity,
                 entityTypes: Seq[AgoraEntityType.EntityType],
                 username: String) =>
-      delete(requestContext, entity, entityTypes, username)
-      context.stop(self)
+      delete(requestContext, entity, entityTypes, username) pipeTo context.parent
   }
 
   def query(requestContext: RequestContext,

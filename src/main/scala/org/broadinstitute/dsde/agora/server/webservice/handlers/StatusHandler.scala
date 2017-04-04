@@ -24,7 +24,6 @@ class StatusHandler(dataSource: PermissionsDataSource, implicit val ec: Executio
   def receive = {
     case ServiceMessages.Status(requestContext: RequestContext) =>
       getStatus(requestContext) pipeTo context.parent
-      context.stop(self)
   }
 
   private def getStatus(requestContext: RequestContext): Future[PerRequestMessage] = {

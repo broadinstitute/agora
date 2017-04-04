@@ -17,7 +17,7 @@ class AgoraServiceStatusSpec extends ApiServiceSpec {
   }
 
   // our test sql db is H2, which doesn't allow us to check for version
-  it should "should not actually be able to test the sql db" in {
+  it should "not actually be able to test the sql db" in {
     Get(s"/status") ~> apiStatusService.statusRoute ~>
       check {
         assertResult(StatusCodes.InternalServerError) {

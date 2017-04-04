@@ -28,14 +28,14 @@ abstract class PermissionsClient(profile: JdbcProfile) {
   def addUserIfNotInDatabase(userEmail: String): WriteAction[Int] = {
     // Attempts to add user to UserTable and ignores errors if user already exists
     (users += UserDao(userEmail)).asTry flatMap {
-      case Success(a) => DBIO.successful(a)
-      case Failure(regret) => DBIO.successful(0)
+      case Success(count) => DBIO.successful(count)
+      case Failure(_) => DBIO.successful(0)
     }
   }
 
   def isAdmin(userEmail: String): ReadAction[Boolean] = {
-    users.findByEmail(userEmail).result map { aa =>
-      aa.head.isAdmin
+    users.findByEmail(userEmail).result map { users =>
+      users.head.isAdmin
     }
   }
 
@@ -132,18 +132,6 @@ abstract class PermissionsClient(profile: JdbcProfile) {
 
       permissionsQuery.result
     }
-  }
-
-  def dumpUsers(): ReadWriteAction[Seq[UserDao]] = {
-    users.result
-  }
-
-  def dumpEntities(): ReadWriteAction[Seq[EntityDao]] = {
-    entities.result
-  }
-
-  def dumpPermissions(): ReadWriteAction[Seq[PermissionDao]] = {
-    permissions.result
   }
 
   def listPermissions(agoraEntity: AgoraEntity): ReadWriteAction[Seq[AccessControl]] = {

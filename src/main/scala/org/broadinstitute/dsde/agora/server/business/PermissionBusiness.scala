@@ -12,14 +12,6 @@ import scala.util.{Failure, Success, Try}
 
 class PermissionBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: ExecutionContext) {
 
-  /*
-  def addUserIfNotInDatabase(username: String): Future[Unit] = {
-    permissionsDataSource.inTransaction { db =>
-      db.aePerms.addUserIfNotInDatabase(username) map { _ => () }
-    }
-  }
-  */
-
   def listNamespacePermissions(entity: AgoraEntity, requester: String): Future[Seq[AccessControl]] = {
     permissionsDataSource.inTransaction { db =>
       authNamespaceRequester(db, entity, requester) {

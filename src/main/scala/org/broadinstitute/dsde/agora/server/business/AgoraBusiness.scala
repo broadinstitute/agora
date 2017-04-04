@@ -100,29 +100,31 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     }
 
     permissionsDataSource.inTransaction { db =>
-      checkNamespacePermission(db, agoraEntity, username, AgoraPermissions(Create)) {
-        checkValidPayload(agoraEntity, username) {
+      db.aePerms.addUserIfNotInDatabase(username) flatMap { _ =>
+        checkNamespacePermission(db, agoraEntity, username, AgoraPermissions(Create)) {
+          checkValidPayload(agoraEntity, username) {
 
-          //this silliness required to check whether the referenced method is readable if it's a config
-          val entityToInsertAction = configReferencedMethodOpt match {
-            case Some(referencedMethod) =>
-              checkEntityPermission(db, referencedMethod, username, AgoraPermissions(Read)) {
-                DBIO.successful(agoraEntity.addMethodId(referencedMethod.id.get.toHexString))
+            //this silliness required to check whether the referenced method is readable if it's a config
+            val entityToInsertAction = configReferencedMethodOpt match {
+              case Some(referencedMethod) =>
+                checkEntityPermission(db, referencedMethod, username, AgoraPermissions(Read)) {
+                  DBIO.successful(agoraEntity.addMethodId(referencedMethod.id.get.toHexString))
+                }
+              case None => DBIO.successful(agoraEntity)
+            }
+
+            entityToInsertAction flatMap { entityToInsert =>
+              //this goes to mongo inside a SQL transaction :(
+              val entityWithId = AgoraDao.createAgoraDao(entityToInsert.entityType).insert(entityToInsert.addDate())
+              val userAccess = new AccessControl(username, AgoraPermissions(All))
+
+              for {
+                _ <- createNamespaceIfNonexistent(db, agoraEntity, entityWithId, userAccess)
+                _ <- db.aePerms.addEntity(entityWithId)
+                _ <- db.aePerms.insertEntityPermission(entityWithId, userAccess)
+              } yield {
+                entityWithId.addUrl().removeIds()
               }
-            case None => DBIO.successful(agoraEntity)
-          }
-
-          entityToInsertAction flatMap { entityToInsert =>
-            //this goes to mongo inside a SQL transaction :(
-            val entityWithId = AgoraDao.createAgoraDao(entityToInsert.entityType).insert(entityToInsert.addDate())
-            val userAccess = new AccessControl(username, AgoraPermissions(All))
-
-            for {
-              _ <- createNamespaceIfNonexistent(db, agoraEntity, entityWithId, userAccess)
-              _ <- db.aePerms.addEntity(entityWithId)
-              _ <- db.aePerms.insertEntityPermission(entityWithId, userAccess)
-            } yield {
-              entityWithId.addUrl().removeIds()
             }
           }
         }
@@ -141,9 +143,12 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     }
 
     permissionsDataSource.inTransaction { db =>
-      checkNamespacePermission(db, agoraEntity, username, AgoraPermissions(Redact), checkAdmin = true) { //admins can redact anything
-        DBIO.sequence(configurations map { config => db.aePerms.deleteAllPermissions(config) }) andThen
-          db.aePerms.deleteAllPermissions(agoraEntity)
+      db.aePerms.addUserIfNotInDatabase(username) flatMap { _ =>
+        checkNamespacePermission(db, agoraEntity, username, AgoraPermissions(Redact), checkAdmin = true) {
+          //admins can redact anything
+          DBIO.sequence(configurations map { config => db.aePerms.deleteAllPermissions(config) }) andThen
+            db.aePerms.deleteAllPermissions(agoraEntity)
+        }
       }
     }
   }
@@ -158,7 +163,10 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
       .map(entity => entity.addUrl().removeIds())
 
     permissionsDataSource.inTransaction { db =>
-      db.aePerms.filterEntityByRead(entities, username)
+      for {
+        _ <- db.aePerms.addUserIfNotInDatabase(username)
+        entity <- db.aePerms.filterEntityByRead(entities, username)
+      } yield entity
     }
   }
 
@@ -170,9 +178,11 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     val foundEntity = AgoraDao.createAgoraDao(entityTypes).findSingle(namespace, name, snapshotId)
 
     permissionsDataSource.inTransaction { db =>
-      db.aePerms.filterEntityByRead(Seq(foundEntity), username) flatMap {
-        case Seq(ae: AgoraEntity) => db.aePerms.listOwners(foundEntity) map { owners => ae.addUrl().removeIds().addManagers(owners) }
-        case _ => DBIO.failed(AgoraEntityNotFoundException(foundEntity))
+      db.aePerms.addUserIfNotInDatabase(username) flatMap { _ =>
+        db.aePerms.filterEntityByRead(Seq(foundEntity), username) flatMap {
+          case Seq(ae: AgoraEntity) => db.aePerms.listOwners(foundEntity) map { owners => ae.addUrl().removeIds().addManagers(owners) }
+          case _ => DBIO.failed(AgoraEntityNotFoundException(foundEntity))
+        }
       }
     }
   }

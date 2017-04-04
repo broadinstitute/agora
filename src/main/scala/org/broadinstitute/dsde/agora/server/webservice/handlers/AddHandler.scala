@@ -31,8 +31,6 @@ class AddHandler(dataSource: PermissionsDataSource, implicit val ec: ExecutionCo
   }
 
   private def add(requestContext: RequestContext, agoraEntity: AgoraEntity, username: String): Future[PerRequestMessage] = {
-    permissionBusiness.addUserIfNotInDatabase(username) flatMap { _ =>
-      agoraBusiness.insert(agoraEntity, username) map( RequestComplete(Created, _) )
-    }
+    agoraBusiness.insert(agoraEntity, username) map( RequestComplete(Created, _) )
   }
 }

@@ -51,11 +51,9 @@ class QueryHandler(dataSource: PermissionsDataSource, implicit val ec: Execution
             entityTypes: Seq[AgoraEntityType.EntityType],
             username: String,
             onlyPayload: Boolean): Future[PerRequestMessage] = {
-    permissionBusiness.addUserIfNotInDatabase(username) flatMap { _ =>
-      agoraBusiness.findSingle(entity, entityTypes, username: String) map { foundEntity =>
-        if (onlyPayload) RequestComplete(foundEntity.payload)
-        else RequestComplete(foundEntity)
-      }
+    agoraBusiness.findSingle(entity, entityTypes, username: String) map { foundEntity =>
+      if (onlyPayload) RequestComplete(foundEntity.payload)
+      else RequestComplete(foundEntity)
     }
   }
 
@@ -64,10 +62,8 @@ class QueryHandler(dataSource: PermissionsDataSource, implicit val ec: Execution
             agoraProjection: Option[AgoraEntityProjection],
             entityTypes: Seq[AgoraEntityType.EntityType],
             username: String): Future[PerRequestMessage] = {
-    permissionBusiness.addUserIfNotInDatabase(username) flatMap { _ =>
-      agoraBusiness.find(agoraSearch, agoraProjection, entityTypes, username) map { entities =>
-        RequestComplete(entities)
-      }
+    agoraBusiness.find(agoraSearch, agoraProjection, entityTypes, username) map { entities =>
+      RequestComplete(entities)
     }
   }
 
@@ -75,10 +71,8 @@ class QueryHandler(dataSource: PermissionsDataSource, implicit val ec: Execution
               entity: AgoraEntity,
               entityTypes: Seq[AgoraEntityType.EntityType],
               username: String): Future[PerRequestMessage] = {
-    permissionBusiness.addUserIfNotInDatabase(username) flatMap { _ =>
-      agoraBusiness.delete(entity, entityTypes, username) map { rowsDeleted =>
-        RequestComplete(rowsDeleted.toString)
-      }
+    agoraBusiness.delete(entity, entityTypes, username) map { rowsDeleted =>
+      RequestComplete(rowsDeleted.toString)
     }
   }
 

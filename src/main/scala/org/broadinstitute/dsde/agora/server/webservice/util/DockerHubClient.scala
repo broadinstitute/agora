@@ -3,12 +3,12 @@ package org.broadinstitute.dsde.agora.server.webservice.util
 import akka.actor.ActorSystem
 import org.broadinstitute.dsde.agora.server.exceptions.DockerImageNotFoundException
 import spray.client.pipelining._
-import spray.http.HttpResponse
-import spray.http.StatusCodes._
+import spray.http.{HttpResponse, StatusCodes}
 import org.broadinstitute.dsde.agora.server.webservice.util.DockerHubJsonSupport._
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+import scala.util.{Failure, Success}
 
 case class DockerImageReference(user: Option[String], repo: String, tag: String)
 
@@ -26,20 +26,20 @@ object DockerHubClient {
 
   def dcGET(url: String): Future[HttpResponse] = pipeline(Get(url))
 
-  def doesDockerImageExist(dockerImage: DockerImageReference): Boolean = {
-    val dockerImageInfo = dcGET(dockerImageTagUrl(dockerImage))
+  def doesDockerImageExist(dockerImage: DockerImageReference): Future[Boolean] = {
+    val dockerImageInfo: Future[HttpResponse] = dcGET(dockerImageTagUrl(dockerImage))
 
-    val dockerTagExists = dockerImageInfo map { response: HttpResponse =>
-      response.status match {
-        case OK => unmarshal[List[DockerTagInfo]].apply(response).nonEmpty
-        case NotFound => throw new DockerImageNotFoundException(dockerImage)
-        case _ => throw new DockerImageNotFoundException(dockerImage)
+    dockerImageInfo transform(
+      { response: HttpResponse => //on success
+        response.status match {
+          case StatusCodes.OK => unmarshal[List[DockerTagInfo]].apply(response).nonEmpty
+          case StatusCodes.NotFound => throw DockerImageNotFoundException(dockerImage)
+          case _ => throw DockerImageNotFoundException(dockerImage)
+        }
+      }, { exc => //on failure
+        throw DockerImageNotFoundException(dockerImage)
       }
-    }
-
-    dockerImageInfo.onFailure { case _ => throw DockerImageNotFoundException(dockerImage) }
-    val isDockerImageInfoFound = Await.result(dockerTagExists, timeout)
-    isDockerImageInfoFound
+    )
   }
 
   val dockerImageRepositoryBaseUrl = "https://index.docker.io/v1/repositories/"

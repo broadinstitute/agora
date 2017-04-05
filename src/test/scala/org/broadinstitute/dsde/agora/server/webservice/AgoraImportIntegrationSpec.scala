@@ -51,8 +51,8 @@ class AgoraImportIntegrationSpec extends FlatSpec with RouteTest with ScalatestR
         assert(entity.documentation == testAgoraEntityWithValidOfficialDockerImageInWdl.documentation)
         assert(entity.owner == testAgoraEntityWithValidOfficialDockerImageInWdl.owner)
         assert(entity.payload == testAgoraEntityWithValidOfficialDockerImageInWdl.payload)
-        assert(entity.snapshotId !== None)
-        assert(entity.createDate !== None)
+        assert(entity.snapshotId != None)
+        assert(entity.createDate != None)
       })
       assert(status == Created)
     }
@@ -84,8 +84,8 @@ class AgoraImportIntegrationSpec extends FlatSpec with RouteTest with ScalatestR
         assert(entity.documentation == testAgoraEntityWithValidPersonalDockerInWdl.documentation)
         assert(entity.owner == testAgoraEntityWithValidPersonalDockerInWdl.owner)
         assert(entity.payload == testAgoraEntityWithValidPersonalDockerInWdl.payload)
-        assert(entity.snapshotId !== None)
-        assert(entity.createDate !== None)
+        assert(entity.snapshotId != None)
+        assert(entity.createDate != None)
       })
       assert(status == Created)
     }

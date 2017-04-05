@@ -58,8 +58,8 @@ class AgoraImportSpec extends ApiServiceSpec {
         assert(entity.documentation == documentation1)
         assert(entity.owner == owner1)
         assert(entity.payload == payloadReferencingExternalMethod)
-        assert(entity.snapshotId !== None)
-        assert(entity.createDate !== None)
+        assert(entity.snapshotId != None)
+        assert(entity.createDate != None)
       })
       assert(status == Created)
     }
@@ -101,7 +101,7 @@ class AgoraImportSpec extends ApiServiceSpec {
 //    val name = testEntityTaskWcWithId.name.get
 //    val id = testEntityTaskWcWithId.snapshotId.get
 //    val method = ImportResolverHelper.resolve(s"methods://$namespace.$name.$id", agoraBusiness, mockAutheticatedOwner.get)
-//    assert(method !== None)
+//    assert(method != None)
 //    assert(method.namespace.get == namespace)
 //    assert(method.name.get == name)
 //    assert(method.snapshotId.get == id)

@@ -46,22 +46,22 @@ class AgoraConfigurationsSpec extends ApiServiceSpec {
       val referencedMethod = AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(namespace1.get, name1.get, snapshotId1.get)
 
       handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => {
-        assert(entity.namespace === namespace2)
-        assert(entity.name === name1)
-        assert(entity.synopsis === synopsis3)
-        assert(entity.documentation === documentation1)
-        assert(entity.owner === owner1)
-        assert(entity.payload === taskConfigPayload)
-        assert(entity.snapshotId !== None)
-        assert(entity.createDate !== None)
-        assert(referencedMethod.id !== None)
-        assert(entity.method !== None)
+        assert(entity.namespace == namespace2)
+        assert(entity.name == name1)
+        assert(entity.synopsis == synopsis3)
+        assert(entity.documentation == documentation1)
+        assert(entity.owner == owner1)
+        assert(entity.payload == taskConfigPayload)
+        assert(entity.snapshotId.isDefined)
+        assert(entity.createDate.isDefined)
+        assert(referencedMethod.id.isDefined)
+        assert(entity.method.isDefined)
 
         val foundMethod = entity.method.get
-        assert(foundMethod.namespace === namespace1)
-        assert(foundMethod.name === name1)
-        assert(foundMethod.snapshotId === snapshotId1)
-        assert(foundMethod.url !== None)
+        assert(foundMethod.namespace == namespace1)
+        assert(foundMethod.name == name1)
+        assert(foundMethod.snapshotId == snapshotId1)
+        assert(foundMethod.url.isDefined)
       })
     }
   }
@@ -90,25 +90,25 @@ class AgoraConfigurationsSpec extends ApiServiceSpec {
         val methodRef2 = foundConfig2.method.get
         val methodRef3 = foundConfig3.method.get
 
-        assert(methodRef1.namespace !== None)
-        assert(methodRef1.name !== None)
-        assert(methodRef1.snapshotId !== None)
-        assert(methodRef2.namespace !== None)
-        assert(methodRef2.name !== None)
-        assert(methodRef2.snapshotId !== None)
-        assert(methodRef3.namespace !== None)
-        assert(methodRef3.name !== None)
-        assert(methodRef3.snapshotId !== None)
+        assert(methodRef1.namespace.isDefined)
+        assert(methodRef1.name.isDefined)
+        assert(methodRef1.snapshotId.isDefined)
+        assert(methodRef2.namespace.isDefined)
+        assert(methodRef2.name.isDefined)
+        assert(methodRef2.snapshotId.isDefined)
+        assert(methodRef3.namespace.isDefined)
+        assert(methodRef3.name.isDefined)
+        assert(methodRef3.snapshotId.isDefined)
 
-        assert(methodRef1.namespace === method1.namespace)
-        assert(methodRef1.name === method1.name)
-        assert(methodRef1.snapshotId === method1.snapshotId)
-        assert(methodRef2.namespace === method2.namespace)
-        assert(methodRef2.name === method2.name)
-        assert(methodRef2.snapshotId === method2.snapshotId)
-        assert(methodRef3.namespace === method3.namespace)
-        assert(methodRef3.name === method3.name)
-        assert(methodRef3.snapshotId === method3.snapshotId)
+        assert(methodRef1.namespace == method1.namespace)
+        assert(methodRef1.name == method1.name)
+        assert(methodRef1.snapshotId == method1.snapshotId)
+        assert(methodRef2.namespace == method2.namespace)
+        assert(methodRef2.name == method2.name)
+        assert(methodRef2.snapshotId == method2.snapshotId)
+        assert(methodRef3.namespace == method3.namespace)
+        assert(methodRef3.name == method3.name)
+        assert(methodRef3.snapshotId == method3.snapshotId)
       })
 
     }
@@ -121,7 +121,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec {
     }
     Post(ApiUtil.Configurations.withLeadingVersion, testAgoraConfigurationEntity3) ~>
       configurationsService.postRoute ~> check {
-        assert(status === NotFound)
+        assert(status == NotFound)
     }
   }
 
@@ -134,7 +134,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec {
   "Agora" should "not allow you to post a new task to the configurations route" in {
     Post(ApiUtil.Configurations.withLeadingVersion, testEntityTaskWc) ~>
     configurationsService.postRoute ~> check {
-      rejection === ValidationRejection
+      rejection == ValidationRejection
     }
   }
 
@@ -145,7 +145,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec {
       testEntityToBeRedacted2WithId.snapshotId.get) ~>
     methodsService.querySingleRoute ~>
     check {
-      assert(body.asString === "1")
+      assert(body.asString == "1")
     }
   }
 

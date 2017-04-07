@@ -19,6 +19,7 @@ import scala.concurrent.{Await, Future}
 trait AgoraTestFixture {
   import scala.concurrent.ExecutionContext.Implicits.global
 
+  val timeout = 10.seconds
   val db: Database = AgoraConfig.sqlDatabase.db
   val permsDataSource: PermissionsDataSource = new PermissionsDataSource(AgoraConfig.sqlDatabase)
   val agoraBusiness: AgoraBusiness = new AgoraBusiness(permsDataSource)

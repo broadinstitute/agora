@@ -81,17 +81,13 @@ class AgoraPermissionsSpec extends ApiServiceSpec with BeforeAndAfterAll with Ag
     val adminUser = AgoraTestData.adminUser.get
 
     // Set adminUsers's admin status false
-    var noAdminUsers = runInDB { db =>
-      db.admPerms.updateAdmin(adminUser, false) andThen
-      db.admPerms.listAdminUsers
-    }
+    runInDB { db => db.admPerms.updateAdmin(adminUser, false) }
+    var noAdminUsers = runInDB { db => db.admPerms.listAdminUsers }
     assert(noAdminUsers.isEmpty)
 
     // Set adminUsers's admin status true
-    var someAdminUsers = runInDB { db =>
-      db.admPerms.updateAdmin(adminUser, true) andThen
-      db.admPerms.listAdminUsers
-    }
+    runInDB { db => db.admPerms.updateAdmin(adminUser, true) }
+    var someAdminUsers = runInDB { db => db.admPerms.listAdminUsers }
     assert(someAdminUsers.length == 1)
   }
 }

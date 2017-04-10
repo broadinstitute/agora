@@ -13,8 +13,6 @@ import scala.util.{Failure, Success, Try}
 abstract class PermissionsClient(profile: JdbcProfile) {
   import profile.api._
 
-  val timeout = 10.seconds
-
   def alias(entity: AgoraEntity): String
 
   def withPermissionNotFoundException[T](errorString: String = "Could not get permission")( op: => ReadWriteAction[T] ): ReadWriteAction[T] = {

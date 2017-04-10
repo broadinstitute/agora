@@ -47,7 +47,9 @@ trait PerRequest extends Actor with LazyLogging {
     case RequestComplete_(response, marshaller) => complete(response)(marshaller)
     case RequestCompleteWithHeaders_(response, headers, marshaller) => complete(response, headers: _*)(marshaller)
     case ReceiveTimeout => complete(GatewayTimeout)
-    case Failure(t) => handleException(t)
+    case Failure(t) =>
+      handleException(t)
+      stop(self)
     case x =>
       system.log.error("Unsupported response message sent to PerRequest actor: " + Option(x).getOrElse("null").toString)
       complete(InternalServerError)
@@ -64,6 +66,7 @@ trait PerRequest extends Actor with LazyLogging {
     stop(self)
   }
 
+  //strategy for handling
   override val supervisorStrategy =
     OneForOneStrategy(loggingEnabled = AgoraConfig.supervisorLogging) {
       case e => {
@@ -73,31 +76,29 @@ trait PerRequest extends Actor with LazyLogging {
     }
 
   def handleException(t: Throwable) = t match {
-      //Should make a single Authorization Exception trait to minimize code duplication.
-      case e: AgoraEntityAuthorizationException =>
-        r.complete(Forbidden, AgoraException(e.getMessage, e.getCause, Forbidden))
-      case e: NamespaceAuthorizationException =>
-        r.complete(Forbidden, AgoraException(e.getMessage, e.getCause, Forbidden))
-      case e: AgoraEntityNotFoundException =>
-        r.complete(NotFound, AgoraException(e.getMessage, e.getCause, NotFound))
-      case e: DockerImageNotFoundException =>
-        r.complete(BadRequest, AgoraException(e.getMessage, e.getCause, BadRequest))
-      case e: PermissionNotFoundException =>
-        r.complete(BadRequest, AgoraException(e.getMessage, e.getCause, BadRequest))
-//      case e: SyntaxError =>
-//        r.complete(BadRequest, AgoraException(e.getMessage, e.getCause, BadRequest))
-//        Stop
-      case e: ValidationException =>
-        r.complete(BadRequest,AgoraException(e.getMessage, e.getCause, BadRequest))
-      case e: PermissionModificationException =>
-        r.complete(BadRequest,AgoraException(e.getMessage, e.getCause, BadRequest))
-      case e: AgoraException =>
-        r.complete(e.statusCode, e)
-      case e: Throwable =>
-        logger.error("Exception caught by PerRequest: ", e)
-        r.complete(InternalServerError, AgoraException(e.getMessage, e.getCause, InternalServerError))
-        Stop
-    }
+    //Should make a single Authorization Exception trait to minimize code duplication.
+    case e: AgoraEntityAuthorizationException =>
+      r.complete(Forbidden, AgoraException(e.getMessage, e.getCause, Forbidden))
+    case e: NamespaceAuthorizationException =>
+      r.complete(Forbidden, AgoraException(e.getMessage, e.getCause, Forbidden))
+    case e: AgoraEntityNotFoundException =>
+      r.complete(NotFound, AgoraException(e.getMessage, e.getCause, NotFound))
+    case e: DockerImageNotFoundException =>
+      r.complete(BadRequest, AgoraException(e.getMessage, e.getCause, BadRequest))
+    case e: PermissionNotFoundException =>
+      r.complete(BadRequest, AgoraException(e.getMessage, e.getCause, BadRequest))
+    //      case e: SyntaxError =>
+    //        r.complete(BadRequest, AgoraException(e.getMessage, e.getCause, BadRequest))
+    case e: ValidationException =>
+      r.complete(BadRequest,AgoraException(e.getMessage, e.getCause, BadRequest))
+    case e: PermissionModificationException =>
+      r.complete(BadRequest,AgoraException(e.getMessage, e.getCause, BadRequest))
+    case e: AgoraException =>
+      r.complete(e.statusCode, e)
+    case e: Throwable =>
+      logger.error("Exception caught by PerRequest: ", e)
+      r.complete(InternalServerError, AgoraException(e.getMessage, e.getCause, InternalServerError))
+  }
 }
 
 

@@ -2,7 +2,7 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.actor.Props
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraEntityPermissionsClient}
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraEntityPermissionsClient, PermissionsDataSource}
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.handlers.{AddHandler, PermissionHandler, QueryHandler, StatusHandler}
@@ -17,19 +17,20 @@ import spray.routing.{HttpService, RequestContext}
  *
  * Concrete implementations are MethodsService and ConfigurationsService.
  */
-abstract class AgoraService extends HttpService with RouteHelpers {
+abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extends HttpService with RouteHelpers {
+  override implicit val executionContext = scala.concurrent.ExecutionContext.Implicits.global
 
   def path: String
 
   def routes = namespacePermissionsRoute ~ entityPermissionsRoute ~ querySingleRoute ~ queryRoute ~ postRoute ~ statusRoute
 
-  def queryHandlerProps = Props(classOf[QueryHandler])
+  def queryHandlerProps = Props(classOf[QueryHandler], permissionsDataSource, executionContext)
 
-  def addHandlerProps = Props(classOf[AddHandler])
+  def addHandlerProps = Props(classOf[AddHandler], permissionsDataSource, executionContext)
 
-  def statusHandlerProps = Props(classOf[StatusHandler])
+  def statusHandlerProps = Props(classOf[StatusHandler], permissionsDataSource, executionContext)
 
-  def permissionHandlerProps = Props(classOf[PermissionHandler])
+  def permissionHandlerProps = Props(classOf[PermissionHandler], permissionsDataSource, executionContext)
 
   def namespacePermissionsRoute =
     matchNamespacePermissionsRoute(path) { (namespace, username) =>

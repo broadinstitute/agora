@@ -50,6 +50,8 @@ case class AgoraPermissions(permissions: Int) {
     AgoraPermissions(varPermissions.foldLeft(permissions) { (perm1, perm2) => perm1 | perm2 })
   }
 
+  def hasPermission(perm: AgoraPermissions): Boolean = (permissions & perm.permissions) != 0
+
   def canRead: Boolean = (permissions & Read) != 0
 
   def canWrite: Boolean = (permissions & Write) != 0

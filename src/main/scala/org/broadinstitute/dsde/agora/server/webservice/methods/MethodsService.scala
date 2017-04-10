@@ -1,6 +1,7 @@
 package org.broadinstitute.dsde.agora.server.webservice.methods
 
 import com.wordnik.swagger.annotations._
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.AgoraService
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
@@ -11,7 +12,7 @@ import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
  * This file defines a methods path (config) and Swagger annotations.
  */
 
-abstract class MethodsService extends AgoraService {
+abstract class MethodsService(permissionsDataSource: PermissionsDataSource) extends AgoraService(permissionsDataSource) {
   override def path = ApiUtil.Methods.path
 
   override def querySingleRoute = super.querySingleRoute

@@ -1,14 +1,16 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
+import java.security.Permissions
+
 import akka.actor.SupervisorStrategy.Restart
 import akka.actor.{OneForOneStrategy, Props}
 import com.gettyimages.spray.swagger.SwaggerHttpService
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import com.wordnik.swagger.model.ApiInfo
 import org.broadinstitute.dsde.agora.server.AgoraConfig
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AdminSweeper, PermissionsDataSource}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AdminSweeper
-import AdminSweeper.Sweep
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AdminSweeper
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AdminSweeper.Sweep
 import org.broadinstitute.dsde.agora.server.webservice.configurations.ConfigurationsService
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
 import org.parboiled.common.FileUtils
@@ -21,10 +23,10 @@ import scala.concurrent.duration._
 import scala.reflect.runtime.universe._
 
 object ApiServiceActor {
-  def props: Props = Props(classOf[ApiServiceActor])
+  def props(permissionsDataSource: PermissionsDataSource): Props = Props(classOf[ApiServiceActor], permissionsDataSource)
 }
 
-class ApiServiceActor extends HttpServiceActor with LazyLogging {
+class ApiServiceActor(permissionsDataSource: PermissionsDataSource) extends HttpServiceActor with LazyLogging {
 
   override def actorRefFactory = context
 
@@ -48,14 +50,14 @@ class ApiServiceActor extends HttpServiceActor with LazyLogging {
   AgoraConfig.adminGoogleGroup match {
     case Some(group) =>
       import context.dispatcher
-      val adminSweeper = actorRefFactory.actorOf(AdminSweeper.props(AdminSweeper.adminsGoogleGroupPoller))
+      val adminSweeper = actorRefFactory.actorOf(AdminSweeper.props(AdminSweeper.adminsGoogleGroupPoller, permissionsDataSource))
       val adminScheduler =
         context.system.scheduler.schedule(5 seconds, AgoraConfig.adminSweepInterval minutes, adminSweeper, Sweep)
     case None =>
   }
 
-  val methodsService = new MethodsService() with ActorRefFactoryContext
-  val configurationsService = new ConfigurationsService() with ActorRefFactoryContext
+  val methodsService = new MethodsService(permissionsDataSource) with ActorRefFactoryContext
+  val configurationsService = new ConfigurationsService(permissionsDataSource) with ActorRefFactoryContext
 
   def withResourceFileContents(path: String)(innerRoute: String => Route): Route =
     innerRoute( FileUtils.readAllTextFromResource(path) )

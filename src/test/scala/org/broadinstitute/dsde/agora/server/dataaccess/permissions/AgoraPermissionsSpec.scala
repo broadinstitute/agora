@@ -19,75 +19,75 @@ class AgoraPermissionsSpec extends ApiServiceSpec with BeforeAndAfterAll with Ag
 
   "Agora" should "return true if someone has read access and we ask if they have read access " in {
     val authorization = AgoraPermissions(Read)
-    assert(authorization.canRead === true)
+    assert(authorization.canRead)
   }
 
   "Agora" should "return true if someone has read and write access and we ask if they have read access " in {
     val authorization = AgoraPermissions(ReadWrite)
-    assert(authorization.canRead === true)
+    assert(authorization.canRead)
   }
 
   "Agora" should "return false if someone has read access and we ask if they have write access " in {
     val authorization = AgoraPermissions(Read)
-    assert(authorization.canWrite === false)
+    assert(!authorization.canWrite)
   }
 
   "Agora" should "return true for all permissions if they have full access" in {
     val authorization = AgoraPermissions(All)
-    assert(authorization.canRead === true)
-    assert(authorization.canWrite === true)
-    assert(authorization.canCreate === true)
-    assert(authorization.canRedact === true)
-    assert(authorization.canManage === true)
+    assert(authorization.canRead)
+    assert(authorization.canWrite)
+    assert(authorization.canCreate)
+    assert(authorization.canRedact)
+    assert(authorization.canManage)
   }
 
   "Agora" should "be able to construct authorizations using var arg permissions" in {
     val authorization = new AgoraPermissions(Read, Write, Redact)
-    assert(authorization.canRead === true)
-    assert(authorization.canWrite === true)
-    assert(authorization.canRedact === true)
-    assert(authorization.canCreate === false)
-    assert(authorization.canManage === false)
+    assert(authorization.canRead)
+    assert(authorization.canWrite)
+    assert(authorization.canRedact)
+    assert(!authorization.canCreate)
+    assert(!authorization.canManage)
   }
 
   "Agora" should "be able to remove permissions from authorization using var arg permissions" in {
     val authorization = new AgoraPermissions(All)
     val newAuthorization = authorization.removePermissions(Write, Create)
-    assert(newAuthorization.canRead === true)
-    assert(newAuthorization.canWrite === false)
-    assert(newAuthorization.canRedact === true)
-    assert(newAuthorization.canCreate === false)
-    assert(newAuthorization.canManage === true)
+    assert(newAuthorization.canRead)
+    assert(!newAuthorization.canWrite)
+    assert(newAuthorization.canRedact)
+    assert(!newAuthorization.canCreate)
+    assert(newAuthorization.canManage)
   }
 
   "Agora" should "be able to add permissions from an authorization using var arg permissions" in {
     val authorization = new AgoraPermissions(Read)
     val newAuthorization = authorization.addPermissions(Write, Create)
-    assert(newAuthorization.canRead === true)
-    assert(newAuthorization.canWrite === true)
-    assert(newAuthorization.canRedact === false)
-    assert(newAuthorization.canCreate === true)
-    assert(newAuthorization.canManage === false)
+    assert(newAuthorization.canRead)
+    assert(newAuthorization.canWrite)
+    assert(!newAuthorization.canRedact)
+    assert(newAuthorization.canCreate)
+    assert(!newAuthorization.canManage)
   }
 
   "Agora" should "be able to list admins" in {
     addAdminUser()
-    val adminUsers = AdminPermissionsClient.listAdminUsers
-    assert(adminUsers.length === 1)
-    assert(adminUsers.head === AgoraTestData.adminUser.get)
+    val adminUsers = runInDB { db => db.admPerms.listAdminUsers }
+    assert(adminUsers.length == 1)
+    assert(adminUsers.head == AgoraTestData.adminUser.get)
   }
 
   "Agora" should "be able to update the admin status of a user" in {
     val adminUser = AgoraTestData.adminUser.get
 
     // Set adminUsers's admin status false
-    AdminPermissionsClient.updateAdmin(adminUser, false)
-    var adminUsers = AdminPermissionsClient.listAdminUsers
-    assert(adminUsers.length === 0)
+    runInDB { db => db.admPerms.updateAdmin(adminUser, false) }
+    var noAdminUsers = runInDB { db => db.admPerms.listAdminUsers }
+    assert(noAdminUsers.isEmpty)
 
     // Set adminUsers's admin status true
-    AdminPermissionsClient.updateAdmin(adminUser, true)
-    adminUsers = AdminPermissionsClient.listAdminUsers
-    assert(adminUsers.length === 1)
+    runInDB { db => db.admPerms.updateAdmin(adminUser, true) }
+    var someAdminUsers = runInDB { db => db.admPerms.listAdminUsers }
+    assert(someAdminUsers.length == 1)
   }
 }

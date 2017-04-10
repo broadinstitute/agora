@@ -3,11 +3,14 @@ package org.broadinstitute.dsde.agora.server.dataaccess.permissions
 import akka.actor.{Actor, Props}
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.webservice.util.GoogleApiUtils
-import com.google.api.services.admin.directory.model.Member
+import slick.dbio.Effect.{Read, Write}
+import slick.dbio.{DBIOAction, NoStream}
+
 import scala.collection.JavaConversions._
+import scala.concurrent.{ExecutionContext, Future}
 
 object AdminSweeper {
-  def props(pollFunction: () => List[String]): Props = Props(classOf[AdminSweeper], pollFunction)
+  def props(pollFunction: () => List[String], permissionsDataSource: PermissionsDataSource): Props = Props(classOf[AdminSweeper], pollFunction, permissionsDataSource)
 
   case class Sweep()
 
@@ -31,30 +34,33 @@ object AdminSweeper {
  * Intended to be run via a scheduler from the parent actor
  * TODO- Implement bulk transactions for better scalability. Currently runs a DB transaction for each user whose admin status needs changing.
  */
-class AdminSweeper(pollAdmins: () => List[String]) extends Actor {
+class AdminSweeper(pollAdmins: () => List[String], permissionsDataSource: PermissionsDataSource) extends Actor {
   import AdminSweeper.Sweep
+  implicit val executionContext = scala.concurrent.ExecutionContext.Implicits.global
+
   def receive = {
     case Sweep => synchronizeAdmins
   }
-  def synchronizeAdmins: Unit = {
+  def synchronizeAdmins: Future[List[Int]] = {
     // get expected and observed admins lists
     val trueAdmins: List[String] = pollAdmins()
-    val currentAdmins = AdminPermissionsClient.listAdminUsers
 
-    // Difference the lists
-    val newAdmins = trueAdmins.filterNot(currentAdmins.toSet)
-    val adminsToDelete = currentAdmins.filterNot(trueAdmins.toSet)
+    permissionsDataSource.inTransaction { db =>
+      db.admPerms.listAdminUsers flatMap { currentAdmins =>
+        // Difference the lists
+        val newAdmins = trueAdmins.filterNot(currentAdmins.toSet)
+        val adminsToDelete = currentAdmins.filterNot(trueAdmins.toSet)
 
-    // Update our user table to reflect list differences
-    for (newAdmin <- newAdmins) {
-      println(newAdmin)
-      AdminPermissionsClient.updateAdmin(newAdmin, true)
-    }
+        // Update our user table to reflect list differences
+        val updateActions = newAdmins map { newAdmin =>
+          db.admPerms.updateAdmin(newAdmin, true)
+        }
+        val deleteActions = adminsToDelete map { adminToDelete =>
+          db.admPerms.updateAdmin(adminToDelete, false)
+        }
 
-    for (adminToDelete <- adminsToDelete) {
-      AdminPermissionsClient.updateAdmin(adminToDelete, false)
+        DBIOAction.sequence(updateActions ++ deleteActions)
+      }
     }
   }
-
-
 }

@@ -27,14 +27,14 @@ class AgoraMethodsSpec extends ApiServiceSpec {
 
   override def beforeAll() = {
     ensureDatabasesAreRunning()
-    testEntity1WithId = agoraBusiness.insert(testEntity1, mockAuthenticatedOwner.get)
-    testEntity2WithId = agoraBusiness.insert(testEntity2, mockAuthenticatedOwner.get)
-    testEntity3WithId = agoraBusiness.insert(testEntity3, mockAuthenticatedOwner.get)
-    testEntity4WithId = agoraBusiness.insert(testEntity4, mockAuthenticatedOwner.get)
-    testEntity5WithId = agoraBusiness.insert(testEntity5, mockAuthenticatedOwner.get)
-    testEntity6WithId = agoraBusiness.insert(testEntity6, mockAuthenticatedOwner.get)
-    testEntity7WithId = agoraBusiness.insert(testEntity7, mockAuthenticatedOwner.get)
-    testEntityToBeRedactedWithId = agoraBusiness.insert(testEntityToBeRedacted, mockAuthenticatedOwner.get)
+    testEntity1WithId = patiently(agoraBusiness.insert(testEntity1, mockAuthenticatedOwner.get))
+    testEntity2WithId = patiently(agoraBusiness.insert(testEntity2, mockAuthenticatedOwner.get))
+    testEntity3WithId = patiently(agoraBusiness.insert(testEntity3, mockAuthenticatedOwner.get))
+    testEntity4WithId = patiently(agoraBusiness.insert(testEntity4, mockAuthenticatedOwner.get))
+    testEntity5WithId = patiently(agoraBusiness.insert(testEntity5, mockAuthenticatedOwner.get))
+    testEntity6WithId = patiently(agoraBusiness.insert(testEntity6, mockAuthenticatedOwner.get))
+    testEntity7WithId = patiently(agoraBusiness.insert(testEntity7, mockAuthenticatedOwner.get))
+    testEntityToBeRedactedWithId = patiently(agoraBusiness.insert(testEntityToBeRedacted, mockAuthenticatedOwner.get))
   }
 
   override def afterAll() = {
@@ -44,8 +44,8 @@ class AgoraMethodsSpec extends ApiServiceSpec {
   "Agora" should "return information about a method, including metadata " in {
     Get(ApiUtil.Methods.withLeadingVersion + "/" + namespace1.get + "/" + name1.get + "/"
       + testEntity1WithId.snapshotId.get) ~> methodsService.querySingleRoute ~> check {
-      handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => assert(entity === testEntity1WithId))
-      assert(status === OK)
+      handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => assert(entity == testEntity1WithId))
+      assert(status == OK)
     }
   }
 
@@ -53,15 +53,15 @@ class AgoraMethodsSpec extends ApiServiceSpec {
     Get(ApiUtil.Methods.withLeadingVersion + "/" + namespace1.get + "/" + name1.get + "/"
       + testEntity1WithId.snapshotId.get + "?onlyPayload=true") ~> methodsService.querySingleRoute ~>
       check {
-        assert(status === OK)
-        assert(mediaType === `text/plain`)
+        assert(status == OK)
+        assert(mediaType == `text/plain`)
       }
   }
 
   "Agora" should "return status 404, mediaType json when nothing matches query by namespace, name, snapshotId" in {
     Get(ApiUtil.Methods.withLeadingVersion + "/foofoofoofoo/foofoofoo/99999"
     ) ~> methodsService.querySingleRoute ~> check {
-      assert(status === NotFound)
+      assert(status == NotFound)
     }
   }
 
@@ -71,9 +71,9 @@ class AgoraMethodsSpec extends ApiServiceSpec {
       handleError(
         entity.as[Seq[AgoraEntity]],
         (entities: Seq[AgoraEntity]) =>
-          assert(entities.toSet === brief(Seq(testEntity3WithId, testEntity4WithId, testEntity5WithId, testEntity6WithId, testEntity7WithId)).toSet)
+          assert(entities.toSet == brief(Seq(testEntity3WithId, testEntity4WithId, testEntity5WithId, testEntity6WithId, testEntity7WithId)).toSet)
       )
-      assert(status === OK)
+      assert(status == OK)
     }
   }
 
@@ -85,9 +85,9 @@ class AgoraMethodsSpec extends ApiServiceSpec {
         handleError(
           entity.as[Seq[AgoraEntity]],
           (entities: Seq[AgoraEntity]) =>
-            assert(entities.toSet === brief(Seq(testEntity1WithId, testEntity2WithId, testEntity3WithId, testEntity6WithId, testEntity7WithId)).toSet)
+            assert(entities.toSet == brief(Seq(testEntity1WithId, testEntity2WithId, testEntity3WithId, testEntity6WithId, testEntity7WithId)).toSet)
         )
-        assert(status === OK)
+        assert(status == OK)
       }
   }
 
@@ -99,7 +99,7 @@ class AgoraMethodsSpec extends ApiServiceSpec {
         handleError(
           entity.as[Seq[AgoraEntity]],
           (entities: Seq[AgoraEntity]) =>
-            assert(entities.toSet === brief(Seq(testEntity1WithId, testEntity3WithId, testEntity4WithId, testEntity5WithId)).toSet)
+            assert(entities.toSet == brief(Seq(testEntity1WithId, testEntity3WithId, testEntity4WithId, testEntity5WithId)).toSet)
         )
       }
   }
@@ -108,23 +108,23 @@ class AgoraMethodsSpec extends ApiServiceSpec {
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity) ~>
       methodsService.postRoute ~> check {
       handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => {
-        assert(entity.namespace === namespace3)
-        assert(entity.name === name1)
-        assert(entity.synopsis === synopsis1)
-        assert(entity.documentation === documentation1)
-        assert(entity.owner === owner1)
-        assert(entity.payload === payload1)
-        assert(entity.snapshotId !== None)
-        assert(entity.createDate !== None)
+        assert(entity.namespace == namespace3)
+        assert(entity.name == name1)
+        assert(entity.synopsis == synopsis1)
+        assert(entity.documentation == documentation1)
+        assert(entity.owner == owner1)
+        assert(entity.payload == payload1)
+        assert(entity.snapshotId.isDefined)
+        assert(entity.createDate.isDefined)
       })
-      assert(status === Created)
+      assert(status == Created)
     }
   }
 
   "Agora" should "return a 201 created when posting a malformed payload" in {
     Post(ApiUtil.Methods.withLeadingVersion, testBadAgoraEntity) ~>
       methodsService.postRoute ~> check {
-      assert(status === Created)
+      assert(status == Created)
 //      assert(responseAs[String] != null)
     }
   }
@@ -147,7 +147,7 @@ class AgoraMethodsSpec extends ApiServiceSpec {
       wrapWithRejectionHandler {
         methodsService.postRoute
       } ~> check {
-      assert(status === BadRequest)
+      assert(status == BadRequest)
     }
   }
 
@@ -169,14 +169,14 @@ class AgoraMethodsSpec extends ApiServiceSpec {
       wrapWithRejectionHandler {
         methodsService.postRoute
       } ~> check {
-      assert(status === BadRequest)
+      assert(status == BadRequest)
     }
   }
 
   "Agora" should "not allow you to post a new configuration to the methods route" in {
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraConfigurationEntity) ~>
       methodsService.postRoute ~> check {
-      rejection === ValidationRejection
+      rejection.isInstanceOf[ValidationRejection]
     }
   }
 
@@ -184,7 +184,7 @@ class AgoraMethodsSpec extends ApiServiceSpec {
     Delete(ApiUtil.Methods.withLeadingVersion + "/" + testEntityToBeRedactedWithId.namespace.get + "/" +
       testEntityToBeRedactedWithId.name.get + "/" + testEntityToBeRedactedWithId.snapshotId.get) ~>
     methodsService.querySingleRoute ~> check {
-      assert(body.asString === "1")
+      assert(body.asString == "1")
     }
   }
 

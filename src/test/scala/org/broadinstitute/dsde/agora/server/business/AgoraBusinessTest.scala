@@ -10,12 +10,11 @@ import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpec, Matchers}
 @DoNotDiscover
 class AgoraBusinessTest extends FlatSpec with Matchers with BeforeAndAfterAll with AgoraTestFixture {
 
-  val agoraBusiness = new AgoraBusiness()
 //  val methodImportResolver = new MethodImportResolver(agoraTestOwner.get, agoraBusiness)
 
   override protected def beforeAll() = {
     ensureDatabasesAreRunning()
-    agoraBusiness.insert(testEntityToBeRedacted3, mockAuthenticatedOwner.get)
+    patiently(agoraBusiness.insert(testEntityToBeRedacted3, mockAuthenticatedOwner.get))
   }
 
   override protected def afterAll() = {
@@ -37,17 +36,17 @@ class AgoraBusinessTest extends FlatSpec with Matchers with BeforeAndAfterAll wi
 //  }
 
   "Agora" should "not let users without permissions redact a method" in {
-    val testEntityToBeRedactedWithId3 = agoraBusiness.find(testEntityToBeRedacted3, None, Seq(testEntityToBeRedacted3.entityType.get), mockAuthenticatedOwner.get).head
+    val testEntityToBeRedactedWithId3 = patiently(agoraBusiness.find(testEntityToBeRedacted3, None, Seq(testEntityToBeRedacted3.entityType.get), mockAuthenticatedOwner.get)).head
     intercept[NamespaceAuthorizationException] {
-      val rowsEdited: Int = agoraBusiness.delete(testEntityToBeRedactedWithId3, AgoraEntityType.MethodTypes, owner2.get)
+      patiently(agoraBusiness.delete(testEntityToBeRedactedWithId3, AgoraEntityType.MethodTypes, owner2.get))
     }
   }
 
   "Agora" should "allow admin users to redact any method" in {
     addAdminUser()
-    val testEntityToBeRedactedWithId3 = agoraBusiness.find(testEntityToBeRedacted3, None, Seq(testEntityToBeRedacted3.entityType.get), mockAuthenticatedOwner.get).head
-    val rowsEdited: Int = agoraBusiness.delete(testEntityToBeRedactedWithId3, AgoraEntityType.MethodTypes, adminUser.get)
-    assert(rowsEdited === 1)
+    val testEntityToBeRedactedWithId3 = patiently(agoraBusiness.find(testEntityToBeRedacted3, None, Seq(testEntityToBeRedacted3.entityType.get), mockAuthenticatedOwner.get)).head
+    val rowsEdited: Int = patiently(agoraBusiness.delete(testEntityToBeRedactedWithId3, AgoraEntityType.MethodTypes, adminUser.get))
+    assert(rowsEdited == 1)
   }
 
 }

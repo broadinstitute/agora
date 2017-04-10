@@ -1,98 +1,84 @@
 package org.broadinstitute.dsde.agora.server.dataaccess.permissions
 
 import AgoraPermissions._
-import org.broadinstitute.dsde.agora.server.AgoraConfig
+import org.broadinstitute.dsde.agora.server.dataaccess.{ReadAction, ReadWriteAction, WriteAction}
 import org.broadinstitute.dsde.agora.server.exceptions.PermissionNotFoundException
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
+import slick.jdbc.JdbcProfile
 
-import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
-trait PermissionsClient {
-  import AgoraConfig.sqlDatabase.profile.api._
-  val db = AgoraConfig.sqlDatabase.db
-
-  val timeout = 10.seconds
+abstract class PermissionsClient(profile: JdbcProfile) {
+  import profile.api._
 
   def alias(entity: AgoraEntity): String
 
+  def withPermissionNotFoundException[T](errorString: String = "Could not get permission")( op: => ReadWriteAction[T] ): ReadWriteAction[T] = {
+    op.asTry flatMap {
+      case Success(permission) => DBIO.successful(permission)
+      case Failure(ex) => DBIO.failed(new PermissionNotFoundException(errorString, ex))
+    }
+  }
+
   // Users
-  def addUserIfNotInDatabase(userEmail: String): Unit = {
+  def addUserIfNotInDatabase(userEmail: String): WriteAction[Int] = {
     // Attempts to add user to UserTable and ignores errors if user already exists
-    try {
-      Await.ready(db.run(users += UserDao(userEmail)), timeout)
-    } catch {
-      case _ : Throwable => //Do nothing
+    (users += UserDao(userEmail)).asTry flatMap {
+      case Success(count) => DBIO.successful(count)
+      case Failure(_) => DBIO.successful(0)
     }
   }
 
-  def isAdmin(userEmail: String): Boolean = {
-    val userQuery = users.findByEmail(userEmail)
-    val user = Await.result(db.run(userQuery.result.head), timeout)
-    user.isAdmin
-  }
-
-  def listAdmins(): Seq[String] = {
-    val adminsQuery = for {
-      user <- users if user.is_admin === true
-    } yield user.email
-
-    try {
-      Await.result(db.run(adminsQuery.result), timeout)
-    } catch {
-      case ex: Throwable =>
-        throw new PermissionNotFoundException(ex.getMessage, ex)
+  def isAdmin(userEmail: String): ReadAction[Boolean] = {
+    users.findByEmail(userEmail).result map { users =>
+      users.head.isAdmin
     }
   }
 
-  def updateAdmin(userEmail: String, adminStatus: Boolean) = {
-    addUserIfNotInDatabase(userEmail)
+  def listAdmins(): ReadWriteAction[Seq[String]] = {
+    withPermissionNotFoundException() {
+      val adminsQuery = for {
+        user <- users if user.is_admin === true
+      } yield user.email
 
-    // construct update action
-    val adminsUpdateAction = for {
-      user <- users
-        .filter(_.email === userEmail)
-        .map(_.is_admin)
-        .update(adminStatus)
-    } yield user
+      adminsQuery.result
+    }
+  }
 
-    // run update action
-    try {
-      val rowsEdited = Await.result(db.run(adminsUpdateAction), timeout)
-
-      if (rowsEdited == 0)
-        throw new Exception("No rows were edited.")
-      else
-        rowsEdited
-
-    } catch {
-      case ex: Throwable => throw new PermissionNotFoundException(s"Could not make user ${userEmail} admin", ex)
+  def updateAdmin(userEmail: String, adminStatus: Boolean): ReadWriteAction[Int] = {
+    withPermissionNotFoundException(s"Could not make user ${userEmail} admin") {
+      for {
+        _ <- addUserIfNotInDatabase(userEmail)
+        rowsUpdated <- users
+          .filter(_.email === userEmail)
+          .map(_.is_admin)
+          .update(adminStatus)
+      } yield {
+        if( rowsUpdated == 0 ) {
+          throw new Exception("No rows were edited.")
+        } else {
+          rowsUpdated
+        }
+      }
     }
   }
 
   // Entities
-  def addEntity(entity: AgoraEntity): Future[Int] =
-    Await.ready(db.run(entities += EntityDao(alias(entity))), timeout)
-
-  def doesEntityExists(agoraEntity: AgoraEntity): Boolean = {
-    val entityQuery = db.run(entities.findByAlias(alias(agoraEntity)).result)
-    val entity = Await.result(entityQuery, timeout)
-    entity.nonEmpty
+  def addEntity(entity: AgoraEntity): WriteAction[Int] = {
+    entities += EntityDao(alias(entity))
   }
 
-  // Permissions
-  def getPermission(agoraEntity: AgoraEntity, userEmail: String): AgoraPermissions = {
+  def doesEntityExists(agoraEntity: AgoraEntity): ReadAction[Boolean] = {
+    entities.findByAlias(alias(agoraEntity)).result map { entity =>
+      entity.nonEmpty
+    }
+  }
 
-    // Can create entities that do not exist
-    if (!doesEntityExists(agoraEntity))
-      return AgoraPermissions(Create)
-
-    addUserIfNotInDatabase(userEmail)
-
+  private def permissionQuery(agoraEntity: AgoraEntity, userEmail: String): ReadAction[Option[PermissionDao]] = {
     // Construct query to get permissions
-    val permissionsQuery = for {
+    for {
       user <- users
         .filter(_.email === userEmail)
         .result
@@ -108,88 +94,87 @@ trait PermissionsClient {
         .result
         .headOption
     } yield permission
+  }
 
-    // run query
-    try {
-      val permissionResult = Await.result(db.run(permissionsQuery), timeout)
 
-      if (permissionResult.isEmpty)
+  private def lookupPermissions(agoraEntity: AgoraEntity, userEmail: String): ReadWriteAction[AgoraPermissions] = {
+    for {
+      _ <- addUserIfNotInDatabase(userEmail)
+      permissionResultOpt <- permissionQuery(agoraEntity, userEmail)
+    } yield {
+      if (permissionResultOpt.isEmpty)
         AgoraPermissions(Nothing)
       else
-        AgoraPermissions(permissionResult.get.roles)
-
-    } catch {
-      case ex: Throwable => throw new PermissionNotFoundException(s"Could not get permission", ex)
-    }
-
-  }
-
-  def listOwners(agoraEntity: AgoraEntity): Seq[String] = {
-    val permissionsQuery = for {
-      entity <- entities if entity.alias === alias(agoraEntity)
-      permission <- permissions if permission.entityID === entity.id && (permission.roles >= AgoraPermissions.Manage)
-      user <- users if user.id === permission.userID
-    } yield user.email
-    try {
-      Await.result(db.run(permissionsQuery.result), timeout)
-    } catch {
-      case ex: Throwable => throw new PermissionNotFoundException(s"Couldn't find any managers. ", ex)
+        AgoraPermissions(permissionResultOpt.get.roles)
     }
   }
 
-  def listPermissions(agoraEntity: AgoraEntity): Seq[AccessControl] = {
-    // Construct query
-    val permissionsQuery = for {
-      entity <- entities if entity.alias === alias(agoraEntity)
-      _permissions <- permissions if _permissions.entityID === entity.id
-      user <- users if user.id === _permissions.userID
-    } yield (user.email, _permissions.roles)
-
-    // Get Future of the query result
-    val permissionsFuture = db.run(permissionsQuery.result)
-
-    // if successful, map the Future
-    val accessControls = permissionsFuture.map { accessObjects: Seq[(String, Int)] =>
-      accessObjects.map(AccessControl.apply)
-
-    // if unsuccessful, throw exception
-    } recover {
-      case ex: Throwable => throw new PermissionNotFoundException(s"Could not list permissions", ex)
+  // Permissions
+  def getPermission(agoraEntity: AgoraEntity, userEmail: String): ReadWriteAction[AgoraPermissions] = {
+    withPermissionNotFoundException() {
+      doesEntityExists(agoraEntity) flatMap {
+        // Can create entities that do not exist
+        case false => DBIO.successful(AgoraPermissions(Create))
+        case true => lookupPermissions(agoraEntity, userEmail)
+      }
     }
-
-    Await.result(accessControls, timeout)
   }
 
-  def insertPermission(agoraEntity: AgoraEntity, userAccessObject: AccessControl): Int = {
+  def listOwners(agoraEntity: AgoraEntity): ReadWriteAction[Seq[String]] = {
+    withPermissionNotFoundException("Couldn't find any managers.") {
+      val permissionsQuery = for {
+        entity <- entities if entity.alias === alias(agoraEntity)
+        permission <- permissions if permission.entityID === entity.id && (permission.roles >= AgoraPermissions.Manage)
+        user <- users if user.id === permission.userID
+      } yield user.email
+
+      permissionsQuery.result
+    }
+  }
+
+  def listPermissions(agoraEntity: AgoraEntity): ReadWriteAction[Seq[AccessControl]] = {
+    withPermissionNotFoundException("Could not list permissions") {
+      // Construct query
+      val permissionsQuery = for {
+        entity <- entities if entity.alias === alias(agoraEntity)
+        _permissions <- permissions if _permissions.entityID === entity.id
+        user <- users if user.id === _permissions.userID
+      } yield (user.email, _permissions.roles)
+
+      permissionsQuery.result map { accessObjects: Seq[(String, Int)] =>
+         accessObjects.map(AccessControl.apply)
+      }
+    }
+  }
+
+  def insertPermission(agoraEntity: AgoraEntity, userAccessObject: AccessControl): ReadWriteAction[Int] = {
     val userEmail = userAccessObject.user
     val roles = userAccessObject.roles
 
-    addUserIfNotInDatabase(userEmail)
+    addUserIfNotInDatabase(userEmail) flatMap { added =>
+      // construct insert action
+      val addPermissionAction = for {
+        user <- users
+          .filter(_.email === userEmail)
+          .result
+          .head
 
-    // construct insert action
-    val addPermissionAction = for {
-      user <- users
-        .filter(_.email === userEmail)
-        .result
-        .head
+        entity <- entities
+          .filter(_.alias === alias(agoraEntity))
+          .result
+          .head
 
-      entity <- entities
-        .filter(_.alias === alias(agoraEntity))
-        .result
-        .head
+        result <- permissions += PermissionDao(user.id.get, entity.id.get, roles.toInt)
+      } yield result
 
-      result <- permissions += PermissionDao(user.id.get, entity.id.get, roles.toInt)
-    } yield result
-
-    // run insert action
-    try {
-      Await.result(db.run(addPermissionAction), timeout)
-    } catch {
-      case ex:Throwable => editPermission(agoraEntity, userAccessObject)
+      addPermissionAction.asTry flatMap {
+        case Success(yay) => DBIO.successful(yay)
+        case Failure(nooo) => editPermission(agoraEntity, userAccessObject)
+      }
     }
   }
 
-  def editPermission(agoraEntity: AgoraEntity, userAccessObject: AccessControl): Int = {
+  def editPermission(agoraEntity: AgoraEntity, userAccessObject: AccessControl): ReadWriteAction[Int] = {
     val userEmail = userAccessObject.user
     val roles = userAccessObject.roles
 
@@ -197,12 +182,45 @@ trait PermissionsClient {
       case AgoraPermissions(Nothing) =>
         deletePermission(agoraEntity, userEmail)
       case _ =>
-        addUserIfNotInDatabase(userEmail)
+        addUserIfNotInDatabase(userEmail) flatMap { added =>
+          withPermissionNotFoundException("Could not edit permission") {
+            // construct update action
+            val permissionsUpdateAction = for {
+              user <- users
+                .filter(_.email === userEmail)
+                .result
+                .head
 
+              entity <- entities
+                .filter(_.alias === alias(agoraEntity))
+                .result
+                .head
+
+              permission <- permissions
+                .filter(p => p.entityID === entity.id && p.userID === user.id)
+                .map(_.roles)
+                .update(roles.toInt)
+            } yield permission
+
+            permissionsUpdateAction flatMap { rowsEdited =>
+              if (rowsEdited == 0) {
+                DBIO.failed(new Exception("No rows were edited."))
+              } else {
+                DBIO.successful(rowsEdited)
+              }
+            }
+          }
+        }
+      }
+    }
+
+  def deletePermission(agoraEntity: AgoraEntity, userToRemove: String): ReadWriteAction[Int] = {
+    addUserIfNotInDatabase(userToRemove) flatMap { added =>
+      withPermissionNotFoundException("Could not delete permission") {
         // construct update action
         val permissionsUpdateAction = for {
           user <- users
-            .filter(_.email === userEmail)
+            .filter(_.email === userToRemove)
             .result
             .head
 
@@ -211,81 +229,39 @@ trait PermissionsClient {
             .result
             .head
 
-          permission <- permissions
+          result <- permissions
             .filter(p => p.entityID === entity.id && p.userID === user.id)
-            .map(_.roles)
-            .update(roles.toInt)
-        } yield permission
+            .delete
+          
+        } yield result
 
-        // run update action
-        try {
-          val rowsEdited = Await.result(db.run(permissionsUpdateAction), timeout)
-
-          if (rowsEdited == 0)
-            throw new Exception("No rows were edited.")
-          else
-            rowsEdited
-
-        } catch {
-          case ex: Throwable => throw new PermissionNotFoundException(s"Could not edit permission", ex)
+        permissionsUpdateAction flatMap { rowsEdited =>
+          if (rowsEdited == 0) {
+            DBIO.failed(new Exception("No rows were edited."))
+          } else {
+            DBIO.successful(rowsEdited)
+          }
         }
+      }
     }
   }
 
-  def deletePermission(agoraEntity: AgoraEntity, userToRemove: String): Int = {
-    addUserIfNotInDatabase(userToRemove)
+  def deleteAllPermissions(agoraEntity: AgoraEntity): ReadWriteAction[Int] = {
+    withPermissionNotFoundException("Could not delete permissions") {
+      for {
+        entity <- entities
+          .filter(_.alias === alias(agoraEntity))
+          .result
+          .head
 
-    // construct update action
-    val permissionsUpdateAction = for {
-      user <- users
-        .filter(_.email === userToRemove)
-        .result
-        .head
-
-      entity <- entities
-        .filter(_.alias === alias(agoraEntity))
-        .result
-        .head
-
-      result <- permissions
-        .filter(p => p.entityID === entity.id && p.userID === user.id)
-        .delete
-    } yield result
-
-    // run update action
-    try {
-      val rowsEdited = Await.result(db.run(permissionsUpdateAction), timeout)
-
-      if (rowsEdited == 0)
-        throw new Exception("No rows were edited.")
-      else
-        rowsEdited
-
-    } catch {
-      case ex: Throwable => throw new PermissionNotFoundException(s"Could not delete permission", ex)
+        rowsDeleted <- permissions
+          .filter(_.entityID === entity.id)
+          .delete
+      } yield rowsDeleted
     }
   }
 
-  def deleteAllPermissions(agoraEntity: AgoraEntity): Int = {
-    val deleteQuery = for {
-      entity <- entities
-        .filter(_.alias === alias(agoraEntity))
-        .result
-        .head
-
-      rowsDeleted <- permissions
-        .filter(_.entityID === entity.id)
-        .delete
-    } yield rowsDeleted
-
-    try {
-      Await.result(db.run(deleteQuery), timeout)
-    } catch {
-      case ex: Throwable => throw new PermissionNotFoundException(s"Could not delete permissions", ex)
-    }
-  }
-
-  def filterEntityByRead(agoraEntities: Seq[AgoraEntity], userEmail: String) = {
+  def filterEntityByRead(agoraEntities: Seq[AgoraEntity], userEmail: String): ReadAction[Seq[AgoraEntity]] = {
     val entitiesThatUserCanReadQuery = for {
       user <- users if user.email === userEmail || user.email === "public"
       permission <- permissions if permission.userID === user.id && (
@@ -296,21 +272,13 @@ trait PermissionsClient {
       entity <- entities if permission.entityID === entity.id
     } yield entity
 
-    val readableEntities = db.run(entitiesThatUserCanReadQuery.result)
-
-    val readableEntitiesFuture = readableEntities.map { entitiesThatCanBeRead =>
-      entitiesThatCanBeRead.map(_.alias)
+    entitiesThatUserCanReadQuery.result map { entitiesThatCanBeRead =>
+      val aliasedAgoraEntitiesWithReadPermissions = entitiesThatCanBeRead.map(_.alias) //this map is a seq map, not a dbio map
+      agoraEntities.filter(agoraEntity => aliasedAgoraEntitiesWithReadPermissions.contains(alias(agoraEntity)))
     }
-
-    val aliasedAgoraEntitiesWithReadPermissions = Await.result(readableEntitiesFuture, timeout)
-
-    agoraEntities.filter(agoraEntity =>
-      aliasedAgoraEntitiesWithReadPermissions.contains(alias(agoraEntity))
-    )
   }
 
-  def sqlDBStatus(): Try[Unit] = {
-    val action = sql"select version();".as[String]
-    Try(Await.result(db.run(action.transactionally), timeout))
+  def sqlDBStatus() = {
+    sql"select version();".as[String]
   }
 }

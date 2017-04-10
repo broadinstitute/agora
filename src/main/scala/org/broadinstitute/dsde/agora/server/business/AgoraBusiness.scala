@@ -1,113 +1,81 @@
 package org.broadinstitute.dsde.agora.server.business
 
 import org.broadinstitute.dsde.agora.server.exceptions.{AgoraEntityNotFoundException, NamespaceAuthorizationException, ValidationException}
-import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
+import org.broadinstitute.dsde.agora.server.dataaccess.{AgoraDao, ReadWriteAction}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.model.{AgoraApiJsonSupport, AgoraEntity, AgoraEntityProjection, AgoraEntityType}
+import slick.dbio.DBIO
 import spray.json._
 
-class AgoraBusiness {
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success, Try}
 
-  def insert(agoraEntity: AgoraEntity, username: String): AgoraEntity = {
-    if (!NamespacePermissionsClient.getNamespacePermission(agoraEntity, username).canCreate &&
-        !NamespacePermissionsClient.getNamespacePermission(agoraEntity, "public").canCreate) {
-      throw new NamespaceAuthorizationException(AgoraPermissions(Create), agoraEntity, username)
+class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: ExecutionContext) {
+
+  //Creates a fake extra permission with the desired permission level conditional on checkAdmin and the user being an admin
+  private def makeDummyAdminPermission(checkAdmin: Boolean, permClient: PermissionsClient, username: String, permLevel: AgoraPermissions) = {
+    if(checkAdmin) {
+      permClient.isAdmin(username) map {
+        case true => permLevel
+        case false => AgoraPermissions(Nothing)
+      }
+    } else {
+      DBIO.successful(AgoraPermissions(Nothing))
     }
+  }
 
-    validatePayload(agoraEntity, username)
+  private def checkNamespacePermission[T](db: DataAccess, agoraEntity: AgoraEntity, username: String, permLevel: AgoraPermissions, checkAdmin: Boolean = false)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
+    //if we're supposed to check if the user is an admin, create a fake action
+    val admAction = makeDummyAdminPermission(checkAdmin, db.nsPerms, username, permLevel)
 
-    val entityToInsert = agoraEntity.entityType.get match {
-      case AgoraEntityType.Configuration =>
-        val method = resolveMethodRef(agoraEntity.payload.get)
-        if (!AgoraEntityPermissionsClient.getEntityPermission(method, username).canRead &&
-            !AgoraEntityPermissionsClient.getEntityPermission(method, "public").canRead) {
-          throw new AgoraEntityNotFoundException(method)
+    DBIO.sequence(Seq(db.nsPerms.getNamespacePermission(agoraEntity, username), db.nsPerms.getNamespacePermission(agoraEntity, "public"), admAction)) flatMap { namespacePerms =>
+      db.nsPerms.isAdmin(username)
+      if (!namespacePerms.exists(_.hasPermission(permLevel))) {
+        DBIO.failed(NamespaceAuthorizationException(permLevel, agoraEntity, username))
+      } else {
+        op
+      }
+    }
+  }
+
+  private def checkEntityPermission[T](db: DataAccess, agoraEntity: AgoraEntity, username: String, permLevel: AgoraPermissions)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
+    DBIO.sequence(Seq(db.aePerms.getEntityPermission(agoraEntity, username), db.aePerms.getEntityPermission(agoraEntity, "public"))) flatMap { entityPerms =>
+      if (!entityPerms.exists(_.hasPermission(permLevel))) {
+        DBIO.failed(AgoraEntityNotFoundException(agoraEntity))
+      } else {
+        op
+      }
+    }
+  }
+
+  private def createNamespaceIfNonexistent(db: DataAccess, entity: AgoraEntity, entityWithId: AgoraEntity, userAccess: AccessControl): ReadWriteAction[Unit] = {
+    db.nsPerms.doesEntityExists(entity) flatMap { exists =>
+      if(!exists) {
+        db.nsPerms.addEntity(entity) flatMap { _ =>
+          db.nsPerms.insertNamespacePermission(entityWithId, userAccess) map { _ => () }
         }
-
-        agoraEntity.addMethodId(method.id.get.toHexString)
-      case _ => agoraEntity
-    }
-
-    val entityWithId = AgoraDao.createAgoraDao(entityToInsert.entityType).insert(entityToInsert.addDate())
-    val userAccess = new AccessControl(username, AgoraPermissions(All))
-
-    if (!NamespacePermissionsClient.doesEntityExists(agoraEntity)) {
-      NamespacePermissionsClient.addEntity(entityWithId)
-      NamespacePermissionsClient.insertNamespacePermission(entityWithId, userAccess)
-    }
-
-    AgoraEntityPermissionsClient.addEntity(entityWithId)
-    AgoraEntityPermissionsClient.insertEntityPermission(entityWithId, userAccess)
-    entityWithId.addUrl().removeIds()
-  }
-
-  def delete(agoraEntity: AgoraEntity, entityTypes: Seq[AgoraEntityType.EntityType], username: String): Int = {
-    if (!NamespacePermissionsClient.getNamespacePermission(agoraEntity, username).canRedact &&
-        !NamespacePermissionsClient.getNamespacePermission(agoraEntity, "public").canRedact &&
-        !NamespacePermissionsClient.isAdmin(username)) {
-      throw new NamespaceAuthorizationException(AgoraPermissions(Redact), agoraEntity, username)
-    }
-
-    // if the entity was a method, then redact all associated configurations
-    if (entityTypes equals AgoraEntityType.MethodTypes) {
-
-      val dao = AgoraDao.createAgoraDao(entityTypes)
-      val entityWithId = dao.findSingle(agoraEntity.namespace.get, agoraEntity.name.get, agoraEntity.snapshotId.get)
-      val configurations = dao.findConfigurations(entityWithId.id.get)
-
-      configurations.foreach {config => AgoraEntityPermissionsClient.deleteAllPermissions(config)}
-    }
-
-    AgoraEntityPermissionsClient.deleteAllPermissions(agoraEntity)
-  }
-
-  def find(agoraSearch: AgoraEntity,
-           agoraProjection: Option[AgoraEntityProjection],
-           entityTypes: Seq[AgoraEntityType.EntityType],
-           username: String): Seq[AgoraEntity] = {
-
-    val entities = AgoraDao.createAgoraDao(entityTypes)
-      .find(agoraSearch, agoraProjection)
-      .map(entity => entity.addUrl().removeIds())
-
-    AgoraEntityPermissionsClient.filterEntityByRead(entities, username)
-  }
-
-  def findSingle(namespace: String,
-                 name: String,
-                 snapshotId: Int,
-                 entityTypes: Seq[AgoraEntityType.EntityType],
-                 username: String): AgoraEntity = {
-    val foundEntity = AgoraDao.createAgoraDao(entityTypes).findSingle(namespace, name, snapshotId)
-    val entities = AgoraEntityPermissionsClient.filterEntityByRead(Seq(foundEntity), username)
-    entities match {
-      case Seq(ae: AgoraEntity) => ae.addUrl().removeIds().addManagers(AgoraEntityPermissionsClient.listOwners(foundEntity))
-      case _ => throw new AgoraEntityNotFoundException(foundEntity)
+      } else {
+        DBIO.successful(())
+      }
     }
   }
 
-  def findSingle(entity: AgoraEntity,
-                 entityTypes: Seq[AgoraEntityType.EntityType],
-                 username: String): AgoraEntity = {
-    findSingle(entity.namespace.get, entity.name.get, entity.snapshotId.get, entityTypes, username)
-  }
-
-  private def validatePayload(agoraEntity: AgoraEntity, username: String): Unit = {
-    agoraEntity.entityType.get match {
+  private def checkValidPayload[T](agoraEntity: AgoraEntity, username: String)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
+    Try(agoraEntity.entityType.get match {
 
       case AgoraEntityType.Task =>
-// GAWB-59 remove wdl validation
-//        val namespace = WdlNamespace.load(agoraEntity.payload.get, BackendType.LOCAL)
-//        // Passed basic validation.  Now check if (any) docker images that are referenced exist
-//        namespace.tasks.foreach { validateDockerImage }
+      // GAWB-59 remove wdl validation
+      //        val namespace = WdlNamespace.load(agoraEntity.payload.get, BackendType.LOCAL)
+      //        // Passed basic validation.  Now check if (any) docker images that are referenced exist
+      //        namespace.tasks.foreach { validateDockerImage }
 
       case AgoraEntityType.Workflow =>
-// GAWB-59 remove wdl validation
-//        val resolver = MethodImportResolver(username, this)
-//        val namespace = WdlNamespace.load(agoraEntity.payload.get, resolver.importResolver _, BackendType.LOCAL)
-//        // Passed basic validation.  Now check if (any) docker images that are referenced exist
-//        namespace.tasks.foreach { validateDockerImage }
+      // GAWB-59 remove wdl validation
+      //        val resolver = MethodImportResolver(username, this)
+      //        val namespace = WdlNamespace.load(agoraEntity.payload.get, resolver.importResolver _, BackendType.LOCAL)
+      //        // Passed basic validation.  Now check if (any) docker images that are referenced exist
+      //        namespace.tasks.foreach { validateDockerImage }
 
       case AgoraEntityType.Configuration =>
         val json = agoraEntity.payload.get.parseJson
@@ -118,7 +86,111 @@ class AgoraBusiness {
         if(!subFields(0).isInstanceOf[JsString]) throw new ValidationException("Configuration methodRepoMethod must include a 'methodNamespace' key with a string value")
         if(!subFields(1).isInstanceOf[JsString]) throw new ValidationException("Configuration methodRepoMethod must include a 'methodName' key with a string value")
         if(!subFields(2).isInstanceOf[JsNumber]) throw new ValidationException("Configuration methodRepoMethod must include a 'methodVersion' key with a JSNumber value")
+    }) match {
+      case Success(_) => op
+      case Failure(regret) => DBIO.failed(regret)
     }
+  }
+
+  def insert(agoraEntity: AgoraEntity, username: String): Future[AgoraEntity] = {
+    //this goes to Mongo, so do this outside the permissions txn
+    val configReferencedMethodOpt = agoraEntity.entityType.get match {
+      case AgoraEntityType.Configuration => Some(resolveMethodRef(agoraEntity.payload.get))
+      case _ => None
+    }
+
+    permissionsDataSource.inTransaction { db =>
+      db.aePerms.addUserIfNotInDatabase(username) flatMap { _ =>
+        checkNamespacePermission(db, agoraEntity, username, AgoraPermissions(Create)) {
+          checkValidPayload(agoraEntity, username) {
+
+            //this silliness required to check whether the referenced method is readable if it's a config
+            val entityToInsertAction = configReferencedMethodOpt match {
+              case Some(referencedMethod) =>
+                checkEntityPermission(db, referencedMethod, username, AgoraPermissions(Read)) {
+                  DBIO.successful(agoraEntity.addMethodId(referencedMethod.id.get.toHexString))
+                }
+              case None => DBIO.successful(agoraEntity)
+            }
+
+            entityToInsertAction flatMap { entityToInsert =>
+              //this goes to mongo inside a SQL transaction :(
+              val entityWithId = AgoraDao.createAgoraDao(entityToInsert.entityType).insert(entityToInsert.addDate())
+              val userAccess = new AccessControl(username, AgoraPermissions(All))
+
+              for {
+                _ <- createNamespaceIfNonexistent(db, agoraEntity, entityWithId, userAccess)
+                _ <- db.aePerms.addEntity(entityWithId)
+                _ <- db.aePerms.insertEntityPermission(entityWithId, userAccess)
+              } yield {
+                entityWithId.addUrl().removeIds()
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  def delete(agoraEntity: AgoraEntity, entityTypes: Seq[AgoraEntityType.EntityType], username: String): Future[Int] = {
+    //list of associated configurations. Goes to Mongo so we do it outside the sql txn
+    val configurations = if (entityTypes equals AgoraEntityType.MethodTypes) {
+      val dao = AgoraDao.createAgoraDao(entityTypes)
+      val entityWithId = dao.findSingle(agoraEntity.namespace.get, agoraEntity.name.get, agoraEntity.snapshotId.get)
+      dao.findConfigurations(entityWithId.id.get)
+    } else {
+      Seq()
+    }
+
+    permissionsDataSource.inTransaction { db =>
+      db.aePerms.addUserIfNotInDatabase(username) flatMap { _ =>
+        checkNamespacePermission(db, agoraEntity, username, AgoraPermissions(Redact), checkAdmin = true) {
+          //admins can redact anything
+          DBIO.sequence(configurations map { config => db.aePerms.deleteAllPermissions(config) }) andThen
+            db.aePerms.deleteAllPermissions(agoraEntity)
+        }
+      }
+    }
+  }
+
+  def find(agoraSearch: AgoraEntity,
+           agoraProjection: Option[AgoraEntityProjection],
+           entityTypes: Seq[AgoraEntityType.EntityType],
+           username: String): Future[Seq[AgoraEntity]] = {
+
+    val entities = AgoraDao.createAgoraDao(entityTypes)
+      .find(agoraSearch, agoraProjection)
+      .map(entity => entity.addUrl().removeIds())
+
+    permissionsDataSource.inTransaction { db =>
+      for {
+        _ <- db.aePerms.addUserIfNotInDatabase(username)
+        entity <- db.aePerms.filterEntityByRead(entities, username)
+      } yield entity
+    }
+  }
+
+  def findSingle(namespace: String,
+                 name: String,
+                 snapshotId: Int,
+                 entityTypes: Seq[AgoraEntityType.EntityType],
+                 username: String): Future[AgoraEntity] = {
+    val foundEntity = AgoraDao.createAgoraDao(entityTypes).findSingle(namespace, name, snapshotId)
+
+    permissionsDataSource.inTransaction { db =>
+      db.aePerms.addUserIfNotInDatabase(username) flatMap { _ =>
+        db.aePerms.filterEntityByRead(Seq(foundEntity), username) flatMap {
+          case Seq(ae: AgoraEntity) => db.aePerms.listOwners(foundEntity) map { owners => ae.addUrl().removeIds().addManagers(owners) }
+          case _ => DBIO.failed(AgoraEntityNotFoundException(foundEntity))
+        }
+      }
+    }
+  }
+
+  def findSingle(entity: AgoraEntity,
+                 entityTypes: Seq[AgoraEntityType.EntityType],
+                 username: String): Future[AgoraEntity] = {
+    findSingle(entity.namespace.get, entity.name.get, entity.snapshotId.get, entityTypes, username)
   }
 
 //  private def validateDockerImage(task: Task) = {

@@ -1,7 +1,9 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
+import akka.actor.ActorSystem
 import org.broadinstitute.dsde.agora.server.AgoraTestFixture
 import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.configurations.ConfigurationsService
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
@@ -11,10 +13,12 @@ import spray.httpx.unmarshalling._
 import spray.routing.{Directives, ExceptionHandler, MalformedRequestContentRejection, RejectionHandler}
 import spray.testkit.ScalatestRouteTest
 
+import scala.concurrent.duration._
+
 @DoNotDiscover
 class ApiServiceSpec extends FlatSpec with Directives with ScalatestRouteTest with AgoraTestFixture {
 
-  val agoraBusiness = new AgoraBusiness()
+  implicit val routeTestTimeout = RouteTestTimeout(5.seconds)
 
   val wrapWithExceptionHandler = handleExceptions(ExceptionHandler {
     case e: IllegalArgumentException => complete(BadRequest, e.getMessage)
@@ -29,14 +33,14 @@ class ApiServiceSpec extends FlatSpec with Directives with ScalatestRouteTest wi
   }
 
 
-  abstract class StatusService extends AgoraService {
+  abstract class StatusService(pds: PermissionsDataSource) extends AgoraService(pds) {
     override def path = "/status"
     override def statusRoute = super.statusRoute
   }
 
-  val methodsService = new MethodsService() with ActorRefFactoryContext
-  val configurationsService = new ConfigurationsService() with ActorRefFactoryContext
-  val apiStatusService = new StatusService() with ActorRefFactoryContext
+  val methodsService = new MethodsService(permsDataSource) with ActorRefFactoryContext
+  val configurationsService = new ConfigurationsService(permsDataSource) with ActorRefFactoryContext
+  val apiStatusService = new StatusService(permsDataSource) with ActorRefFactoryContext
 
   def handleError[T](deserialized: Deserialized[T], assertions: (T) => Unit) = {
     if (status.isSuccess) {

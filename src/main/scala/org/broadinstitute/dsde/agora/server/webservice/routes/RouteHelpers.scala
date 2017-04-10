@@ -3,7 +3,6 @@ package org.broadinstitute.dsde.agora.server.webservice.routes
 import akka.actor.Props
 import org.broadinstitute.dsde.agora.server.AgoraConfig.{authenticationDirectives, version}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AccessControl
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraEntityPermissionsClient._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection, AgoraEntityType}
 import org.broadinstitute.dsde.agora.server.webservice.PerRequestCreator
 import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages._
@@ -19,8 +18,6 @@ trait RouteHelpers extends QuerySingleHelper
   with NamespacePermissionsRouteHelper
 
 trait BaseRoute extends PerRequestCreator with RouteUtil  {
-  implicit val executionContext = actorRefFactory.dispatcher
-
   def getUserFromParams(params: Map[String, String]): String = {
     val user = params.get("user")
     if (user.isDefined)
@@ -39,33 +36,28 @@ trait NamespacePermissionsRouteHelper extends BaseRoute {
     authenticationDirectives.usernameFromRequest()
 
   def completeNamespacePermissionsGet(context: RequestContext, entity: AgoraEntity, username: String, permissionsHandler: Props) = {
-    addUserIfNotInDatabase(username)
     val message = ListNamespacePermissions(context, entity, username)
     perRequest(context, permissionsHandler, message)
   }
 
   def completeBatchNamespacePermissionsPost(context: RequestContext, entity: AgoraEntity, accessObjects: List[AccessControl], username: String, permissionHandler: Props) = {
-    accessObjects.foreach(accessObject => addUserIfNotInDatabase(accessObject.user))
     val message = BatchNamespacePermission(context, entity, username, accessObjects)
     perRequest(context, permissionHandler, message)
   }
 
   def completeNamespacePermissionsPost(context: RequestContext, entity: AgoraEntity, params: Map[String, String], username: String, permissionsHandler: Props) ={
-    addUserIfNotInDatabase(username)
     val accessObject = AccessControl.fromParams(params)
     val message = InsertNamespacePermission(context, entity, username, accessObject)
     perRequest(context, permissionsHandler, message)
   }
 
   def completeNamespacePermissionsPut(context: RequestContext, entity: AgoraEntity, params: Map[String, String], username: String, permissionsHandler: Props) ={
-    addUserIfNotInDatabase(username)
     val accessObject = AccessControl.fromParams(params)
     val message = EditNamespacePermission(context, entity, username, accessObject)
     perRequest(context, permissionsHandler, message)
   }
 
   def completeNamespacePermissionsDelete(context: RequestContext, entity: AgoraEntity, params: Map[String, String], username: String, permissionsHandler: Props) = {
-    addUserIfNotInDatabase(username)
     val userToRemove = getUserFromParams(params)
     val message = DeleteNamespacePermission(context, entity, username, userToRemove)
     perRequest(context, permissionsHandler, message)
@@ -79,33 +71,28 @@ trait EntityPermissionsRouteHelper extends BaseRoute {
     authenticationDirectives.usernameFromRequest()
 
   def completeEntityPermissionsGet(context: RequestContext, entity: AgoraEntity, username: String, permissionsHandler: Props) = {
-    addUserIfNotInDatabase(username)
     val message = ListEntityPermissions(context, entity, username)
     perRequest(context, permissionsHandler, message)
   }
 
   def completeBatchEntityPermissionsPost(context: RequestContext, entity: AgoraEntity, accessObjects: List[AccessControl], username: String, permissionHandler: Props) = {
-    accessObjects.foreach(accessObject => addUserIfNotInDatabase(accessObject.user))
     val message = BatchEntityPermission(context, entity, username, accessObjects)
     perRequest(context, permissionHandler, message)
   }
 
   def completeEntityPermissionsPost(context: RequestContext, entity: AgoraEntity, params: Map[String, String], username: String, permissionsHandler: Props) = {
-    addUserIfNotInDatabase(username)
     val accessObject = AccessControl.fromParams(params)
     val message = InsertEntityPermission(context, entity, username, accessObject)
     perRequest(context, permissionsHandler, message)
   }
 
   def completeEntityPermissionsPut(context: RequestContext, entity: AgoraEntity, params: Map[String, String], username: String, permissionsHandler: Props) = {
-    addUserIfNotInDatabase(username)
     val accessObject = AccessControl.fromParams(params)
     val message = EditEntityPermission(context, entity, username, accessObject)
     perRequest(context, permissionsHandler, message)
   }
 
   def completeEntityPermissionsDelete(context: RequestContext, entity: AgoraEntity, params: Map[String, String], username: String, permissionsHandler: Props) = {
-    addUserIfNotInDatabase(username)
     val userToRemove = getUserFromParams(params)
     val message = DeleteEntityPermission(context, entity, username, userToRemove)
     perRequest(context, permissionsHandler, message)
@@ -126,7 +113,6 @@ trait QuerySingleHelper extends BaseRoute {
                               onlyPayload: Boolean,
                               path: String,
                               queryHandler: Props): Unit = {
-    addUserIfNotInDatabase(username)
     val entityTypes = AgoraEntityType.byPath(path)
     val message = QuerySingle(context, entity, entityTypes, username, onlyPayload)
 
@@ -138,7 +124,6 @@ trait QuerySingleHelper extends BaseRoute {
                             username: String,
                             path: String,
                             queryHandler: Props): Unit = {
-    addUserIfNotInDatabase(username)
     val entityTypes = AgoraEntityType.byPath(path)
     val message = Delete(context, entity, entityTypes, username)
 
@@ -189,7 +174,6 @@ trait QueryRouteHelper extends BaseRoute {
                              username: String,
                              path: String,
                              queryHandler: Props): Unit = {
-    addUserIfNotInDatabase(username)
     val entity = entityFromParams(params)
     val entityType = AgoraEntityType.byPath(path)
     val projection = projectionFromParams(params)
@@ -216,7 +200,6 @@ trait AddRouteHelper extends BaseRoute {
                              username: String,
                              path: String,
                              addHandler: Props ) = {
-    addUserIfNotInDatabase(username)
     val entityWithType = AgoraEntityType.byPath(path) match {
       case AgoraEntityType.Configuration => entity.addEntityType(Option(AgoraEntityType.Configuration))
       case _ => entity

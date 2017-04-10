@@ -4,8 +4,12 @@ package org.broadinstitute.dsde.agora.server
 import com.mongodb.casbah.MongoCollection
 import com.mongodb.casbah.commons.MongoDBObject
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
+import org.broadinstitute.dsde.agora.server.business.{AgoraBusiness, PermissionBusiness}
+import org.broadinstitute.dsde.agora.server.dataaccess.ReadWriteAction
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.{AgoraMongoClient, EmbeddedMongo}
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{UserDao, entities, permissions, users}
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
+import slick.dbio.DBIOAction
+import slick.dbio.Effect.Read
 import slick.driver.MySQLDriver.api._
 import slick.jdbc.meta.MTable
 
@@ -13,20 +17,23 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 trait AgoraTestFixture {
+  import scala.concurrent.ExecutionContext.Implicits.global
+
   val timeout = 10.seconds
-  var db: Database = _
+  val db: Database = AgoraConfig.sqlDatabase.db
+  val permsDataSource: PermissionsDataSource = new PermissionsDataSource(AgoraConfig.sqlDatabase)
+  val agoraBusiness: AgoraBusiness = new AgoraBusiness(permsDataSource)
+  val permissionBusiness: PermissionBusiness = new PermissionBusiness(permsDataSource)
 
   def startDatabases() = {
     EmbeddedMongo.startMongo()
 
-    println("Connecting to test sql database.")
-    db = AgoraConfig.sqlDatabase.db
     clearDatabases()
-
-    val setupFuture = createTableIfNotExists(entities, permissions, users)
+    val setupFuture = createTableIfNotExists(users, entities, permissions)
 
     println("Populating sql database.")
     Await.result(setupFuture, timeout)
+    println("Finished populating sql database.")
   }
 
   def stopDatabases() = {
@@ -52,40 +59,33 @@ trait AgoraTestFixture {
     }
   }
 
-  private def createTableIfNotExists(tables: TableQuery[_ <: Table[_]]*): Future[Seq[Unit]] = {
-    import scala.concurrent.ExecutionContext.Implicits.global
-    Future.sequence(
-      tables map { table =>
-        db.run(MTable.getTables(table.baseTableRow.tableName)).flatMap { result =>
-          if (result.isEmpty) {
-            db.run(table.schema.create)
-          } else {
-            Future.successful(())
-          }
+  private def createTableIfNotExists(tables: TableQuery[_ <: Table[_]]*) = {
+    val actions = tables map { table =>
+      MTable.getTables(table.baseTableRow.tableName).flatMap { result =>
+        if (result.isEmpty) {
+          table.schema.create
+        } else {
+          DBIOAction.successful(())
         }
       }
-    )
+    }
+    db.run(DBIO.sequence(actions))
   }
 
   private def deleteFromTableIfExists(tables: TableQuery[_ <: Table[_]]*): Future[Seq[AnyVal]] = {
-    import scala.concurrent.ExecutionContext.Implicits.global
-    Future.sequence(
-      tables map { table =>
-        db.run(MTable.getTables(table.baseTableRow.tableName)).flatMap { result =>
-          if (result.nonEmpty) {
-            db.run(sqlu"delete from #${table.baseTableRow.tableName}")
-          } else {
-            Future.successful(())
-          }
+    val actions = tables map { table =>
+      MTable.getTables(table.baseTableRow.tableName).flatMap { result =>
+        if (result.nonEmpty) {
+          sqlu"delete from #${table.baseTableRow.tableName}"
+        } else {
+          DBIOAction.successful(())
         }
       }
-    )
+    }
+    db.run(DBIOAction.sequence(actions))
   }
 
   def ensureSqlDatabaseIsRunning() = {
-    println("Connecting to test sql database.")
-    db = AgoraConfig.sqlDatabase.db
-
     println("Populating sql database.")
     Await.result(createTableIfNotExists(entities, users, permissions), timeout)
   }
@@ -109,5 +109,13 @@ trait AgoraTestFixture {
 
   def addAdminUser() = {
     Await.result(db.run(users += UserDao(adminUser.get, isAdmin = true)), timeout)
+  }
+
+  protected def patiently[R](op: => Future[R], duration: Duration = 1 minutes): R = {
+    Await.result(op, duration)
+  }
+
+  protected def runInDB[R](action: DataAccess => DBIOAction[R, _ <: NoStream, _ <: Effect], duration: Duration = 1 minutes): R = {
+    patiently(permsDataSource.inTransaction { db => action(db).asInstanceOf[ReadWriteAction[R]] }, duration)
   }
 }

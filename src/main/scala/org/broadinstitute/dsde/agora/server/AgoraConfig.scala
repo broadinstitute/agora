@@ -1,12 +1,14 @@
 package org.broadinstitute.dsde.agora.server
 
-import com.typesafe.config.{Config, ConfigFactory}
+import com.typesafe.config.{Config, ConfigException, ConfigFactory}
 import net.ceedubs.ficus.Ficus._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntityType
 import org.broadinstitute.dsde.agora.server.model.AgoraEntityType.EntityType
 import org.broadinstitute.dsde.agora.server.webservice.routes.{AgoraDirectives, MockAgoraDirectives, OpenIdConnectDirectives}
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
+
+import scala.util.{Failure, Success, Try}
 
 object AgoraConfig {
 
@@ -88,6 +90,28 @@ object AgoraConfig {
       case Some(AgoraEntityType.Task) | Some(AgoraEntityType.Workflow) => methodsUrl
       case Some(AgoraEntityType.Configuration) => configurationsUrl
       case _ => baseUrl
+    }
+  }
+
+  implicit class EnhancedScalaConfig(val config: Config) extends AnyVal {
+    def getConfigOption(key: String): Option[Config] = getOption(key, config.getConfig)
+    def getStringOption(key: String): Option[String] = getOption(key, config.getString)
+    def getBooleanOption(key: String): Option[Boolean] = getOption(key, config.getBoolean)
+    def getIntOption(key: String): Option[Int] = getOption(key, config.getInt)
+    def getLongOption(key: String): Option[Long] = getOption(key, config.getLong)
+    def getDoubleOption(key: String): Option[Double] = getOption(key, config.getDouble)
+    def getStringOr(key: String, default: => String = ""): String = getStringOption(key) getOrElse default
+    def getBooleanOr(key: String, default: => Boolean = false): Boolean = getBooleanOption(key) getOrElse default
+    def getIntOr(key: String, default: => Int = 0): Int = getIntOption(key) getOrElse default
+    def getLongOr(key: String, default: => Long = 0L): Long = getLongOption(key) getOrElse default
+    def getDoubleOr(key: String, default: => Double = 0.0): Double = getDoubleOption(key) getOrElse default
+
+    private def getOption[T](key: String, f: String => T): Option[T] = {
+      Try(f(key)) match {
+        case Success(value) => Option(value)
+        case Failure(e: ConfigException.Missing) => None
+        case Failure(e) => throw e
+      }
     }
   }
 }

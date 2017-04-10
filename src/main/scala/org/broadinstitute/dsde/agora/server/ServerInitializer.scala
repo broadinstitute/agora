@@ -8,6 +8,7 @@ import akka.util.Timeout
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.EmbeddedMongo
 import org.broadinstitute.dsde.agora.server.webservice.ApiServiceActor
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
 import spray.can.Http
 
 import scala.concurrent.Await
@@ -16,6 +17,7 @@ import scala.util.Try
 
 class ServerInitializer extends LazyLogging {
   implicit val actorSystem = ActorSystem("agora")
+  val permsDataSource = new PermissionsDataSource(AgoraConfig.sqlDatabase)
 
   def startAllServices() {
     if (AgoraConfig.usesEmbeddedMongo)
@@ -29,14 +31,14 @@ class ServerInitializer extends LazyLogging {
       EmbeddedMongo.stopMongo()
 
     println("Closing connection to sql db.")
-    AgoraConfig.sqlDatabase.db.close()
+    permsDataSource.close()
 
     stopAndCatchExceptions(stopWebServiceActors())
   }
 
   private def startWebServiceActors() = {
     implicit val bindTimeout: Timeout = 120.seconds
-    val service = actorSystem.actorOf(ApiServiceActor.props, "agora-actor")
+    val service = actorSystem.actorOf(ApiServiceActor.props(permsDataSource), "agora-actor")
     Await.result(IO(Http) ? Http.Bind(service, interface = AgoraConfig.webserviceInterface, port = AgoraConfig.port), bindTimeout.duration) match {
       case CommandFailed(b: Http.Bind) =>
         logger.error(s"Unable to bind to port ${AgoraConfig.port} on interface ${AgoraConfig.webserviceInterface}")

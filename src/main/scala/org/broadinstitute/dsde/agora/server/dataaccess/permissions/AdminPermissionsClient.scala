@@ -1,8 +1,9 @@
 package org.broadinstitute.dsde.agora.server.dataaccess.permissions
 
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
+import slick.jdbc.JdbcProfile
 
-object AdminPermissionsClient extends PermissionsClient {
+class AdminPermissionsClient(profile: JdbcProfile) extends PermissionsClient(profile) {
 
   def listAdminUsers = listAdmins
 

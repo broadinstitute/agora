@@ -151,25 +151,22 @@ class EntityPermissionsClientSpec extends FlatSpec with ScalaFutures with Before
 
   "Agora" should "prevent a user from overwriting their own entity permission" in {
     val accessObject = new AccessControl(mockAuthenticatedOwner.get, AgoraPermissions(AgoraPermissions.Nothing))
-    val exception = intercept[PermissionModificationException] {
+    intercept[PermissionModificationException] {
       patiently(permissionBusiness.insertEntityPermission(testBatchPermissionEntity, mockAuthenticatedOwner.get, accessObject))
     }
-    assert(exception != null)
   }
 
   "Agora" should "prevent a user from modifying their own entity permission" in {
     val accessObject = new AccessControl(mockAuthenticatedOwner.get, AgoraPermissions(AgoraPermissions.Nothing))
-    val exception = intercept[PermissionModificationException] {
+    intercept[PermissionModificationException] {
       patiently(permissionBusiness.editEntityPermission(testBatchPermissionEntity, mockAuthenticatedOwner.get, accessObject))
     }
-    assert(exception != null)
   }
 
   "Agora" should "prevent a user from deleting their own entity permission" in {
-    val exception = intercept[PermissionModificationException] {
+    intercept[PermissionModificationException] {
       patiently(permissionBusiness.deleteEntityPermission(testBatchPermissionEntity, mockAuthenticatedOwner.get, mockAuthenticatedOwner.get))
     }
-    assert(exception != null)
   }
 
 }

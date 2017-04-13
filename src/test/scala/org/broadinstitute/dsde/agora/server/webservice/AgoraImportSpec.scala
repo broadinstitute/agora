@@ -42,27 +42,10 @@ class AgoraImportSpec extends ApiServiceSpec {
     }
   }
 
-  //ignored because no it shouldn't. GAWB-937 means Agora isn't supporting import statements any more
-  ignore should "create a method and return with a status of 201 when the WDL contains an import to an existent method" in {
-    // Verifying that the pre-loaded task exists...
-    Get(ApiUtil.Methods.withLeadingVersion + "/" + testEntityTaskWcWithId.namespace.get + "/" + testEntityTaskWcWithId.name.get + "/"
-      + testEntityTaskWcWithId.snapshotId.get) ~> methodsService.querySingleRoute ~> check {
-      handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => assert(brief(entity) == brief(testEntityTaskWcWithId)))
-      assert(status == OK)
-    }
+  "MethodsService" should "return 400 when the WDL contains an import, because imports are no longer allowed" in {
     Post(ApiUtil.Methods.withLeadingVersion, testEntityWorkflowWithExistentWdlImport) ~>
       methodsService.postRoute ~> check {
-      handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => {
-        assert(entity.namespace == namespace1)
-        assert(entity.name == name1)
-        assert(entity.synopsis == synopsis1)
-        assert(entity.documentation == documentation1)
-        assert(entity.owner == owner1)
-        assert(entity.payload == payloadReferencingExternalMethod)
-        assert(entity.snapshotId != None)
-        assert(entity.createDate != None)
-      })
-      assert(status == Created)
+      assert(status == BadRequest)
     }
   }
 

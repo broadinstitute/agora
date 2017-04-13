@@ -19,30 +19,31 @@ class AgoraImportSpec extends ApiServiceSpec {
   override def beforeAll() = {
     ensureDatabasesAreRunning()
     testEntityTaskWcWithId = patiently(agoraBusiness.insert(testEntityTaskWc, mockAuthenticatedOwner.get))
-    patiently(agoraBusiness.insert(testEntityWorkflowWithExistentWdlImport, mockAuthenticatedOwner.get))
+    //patiently(agoraBusiness.insert(testEntityWorkflowWithExistentWdlImport, mockAuthenticatedOwner.get)) GAWB-937 means no more imports allowed
   }
 
   override def afterAll() = {
     clearDatabases()
   }
 
-  "MethodsService" should "return a 201 created when posting a WDL with an invalid import statement" in {
+  "MethodsService" should "return a 400 when posting a WDL with an invalid import statement" in {
     Post(ApiUtil.Methods.withLeadingVersion, testBadAgoraEntityInvalidWdlImportFormat) ~>
       methodsService.postRoute ~> check {
-      assert(status == Created)
+      assert(status == BadRequest)
 //      assert(responseAs[String] != null)
     }
   }
 
-  "MethodsService" should "return a 201 created when posting a WDL with an import statement that references a non-existent method" in {
+  "MethodsService" should "return a 400 when posting a WDL with an import statement that references a non-existent method" in {
     Post(ApiUtil.Methods.withLeadingVersion, testBadAgoraEntityNonExistentWdlImportFormat) ~>
       methodsService.postRoute ~> check {
-      assert(status == Created)
+      assert(status == BadRequest)
 //      assert(responseAs[String] != null)
     }
   }
 
-  "MethodsService" should "create a method and return with a status of 201 when the WDL contains an import to an existent method" in {
+  //ignored because no it shouldn't. GAWB-937 means Agora isn't supporting import statements any more
+  ignore should "create a method and return with a status of 201 when the WDL contains an import to an existent method" in {
     // Verifying that the pre-loaded task exists...
     Get(ApiUtil.Methods.withLeadingVersion + "/" + testEntityTaskWcWithId.namespace.get + "/" + testEntityTaskWcWithId.name.get + "/"
       + testEntityTaskWcWithId.snapshotId.get) ~> methodsService.querySingleRoute ~> check {

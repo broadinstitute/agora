@@ -34,7 +34,7 @@ libraryDependencies ++= Seq(
   "io.spray" %% "spray-routing" % sprayV,
   "mysql" % "mysql-connector-java" % "5.1.35",
   "net.ceedubs" %% "ficus" % "1.1.2",
-//  "org.broadinstitute" %% "cromwell" % "0.9" excludeAll ExclusionRule(organization = "com.gettyimages"),
+  "org.broadinstitute" %% "wdl4s" % "0.10",
   "org.broadinstitute.dsde.vault" %% "vault-common" % "0.1-15-bf74315",
   "org.mongodb" %% "casbah" % "2.8.2",
   "org.scalaz" %% "scalaz-core" % "7.1.3",

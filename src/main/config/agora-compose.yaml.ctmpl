@@ -1,0 +1,23 @@
+{{with $environment := env "ENVIRONMENT"}}
+{{$keyname := printf "secret/dsde/%s/agora/agora-compose.yaml" $environment}}
+{{with vault $keyname}}
+
+app:
+  image: {{.Data.app_image}}
+  {{.Data.app_dns}}
+  log_driver: {{.Data.log_driver}}
+  {{.Data.app_volumes}}
+proxy:
+  extends:
+    file: proxy-compose.yaml
+    service: proxy
+  hostname: {{.Data.proxy_hostname}}
+  log_driver: {{.Data.log_driver}}
+  links:
+    - app:app
+  environment:
+    PROXY_URL: http://app:8000/
+    PROXY_URL2: http://app:8000/api
+
+{{end}}
+{{end}}

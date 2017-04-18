@@ -103,7 +103,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
             if (!subFields(2).isInstanceOf[JsNumber]) throw ValidationException("Configuration methodRepoMethod must include a 'methodVersion' key with a JSNumber value")
           }
 
-        case None => //hello "shouldn't get here" my old friend
+        case _ => //hello "shouldn't get here" my old friend
           Failure(ValidationException(s"AgoraEntity $agoraEntity has no type!"))
       }
 

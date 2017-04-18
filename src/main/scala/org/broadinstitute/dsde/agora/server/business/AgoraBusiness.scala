@@ -73,28 +73,27 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     } match {
       case Failure(x) => Failure(x) //ast didn't parse nicely
       case Success(true) => Success() //no imports, WDL is fine
-      case Success(false) => Failure(ValidationException("Agora doesn't support imports in WDLs"))
+      case Success(false) => Failure(ValidationException("WDL imports not yet supported."))
     }
   }
 
   private def checkValidPayload[T](agoraEntity: AgoraEntity, username: String)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
-    val wdl = agoraEntity.payload.get
-    val wdlImportCheck = checkWdlHasNoImports(wdl)
+    val payload = agoraEntity.payload.get
 
-    val wdlLoads = agoraEntity.entityType.get match {
-        case AgoraEntityType.Task =>
-          wdlImportCheck flatMap ( _ => WdlNamespace.loadUsingSource(wdl, None, Option(Seq())) )
+    val payloadOK = agoraEntity.entityType match {
+        case Some(AgoraEntityType.Task) =>
+          checkWdlHasNoImports(payload) flatMap ( _ => WdlNamespace.loadUsingSource(payload, None, Option(Seq())) )
         // NOTE: Still not validating existence of docker images.
         // namespace.tasks.foreach { validateDockerImage }
 
-        case AgoraEntityType.Workflow =>
-          wdlImportCheck flatMap ( _ => WdlNamespaceWithWorkflow.load(wdl, Seq()) )
+        case Some(AgoraEntityType.Workflow) =>
+          checkWdlHasNoImports(payload) flatMap ( _ => WdlNamespaceWithWorkflow.load(payload, Seq()) )
         // NOTE: Still not validating existence of docker images.
         //namespace.tasks.foreach { validateDockerImage }
 
-        case AgoraEntityType.Configuration =>
+        case Some(AgoraEntityType.Configuration) =>
           Try {
-            val json = wdl.parseJson
+            val json = payload.parseJson
             val fields = json.asJsObject.getFields("methodRepoMethod")
             if (fields.size != 1) throw ValidationException("Configuration payload must define at least one field named 'methodRepoMethod'.")
 
@@ -103,9 +102,12 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
             if (!subFields(1).isInstanceOf[JsString]) throw ValidationException("Configuration methodRepoMethod must include a 'methodName' key with a string value")
             if (!subFields(2).isInstanceOf[JsNumber]) throw ValidationException("Configuration methodRepoMethod must include a 'methodVersion' key with a JSNumber value")
           }
+
+        case None => //hello "shouldn't get here" my old friend
+          Failure(ValidationException(s"AgoraEntity $agoraEntity has no type!"))
       }
 
-    wdlLoads match {
+    payloadOK match {
       case Success(_) => op
       case Failure(e: SyntaxError) =>
         DBIO.failed(ValidationException(e.getMessage, e.getCause))

@@ -96,6 +96,8 @@ assemblyMergeStrategy in assembly := {
     }
   case "asm-license.txt" | "overview.html" =>
     MergeStrategy.discard
+  case PathList("com", "typesafe", "scalalogging", xs @ _*) =>
+    MergeStrategy.last
   case "cobertura.properties" =>
     MergeStrategy.discard
   case "logback.xml" =>

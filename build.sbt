@@ -17,7 +17,7 @@ resolvers += "artifactory-snapshots" at artifactory + "libs-snapshot"
 
 libraryDependencies ++= Seq(
   "ch.qos.logback" % "logback-classic" % "1.1.3",
-  "com.gettyimages" %% "spray-swagger" % "0.5.0",
+  "com.github.swagger-spray" %% "swagger-spray" % "0.8.0",
   "com.github.simplyscala" %% "scalatest-embedmongo" % "0.2.2",
   "com.google.api-client" % "google-api-client" % "1.20.0" excludeAll ExclusionRule(organization = "com.google.guava"),
   "com.google.apis" % "google-api-services-admin-directory" % "directory_v1-rev53-1.20.0" excludeAll ExclusionRule(organization = "com.google.guava"),
@@ -96,8 +96,6 @@ assemblyMergeStrategy in assembly := {
     }
   case "asm-license.txt" | "overview.html" =>
     MergeStrategy.discard
-  case PathList("com", "typesafe", "scalalogging", xs @ _*) =>
-    MergeStrategy.last
   case "cobertura.properties" =>
     MergeStrategy.discard
   case "logback.xml" =>

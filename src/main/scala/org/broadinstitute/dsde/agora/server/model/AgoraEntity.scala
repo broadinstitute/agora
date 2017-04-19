@@ -1,7 +1,6 @@
 
 package org.broadinstitute.dsde.agora.server.model
 
-import com.wordnik.swagger.annotations.{ApiModel, ApiModelProperty}
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.bson.types.ObjectId
 import org.joda.time.DateTime

@@ -134,7 +134,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec {
   "Agora" should "not allow you to post a new task to the configurations route" in {
     Post(ApiUtil.Configurations.withLeadingVersion, testEntityTaskWc) ~>
     configurationsService.postRoute ~> check {
-      rejection == ValidationRejection
+      assert(rejection.isInstanceOf[ValidationRejection])
     }
   }
 

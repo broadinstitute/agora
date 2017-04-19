@@ -4,11 +4,12 @@ import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
 
 import scala.concurrent.Future
+import scala.io.Source
 
 object AgoraTestData {
   def getBigDocumentation: String = {
     // Read contents of a test markdown file into a single string.
-    val markdown = io.Source.fromFile("src/test/resources/TESTMARKDOWN.md").getLines() mkString "\n"
+    val markdown = Source.fromFile("src/test/resources/TESTMARKDOWN.md").getLines() mkString "\n"
     markdown * 7 // NB: File is 1.6 Kb, so 7* that is >10kb, our minimal required storage amount.
   }
 

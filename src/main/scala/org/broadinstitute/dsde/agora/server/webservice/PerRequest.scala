@@ -4,10 +4,9 @@ package org.broadinstitute.dsde.agora.server.webservice
 import akka.actor.Status.Failure
 import akka.actor.SupervisorStrategy.Stop
 import akka.actor.{OneForOneStrategy, _}
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 import scala.concurrent.ExecutionContext
-//import cromwell.parser.WdlParser.SyntaxError
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.exceptions._
 import org.broadinstitute.dsde.agora.server.webservice.PerRequest._
@@ -87,8 +86,6 @@ trait PerRequest extends Actor with LazyLogging {
       r.complete(BadRequest, AgoraException(e.getMessage, e.getCause, BadRequest))
     case e: PermissionNotFoundException =>
       r.complete(BadRequest, AgoraException(e.getMessage, e.getCause, BadRequest))
-    //      case e: SyntaxError =>
-    //        r.complete(BadRequest, AgoraException(e.getMessage, e.getCause, BadRequest))
     case e: ValidationException =>
       r.complete(BadRequest,AgoraException(e.getMessage, e.getCause, BadRequest))
     case e: PermissionModificationException =>

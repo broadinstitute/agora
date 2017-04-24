@@ -4,9 +4,9 @@ import java.security.Permissions
 
 import akka.actor.SupervisorStrategy.Restart
 import akka.actor.{OneForOneStrategy, Props}
-import com.gettyimages.spray.swagger.SwaggerHttpService
-import com.typesafe.scalalogging.slf4j.LazyLogging
-import com.wordnik.swagger.model.ApiInfo
+import com.github.swagger.spray.SwaggerHttpService
+import com.github.swagger.spray.model.{Contact, License, Info}
+import com.typesafe.scalalogging.LazyLogging
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AdminSweeper, PermissionsDataSource}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AdminSweeper
@@ -95,21 +95,18 @@ class ApiServiceActor(permissionsDataSource: PermissionsDataSource) extends Http
   }
 
   val swaggerService = new SwaggerHttpService {
-    override def apiTypes = Seq(typeOf[MethodsService], typeOf[ConfigurationsService])
-    override def apiVersion = AgoraConfig.SwaggerConfig.apiVersion
-    override def baseUrl = AgoraConfig.SwaggerConfig.baseUrl
-    override def docsPath = AgoraConfig.SwaggerConfig.apiDocs
+    override val apiTypes = Seq(typeOf[MethodsService], typeOf[ConfigurationsService])
+    override val basePath = AgoraConfig.SwaggerConfig.baseUrl
+    override val apiDocsPath = AgoraConfig.SwaggerConfig.apiDocs
     override def actorRefFactory = context
-    override def swaggerVersion = AgoraConfig.SwaggerConfig.swaggerVersion
 
-    override def apiInfo = Some(
-      new ApiInfo(
-        AgoraConfig.SwaggerConfig.info,
+    override val info = Info(
         AgoraConfig.SwaggerConfig.description,
+        AgoraConfig.SwaggerConfig.swaggerVersion,
+        AgoraConfig.SwaggerConfig.info,
         AgoraConfig.SwaggerConfig.termsOfServiceUrl,
-        AgoraConfig.SwaggerConfig.contact,
-        AgoraConfig.SwaggerConfig.license,
-        AgoraConfig.SwaggerConfig.licenseUrl)
-    )
+        Some(Contact("", "",AgoraConfig.SwaggerConfig.contact)),
+        Some(License(AgoraConfig.SwaggerConfig.license, AgoraConfig.SwaggerConfig.licenseUrl))
+      )
   }
 }

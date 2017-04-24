@@ -1,6 +1,6 @@
 package org.broadinstitute.dsde.agora.server.exceptions
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import spray.http.{StatusCode, StatusCodes}
 
 case class AgoraException(message: String = null,

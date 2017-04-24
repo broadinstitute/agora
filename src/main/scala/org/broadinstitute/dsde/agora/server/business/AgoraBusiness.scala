@@ -7,6 +7,8 @@ import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissi
 import org.broadinstitute.dsde.agora.server.model.{AgoraApiJsonSupport, AgoraEntity, AgoraEntityProjection, AgoraEntityType}
 import slick.dbio.DBIO
 import spray.json._
+import wdl4s.{AstTools, WdlNamespace, WdlNamespaceWithWorkflow}
+import wdl4s.parser.WdlParser.{AstList, AstNode, SyntaxError}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
@@ -61,34 +63,56 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     }
   }
 
+  //Workaround for https://github.com/broadinstitute/wdl4s/issues/103
+  //Checks to see if the WDL has imports, since loading a WDL that contains imports without specifying a resolver
+  //barfs in an unintuitive way.
+  private def checkWdlHasNoImports(wdl: String): Try[Unit] = {
+    Try { //AST loader might syntax error if the wdl is crap
+      val ast = AstTools.getAst(wdl, "string")
+      ast.getAttribute("imports").asInstanceOf[AstList].isEmpty
+    } match {
+      case Failure(x) => Failure(x) //ast didn't parse nicely
+      case Success(true) => Success() //no imports, WDL is fine
+      case Success(false) => Failure(ValidationException("WDL imports not yet supported."))
+    }
+  }
+
   private def checkValidPayload[T](agoraEntity: AgoraEntity, username: String)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
-    Try(agoraEntity.entityType.get match {
+    val payload = agoraEntity.payload.get
 
-      case AgoraEntityType.Task =>
-      // GAWB-59 remove wdl validation
-      //        val namespace = WdlNamespace.load(agoraEntity.payload.get, BackendType.LOCAL)
-      //        // Passed basic validation.  Now check if (any) docker images that are referenced exist
-      //        namespace.tasks.foreach { validateDockerImage }
+    val payloadOK = agoraEntity.entityType match {
+        case Some(AgoraEntityType.Task) =>
+          checkWdlHasNoImports(payload) flatMap ( _ => WdlNamespace.loadUsingSource(payload, None, Option(Seq())) )
+        // NOTE: Still not validating existence of docker images.
+        // namespace.tasks.foreach { validateDockerImage }
 
-      case AgoraEntityType.Workflow =>
-      // GAWB-59 remove wdl validation
-      //        val resolver = MethodImportResolver(username, this)
-      //        val namespace = WdlNamespace.load(agoraEntity.payload.get, resolver.importResolver _, BackendType.LOCAL)
-      //        // Passed basic validation.  Now check if (any) docker images that are referenced exist
-      //        namespace.tasks.foreach { validateDockerImage }
+        case Some(AgoraEntityType.Workflow) =>
+          checkWdlHasNoImports(payload) flatMap ( _ => WdlNamespaceWithWorkflow.load(payload, Seq()) )
+        // NOTE: Still not validating existence of docker images.
+        //namespace.tasks.foreach { validateDockerImage }
 
-      case AgoraEntityType.Configuration =>
-        val json = agoraEntity.payload.get.parseJson
-        val fields = json.asJsObject.getFields("methodRepoMethod")
-        if(fields.size != 1) throw new ValidationException("Configuration payload must define at least one field named 'methodRepoMethod'.")
+        case Some(AgoraEntityType.Configuration) =>
+          Try {
+            val json = payload.parseJson
+            val fields = json.asJsObject.getFields("methodRepoMethod")
+            if (fields.size != 1) throw ValidationException("Configuration payload must define at least one field named 'methodRepoMethod'.")
 
-        val subFields = fields(0).asJsObject.getFields("methodNamespace", "methodName", "methodVersion")
-        if(!subFields(0).isInstanceOf[JsString]) throw new ValidationException("Configuration methodRepoMethod must include a 'methodNamespace' key with a string value")
-        if(!subFields(1).isInstanceOf[JsString]) throw new ValidationException("Configuration methodRepoMethod must include a 'methodName' key with a string value")
-        if(!subFields(2).isInstanceOf[JsNumber]) throw new ValidationException("Configuration methodRepoMethod must include a 'methodVersion' key with a JSNumber value")
-    }) match {
+            val subFields = fields.head.asJsObject.getFields("methodNamespace", "methodName", "methodVersion")
+            if (!subFields(0).isInstanceOf[JsString]) throw ValidationException("Configuration methodRepoMethod must include a 'methodNamespace' key with a string value")
+            if (!subFields(1).isInstanceOf[JsString]) throw ValidationException("Configuration methodRepoMethod must include a 'methodName' key with a string value")
+            if (!subFields(2).isInstanceOf[JsNumber]) throw ValidationException("Configuration methodRepoMethod must include a 'methodVersion' key with a JSNumber value")
+          }
+
+        case _ => //hello "shouldn't get here" my old friend
+          Failure(ValidationException(s"AgoraEntity $agoraEntity has no type!"))
+      }
+
+    payloadOK match {
       case Success(_) => op
-      case Failure(regret) => DBIO.failed(regret)
+      case Failure(e: SyntaxError) =>
+        DBIO.failed(ValidationException(e.getMessage, e.getCause))
+      case Failure(regret) =>
+        DBIO.failed(regret)
     }
   }
 

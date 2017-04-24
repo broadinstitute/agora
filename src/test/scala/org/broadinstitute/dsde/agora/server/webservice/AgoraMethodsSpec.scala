@@ -121,11 +121,11 @@ class AgoraMethodsSpec extends ApiServiceSpec {
     }
   }
 
-  "Agora" should "return a 201 created when posting a malformed payload" in {
+  "Agora" should "return a 400 bad request when posting a malformed payload" in {
     Post(ApiUtil.Methods.withLeadingVersion, testBadAgoraEntity) ~>
       methodsService.postRoute ~> check {
-      assert(status == Created)
-//      assert(responseAs[String] != null)
+      assert(status === BadRequest)
+      assert(responseAs[String] != null)
     }
   }
 

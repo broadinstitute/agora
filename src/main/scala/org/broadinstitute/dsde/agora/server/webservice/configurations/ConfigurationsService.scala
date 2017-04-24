@@ -1,7 +1,6 @@
 
 package org.broadinstitute.dsde.agora.server.webservice.configurations
 
-import com.wordnik.swagger.annotations._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.AgoraService

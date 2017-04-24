@@ -1,6 +1,6 @@
 package org.broadinstitute.dsde.agora.server
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 object ProductionAgora extends Agora {
   start()

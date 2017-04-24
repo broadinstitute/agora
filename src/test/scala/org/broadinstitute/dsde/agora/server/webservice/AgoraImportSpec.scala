@@ -19,118 +19,30 @@ class AgoraImportSpec extends ApiServiceSpec {
   override def beforeAll() = {
     ensureDatabasesAreRunning()
     testEntityTaskWcWithId = patiently(agoraBusiness.insert(testEntityTaskWc, mockAuthenticatedOwner.get))
-    patiently(agoraBusiness.insert(testEntityWorkflowWithExistentWdlImport, mockAuthenticatedOwner.get))
   }
 
   override def afterAll() = {
     clearDatabases()
   }
 
-  "MethodsService" should "return a 201 created when posting a WDL with an invalid import statement" in {
+  "MethodsService" should "return a 400 when posting a WDL with an invalid import statement" in {
     Post(ApiUtil.Methods.withLeadingVersion, testBadAgoraEntityInvalidWdlImportFormat) ~>
       methodsService.postRoute ~> check {
-      assert(status == Created)
-//      assert(responseAs[String] != null)
+      assert(status == BadRequest)
     }
   }
 
-  "MethodsService" should "return a 201 created when posting a WDL with an import statement that references a non-existent method" in {
+  "MethodsService" should "return a 400 when posting a WDL with an import statement that references a non-existent method" in {
     Post(ApiUtil.Methods.withLeadingVersion, testBadAgoraEntityNonExistentWdlImportFormat) ~>
       methodsService.postRoute ~> check {
-      assert(status == Created)
-//      assert(responseAs[String] != null)
+      assert(status == BadRequest)
     }
   }
 
-  "MethodsService" should "create a method and return with a status of 201 when the WDL contains an import to an existent method" in {
-    // Verifying that the pre-loaded task exists...
-    Get(ApiUtil.Methods.withLeadingVersion + "/" + testEntityTaskWcWithId.namespace.get + "/" + testEntityTaskWcWithId.name.get + "/"
-      + testEntityTaskWcWithId.snapshotId.get) ~> methodsService.querySingleRoute ~> check {
-      handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => assert(brief(entity) == brief(testEntityTaskWcWithId)))
-      assert(status == OK)
-    }
+  "MethodsService" should "return 400 when the WDL contains an import, because imports are no longer allowed" in {
     Post(ApiUtil.Methods.withLeadingVersion, testEntityWorkflowWithExistentWdlImport) ~>
       methodsService.postRoute ~> check {
-      handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => {
-        assert(entity.namespace == namespace1)
-        assert(entity.name == name1)
-        assert(entity.synopsis == synopsis1)
-        assert(entity.documentation == documentation1)
-        assert(entity.owner == owner1)
-        assert(entity.payload == payloadReferencingExternalMethod)
-        assert(entity.snapshotId != None)
-        assert(entity.createDate != None)
-      })
-      assert(status == Created)
+      assert(status == BadRequest)
     }
   }
-
-//  "ImportResolverHelper" should "reject import if scheme != methods://" in {
-//    val thrown = the[SyntaxError] thrownBy ImportResolverHelper.validateUri("blah://")
-//    assert(thrown.getMessage.contains("start with") == true)
-//  }
-//
-//  "ImportResolverHelper" should "reject import if something comes before scheme" in {
-//    val thrown = the[SyntaxError] thrownBy ImportResolverHelper.validateUri("foo methods://")
-//    assert(thrown.getMessage.contains("start with") == true)
-//  }
-//
-//  "ImportResolverHelper" should "reject import if uri doesn't have 3 parts" in {
-//    val thrown = the[SyntaxError] thrownBy ImportResolverHelper.validateUri("methods://")
-//    assert(thrown.getMessage.contains("three parts") == true)
-//  }
-//
-//  "ImportResolverHelper" should "reject import if third part is not an integer" in {
-//    val thrown = the[SyntaxError] thrownBy ImportResolverHelper.validateUri("methods://foo.bar.baz")
-//    assert(thrown.getMessage.contains("integer") == true)
-//  }
-//
-//  "ImportResolverHelper" should "accept a valid import uri" in {
-//    noException should be thrownBy ImportResolverHelper.validateUri("methods://foo.bar.2")
-//  }
-//
-//  "ImportResolverHelper.resolve" should "return throw an AgoraEntityNotFoundException if method does not exist" in {
-//    val thrown = intercept[AgoraEntityNotFoundException] {
-//      ImportResolverHelper.resolve("methods://foo.bar.1", agoraBusiness, mockAutheticatedOwner.get)
-//    }
-//    assert(thrown != null)
-//  }
-//
-//  "ImportResolverHelper.resolve" should "return the method if it exists" in {
-//    val namespace = testEntityTaskWcWithId.namespace.get
-//    val name = testEntityTaskWcWithId.name.get
-//    val id = testEntityTaskWcWithId.snapshotId.get
-//    val method = ImportResolverHelper.resolve(s"methods://$namespace.$name.$id", agoraBusiness, mockAutheticatedOwner.get)
-//    assert(method != None)
-//    assert(method.namespace.get == namespace)
-//    assert(method.name.get == name)
-//    assert(method.snapshotId.get == id)
-//  }
-//
-//  "MethodImportResolver" should "reject import if scheme != methods://" in {
-//    val uri = "blah://"
-//    val resolver = MethodImportResolver(mockAutheticatedOwner.get, agoraBusiness)
-//    val thrown = the[SyntaxError] thrownBy resolver.importResolver(uri)
-//    assert(thrown.getMessage.contains("start with") == true)
-//  }
-//
-//  "MethodImportResolver" should "throw an AgoraEntityNotFoundException if method not found" in {
-//    val uri = "methods://foo.bar.22"
-//    val resolver = MethodImportResolver(mockAutheticatedOwner.get, agoraBusiness)
-//    val thrown = intercept[AgoraEntityNotFoundException] {
-//      resolver.importResolver(uri)
-//    }
-//    assert(thrown != null)
-//  }
-//
-//  "MethodImportResolver" should "return payload if method is found" in {
-//    val namespace = testEntityTaskWcWithId.namespace.get
-//    val name = testEntityTaskWcWithId.name.get
-//    val id = testEntityTaskWcWithId.snapshotId.get
-//    val uri = s"methods://$namespace.$name.$id"
-//    val resolver = MethodImportResolver(mockAutheticatedOwner.get, agoraBusiness)
-//    val payload = resolver.importResolver(uri)
-//    assert(payload.contains("wc") == true)
-//  }
-
 }

@@ -1,7 +1,6 @@
 package org.broadinstitute.dsde.agora.server.webservice.routes
 
 import org.broadinstitute.dsde.agora.server.AgoraConfig
-import org.broadinstitute.dsde.vault.common.directives.OpenAMDirectives
 import org.broadinstitute.dsde.vault.common.util.ImplicitMagnet
 import spray.routing.Directives._
 import spray.routing._
@@ -15,9 +14,15 @@ trait MockAgoraDirectives extends AgoraDirectives {
     provide(AgoraConfig.mockAuthenticatedUserEmail)
   }
 
+  // allow unit tests to specify the user making the request; if they don't, use the default
   def usernameFromRequest(magnet: ImplicitMagnet[ExecutionContext]): Directive1[String] = {
-    provide(AgoraConfig.mockAuthenticatedUserEmail)
+    optionalHeaderValueByName(MockAgoraDirectives.mockUserHeader) map {
+      case Some(mockuser) => mockuser
+      case None => AgoraConfig.mockAuthenticatedUserEmail
+    }
   }
 }
 
-object MockAgoraDirectives extends MockAgoraDirectives
+object MockAgoraDirectives extends MockAgoraDirectives {
+  val mockUserHeader = "X-UnitTest-ImpersonateUser"
+}

@@ -77,9 +77,15 @@ class EntityCreationPermissionSpec extends ApiServiceSpec {
   }
 
   it should "reject creating a new snapshot of an existing entity if you do not own the entity" in {
-    // owner3 create new entity in namespace2 (success)
+    // owner3 create random new entity in namespace2: prove that owner3 has Create in the namespace
     assertEntityCreation(owner3.get, namespace2.get, randUUID)
-    // owner3 create new snapshot of testEntity2WithId in namespace2 (fail)
+
+    // assert that owner3 does not have any permissions on pre-existing testEntity2WithId
+    val existingPerms = patiently(permissionBusiness.listEntityPermissions(testEntity2WithId, owner2.get))
+    assert(!existingPerms.exists(_.user == owner3.get), "owner3 should not have any permissions on testEntity2WithId")
+
+    // owner3 create new snapshot of testEntity2WithId in namespace2: should fail to create, because owner3 doesn't
+    // have permissions on previous snapshots.
     assertEntityRejection(owner3.get, testEntity2WithId.namespace.get, testEntity2WithId.name.get)
   }
 

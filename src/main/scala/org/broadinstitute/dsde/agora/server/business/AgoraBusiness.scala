@@ -34,7 +34,8 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     else {
       val ownerPerm = AgoraPermissions(Manage)
       DBIO.sequence(snapshots map { db.aePerms.getEntityPermission(_, username) }) flatMap { snapshotPermissions =>
-        if (!snapshotPermissions.exists(_.hasPermission(ownerPerm)))
+        val nonRedacted = snapshotPermissions.filter(_.permissions > 0) // ignore redacted snapshots
+        if (!nonRedacted.exists(_.hasPermission(ownerPerm)))
           DBIO.failed(AgoraEntityAuthorizationException(ownerPerm, agoraEntity, username))
         else
           op

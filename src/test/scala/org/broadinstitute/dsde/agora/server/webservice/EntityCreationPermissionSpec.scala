@@ -89,7 +89,7 @@ class EntityCreationPermissionSpec extends ApiServiceSpec {
     assertEntityRejection(owner3.get, testEntity2WithId.namespace.get, testEntity2WithId.name.get)
   }
 
-  it should "DO SOMETHING WHEN creating a new snapshot of an existing entity if you own the entity BUT LACK PERMISSION ON THE NAMESPACE" in {
+  it should "allow creating a new snapshot of an existing entity if you own a snapshot of the entity but lack permission on the namespace" in {
     val name = randUUID
     assertEntityCreation(owner1.get, namespace1.get, name)
 

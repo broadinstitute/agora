@@ -27,12 +27,12 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     }
   }
 
+  // as of this writing, no caller specifies checkAdmin=true, but we leave the option here for future use
   private def checkNamespacePermission[T](db: DataAccess, agoraEntity: AgoraEntity, username: String, permLevel: AgoraPermissions, checkAdmin: Boolean = false)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
     //if we're supposed to check if the user is an admin, create a fake action
     val admAction = makeDummyAdminPermission(checkAdmin, db.nsPerms, username, permLevel)
 
     DBIO.sequence(Seq(db.nsPerms.getNamespacePermission(agoraEntity, username), db.nsPerms.getNamespacePermission(agoraEntity, "public"), admAction)) flatMap { namespacePerms =>
-      db.nsPerms.isAdmin(username)
       if (!namespacePerms.exists(_.hasPermission(permLevel))) {
         DBIO.failed(NamespaceAuthorizationException(permLevel, agoraEntity, username))
       } else {
@@ -168,7 +168,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
 
     permissionsDataSource.inTransaction { db =>
       db.aePerms.addUserIfNotInDatabase(username) flatMap { _ =>
-        checkNamespacePermission(db, agoraEntity, username, AgoraPermissions(Redact), checkAdmin = true) {
+        checkNamespacePermission(db, agoraEntity, username, AgoraPermissions(Redact)) {
           //admins can redact anything
           DBIO.sequence(configurations map { config => db.aePerms.deleteAllPermissions(config) }) andThen
             db.aePerms.deleteAllPermissions(agoraEntity)

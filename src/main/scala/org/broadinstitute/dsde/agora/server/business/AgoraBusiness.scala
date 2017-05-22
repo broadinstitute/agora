@@ -140,7 +140,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     }
     // find all previous snapshots. Use the dao directly, because we want to find
     // everything, including those snapshots the current user can't read
-    val snapshots: Seq[AgoraEntity] = AgoraDao.createAgoraDao(agoraEntity.entityType)
+    val snapshots = AgoraDao.createAgoraDao(agoraEntity.entityType)
       .find(AgoraEntity(agoraEntity.namespace, agoraEntity.name), None)
 
     permissionsDataSource.inTransaction { db =>

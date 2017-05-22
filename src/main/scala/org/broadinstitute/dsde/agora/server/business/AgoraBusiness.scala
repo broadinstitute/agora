@@ -32,7 +32,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     if (snapshots.isEmpty)
       checkNamespacePermission(db, agoraEntity, username, AgoraPermissions(Create))(op)
     else {
-      val ownerPerm = AgoraPermissions(Manage)
+      val ownerPerm = AgoraPermissions(Create)
       DBIO.sequence(snapshots map { db.aePerms.getEntityPermission(_, username) }) flatMap { snapshotPermissions =>
         val nonRedacted = snapshotPermissions.filter(_.permissions > 0) // ignore redacted snapshots
         if (!nonRedacted.exists(_.hasPermission(ownerPerm)))

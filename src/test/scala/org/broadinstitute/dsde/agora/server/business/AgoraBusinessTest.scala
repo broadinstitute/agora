@@ -42,11 +42,12 @@ class AgoraBusinessTest extends FlatSpec with Matchers with BeforeAndAfterAll wi
     }
   }
 
-  "Agora" should "allow admin users to redact any method" in {
+  "Agora" should "prevent admin users from redacting any method" in {
     addAdminUser()
     val testEntityToBeRedactedWithId3 = patiently(agoraBusiness.find(testEntityToBeRedacted3, None, Seq(testEntityToBeRedacted3.entityType.get), mockAuthenticatedOwner.get)).head
-    val rowsEdited: Int = patiently(agoraBusiness.delete(testEntityToBeRedactedWithId3, AgoraEntityType.MethodTypes, adminUser.get))
-    assert(rowsEdited == 1)
+    intercept[NamespaceAuthorizationException] {
+      patiently(agoraBusiness.delete(testEntityToBeRedactedWithId3, AgoraEntityType.MethodTypes, adminUser.get))
+    }
   }
 
 }

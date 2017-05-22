@@ -9,20 +9,18 @@ import scala.concurrent.ExecutionContext
 
 trait MockAgoraDirectives extends AgoraDirectives {
   def commonNameFromRequest(magnet: ImplicitMagnet[ExecutionContext]): Directive1[String] = {
-
-
     provide(AgoraConfig.mockAuthenticatedUserEmail)
   }
 
   // allow unit tests to specify the user making the request; if they don't, use the default
   def usernameFromRequest(magnet: ImplicitMagnet[ExecutionContext]): Directive1[String] = {
-    optionalHeaderValueByName(MockAgoraDirectives.mockUserHeader) map {
-      case Some(mockuser) => mockuser
+    optionalHeaderValueByName(MockAgoraDirectives.mockAuthenticatedUserEmailHeader) map {
+      case Some(mockAuthenticatedUserEmail) => mockAuthenticatedUserEmail
       case None => AgoraConfig.mockAuthenticatedUserEmail
     }
   }
 }
 
 object MockAgoraDirectives extends MockAgoraDirectives {
-  val mockUserHeader = "X-UnitTest-ImpersonateUser"
+  val mockAuthenticatedUserEmailHeader = "X-UnitTest-MockAuthenticatedUserEmail"
 }

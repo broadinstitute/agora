@@ -151,7 +151,7 @@ class EntityCreationPermissionSpec extends ApiServiceSpec {
     val randomEntity = createRandomMethod(namespace, name)
 
     Post(ApiUtil.Methods.withLeadingVersion, randomEntity) ~>
-      addHeader(MockAgoraDirectives.mockUserHeader, asUser) ~>
+      addHeader(MockAgoraDirectives.mockAuthenticatedUserEmailHeader, asUser) ~>
       methodsService.postRoute ~> check {
         assert(status == expectedStatus, response.message)
         if (expectedStatus == Created) {

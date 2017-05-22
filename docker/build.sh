@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 function make_jar() {
     echo "building jar..."
     docker run --rm -v $PWD:/working \
@@ -32,7 +34,6 @@ REPO=${REPO:-broadinstitute/$PROJECT}  # default to rawls docker repo
 while [ "$1" != "" ]; do
     case $1 in
         jar) make_jar ;;
-        publish) artifactory_push ;;
         -d | --docker) shift
                        echo $1
                        DOCKER_CMD=$1

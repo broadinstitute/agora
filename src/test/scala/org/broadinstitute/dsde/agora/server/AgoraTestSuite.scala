@@ -11,6 +11,7 @@ import org.scalatest.{BeforeAndAfterAll, Suites}
 class AgoraTestSuite extends Suites(
   new AgoraServiceStatusSpec,
   new AgoraMethodsSpec,
+  new EntityCreationPermissionSpec,
   new AgoraProjectionsSpec,
   new AgoraImportSpec,
   new AgoraConfigurationsSpec,

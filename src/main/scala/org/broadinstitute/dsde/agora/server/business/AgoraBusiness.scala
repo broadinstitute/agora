@@ -1,6 +1,6 @@
 package org.broadinstitute.dsde.agora.server.business
 
-import org.broadinstitute.dsde.agora.server.exceptions.{AgoraEntityNotFoundException, NamespaceAuthorizationException, ValidationException}
+import org.broadinstitute.dsde.agora.server.exceptions.{AgoraEntityAuthorizationException, AgoraEntityNotFoundException, NamespaceAuthorizationException, ValidationException}
 import org.broadinstitute.dsde.agora.server.dataaccess.{AgoraDao, ReadWriteAction}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
@@ -24,6 +24,22 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
       }
     } else {
       DBIO.successful(AgoraPermissions(Nothing))
+    }
+  }
+  
+  private def checkInsertPermission[T](db: DataAccess, agoraEntity: AgoraEntity, username: String, snapshots: Seq[AgoraEntity])(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
+    // if previous snapshots exist, check ownership on them; if not, check permission on the namespace
+    if (snapshots.isEmpty)
+      checkNamespacePermission(db, agoraEntity, username, AgoraPermissions(Create))(op)
+    else {
+      val ownerPerm = AgoraPermissions(Create)
+      DBIO.sequence(snapshots map { db.aePerms.getEntityPermission(_, username) }) flatMap { snapshotPermissions =>
+        val nonRedacted = snapshotPermissions.filter(_.permissions > 0) // ignore redacted snapshots
+        if (!nonRedacted.exists(_.hasPermission(ownerPerm)))
+          DBIO.failed(AgoraEntityAuthorizationException(ownerPerm, agoraEntity, username))
+        else
+          op
+      }
     }
   }
 
@@ -117,15 +133,19 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
   }
 
   def insert(agoraEntity: AgoraEntity, username: String): Future[AgoraEntity] = {
-    //this goes to Mongo, so do this outside the permissions txn
+    //these next two go to Mongo, so do them outside the permissions txn
     val configReferencedMethodOpt = agoraEntity.entityType.get match {
       case AgoraEntityType.Configuration => Some(resolveMethodRef(agoraEntity.payload.get))
       case _ => None
     }
+    // find all previous snapshots. Use the dao directly, because we want to find
+    // everything, including those snapshots the current user can't read
+    val snapshots = AgoraDao.createAgoraDao(agoraEntity.entityType)
+      .find(AgoraEntity(agoraEntity.namespace, agoraEntity.name), None)
 
     permissionsDataSource.inTransaction { db =>
       db.aePerms.addUserIfNotInDatabase(username) flatMap { _ =>
-        checkNamespacePermission(db, agoraEntity, username, AgoraPermissions(Create)) {
+        checkInsertPermission(db, agoraEntity, username, snapshots) {
           checkValidPayload(agoraEntity, username) {
 
             //this silliness required to check whether the referenced method is readable if it's a config

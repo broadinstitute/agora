@@ -67,8 +67,11 @@ class EntityCreationPermissionSpec extends ApiServiceSpec {
   }
 
   it should "reject creating a new entity if you lack permissions on the namespace" in {
-    // owner1 create in namespace2
+    // owner1 has no perms on namespace2, though owner1 has created an entity in another namespace.
     assertEntityRejection(owner1.get, namespace2.get, randUUID)
+    // owner3 has no perms on namespace, and owner3 has never created an entity.
+    assertEntityRejection(owner3.get, namespace1.get, randUUID)
+    // both the above cases should be exactly the same result, but testing slightly different permutations of fixtures.
   }
 
   it should "allow creating a new snapshot of an existing entity if you own the entity" in {
@@ -99,16 +102,18 @@ class EntityCreationPermissionSpec extends ApiServiceSpec {
     patiently(permissionBusiness.insertEntityPermission(
       ent, owner1.get, AccessControl(owner2.get, AgoraPermissions(All))
     ))
-    // remove owner1
-    patiently(permissionBusiness.deleteEntityPermission(
-      ent, owner2.get, owner1.get
-    ))
+    // ensure owner2 was added and has permissions on the entity
     val actualPermissions = patiently(permissionBusiness.listEntityPermissions(ent, owner2.get))
-    assertResult( List(AccessControl(owner2.get, AgoraPermissions(All))), "should have modified snapshot permissions correctly" ) {
-      actualPermissions
+    assertResult(Set(AccessControl(owner1.get, AgoraPermissions(All)), AccessControl(owner2.get, AgoraPermissions(All))), "should have modified snapshot permissions correctly" ) {
+      actualPermissions.toSet
+    }
+    // ensure owner2 does NOT have permission on the namespace
+    val actualNamespacePermissions = patiently(permissionBusiness.listNamespacePermissions(AgoraEntity(namespace1), owner1.get))
+    assertResult(List(AccessControl(owner1.get, AgoraPermissions(All)))) {
+      actualNamespacePermissions
     }
     // at this point, the entity has one snapshot, owned by owner2, but owner2 does not have create permissions
-    // in the namespace.
+    // in the namespace. Owner2 should still be able to create a new snapshot of that entity.
     assertEntityCreation(owner2.get, namespace1.get, name)
   }
 
@@ -118,17 +123,17 @@ class EntityCreationPermissionSpec extends ApiServiceSpec {
     assertEntityCreation(owner2.get, namespace2.get, name) // create snapshot 1
     assertEntityCreation(owner2.get, namespace2.get, name) // create snapshot 2
 
-    val ent = AgoraEntity(namespace2, Some(name), Some(2))
+    val snapshot2 = AgoraEntity(namespace2, Some(name), Some(2))
 
     // add owner3 to snapshot 2
     patiently(permissionBusiness.insertEntityPermission(
-      ent, owner2.get, AccessControl(owner3.get, AgoraPermissions(All))
+      snapshot2, owner2.get, AccessControl(owner3.get, AgoraPermissions(All))
     ))
     // remove owner2 from snapshot 2
     patiently(permissionBusiness.deleteEntityPermission(
-      ent, owner3.get, owner2.get
+      snapshot2, owner3.get, owner2.get
     ))
-    val actualPermissions = patiently(permissionBusiness.listEntityPermissions(ent, owner3.get))
+    val actualPermissions = patiently(permissionBusiness.listEntityPermissions(snapshot2, owner3.get))
     assertResult( List(AccessControl(owner3.get, AgoraPermissions(All))), "should have modified snapshot permissions correctly" ) {
       actualPermissions
     }

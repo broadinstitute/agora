@@ -130,6 +130,19 @@ trait QuerySingleHelper extends BaseRoute {
     perRequest(context, queryHandler, message)
   }
 
+  def completeEntityCopy(context: RequestContext,
+                           oldEntity: AgoraEntity,
+                           newEntity: AgoraEntity,
+                           redact: Boolean,
+                           username: String,
+                           path: String,
+                           queryHandler: Props): Unit = {
+    val entityTypes = AgoraEntityType.byPath(path)
+    val message = Copy(context, oldEntity, newEntity, redact, entityTypes, username)
+
+    perRequest(context, queryHandler, message)
+  }
+
 }
 
 trait QueryRouteHelper extends BaseRoute {

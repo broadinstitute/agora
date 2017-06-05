@@ -215,6 +215,70 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/Error'
+    post:
+      summary: Create a new snapshot of an existing Method.
+      description: |
+        Inserts a new snapshot of the method into the method repository and
+        copies access permissions from previous snapshot. Must supply a namespace
+        name, payload, and entityType. Cannot supply a snapshotId
+      consumes:
+        - application/json
+        - text/plain
+      produces:
+        - application/json
+        - text/plain
+      parameters:
+        - name: namespace
+          in: path
+          description: Namespace of method.
+          required: true
+          type: string
+        - name: name
+          in: path
+          description: Name of method.
+          required: true
+          type: string
+        - name: snapshotId
+          in: path
+          description: Snapshot ID of method.
+          required: true
+          type: number
+        - name: redact
+          in: query
+          description: Should the source method be redacted?
+          required: false
+          type: boolean
+          default: false
+        - name: body
+          in: body
+          description: Agora Entity
+          required: false
+          schema:
+            type: object
+            $ref: '#/definitions/MethodQuery'
+      tags:
+        - Methods
+      responses:
+        '201':
+          description: Method successfully copied.
+          schema:
+            type: object
+            $ref: '#/definitions/MethodResponse'
+        '400':
+          description: Malformed input.
+          schema:
+            type: object
+            $ref: '#/definitions/BadRequest'
+        '500':
+          description: Internal error.
+          schema:
+            type: object
+            $ref: '#/definitions/Error'
+      security:
+        - authorization:
+            - openid
+            - email
+            - profile
   /api/v1/configurations:
     get:
       summary: List configurations

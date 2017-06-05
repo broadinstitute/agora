@@ -91,13 +91,20 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
   def querySingleRoute =
     matchQuerySingleRoute(path) { (namespace, name, snapshotId, username) =>
       extractOnlyPayloadParameter { (onlyPayload) =>
-        val entity = AgoraEntity(Option(namespace), Option(name), Option(snapshotId))
+        val targetEntity = AgoraEntity(Option(namespace), Option(name), Option(snapshotId))
 
         get { requestContext =>
-          completeWithPerRequest(requestContext, entity, username, toBool(onlyPayload), path, queryHandlerProps)
+          completeWithPerRequest(requestContext, targetEntity, username, toBool(onlyPayload), path, queryHandlerProps)
         } ~
         delete { requestContext =>
-          completeEntityDelete(requestContext, entity, username, path, queryHandlerProps)
+          completeEntityDelete(requestContext, targetEntity, username, path, queryHandlerProps)
+        } ~
+        post {
+          entity(as[AgoraEntity]) { newEntity =>
+            parameters("redact".as[Boolean] ? false) { redact =>
+              requestContext => completeEntityCopy(requestContext, targetEntity, newEntity, redact, username, path, queryHandlerProps)
+            }
+          }
         }
       }
     }

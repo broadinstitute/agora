@@ -44,6 +44,14 @@ class QueryHandler(dataSource: PermissionsDataSource, implicit val ec: Execution
                 entityTypes: Seq[AgoraEntityType.EntityType],
                 username: String) =>
       delete(requestContext, entity, entityTypes, username) pipeTo context.parent
+
+    case Copy(requestContext: RequestContext,
+              oldEntity: AgoraEntity,
+              newEntity: AgoraEntity,
+              redact: Boolean,
+              entityTypes: Seq[AgoraEntityType.EntityType],
+              username: String) =>
+      copy(requestContext, oldEntity, newEntity, redact, entityTypes, username) pipeTo context.parent
   }
 
   def query(requestContext: RequestContext,
@@ -73,6 +81,17 @@ class QueryHandler(dataSource: PermissionsDataSource, implicit val ec: Execution
               username: String): Future[PerRequestMessage] = {
     agoraBusiness.delete(entity, entityTypes, username) map { rowsDeleted =>
       RequestComplete(rowsDeleted.toString)
+    }
+  }
+
+  def copy(requestContext: RequestContext,
+             oldEntity: AgoraEntity,
+             newEntity: AgoraEntity,
+             redact: Boolean,
+             entityTypes: Seq[AgoraEntityType.EntityType],
+             username: String): Future[PerRequestMessage] = {
+    agoraBusiness.copy(oldEntity, newEntity, redact, entityTypes, username) map { entities =>
+      RequestComplete(entities)
     }
   }
 

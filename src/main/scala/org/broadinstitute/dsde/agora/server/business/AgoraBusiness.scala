@@ -233,6 +233,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
         }
       }
     }
+    // TODO: error-handling. On any error, redact the targetEntity
   }
 
   def find(agoraSearch: AgoraEntity,

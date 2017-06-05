@@ -219,8 +219,10 @@ paths:
       summary: Create a new snapshot of an existing Method.
       description: |
         Inserts a new snapshot of the method into the method repository and
-        copies access permissions from previous snapshot. Must supply a namespace
-        name, payload, and entityType. Cannot supply a snapshotId
+        copies access permissions from previous snapshot, optionally redacting
+        the source snapshot. Documentation, synopsis, and payload are the only
+        arguments considered for the new snapshot; everything else is copied
+        from the source.
       consumes:
         - application/json
         - text/plain
@@ -230,17 +232,17 @@ paths:
       parameters:
         - name: namespace
           in: path
-          description: Namespace of method.
+          description: Namespace of source method.
           required: true
           type: string
         - name: name
           in: path
-          description: Name of method.
+          description: Name of source method.
           required: true
           type: string
         - name: snapshotId
           in: path
-          description: Snapshot ID of method.
+          description: Snapshot ID of source method.
           required: true
           type: number
         - name: redact

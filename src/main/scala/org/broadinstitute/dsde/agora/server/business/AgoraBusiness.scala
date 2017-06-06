@@ -199,26 +199,34 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
 
   def copy(oldEntity: AgoraEntity, newEntity: AgoraEntity, redact: Boolean, entityTypes: Seq[AgoraEntityType.EntityType], username: String): Future[AgoraEntity] = {
 
-    // get source
-    findSingle(oldEntity, entityTypes, username) flatMap { sourceEntity =>
-      // insert target
-      // munge the object we're inserting to be a copy of the source plus overrides from the new
-      // TODO: should we allow override of anything other than synopsis, doc, and payload?
-      val insertEntity = AgoraEntity(
-                        namespace = sourceEntity.namespace,
-                        name = sourceEntity.name,
-                        synopsis = if (newEntity.synopsis.isDefined) newEntity.synopsis else sourceEntity.synopsis,
-                        documentation = if (newEntity.documentation.isDefined) newEntity.documentation else sourceEntity.documentation,
-                        payload = if (newEntity.payload.isDefined) newEntity.payload else sourceEntity.payload,
-                        entityType=sourceEntity.entityType
-                        )
-      insert(insertEntity, username) flatMap { targetEntity =>
-        permissionsDataSource.inTransaction { db =>
-          // get source permissions
-          db.aePerms.listEntityPermissions(sourceEntity) flatMap { sourcePerms =>
-            // TODO: do we need to remove the default owner permission of the newly-inserted snapshot?
+    // TODO: don't hardcode method here?
+    val dao = AgoraDao.createAgoraDao(Some(AgoraEntityType.Workflow))
+
+    // get source. will throw exception if source does not exist
+    val sourceEntity = dao.findSingle(oldEntity)
+    permissionsDataSource.inTransaction { db =>
+      // do we have permissions to create a new snapshot?
+      checkEntityPermission(db, sourceEntity, username, AgoraPermissions(Create)) {
+        // munge the object we're inserting to be a copy of the source plus overrides from the new
+        // TODO: should we allow override of anything other than synopsis, doc, and payload?
+        val entityToInsert = AgoraEntity(
+          namespace = sourceEntity.namespace,
+          name = sourceEntity.name,
+          synopsis = if (newEntity.synopsis.isDefined) newEntity.synopsis else sourceEntity.synopsis,
+          documentation = if (newEntity.documentation.isDefined) newEntity.documentation else sourceEntity.documentation,
+          payload = if (newEntity.payload.isDefined) newEntity.payload else sourceEntity.payload,
+          entityType=sourceEntity.entityType
+        )
+        // insert target
+        val targetEntity = dao.insert(entityToInsert.addDate())
+        // get source permissions
+        db.aePerms.listEntityPermissions(sourceEntity) flatMap { sourcePerms =>
+          // create the entity stub for permissions
+          db.aePerms.addEntity(targetEntity) flatMap { _ =>
             // copy source permissions to target
-            DBIO.sequence(sourcePerms map {db.aePerms.insertEntityPermission(targetEntity, _)}) flatMap { ins =>
+            DBIO.sequence(sourcePerms map {
+              db.aePerms.insertEntityPermission(targetEntity, _)
+            }) flatMap { ins =>
               // do we need to redact the old snapshot?
               val redactFuture = if (redact) {
                 DBIO.from(delete(sourceEntity, Seq(sourceEntity.entityType.get), username))
@@ -226,13 +234,14 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
                 DBIO.successful(0)
               }
               redactFuture flatMap { _ =>
-                DBIO.successful(targetEntity)
+                DBIO.successful(targetEntity.removeIds())
               }
             }
           }
         }
       }
     }
+
     // TODO: error-handling. On any error, redact the targetEntity
   }
 

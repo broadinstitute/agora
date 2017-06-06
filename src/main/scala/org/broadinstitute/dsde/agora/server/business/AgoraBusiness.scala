@@ -199,7 +199,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
 
   def copy(oldEntity: AgoraEntity, newEntity: AgoraEntity, redact: Boolean, entityTypes: Seq[AgoraEntityType.EntityType], username: String): Future[AgoraEntity] = {
 
-    // TODO: don't hardcode method here?
+    // TODO: we only allow this for methods. Correct?
     val dao = AgoraDao.createAgoraDao(Some(AgoraEntityType.Workflow))
 
     // get source. will throw exception if source does not exist
@@ -208,15 +208,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
       // do we have permissions to create a new snapshot?
       checkEntityPermission(db, sourceEntity, username, AgoraPermissions(Create)) {
         // munge the object we're inserting to be a copy of the source plus overrides from the new
-        // TODO: should we allow override of anything other than synopsis, doc, and payload?
-        val entityToInsert = AgoraEntity(
-          namespace = sourceEntity.namespace,
-          name = sourceEntity.name,
-          synopsis = if (newEntity.synopsis.isDefined) newEntity.synopsis else sourceEntity.synopsis,
-          documentation = if (newEntity.documentation.isDefined) newEntity.documentation else sourceEntity.documentation,
-          payload = if (newEntity.payload.isDefined) newEntity.payload else sourceEntity.payload,
-          entityType=sourceEntity.entityType
-        )
+        val entityToInsert = copyWithOverrides(sourceEntity, newEntity)
         // insert target
         val targetEntity = dao.insert(entityToInsert.addDate())
         // get source permissions
@@ -246,6 +238,18 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
         }
       }
     }
+  }
+
+  private def copyWithOverrides(sourceEntity: AgoraEntity, newEntity: AgoraEntity): AgoraEntity = {
+    // TODO: should we allow override of anything other than synopsis, doc, and payload?
+    AgoraEntity(
+      namespace = sourceEntity.namespace,
+      name = sourceEntity.name,
+      synopsis = if (newEntity.synopsis.isDefined) newEntity.synopsis else sourceEntity.synopsis,
+      documentation = if (newEntity.documentation.isDefined) newEntity.documentation else sourceEntity.documentation,
+      payload = if (newEntity.payload.isDefined) newEntity.payload else sourceEntity.payload,
+      entityType=sourceEntity.entityType
+    )
   }
 
   def find(agoraSearch: AgoraEntity,

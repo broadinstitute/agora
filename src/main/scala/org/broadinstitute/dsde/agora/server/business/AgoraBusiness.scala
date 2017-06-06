@@ -1,6 +1,6 @@
 package org.broadinstitute.dsde.agora.server.business
 
-import org.broadinstitute.dsde.agora.server.exceptions.{AgoraEntityAuthorizationException, AgoraEntityNotFoundException, NamespaceAuthorizationException, ValidationException}
+import org.broadinstitute.dsde.agora.server.exceptions._
 import org.broadinstitute.dsde.agora.server.dataaccess.{AgoraDao, ReadWriteAction}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
@@ -238,11 +238,14 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
               }
             }
           }
+        } cleanUp {
+            case Some(t:Throwable) =>
+              db.aePerms.deleteAllPermissions(targetEntity)
+              throw new AgoraException("an unexpected error occurred during copy.", t)
+            case None => DBIO.successful(targetEntity.removeIds())
         }
       }
     }
-
-    // TODO: error-handling. On any error, redact the targetEntity
   }
 
   def find(agoraSearch: AgoraEntity,

@@ -2,14 +2,16 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.actor.Props
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraEntityPermissionsClient, PermissionsDataSource}
+import org.broadinstitute.dsde.agora.server.AgoraConfig
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, PermissionsDataSource}
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.handlers.{AddHandler, PermissionHandler, QueryHandler, StatusHandler}
 import org.broadinstitute.dsde.agora.server.webservice.routes.RouteHelpers
 import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages.Status
+import spray.http.HttpMethods
 import spray.httpx.SprayJsonSupport._
-import spray.routing.{HttpService, RequestContext}
+import spray.routing.{HttpService, MethodRejection}
 
 
 /**
@@ -100,9 +102,14 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
           completeEntityDelete(requestContext, targetEntity, username, path, queryHandlerProps)
         } ~
         post {
-          entity(as[AgoraEntity]) { newEntity =>
-            parameters("redact".as[Boolean] ? false) { redact =>
-              requestContext => completeEntityCopy(requestContext, targetEntity, newEntity, redact, username, path, queryHandlerProps)
+          // only allow copying (post) for methods
+          if (path != AgoraConfig.methodsRoute) {
+            reject(MethodRejection(HttpMethods.GET), MethodRejection(HttpMethods.DELETE))
+          } else {
+            entity(as[AgoraEntity]) { newEntity =>
+              parameters("redact".as[Boolean] ? false) { redact =>
+                requestContext => completeEntityCopy(requestContext, targetEntity, newEntity, redact, username, path, queryHandlerProps)
+              }
             }
           }
         }

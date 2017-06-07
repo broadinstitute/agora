@@ -60,7 +60,14 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
   private def checkEntityPermission[T](db: DataAccess, agoraEntity: AgoraEntity, username: String, permLevel: AgoraPermissions)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
     DBIO.sequence(Seq(db.aePerms.getEntityPermission(agoraEntity, username), db.aePerms.getEntityPermission(agoraEntity, "public"))) flatMap { entityPerms =>
       if (!entityPerms.exists(_.hasPermission(permLevel))) {
-        DBIO.failed(AgoraEntityNotFoundException(agoraEntity))
+        // if the user can't even read the entity, throw NotFound for security.
+        // if the user can read, but doesn't have the requested permission, throw Forbidden.
+        val exceptionToThrow = if (!entityPerms.exists(_.hasPermission(AgoraPermissions(Read)))) {
+          AgoraEntityNotFoundException(agoraEntity)
+        } else {
+          AgoraEntityAuthorizationException(permLevel, agoraEntity, username)
+        }
+        DBIO.failed(exceptionToThrow)
       } else {
         op
       }

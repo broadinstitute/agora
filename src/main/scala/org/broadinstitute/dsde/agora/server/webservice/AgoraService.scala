@@ -2,14 +2,16 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.actor.Props
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraEntityPermissionsClient, PermissionsDataSource}
+import org.broadinstitute.dsde.agora.server.AgoraConfig
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, PermissionsDataSource}
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.handlers.{AddHandler, PermissionHandler, QueryHandler, StatusHandler}
 import org.broadinstitute.dsde.agora.server.webservice.routes.RouteHelpers
 import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages.Status
+import spray.http.HttpMethods
 import spray.httpx.SprayJsonSupport._
-import spray.routing.{HttpService, RequestContext}
+import spray.routing.{HttpService, MethodRejection}
 
 
 /**
@@ -91,13 +93,25 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
   def querySingleRoute =
     matchQuerySingleRoute(path) { (namespace, name, snapshotId, username) =>
       extractOnlyPayloadParameter { (onlyPayload) =>
-        val entity = AgoraEntity(Option(namespace), Option(name), Option(snapshotId))
+        val targetEntity = AgoraEntity(Option(namespace), Option(name), Option(snapshotId))
 
         get { requestContext =>
-          completeWithPerRequest(requestContext, entity, username, toBool(onlyPayload), path, queryHandlerProps)
+          completeWithPerRequest(requestContext, targetEntity, username, toBool(onlyPayload), path, queryHandlerProps)
         } ~
         delete { requestContext =>
-          completeEntityDelete(requestContext, entity, username, path, queryHandlerProps)
+          completeEntityDelete(requestContext, targetEntity, username, path, queryHandlerProps)
+        } ~
+        post {
+          // only allow copying (post) for methods
+          if (path != AgoraConfig.methodsRoute) {
+            reject(MethodRejection(HttpMethods.GET), MethodRejection(HttpMethods.DELETE))
+          } else {
+            entity(as[AgoraEntity]) { newEntity =>
+              parameters("redact".as[Boolean] ? false) { redact =>
+                requestContext => completeEntityCopy(requestContext, targetEntity, newEntity, redact, username, path, queryHandlerProps)
+              }
+            }
+          }
         }
       }
     }

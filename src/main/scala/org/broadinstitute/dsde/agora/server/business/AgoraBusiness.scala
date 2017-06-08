@@ -1,11 +1,12 @@
 package org.broadinstitute.dsde.agora.server.business
 
-import org.broadinstitute.dsde.agora.server.exceptions.{AgoraEntityAuthorizationException, AgoraEntityNotFoundException, NamespaceAuthorizationException, ValidationException}
+import org.broadinstitute.dsde.agora.server.exceptions._
 import org.broadinstitute.dsde.agora.server.dataaccess.{AgoraDao, ReadWriteAction}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.model.{AgoraApiJsonSupport, AgoraEntity, AgoraEntityProjection, AgoraEntityType}
 import slick.dbio.DBIO
+import spray.http.StatusCodes
 import spray.json._
 import wdl4s.{AstTools, WdlNamespace, WdlNamespaceWithWorkflow}
 import wdl4s.parser.WdlParser.{AstList, AstNode, SyntaxError}
@@ -60,7 +61,14 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
   private def checkEntityPermission[T](db: DataAccess, agoraEntity: AgoraEntity, username: String, permLevel: AgoraPermissions)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
     DBIO.sequence(Seq(db.aePerms.getEntityPermission(agoraEntity, username), db.aePerms.getEntityPermission(agoraEntity, "public"))) flatMap { entityPerms =>
       if (!entityPerms.exists(_.hasPermission(permLevel))) {
-        DBIO.failed(AgoraEntityNotFoundException(agoraEntity))
+        // if the user can't even read the entity, throw NotFound for security.
+        // if the user can read, but doesn't have the requested permission, throw Forbidden.
+        val exceptionToThrow = if (!entityPerms.exists(_.hasPermission(AgoraPermissions(Read)))) {
+          AgoraEntityNotFoundException(agoraEntity)
+        } else {
+          AgoraEntityAuthorizationException(permLevel, agoraEntity, username)
+        }
+        DBIO.failed(exceptionToThrow)
       } else {
         op
       }
@@ -189,12 +197,68 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     permissionsDataSource.inTransaction { db =>
       db.aePerms.addUserIfNotInDatabase(username) flatMap { _ =>
         checkNamespacePermission(db, agoraEntity, username, AgoraPermissions(Redact)) {
-          //admins can redact anything
           DBIO.sequence(configurations map { config => db.aePerms.deleteAllPermissions(config) }) andThen
             db.aePerms.deleteAllPermissions(agoraEntity)
         }
       }
     }
+  }
+
+  def copy(sourceArgs: AgoraEntity, targetArgs: AgoraEntity, redact: Boolean, entityTypes: Seq[AgoraEntityType.EntityType], username: String): Future[AgoraEntity] = {
+
+    // we only allow this for methods.
+    val dao = AgoraDao.createAgoraDao(Some(AgoraEntityType.Workflow))
+
+    // get source. will throw exception if source does not exist
+    val sourceEntity = dao.findSingle(sourceArgs)
+    // munge the object we're inserting to be a copy of the source plus overrides from the new
+    val entityToInsert = copyWithOverrides(sourceEntity, targetArgs).addDate()
+
+    permissionsDataSource.inTransaction { db =>
+      // do we have permissions to create a new snapshot?
+      checkEntityPermission(db, sourceEntity, username, AgoraPermissions(Create)) {
+        // insert target
+        val targetEntity = dao.insert(entityToInsert)
+
+        // get source permissions, copy to target
+        (for {
+          sourcePerms <- db.aePerms.listEntityPermissions(sourceEntity)
+          stub <- db.aePerms.addEntity(targetEntity)
+          targetPerms <- DBIO.sequence(sourcePerms map {
+            db.aePerms.insertEntityPermission(targetEntity, _)
+          })
+        } yield targetEntity.removeIds()) cleanUp {
+          case Some(t: Throwable) =>
+            db.aePerms.deleteAllPermissions(targetEntity)
+            throw new AgoraException("an unexpected error occurred during copy.", t)
+          case None => DBIO.successful(targetEntity.removeIds())
+        }
+      }
+    } flatMap { first =>
+      val redactAction = if (redact)
+        delete(sourceEntity, Seq(sourceEntity.entityType.get), username)
+      else
+        Future.successful(0)
+
+      redactAction map {_ => first} recover {
+        case t: Throwable => throw new AgoraException(
+          "Copy completed, but failed to redact original.", t, StatusCodes.PartialContent
+        )
+      }
+    }
+
+  }
+
+  private def copyWithOverrides(sourceEntity: AgoraEntity, newEntity: AgoraEntity): AgoraEntity = {
+    // TODO: should we allow override of anything other than synopsis, doc, and payload?
+    AgoraEntity(
+      namespace = sourceEntity.namespace,
+      name = sourceEntity.name,
+      synopsis = if (newEntity.synopsis.isDefined) newEntity.synopsis else sourceEntity.synopsis,
+      documentation = if (newEntity.documentation.isDefined) newEntity.documentation else sourceEntity.documentation,
+      payload = if (newEntity.payload.isDefined) newEntity.payload else sourceEntity.payload,
+      entityType=sourceEntity.entityType
+    )
   }
 
   def find(agoraSearch: AgoraEntity,

@@ -71,6 +71,13 @@ object ServiceMessages {
                          entityTypes: Seq[AgoraEntityType.EntityType],
                          username: String)
 
+  case class Copy(requestContext: RequestContext,
+                    oldEntity: AgoraEntity,
+                    newEntity: AgoraEntity,
+                    redact: Boolean,
+                    entityTypes: Seq[AgoraEntityType.EntityType],
+                    username: String)
+
   case class Query(requestContext: RequestContext,
                    agoraSearch: AgoraEntity,
                    agoraProjection: Option[AgoraEntityProjection],

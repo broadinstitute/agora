@@ -215,6 +215,86 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/Error'
+    post:
+      summary: Create a new snapshot of an existing Method.
+      description: |
+        Inserts a new snapshot of the method into the method repository and
+        copies access permissions from previous snapshot, optionally redacting
+        the source snapshot. Documentation, synopsis, and payload are the only
+        arguments considered for the new snapshot; everything else is copied
+        from the source.
+      consumes:
+        - application/json
+      produces:
+        - application/json
+        - text/plain
+      parameters:
+        - name: namespace
+          in: path
+          description: Namespace of source method.
+          required: true
+          type: string
+        - name: name
+          in: path
+          description: Name of source method.
+          required: true
+          type: string
+        - name: snapshotId
+          in: path
+          description: Snapshot ID of source method.
+          required: true
+          type: number
+        - name: redact
+          in: query
+          description: Should the source method be redacted?
+          required: false
+          type: boolean
+          default: false
+        - name: body
+          in: body
+          description: Agora Entity
+          required: false
+          schema:
+            type: object
+            $ref: '#/definitions/MethodQuery'
+      tags:
+        - Methods
+      responses:
+        '200':
+          description: Method successfully copied.
+          schema:
+            type: object
+            $ref: '#/definitions/MethodResponse'
+        '206':
+          description: Method successfully copied, but error while redacting.
+          schema:
+            type: object
+            $ref: '#/definitions/MethodResponse'
+        '400':
+          description: Malformed input.
+          schema:
+            type: object
+            $ref: '#/definitions/BadRequest'
+        '403':
+          description: Forbidden to create copy.
+          schema:
+            type: object
+            $ref: '#/definitions/Error'
+        '404':
+          description: Source snapshot not found.
+          schema:
+            type: object
+            $ref: '#/definitions/Error'
+        '500':
+          description: Internal error.
+          schema:
+            type: object
+            $ref: '#/definitions/Error'
+      security:
+        - authorization:
+            - openid
+            - email
+            - profile
   /api/v1/configurations:
     get:
       summary: List configurations

@@ -6,6 +6,7 @@ import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.model.{AgoraApiJsonSupport, AgoraEntity, AgoraEntityProjection, AgoraEntityType}
 import slick.dbio.DBIO
+import spray.http.StatusCodes
 import spray.json._
 import wdl4s.{AstTools, WdlNamespace, WdlNamespaceWithWorkflow}
 import wdl4s.parser.WdlParser.{AstList, AstNode, SyntaxError}
@@ -196,7 +197,6 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     permissionsDataSource.inTransaction { db =>
       db.aePerms.addUserIfNotInDatabase(username) flatMap { _ =>
         checkNamespacePermission(db, agoraEntity, username, AgoraPermissions(Redact)) {
-          //admins can redact anything
           DBIO.sequence(configurations map { config => db.aePerms.deleteAllPermissions(config) }) andThen
             db.aePerms.deleteAllPermissions(agoraEntity)
         }
@@ -204,47 +204,49 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     }
   }
 
-  def copy(oldEntity: AgoraEntity, newEntity: AgoraEntity, redact: Boolean, entityTypes: Seq[AgoraEntityType.EntityType], username: String): Future[AgoraEntity] = {
+  def copy(sourceArgs: AgoraEntity, targetArgs: AgoraEntity, redact: Boolean, entityTypes: Seq[AgoraEntityType.EntityType], username: String): Future[AgoraEntity] = {
 
-    // TODO: we only allow this for methods. Correct?
+    // we only allow this for methods.
     val dao = AgoraDao.createAgoraDao(Some(AgoraEntityType.Workflow))
 
     // get source. will throw exception if source does not exist
-    val sourceEntity = dao.findSingle(oldEntity)
+    val sourceEntity = dao.findSingle(sourceArgs)
+    // munge the object we're inserting to be a copy of the source plus overrides from the new
+    val entityToInsert = copyWithOverrides(sourceEntity, targetArgs).addDate()
+
     permissionsDataSource.inTransaction { db =>
       // do we have permissions to create a new snapshot?
       checkEntityPermission(db, sourceEntity, username, AgoraPermissions(Create)) {
-        // munge the object we're inserting to be a copy of the source plus overrides from the new
-        val entityToInsert = copyWithOverrides(sourceEntity, newEntity)
         // insert target
-        val targetEntity = dao.insert(entityToInsert.addDate())
-        // get source permissions
-        db.aePerms.listEntityPermissions(sourceEntity) flatMap { sourcePerms =>
-          // create the entity stub for permissions
-          db.aePerms.addEntity(targetEntity) flatMap { _ =>
-            // copy source permissions to target
-            DBIO.sequence(sourcePerms map {
-              db.aePerms.insertEntityPermission(targetEntity, _)
-            }) flatMap { ins =>
-              // do we need to redact the old snapshot?
-              val redactFuture = if (redact) {
-                DBIO.from(delete(sourceEntity, Seq(sourceEntity.entityType.get), username))
-              } else {
-                DBIO.successful(0)
-              }
-              redactFuture flatMap { _ =>
-                DBIO.successful(targetEntity.removeIds())
-              }
-            }
-          }
-        } cleanUp {
-            case Some(t:Throwable) =>
-              db.aePerms.deleteAllPermissions(targetEntity)
-              throw new AgoraException("an unexpected error occurred during copy.", t)
-            case None => DBIO.successful(targetEntity.removeIds())
+        val targetEntity = dao.insert(entityToInsert)
+
+        // get source permissions, copy to target
+        (for {
+          sourcePerms <- db.aePerms.listEntityPermissions(sourceEntity)
+          stub <- db.aePerms.addEntity(targetEntity)
+          targetPerms <- DBIO.sequence(sourcePerms map {
+            db.aePerms.insertEntityPermission(targetEntity, _)
+          })
+        } yield targetEntity.removeIds()) cleanUp {
+          case Some(t: Throwable) =>
+            db.aePerms.deleteAllPermissions(targetEntity)
+            throw new AgoraException("an unexpected error occurred during copy.", t)
+          case None => DBIO.successful(targetEntity.removeIds())
         }
       }
+    } flatMap { first =>
+      val redactAction = if (redact)
+        delete(sourceEntity, Seq(sourceEntity.entityType.get), username)
+      else
+        Future.successful(0)
+
+      redactAction map {_ => first} recover {
+        case t: Throwable => throw new AgoraException(
+          "Copy completed, but failed to redact original.", t, StatusCodes.PartialContent
+        )
+      }
     }
+
   }
 
   private def copyWithOverrides(sourceEntity: AgoraEntity, newEntity: AgoraEntity): AgoraEntity = {

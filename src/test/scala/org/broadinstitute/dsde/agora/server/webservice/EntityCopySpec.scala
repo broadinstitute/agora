@@ -7,11 +7,11 @@ import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraPermissions}
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
-import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
+import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.routes.MockAgoraDirectives
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
 import org.scalatest.DoNotDiscover
-import spray.http.{HttpResponse, StatusCode, Uri}
+import spray.http.{StatusCode, Uri}
 import spray.http.StatusCodes._
 import spray.httpx.SprayJsonSupport._
 import spray.httpx.unmarshalling._
@@ -31,6 +31,8 @@ class EntityCopySpec extends ApiServiceSpec {
     testEntity1WithId = patiently(agoraBusiness.insert(testEntity1, owner1.get))
     // add owner2 as reader on entity1
     patiently(permissionBusiness.insertEntityPermission(testEntity1WithId, owner1.get, AccessControl(owner2.get, AgoraPermissions(Read))))
+    // add owner3 with Create (but not Redact) on entity1
+    patiently(permissionBusiness.insertEntityPermission(testEntity1WithId, owner1.get, AccessControl(owner3.get, AgoraPermissions(Create))))
   }
 
   override def afterAll() = {
@@ -44,7 +46,8 @@ class EntityCopySpec extends ApiServiceSpec {
 
     val expectedPerms = List(
       AccessControl(owner1.get, AgoraPermissions(All)),
-      AccessControl(owner2.get, AgoraPermissions(Read))
+      AccessControl(owner2.get, AgoraPermissions(Read)),
+      AccessControl(owner3.get, AgoraPermissions(Create))
     )
 
     assertResult(expectedPerms) {actualPerms}
@@ -61,7 +64,7 @@ class EntityCopySpec extends ApiServiceSpec {
   }
 
   it should "fail when source does not exist" in {
-    testEntityCopy(NotFound, owner1.get, "doesnt", "exist", 1)
+    testEntityCopy(NotFound, owner1.get, "doesnt", "exist", 1, assertRedact=false)
   }
 
   it should "fail when source exists but I don't have Create on it" in {
@@ -85,53 +88,31 @@ class EntityCopySpec extends ApiServiceSpec {
   }
 
   it should "not redact the source entity by default" in {
-    patiently(testEntityCopy(OK, owner1.get, namespace1.get, name1.get, 1))
-    // following will throw an exception if the entity could not be found, i.e. was redacted
-    patiently(agoraBusiness.findSingle(namespace1.get, name1.get, 1, Seq(AgoraEntityType.Workflow), owner1.get))
+    testEntityCopy(OK, owner1.get, namespace1.get, name1.get, 1)
   }
 
   it should "redact the source entity when requested" in {
-    // create a copy; we'll use this copy to redact so we don't interrupt other tests in this class
-    val latestSnap = patiently(testEntityCopy(OK, owner1.get, namespace1.get, name1.get, 1, redact=false))
-
-    latestSnap.entity.as[AgoraEntity] match {
-      case Left(_) => fail(latestSnap.message.toString)
-      case Right(ae:AgoraEntity) => {
-        // testEntityCopy(OK, owner1.get, namespace1.get, name1.get, ae.snapshotId.get, redact=true)
-        /*
-        intercept[AgoraEntityNotFoundException] {
-          agoraBusiness.findSingle(namespace1.get, name1.get, ae.snapshotId.get, Seq(AgoraEntityType.Workflow), owner1.get)
-        }
-        */
-      }
-    }
-
-    fail("not implemented")
+    patiently(Future(testEntityCopy(OK, owner1.get, namespace1.get, name1.get, 2, redact=true)))
   }
 
-  it should "throw error when failing to create target" in {
-    fail("not implemented")
+  it should "return PartialContent if I can create but not redact" in {
+    patiently(Future(testEntityCopy(PartialContent, owner3.get, namespace1.get, name1.get, 3, redact=true)))
   }
 
-  it should "throw error when failing to copy permissions" in {
-    fail("not implemented")
-  }
 
-  it should "redact the target when failing to copy permissions" in {
-    fail("not implemented")
-  }
   // =============================================================================================
   // support methods
   // =============================================================================================
 
   private def testEntityCopy(expectedStatus: StatusCode, asUser: String,
                              namespace: String, name: String, snapshotId: Int,
-                             argument: AgoraEntity = AgoraEntity(), redact: Boolean = false): Future[HttpResponse] = {
+                             argument: AgoraEntity = AgoraEntity(),
+                             redact: Boolean = false, assertRedact: Boolean = true) = {
 
-    val targetUri =
-      Uri(testRoute.format(namespace,name,snapshotId)).withQuery(Map("redact"->redact.toString))
+    val getUri = Uri(testRoute.format(namespace,name,snapshotId))
+    val postUri = getUri.withQuery(Map("redact"->redact.toString))
 
-    Post(targetUri, AgoraEntity()) ~>
+    Post(postUri, AgoraEntity()) ~>
       addHeader(MockAgoraDirectives.mockAuthenticatedUserEmailHeader, asUser) ~>
       methodsService.querySingleRoute ~> check {
         assert(status == expectedStatus, response.message)
@@ -157,9 +138,23 @@ class EntityCopySpec extends ApiServiceSpec {
               assert(entity.payload == testEntity1WithId.payload)
           })
         }
-        Future.successful(response)
+      }
+
+    if (assertRedact) {
+      Get(getUri) ~>
+        addHeader(MockAgoraDirectives.mockAuthenticatedUserEmailHeader, asUser) ~>
+        methodsService.querySingleRoute ~> check {
+          if (redact) {
+            assert(status == NotFound, response.message)
+          } else {
+            assert(status == OK, response.message)
+          }
+
+      }
     }
-  }
+
+
+    }
 
   private def randUUID: String = UUID.randomUUID.toString
 

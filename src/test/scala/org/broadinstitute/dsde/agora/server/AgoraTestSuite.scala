@@ -12,6 +12,7 @@ class AgoraTestSuite extends Suites(
   new AgoraServiceStatusSpec,
   new AgoraMethodsSpec,
   new EntityCreationPermissionSpec,
+  new EntityCopySpec,
   new AgoraProjectionsSpec,
   new AgoraImportSpec,
   new AgoraConfigurationsSpec,

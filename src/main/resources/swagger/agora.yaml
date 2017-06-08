@@ -261,8 +261,13 @@ paths:
       tags:
         - Methods
       responses:
-        '201':
+        '200':
           description: Method successfully copied.
+          schema:
+            type: object
+            $ref: '#/definitions/MethodResponse'
+        '206':
+          description: Method successfully copied, but error while redacting.
           schema:
             type: object
             $ref: '#/definitions/MethodResponse'
@@ -271,6 +276,16 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/BadRequest'
+        '403':
+          description: Forbidden to create copy.
+          schema:
+            type: object
+            $ref: '#/definitions/Error'
+        '404':
+          description: Source snapshot not found.
+          schema:
+            type: object
+            $ref: '#/definitions/Error'
         '500':
           description: Internal error.
           schema:

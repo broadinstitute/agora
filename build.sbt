@@ -9,7 +9,7 @@ scalaVersion := "2.11.7"
 
 val sprayV = "1.3.2"
 
-val artifactory = "https://artifactory.broadinstitute.org/artifactory/"
+val artifactory = "https://broadinstitute.jfrog.io/broadinstitute/"
 
 resolvers += "artifactory-releases" at artifactory + "libs-release"
 

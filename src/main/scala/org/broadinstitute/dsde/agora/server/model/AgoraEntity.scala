@@ -40,14 +40,14 @@ object AgoraEntity {
     def validateNamespace(namespace: String): ValidationNel[String, String] = {
       namespace match {
         case nameRegex(_*) => namespace.successNel[String]
-        case _ => "Namespace must be non-empty and consist of only letters, numbers, dash, and underscore.".failureNel[String]
+        case _ => "Namespace may only contain letters, numbers, underscores, and dashes.".failureNel[String]
       }
     }
 
     def validateName(name: String): ValidationNel[String, String] = {
       name match {
         case nameRegex(_*) => name.successNel[String]
-        case _ => "Name must be non-empty and consist of only letters, numbers, dash, and underscore.".failureNel[String]
+        case _ => "Name may only contain letters, numbers, underscores, and dashes.".failureNel[String]
       }
     }
 

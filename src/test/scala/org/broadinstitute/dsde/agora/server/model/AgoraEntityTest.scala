@@ -11,9 +11,16 @@ class AgoraEntityTest extends FlatSpec {
     assert(AgoraEntity(namespace1, name1, snapshotId1, synopsis1) === AgoraEntity(namespace1, name1, snapshotId1, synopsis1))
   }
 
-  "Agora" should "validate agoraEntity namespace is not empty" in {
+  "Agora" should "validate agoraEntity namespace is not all spaces" in {
     val ex = intercept[IllegalArgumentException] {
       AgoraEntity(badNamespace)
+    }
+    assert(ex.getMessage contains "Namespace")
+  }
+
+  "Agora" should "validate agoraEntity namespace is not empty" in {
+    val ex = intercept[IllegalArgumentException] {
+      AgoraEntity(Some(""))
     }
     assert(ex.getMessage contains "Namespace")
   }
@@ -30,9 +37,16 @@ class AgoraEntityTest extends FlatSpec {
     AgoraEntity(nameWithAllLegalChars)
   }
 
-  "Agora" should "validate agoraEntity name is not empty" in {
+  "Agora" should "validate agoraEntity name is not all spaces" in {
     val ex = intercept[IllegalArgumentException] {
       AgoraEntity(name = badName)
+    }
+    assert(ex.getMessage contains "Name")
+  }
+
+  "Agora" should "validate agoraEntity name is not empty" in {
+    val ex = intercept[IllegalArgumentException] {
+      AgoraEntity(name = Some(""))
     }
     assert(ex.getMessage contains "Name")
   }

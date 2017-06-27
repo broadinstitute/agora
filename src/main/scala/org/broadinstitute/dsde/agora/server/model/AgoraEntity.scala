@@ -24,6 +24,8 @@ object AgoraEntityType extends Enumeration {
 
 object AgoraEntity {
 
+  lazy final private val nameRegex = """[a-zA-Z0-9-_.]+""".r
+
   // ValidationNel is a Non-empty List (Nel) data structure. The left type
   // is the failure type. The right type is the success type.
   //
@@ -36,13 +38,17 @@ object AgoraEntity {
   def validate(entity: AgoraEntity): ValidationNel[String, Boolean] = {
 
     def validateNamespace(namespace: String): ValidationNel[String, String] = {
-      if (namespace.trim.nonEmpty) namespace.successNel[String]
-      else "Namespace cannot be empty".failureNel[String]
+      namespace match {
+        case nameRegex(_*) => namespace.successNel[String]
+        case _ => "Namespace may only contain letters, numbers, underscores, dashes, and periods.".failureNel[String]
+      }
     }
 
     def validateName(name: String): ValidationNel[String, String] = {
-      if (name.trim.nonEmpty) name.successNel[String]
-      else "Name cannot be empty".failureNel[String]
+      name match {
+        case nameRegex(_*) => name.successNel[String]
+        case _ => "Name may only contain letters, numbers, underscores, dashes, and periods.".failureNel[String]
+      }
     }
 
     def validateSnapshotId(_id: Int): ValidationNel[String, Int] = {

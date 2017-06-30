@@ -140,6 +140,19 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     }
   }
 
+  // Name & namespace for new methods are validated against the regex.
+  // Existing methods get a pass because cleaning up the repo is prohibitively difficult (GAWB-1614)
+  private def validateNamesForNewEntity[T](entity: AgoraEntity)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
+    val nameRegex = """[a-zA-Z0-9-_.]+""".r
+
+    (entity.namespace, entity.name) match {
+      case (Some(nameRegex(_*)), Some(nameRegex(_*))) => op
+      case _ => throw ValidationException(
+        "Entity must have both namespace and name and may only contain letters, numbers, underscores, dashes, and periods."
+      )
+    }
+  }
+
   def insert(agoraEntity: AgoraEntity, username: String): Future[AgoraEntity] = {
     //these next two go to Mongo, so do them outside the permissions txn
     val configReferencedMethodOpt = agoraEntity.entityType.get match {
@@ -154,28 +167,30 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     permissionsDataSource.inTransaction { db =>
       db.aePerms.addUserIfNotInDatabase(username) flatMap { _ =>
         checkInsertPermission(db, agoraEntity, username, snapshots) {
-          checkValidPayload(agoraEntity, username) {
+          validateNamesForNewEntity(agoraEntity) {
+            checkValidPayload(agoraEntity, username) {
 
-            //this silliness required to check whether the referenced method is readable if it's a config
-            val entityToInsertAction = configReferencedMethodOpt match {
-              case Some(referencedMethod) =>
-                checkEntityPermission(db, referencedMethod, username, AgoraPermissions(Read)) {
-                  DBIO.successful(agoraEntity.addMethodId(referencedMethod.id.get.toHexString))
+              //this silliness required to check whether the referenced method is readable if it's a config
+              val entityToInsertAction = configReferencedMethodOpt match {
+                case Some(referencedMethod) =>
+                  checkEntityPermission(db, referencedMethod, username, AgoraPermissions(Read)) {
+                    DBIO.successful(agoraEntity.addMethodId(referencedMethod.id.get.toHexString))
+                  }
+                case None => DBIO.successful(agoraEntity)
+              }
+
+              entityToInsertAction flatMap { entityToInsert =>
+                //this goes to mongo inside a SQL transaction :(
+                val entityWithId = AgoraDao.createAgoraDao(entityToInsert.entityType).insert(entityToInsert.addDate())
+                val userAccess = new AccessControl(username, AgoraPermissions(All))
+
+                for {
+                  _ <- createNamespaceIfNonexistent(db, agoraEntity, entityWithId, userAccess)
+                  _ <- db.aePerms.addEntity(entityWithId)
+                  _ <- db.aePerms.insertEntityPermission(entityWithId, userAccess)
+                } yield {
+                  entityWithId.addUrl().removeIds()
                 }
-              case None => DBIO.successful(agoraEntity)
-            }
-
-            entityToInsertAction flatMap { entityToInsert =>
-              //this goes to mongo inside a SQL transaction :(
-              val entityWithId = AgoraDao.createAgoraDao(entityToInsert.entityType).insert(entityToInsert.addDate())
-              val userAccess = new AccessControl(username, AgoraPermissions(All))
-
-              for {
-                _ <- createNamespaceIfNonexistent(db, agoraEntity, entityWithId, userAccess)
-                _ <- db.aePerms.addEntity(entityWithId)
-                _ <- db.aePerms.insertEntityPermission(entityWithId, userAccess)
-              } yield {
-                entityWithId.addUrl().removeIds()
               }
             }
           }

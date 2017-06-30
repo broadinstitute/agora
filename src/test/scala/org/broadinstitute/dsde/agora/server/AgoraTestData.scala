@@ -21,6 +21,7 @@ object AgoraTestData {
   val name2 = Option("testMethod2")
   val name3 = Option("name3")
   val name4 = Option("name4")
+  val nameWithAllLegalChars = Option("abcdefghijklmnopqrstuvwxyz-ABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789.")
   val snapshotId1 = Option(1)
   val snapshotId2 = Option(2)
   val nameNonExistent = Option("nonexistent")
@@ -32,6 +33,7 @@ object AgoraTestData {
 
   val badNamespace = Option("    ")
   val badName = Option("   ")
+  val badNameWithIllegalChars = Option("does it work?")
   val badId = Option(-10)
   val badSynopsis = Option("a" * 81)
 
@@ -641,6 +643,30 @@ object AgoraTestData {
     owner = mockAuthenticatedOwner,
     payload = payloadWithInvalidPersonalDockerTagNameInWdl,
     entityType = Option(AgoraEntityType.Task)
+  )
+
+  val testAgoraEntityWithAllLegalNameChars = new AgoraEntity(
+    namespace = nameWithAllLegalChars,
+    name = nameWithAllLegalChars,
+    payload = payload1,
+    entityType = Option(AgoraEntityType.Workflow),
+    snapshotId = snapshotId1
+  )
+
+  val testAgoraEntityWithIllegalNameChars = new AgoraEntity(
+    namespace = nameWithAllLegalChars,
+    name = badNameWithIllegalChars,
+    payload = payload1,
+    entityType = Option(AgoraEntityType.Workflow),
+    snapshotId = snapshotId1
+  )
+
+  val testAgoraEntityWithIllegalNamespaceChars = new AgoraEntity(
+    namespace = badNameWithIllegalChars,
+    name = nameWithAllLegalChars,
+    payload = payload1,
+    entityType = Option(AgoraEntityType.Workflow),
+    snapshotId = snapshotId1
   )
 
   def populateDatabase(agoraBusiness: AgoraBusiness) = {

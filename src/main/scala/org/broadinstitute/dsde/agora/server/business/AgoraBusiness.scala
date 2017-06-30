@@ -14,6 +14,10 @@ import wdl4s.parser.WdlParser.{AstList, AstNode, SyntaxError}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
+object AgoraBusiness {
+  val nameRegex = """[a-zA-Z0-9-_.]+""".r // Applies to entity names & namespaces
+}
+
 class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: ExecutionContext) {
 
   //Creates a fake extra permission with the desired permission level conditional on checkAdmin and the user being an admin
@@ -143,10 +147,8 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
   // Name & namespace for new methods are validated against the regex.
   // Existing methods get a pass because cleaning up the repo is prohibitively difficult (GAWB-1614)
   private def validateNamesForNewEntity[T](entity: AgoraEntity)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
-    val nameRegex = """[a-zA-Z0-9-_.]+""".r
-
     (entity.namespace, entity.name) match {
-      case (Some(nameRegex(_*)), Some(nameRegex(_*))) => op
+      case (Some(AgoraBusiness.nameRegex(_*)), Some(AgoraBusiness.nameRegex(_*))) => op
       case _ => throw ValidationException(
         "Entity must have both namespace and name and may only contain letters, numbers, underscores, dashes, and periods."
       )

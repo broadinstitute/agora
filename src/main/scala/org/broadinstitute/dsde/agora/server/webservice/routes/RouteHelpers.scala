@@ -70,6 +70,15 @@ trait EntityPermissionsRouteHelper extends BaseRoute {
     versionedPath(_path / Segment / Segment / IntNumber / "permissions") &
     authenticationDirectives.usernameFromRequest()
 
+  def matchMultiEntityPermissionsRoute(_path: String) =
+    versionedPath(_path / "permissions") &
+      authenticationDirectives.usernameFromRequest()
+
+  def completeMultiEntityPermissionsReport(context: RequestContext, entities: List[AgoraEntity], username: String, permissionsHandler: Props) = {
+    val message = ListMultiEntityPermissions(context, entities, username)
+    perRequest(context, permissionsHandler, message)
+  }
+
   def completeEntityPermissionsGet(context: RequestContext, entity: AgoraEntity, username: String, permissionsHandler: Props) = {
     val message = ListEntityPermissions(context, entity, username)
     perRequest(context, permissionsHandler, message)

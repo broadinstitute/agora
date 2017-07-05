@@ -1,5 +1,7 @@
 package org.broadinstitute.dsde.agora.server.dataaccess.permissions
 
+import org.broadinstitute.dsde.agora.server.model.AgoraEntity
+
 object AccessControl {
 
   def apply(accessObject: Tuple2[String, Int]): AccessControl = {
@@ -20,3 +22,5 @@ object AccessControl {
 }
 
 case class AccessControl(user: String, roles: AgoraPermissions)
+
+case class EntityAccessControl(entity: AgoraEntity, acls: Seq[AccessControl], message: Option[String] = None)

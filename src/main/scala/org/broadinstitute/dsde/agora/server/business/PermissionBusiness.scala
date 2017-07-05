@@ -6,6 +6,7 @@ import org.broadinstitute.dsde.agora.server.dataaccess.ReadWriteAction
 import org.broadinstitute.dsde.agora.server.exceptions.{AgoraEntityAuthorizationException, NamespaceAuthorizationException, PermissionModificationException}
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import slick.dbio.DBIOAction
+import slick.dbio.DBIO
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
@@ -69,6 +70,20 @@ class PermissionBusiness(permissionsDataSource: PermissionsDataSource)(implicit 
         db.aePerms.listEntityPermissions(entity)
       }
     }
+  }
+
+  def listEntityPermissions(entities: List[AgoraEntity], requester: String): Future[Seq[EntityAccessControl]] = {
+    Future.sequence(entities map {entity =>
+      listEntityPermissions(entity, requester) map { acls =>
+        EntityAccessControl(entity, acls)
+      } recover {
+        // AgoraEntityAuthorizationException means we don't have permissions to read the entity's acls,
+        // or the entity doesn't exist. For purposes of this method, call these non-fatal.
+        // we don't recover from any other exceptions.
+        case aeae:AgoraEntityAuthorizationException => EntityAccessControl(entity, Seq.empty[AccessControl], Some(aeae.getMessage))
+      }
+    })
+
   }
 
   def insertEntityPermission(entity: AgoraEntity, requester: String, accessObject: AccessControl): Future[Int] = {

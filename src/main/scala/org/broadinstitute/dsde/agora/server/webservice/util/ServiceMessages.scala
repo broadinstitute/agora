@@ -39,6 +39,10 @@ object ServiceMessages {
                                    entity: AgoraEntity,
                                    username: String)
 
+  case class ListMultiEntityPermissions(requestContext: RequestContext,
+                                   entities: List[AgoraEntity],
+                                   username: String)
+
   case class InsertEntityPermission(requestContext: RequestContext,
                                     entity: AgoraEntity,
                                     username: String,

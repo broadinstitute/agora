@@ -29,11 +29,14 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
 
   var agoraEntity1: AgoraEntity = _
   var agoraEntity2: AgoraEntity = _
+  var redactedEntity: AgoraEntity = _
 
   override def beforeAll(): Unit = {
     ensureDatabasesAreRunning()
     agoraEntity1 = patiently(agoraBusiness.insert(testIntegrationEntity, mockAuthenticatedOwner.get))
     agoraEntity2 = patiently(agoraBusiness.insert(testIntegrationEntity2, owner2.get))
+    redactedEntity = patiently(agoraBusiness.insert(testEntityToBeRedacted2, mockAuthenticatedOwner.get))
+    patiently(agoraBusiness.delete(redactedEntity, Seq(redactedEntity.entityType.get), mockAuthenticatedOwner.get))
   }
 
   override def afterAll(): Unit = {
@@ -254,7 +257,8 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
     val payload:Seq[AgoraEntity] = Seq(
       AgoraEntity(agoraEntity1.namespace, agoraEntity1.name, agoraEntity1.snapshotId),
       AgoraEntity(agoraEntity2.namespace, agoraEntity2.name, agoraEntity2.snapshotId),
-      AgoraEntity(agoraEntity1.namespace, agoraEntity1.name, Some(12345))
+      AgoraEntity(agoraEntity1.namespace, agoraEntity1.name, Some(12345)),
+      AgoraEntity(redactedEntity.namespace, redactedEntity.name, redactedEntity.snapshotId)
     )
 
     Post(ApiUtil.Methods.withLeadingVersion + "/permissions", payload) ~>
@@ -262,7 +266,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
       check {
         assert(status == OK)
         val entityAclList = responseAs[Seq[EntityAccessControl]]
-        assertResult(3) {entityAclList.size}
+        assertResult(4) {entityAclList.size}
 
         // check first - should get permissions
         {
@@ -285,6 +289,14 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
         // check third - it doesn't exist in the db
         {
           val stubEntity = AgoraEntity(agoraEntity1.namespace, agoraEntity1.name, Some(12345))
+          val found = entityAclList.find(_.entity == stubEntity)
+          assert(found.isDefined)
+          assert(found.get.message.nonEmpty)
+          assert(found.get.acls.isEmpty)
+        }
+        // check fourth - it has been redacted, which resolves to us not having permissions to see it
+        {
+          val stubEntity = AgoraEntity(redactedEntity.namespace, redactedEntity.name, redactedEntity.snapshotId)
           val found = entityAclList.find(_.entity == stubEntity)
           assert(found.isDefined)
           assert(found.get.message.nonEmpty)

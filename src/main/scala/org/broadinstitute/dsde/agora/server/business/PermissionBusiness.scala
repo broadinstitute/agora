@@ -3,13 +3,13 @@ package org.broadinstitute.dsde.agora.server.business
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
 import AgoraPermissions.Manage
 import org.broadinstitute.dsde.agora.server.dataaccess.ReadWriteAction
-import org.broadinstitute.dsde.agora.server.exceptions.{AgoraEntityAuthorizationException, NamespaceAuthorizationException, PermissionModificationException}
+import org.broadinstitute.dsde.agora.server.exceptions.{AgoraEntityAuthorizationException, NamespaceAuthorizationException, PermissionModificationException, ValidationException}
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import slick.dbio.DBIOAction
-import slick.dbio.DBIO
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
+import scalaz.{Failure => zFailure, Success => zSuccess}
 
 class PermissionBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: ExecutionContext) {
 
@@ -65,6 +65,12 @@ class PermissionBusiness(permissionsDataSource: PermissionsDataSource)(implicit 
   }
 
   def listEntityPermissions(entity: AgoraEntity, requester: String): Future[Seq[AccessControl]] = {
+    // validate entity
+    AgoraEntity.validate(entity, allowEmptyIdentifiers=false) match {
+      case zSuccess(_) => // noop
+      case zFailure(errors) => throw new ValidationException(s"Entity [${entity.toShortString}] is not valid: Errors: $errors")
+    }
+
     permissionsDataSource.inTransaction { db =>
       authEntityRequester(db, entity, requester) {
         db.aePerms.listEntityPermissions(entity)

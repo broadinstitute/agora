@@ -24,7 +24,7 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
 
   def path: String
 
-  def routes = namespacePermissionsRoute ~ entityPermissionsRoute ~ querySingleRoute ~ queryRoute ~ postRoute ~ statusRoute
+  def routes = namespacePermissionsRoute ~ multiEntityPermissionsRoute ~ entityPermissionsRoute ~ querySingleRoute ~ queryRoute ~ postRoute ~ statusRoute
 
   def queryHandlerProps = Props(classOf[QueryHandler], permissionsDataSource, executionContext)
 
@@ -85,6 +85,15 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
           completeEntityPermissionsDelete(requestContext, agoraEntity, params, username, permissionHandlerProps)
         }
 
+      }
+    }
+
+  def multiEntityPermissionsRoute =
+    matchMultiEntityPermissionsRoute(path) { (username) =>
+      post {
+        entity(as[List[AgoraEntity]]) { entities => requestContext =>
+          completeMultiEntityPermissionsReport(requestContext, entities, username, permissionHandlerProps)
+        }
       }
     }
 

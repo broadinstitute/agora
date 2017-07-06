@@ -3,12 +3,13 @@ package org.broadinstitute.dsde.agora.server.business
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
 import AgoraPermissions.Manage
 import org.broadinstitute.dsde.agora.server.dataaccess.ReadWriteAction
-import org.broadinstitute.dsde.agora.server.exceptions.{AgoraEntityAuthorizationException, NamespaceAuthorizationException, PermissionModificationException}
+import org.broadinstitute.dsde.agora.server.exceptions.{AgoraEntityAuthorizationException, NamespaceAuthorizationException, PermissionModificationException, ValidationException}
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import slick.dbio.DBIOAction
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
+import scalaz.{Failure => zFailure, Success => zSuccess}
 
 class PermissionBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: ExecutionContext) {
 
@@ -64,11 +65,31 @@ class PermissionBusiness(permissionsDataSource: PermissionsDataSource)(implicit 
   }
 
   def listEntityPermissions(entity: AgoraEntity, requester: String): Future[Seq[AccessControl]] = {
+    // validate entity
+    AgoraEntity.validate(entity, allowEmptyIdentifiers=false) match {
+      case zSuccess(_) => // noop
+      case zFailure(errors) => throw new ValidationException(s"Entity [${entity.toShortString}] is not valid: Errors: $errors")
+    }
+
     permissionsDataSource.inTransaction { db =>
       authEntityRequester(db, entity, requester) {
         db.aePerms.listEntityPermissions(entity)
       }
     }
+  }
+
+  def listEntityPermissions(entities: List[AgoraEntity], requester: String): Future[Seq[EntityAccessControl]] = {
+    Future.sequence(entities map {entity =>
+      listEntityPermissions(entity, requester) map { acls =>
+        EntityAccessControl(entity, acls)
+      } recover {
+        // AgoraEntityAuthorizationException means we don't have permissions to read the entity's acls,
+        // or the entity doesn't exist. For purposes of this method, call these non-fatal.
+        // we don't recover from any other exceptions.
+        case aeae:AgoraEntityAuthorizationException => EntityAccessControl(entity, Seq.empty[AccessControl], Some(aeae.getMessage))
+      }
+    })
+
   }
 
   def insertEntityPermission(entity: AgoraEntity, requester: String, accessObject: AccessControl): Future[Int] = {

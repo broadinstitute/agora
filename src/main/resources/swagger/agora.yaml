@@ -659,6 +659,39 @@ paths:
             - openid
             - email
             - profile
+  '/api/v1/methods/permissions':
+    post:
+      summary: List permissions for multiple methods.
+      description: |
+        List permissions for multiple methods.
+      parameters:
+        - name: methods
+          in: body
+          description: methods for which to retrieve permissions
+          required: true
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/EntityId'
+      tags:
+        - Permissions
+      responses:
+        '200':
+          description: An array of entity -> permissions pairs.
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/AccessControlPair'
+        default:
+          description: Unexpected error
+          schema:
+            type: object
+            $ref: '#/definitions/Error'
+      security:
+        - authorization:
+            - openid
+            - email
+            - profile
   '/api/v1/methods/{namespace}/{name}/{snapshotId}/permissions':
     get:
       summary: List permissions on a specific method.
@@ -1234,6 +1267,39 @@ paths:
             - openid
             - email
             - profile
+  '/api/v1/configurations/permissions':
+    post:
+      summary: List permissions for multiple configurations.
+      description: |
+        List permissions for multiple configurations.
+      parameters:
+        - name: configurations
+          in: body
+          description: configurations for which to retrieve permissions
+          required: true
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/EntityId'
+      tags:
+        - Permissions
+      responses:
+        '200':
+          description: An array of entity -> permissions pairs.
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/AccessControlPair'
+        default:
+          description: Unexpected error
+          schema:
+            type: object
+            $ref: '#/definitions/Error'
+      security:
+        - authorization:
+            - openid
+            - email
+            - profile
 securityDefinitions:
   authorization:
     type: oauth2
@@ -1244,6 +1310,18 @@ securityDefinitions:
       email: email authorization
       profile: profile authorization
 definitions:
+  EntityId:
+    type: object
+    properties:
+      namespace:
+        type: string
+        description: Namespace which contains AgoraEntity.
+      name:
+        type: string
+        description: Name of the AgoraEntity.
+      snapshotId:
+        type: integer
+        description: SnapshotId of AgoraEntity
   MethodQuery:
     type: object
     properties:
@@ -1408,6 +1486,15 @@ definitions:
           - Create
           - Redact
           - Manage
+  AccessControlPair:
+    type: object
+    properties:
+      entity:
+        $ref: '#/definitions/EntityId'
+      acls:
+        type: array
+        items:
+          $ref: '#/definitions/AccessControl'
   BadRequest:
     type: object
     properties:

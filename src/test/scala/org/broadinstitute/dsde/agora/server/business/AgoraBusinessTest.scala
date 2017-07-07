@@ -2,10 +2,13 @@ package org.broadinstitute.dsde.agora.server.business
 
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.AgoraTestFixture
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{UserDao, users}
+import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions.Read
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraPermissions}
 import org.broadinstitute.dsde.agora.server.exceptions.{NamespaceAuthorizationException, ValidationException}
 import org.broadinstitute.dsde.agora.server.model.AgoraEntityType
 import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpec, Matchers}
+import slick.dbio.DBIOAction
 
 @DoNotDiscover
 class AgoraBusinessTest extends FlatSpec with Matchers with BeforeAndAfterAll with AgoraTestFixture {
@@ -56,6 +59,43 @@ class AgoraBusinessTest extends FlatSpec with Matchers with BeforeAndAfterAll wi
     intercept[ValidationException] {
       patiently(agoraBusiness.insert(testAgoraEntityWithIllegalNamespaceChars, mockAuthenticatedOwner.get))
     }
+  }
+
+  "Agora" should "allow a pre-existing entity with illegal name to be loaded successfully" in {
+
+    implicit val executionContext = scala.concurrent.ExecutionContext.Implicits.global
+    val agoraDao = AgoraDao.createAgoraDao(Seq(testAgoraEntityWithIllegalNameChars.entityType.get))
+
+    // Strategy: bypass the business rule validation in AgoraBusiness by inserting directly through the DAO & perms client
+    // Once inserted, verify that AgoraBusiness.findSingle does not choke on the illegally-named entity
+
+    // Insert entity
+    agoraDao.insert(testAgoraEntityWithIllegalNameChars.addDate())
+
+    // Set entity permissions
+    patiently(permsDataSource.inTransaction { db =>
+      DBIOAction.seq(
+        db.aePerms.addEntity(testAgoraEntityWithIllegalNameChars),
+        db.aePerms.insertEntityPermission(testAgoraEntityWithIllegalNameChars, new AccessControl(mockAuthenticatedOwner.get, AgoraPermissions(Read)))
+      )
+    })
+
+    // Fetch single entity
+    val actual = patiently(agoraBusiness.findSingle(
+      testAgoraEntityWithIllegalNameChars,
+      Seq(testAgoraEntityWithIllegalNameChars.entityType.get),
+      mockAuthenticatedOwner.get))
+
+    assert(actual.name == testAgoraEntityWithIllegalNameChars.name)
+    assert(actual.namespace == testAgoraEntityWithIllegalNameChars.namespace)
+
+    // Search for entity
+    val actualFromSearch = patiently(
+      agoraBusiness.find(testAgoraEntityWithIllegalNameChars, None, Seq(testAgoraEntityWithIllegalNameChars.entityType.get), mockAuthenticatedOwner.get)
+    ).head
+
+    assert(actualFromSearch.name == testAgoraEntityWithIllegalNameChars.name)
+    assert(actualFromSearch.namespace == testAgoraEntityWithIllegalNameChars.namespace)
   }
 
   "Agora" should "not let users without permissions redact a method" in {

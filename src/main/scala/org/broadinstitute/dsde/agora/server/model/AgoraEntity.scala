@@ -33,6 +33,8 @@ object AgoraEntity {
   // Obj[SuccessType].successNel[FailureType] = 1.successNel[String]
   // Obj[FailureType].failureNel[SuccessType] = "fail".failureNel[Int]
 
+  // Note that newly-created entities are subject to stricter rules than these
+  // See validateNamesForNewEntity(), GAWB-1614
   def validate(entity: AgoraEntity, allowEmptyIdentifiers: Boolean = true): ValidationNel[String, Boolean] = {
 
     def validateNamespace(namespace: String): ValidationNel[String, String] = {

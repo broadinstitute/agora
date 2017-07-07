@@ -10,7 +10,7 @@ import org.broadinstitute.dsde.agora.server.model.AgoraEntityType
 import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpec, Matchers}
 import slick.dbio.DBIOAction
 
-//@DoNotDiscover
+@DoNotDiscover
 class AgoraBusinessTest extends FlatSpec with Matchers with BeforeAndAfterAll with AgoraTestFixture {
 
 //  val methodImportResolver = new MethodImportResolver(agoraTestOwner.get, agoraBusiness)

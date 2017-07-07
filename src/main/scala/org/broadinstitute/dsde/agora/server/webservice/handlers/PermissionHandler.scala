@@ -53,6 +53,11 @@ class PermissionHandler(dataSource: PermissionsDataSource, implicit val ec: Exec
         RequestComplete(permissions)
       }) pipeTo context.parent
 
+    case ListMultiEntityPermissions(_context: RequestContext, entities: List[AgoraEntity], requester: String) =>
+      (permissionBusiness.listEntityPermissions(entities, requester) map { permissions =>
+        RequestComplete(permissions)
+      }) pipeTo context.parent
+
     case InsertEntityPermission(_context: RequestContext, entity: AgoraEntity, requester: String, userAccess: AccessControl) =>
       (permissionBusiness.insertEntityPermission(entity, requester, userAccess) map { rowsChanged =>
         RequestComplete(userAccess)

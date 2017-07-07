@@ -35,7 +35,7 @@ object AgoraEntity {
 
   // Note that newly-created entities are subject to stricter rules than these
   // See validateNamesForNewEntity(), GAWB-1614
-  def validate(entity: AgoraEntity): ValidationNel[String, Boolean] = {
+  def validate(entity: AgoraEntity, allowEmptyIdentifiers: Boolean = true): ValidationNel[String, Boolean] = {
 
     def validateNamespace(namespace: String): ValidationNel[String, String] = {
       if (namespace.trim.nonEmpty) namespace.successNel[String]
@@ -64,17 +64,29 @@ object AgoraEntity {
 
     val namespace = entity.namespace match {
       case Some(n) => validateNamespace(n)
-      case None => None.successNel[String]
+      case None =>
+        if (allowEmptyIdentifiers)
+          None.successNel[String]
+        else
+          "Namespace must be supplied".failureNel[String]
     }
 
     val name = entity.name match {
       case Some(n) => validateName(n)
-      case None => None.successNel[String]
+      case None =>
+        if (allowEmptyIdentifiers)
+          None.successNel[String]
+        else
+          "Namespace must be supplied".failureNel[String]
     }
 
     val _id = entity.snapshotId match {
       case Some(snapShotId) => validateSnapshotId(snapShotId)
-      case None => None.successNel[String]
+      case None =>
+        if (allowEmptyIdentifiers)
+          None.successNel[String]
+        else
+          "SnapshotId must be supplied".failureNel[Int]
     }
 
     val synopsis = entity.synopsis match {
@@ -147,6 +159,8 @@ case class AgoraEntity(namespace: Option[String] = None,
   def addManagers(managers: Seq[String]): AgoraEntity = {
     copy(managers = managers)
   }
+
+  def toShortString: String = s"AgoraEntity($namespace,$name,$snapshotId)"
 }
 
 

@@ -3,7 +3,7 @@ package org.broadinstitute.dsde.agora.server.model
 
 import org.broadinstitute.dsde.agora.server.exceptions.AgoraException
 import org.broadinstitute.dsde.agora.server.webservice.util.AgoraOpenAMClient.UserInfoResponse
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AgoraPermissions, AccessControl}
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, EntityAccessControl, AgoraPermissions}
 import org.bson.types.ObjectId
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
@@ -163,6 +163,8 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
   implicit val AgoraEntityProjectionFormat = jsonFormat2(AgoraEntityProjection.apply)
 
   implicit val AccessControlFormat = jsonFormat2(AccessControl.apply)
+
+  implicit val AccessControlPairFormat = jsonFormat3(EntityAccessControl)
 
   implicit object AgoraStatusFormat extends RootJsonFormat[AgoraStatus] {
     override def write(obj: AgoraStatus): JsObject = {

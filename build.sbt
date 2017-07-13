@@ -9,6 +9,8 @@ scalaVersion := "2.11.7"
 
 val sprayV = "1.3.2"
 
+val wdl4sV = "0.13"
+
 val artifactory = "https://broadinstitute.jfrog.io/broadinstitute/"
 
 resolvers += "artifactory-releases" at artifactory + "libs-release"
@@ -33,7 +35,7 @@ libraryDependencies ++= Seq(
   "io.spray" %% "spray-json" % "1.3.1", // NB: Not at sprayV. 1.3.2 does not exist.
   "io.spray" %% "spray-routing" % sprayV,
   "mysql" % "mysql-connector-java" % "5.1.35",
-  "org.broadinstitute" %% "wdl4s" % "0.12",
+  "org.broadinstitute" %% "wdl4s" % wdl4sV,
   "org.broadinstitute.dsde.vault" %% "vault-common" % "0.1-15-bf74315",
   "org.mongodb" %% "casbah" % "2.8.2",
   "org.scalaz" %% "scalaz-core" % "7.1.3",

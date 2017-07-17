@@ -2,7 +2,7 @@ package org.broadinstitute.dsde.agora.server.webservice.routes
 
 import akka.actor.Props
 import org.broadinstitute.dsde.agora.server.AgoraConfig.{authenticationDirectives, version}
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AccessControl
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, EntityAccessControl}
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection, AgoraEntityType}
 import org.broadinstitute.dsde.agora.server.webservice.PerRequestCreator
 import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages._
@@ -76,6 +76,11 @@ trait EntityPermissionsRouteHelper extends BaseRoute {
 
   def completeMultiEntityPermissionsReport(context: RequestContext, entities: List[AgoraEntity], username: String, permissionsHandler: Props) = {
     val message = ListMultiEntityPermissions(context, entities, username)
+    perRequest(context, permissionsHandler, message)
+  }
+
+  def completeMultiEntityPermissionsPut(context: RequestContext, aclPairs: List[EntityAccessControl], username: String, permissionsHandler: Props) = {
+    val message = UpsertMultiEntityPermissions(context, aclPairs, username)
     perRequest(context, permissionsHandler, message)
   }
 

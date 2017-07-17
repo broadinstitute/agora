@@ -3,7 +3,7 @@ package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.actor.Props
 import org.broadinstitute.dsde.agora.server.AgoraConfig
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, PermissionsDataSource}
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, EntityAccessControl, PermissionsDataSource, entities}
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.handlers.{AddHandler, PermissionHandler, QueryHandler, StatusHandler}
@@ -93,6 +93,11 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
       post {
         entity(as[List[AgoraEntity]]) { entities => requestContext =>
           completeMultiEntityPermissionsReport(requestContext, entities, username, permissionHandlerProps)
+        }
+      } ~
+      put {
+        entity(as[List[EntityAccessControl]]) { aclPairs => requestContext =>
+          completeMultiEntityPermissionsPut(requestContext, aclPairs, username, permissionHandlerProps)
         }
       }
     }

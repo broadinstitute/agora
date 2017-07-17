@@ -89,7 +89,41 @@ class PermissionBusiness(permissionsDataSource: PermissionsDataSource)(implicit 
         case aeae:AgoraEntityAuthorizationException => EntityAccessControl(entity, Seq.empty[AccessControl], Some(aeae.getMessage))
       }
     })
+  }
 
+  def upsertEntityPermissions(aclPairs: List[EntityAccessControl], requester: String): Future[Seq[EntityAccessControl]] = {
+
+    if (aclPairs.isEmpty)
+      Future.successful(Seq.empty[EntityAccessControl])
+    else {
+
+      val groupedAccessControl:Map[AgoraEntity, List[AccessControl]] = aclPairs.groupBy(_.entity).map {
+        case (entity, listEntityAccessControl) => (entity, listEntityAccessControl flatMap(_.acls))
+      }
+
+      // run these sequentially to avoid DB deadlocks
+      val batchFutures = groupedAccessControl map {
+        case (entity, listAccessControl) => () =>
+          batchEntityPermission(entity, requester, listAccessControl) map { num =>
+            EntityAccessControl(entity, listAccessControl, None)
+          } recover {
+            case e:Exception =>
+              EntityAccessControl(entity, listAccessControl, Some(e.getMessage))
+          }
+      }
+
+      def sequentially(futures: Iterable[() => Future[EntityAccessControl]], acc: Seq[EntityAccessControl]): Future[Seq[EntityAccessControl]] = {
+        futures match {
+          case x if x.isEmpty => Future.successful(acc)
+          case y =>
+            futures.head() flatMap { eac =>
+              sequentially(futures.tail, acc :+ eac)
+            }
+        }
+      }
+
+      sequentially(batchFutures, Seq.empty[EntityAccessControl])
+    }
   }
 
   def insertEntityPermission(entity: AgoraEntity, requester: String, accessObject: AccessControl): Future[Int] = {

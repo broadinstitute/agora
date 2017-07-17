@@ -3,7 +3,7 @@ package org.broadinstitute.dsde.agora.server.webservice.handlers
 import akka.actor.Actor
 import akka.pattern._
 import org.broadinstitute.dsde.agora.server.business.PermissionBusiness
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraPermissions, PermissionsDataSource}
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraPermissions, EntityAccessControl, PermissionsDataSource}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.PerRequest.RequestComplete
@@ -55,6 +55,11 @@ class PermissionHandler(dataSource: PermissionsDataSource, implicit val ec: Exec
 
     case ListMultiEntityPermissions(_context: RequestContext, entities: List[AgoraEntity], requester: String) =>
       (permissionBusiness.listEntityPermissions(entities, requester) map { permissions =>
+        RequestComplete(permissions)
+      }) pipeTo context.parent
+
+    case UpsertMultiEntityPermissions(_context: RequestContext, aclPairs: List[EntityAccessControl], requester: String) =>
+      (permissionBusiness.upsertEntityPermissions(aclPairs, requester) map { permissions =>
         RequestComplete(permissions)
       }) pipeTo context.parent
 

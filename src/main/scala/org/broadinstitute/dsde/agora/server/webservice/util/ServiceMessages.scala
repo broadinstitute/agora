@@ -1,6 +1,6 @@
 package org.broadinstitute.dsde.agora.server.webservice.util
 
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AccessControl
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, EntityAccessControl}
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection, AgoraEntityType}
 import spray.routing.RequestContext
 
@@ -42,6 +42,10 @@ object ServiceMessages {
   case class ListMultiEntityPermissions(requestContext: RequestContext,
                                    entities: List[AgoraEntity],
                                    username: String)
+
+  case class UpsertMultiEntityPermissions(requestContext: RequestContext,
+                                          aclPairs: List[EntityAccessControl],
+                                          username: String)
 
   case class InsertEntityPermission(requestContext: RequestContext,
                                     entity: AgoraEntity,

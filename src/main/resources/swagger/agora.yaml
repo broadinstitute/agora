@@ -692,6 +692,38 @@ paths:
             - openid
             - email
             - profile
+    put:
+      summary: Upsert permissions for multiple methods.
+      description: |
+        Insert or update permissions for multiple methods.
+      parameters:
+        - name: methods
+          in: body
+          description: array of entity -> permissions pairs to upsert
+          required: true
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/AccessControlPair'
+      tags:
+        - Permissions
+      responses:
+        '200':
+          description: An array of entity -> permissions pairs.
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/AccessControlPair'
+        default:
+          description: Unexpected error
+          schema:
+            type: object
+            $ref: '#/definitions/Error'
+      security:
+        - authorization:
+            - openid
+            - email
+            - profile
   '/api/v1/methods/{namespace}/{name}/{snapshotId}/permissions':
     get:
       summary: List permissions on a specific method.

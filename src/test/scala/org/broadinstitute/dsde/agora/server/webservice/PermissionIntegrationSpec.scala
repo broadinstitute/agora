@@ -4,12 +4,13 @@ import akka.actor.ActorSystem
 import org.broadinstitute.dsde.agora.server.AgoraTestFixture
 import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
 import org.broadinstitute.dsde.agora.server.AgoraTestData.{mockAuthenticatedOwner, _}
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions.EntityAccessControl
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraPermissions, EntityAccessControl}
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
 import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpec}
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
+import org.broadinstitute.dsde.agora.server.webservice.routes.MockAgoraDirectives
 import spray.testkit.{RouteTest, ScalatestRouteTest}
 import spray.http.StatusCodes._
 import spray.httpx.SprayJsonSupport._
@@ -29,12 +30,14 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
 
   var agoraEntity1: AgoraEntity = _
   var agoraEntity2: AgoraEntity = _
+  var agoraEntity3: AgoraEntity = _
   var redactedEntity: AgoraEntity = _
 
   override def beforeAll(): Unit = {
     ensureDatabasesAreRunning()
     agoraEntity1 = patiently(agoraBusiness.insert(testIntegrationEntity, mockAuthenticatedOwner.get))
     agoraEntity2 = patiently(agoraBusiness.insert(testIntegrationEntity2, owner2.get))
+    agoraEntity3 = patiently(agoraBusiness.insert(testIntegrationEntity3, mockAuthenticatedOwner.get))
     redactedEntity = patiently(agoraBusiness.insert(testEntityToBeRedacted2, mockAuthenticatedOwner.get))
     patiently(agoraBusiness.delete(redactedEntity, Seq(redactedEntity.entityType.get), mockAuthenticatedOwner.get))
   }
@@ -304,5 +307,80 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
         }
       }
   }
+
+  "Agora" should "successfully upsert permissions for multiple methods and users simultaneously" in {
+
+    // initial state should start with no permissions for our test cases
+    assertResult(None) {getUserPermissions(agoraEntity1, owner2.get)(mockAuthenticatedOwner.get)}
+    assertResult(None) {getUserPermissions(agoraEntity1, owner3.get)(mockAuthenticatedOwner.get)}
+    assertResult(None) {getUserPermissions(agoraEntity3, owner3.get)(mockAuthenticatedOwner.get)}
+
+    val payload:Seq[EntityAccessControl] = Seq(
+      EntityAccessControl(agoraEntity1, Seq(AccessControl((owner2.get, AgoraPermissions.Read)))),
+      EntityAccessControl(agoraEntity1, Seq(AccessControl((owner3.get, AgoraPermissions.Write)))),
+      EntityAccessControl(agoraEntity3, Seq(AccessControl((owner3.get, AgoraPermissions.Manage))))
+    )
+
+    Put(ApiUtil.Methods.withLeadingVersion + "/permissions", payload) ~>
+      methodsService.multiEntityPermissionsRoute ~>
+      check {
+        assert(status == OK)
+        assertResult(Some(AgoraPermissions(AgoraPermissions.Read)), "owner 2 on entity 1") {getUserPermissions(agoraEntity1, owner2.get)(mockAuthenticatedOwner.get)}
+        assertResult(Some(AgoraPermissions(AgoraPermissions.Write)), "owner 3 on entity 1") {getUserPermissions(agoraEntity1, owner3.get)(mockAuthenticatedOwner.get)}
+        assertResult(Some(AgoraPermissions(AgoraPermissions.Manage)), "owner 3 on entity 3") {getUserPermissions(agoraEntity3, owner3.get)(mockAuthenticatedOwner.get)}
+      }
+  }
+
+  "Agora" should "upsert some and return error messages for others on multiple-acl endpoint" in {
+    // initial state should start with no permissions for our positive test case
+    assertResult(None) {getUserPermissions(agoraEntity1, adminUser.get)(mockAuthenticatedOwner.get)}
+
+    val theseShouldFail = Seq(
+      // this should fail - can't change my own permissions
+      EntityAccessControl(agoraEntity1, Seq(AccessControl((mockAuthenticatedOwner.get, AgoraPermissions.Read)))),
+      // this should fail - I don't have manage on agoraEntity2
+      EntityAccessControl(agoraEntity2, Seq(AccessControl((owner3.get, AgoraPermissions.Manage)))),
+      // this should fail - it was redacted
+      EntityAccessControl(redactedEntity, Seq(AccessControl((owner3.get, AgoraPermissions.Manage))))
+    )
+
+    // cache pre-existing acls for the negative test case
+    val preExistingSelf = getUserPermissions(agoraEntity1, mockAuthenticatedOwner.get)(mockAuthenticatedOwner.get)
+
+    val payload:Seq[EntityAccessControl] = theseShouldFail :+
+      // this one should succeed
+      EntityAccessControl(agoraEntity1, Seq(AccessControl((adminUser.get, AgoraPermissions.Write))))
+
+    Put(ApiUtil.Methods.withLeadingVersion + "/permissions", payload) ~>
+      methodsService.multiEntityPermissionsRoute ~>
+      check {
+        assert(status == OK)
+        val resp = responseAs[Seq[EntityAccessControl]]
+        theseShouldFail foreach { eac =>
+          assert(getResponseMessage(resp, eac).isDefined)
+          val expected = if (eac.acls.head.user == owner3.get)
+            None
+          else
+            preExistingSelf
+          assertResult(expected) {getUserPermissions(eac.entity, eac.acls.head.user)(mockAuthenticatedOwner.get)}
+        }
+      }
+  }
+
+  private def getUserPermissions(entity: AgoraEntity, userToCheck: String)(requester: String): Option[AgoraPermissions] = {
+    val allAcls = patiently(permissionBusiness.listEntityPermissions(entity, requester) recover {
+      case e:Exception => Seq.empty[AccessControl] })
+    allAcls.find(_.user == userToCheck).map(_.roles)
+  }
+
+  private def getResponseMessage(resp: Seq[EntityAccessControl], criteria:EntityAccessControl): Option[String] = {
+    // val foundEntity = resp.find(x => x.entity.toShortString == criteria.entity.toShortString && x.acls == criteria.acls)
+    val foundEntity = resp.find(x =>
+      x.entity.toShortString == criteria.entity.toShortString &&
+      x.acls.head.user == criteria.acls.head.user)
+    val returnMessage = foundEntity.flatMap(_.message)
+    returnMessage
+  }
+
 
 }

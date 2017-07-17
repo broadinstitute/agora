@@ -582,6 +582,14 @@ object AgoraTestData {
     payload = payload1,
     entityType = Option(AgoraEntityType.Workflow))
 
+  val testIntegrationEntity3 = AgoraEntity(namespace = Option("___test3"),
+    name = Option("testWorkflow3"),
+    synopsis = synopsis3,
+    documentation = documentation1,
+    owner = owner3,
+    payload = payload1,
+    entityType = Option(AgoraEntityType.Workflow))
+
   val testAgoraEntityWithValidOfficialDockerImageInWdl = new AgoraEntity(namespace = Option("___docker_test"),
     name = name1,
     synopsis = synopsis1,

@@ -1353,7 +1353,12 @@ definitions:
         description: Name of the AgoraEntity.
       snapshotId:
         type: integer
-        description: SnapshotId of AgoraEntity
+        description: SnapshotId of AgoraEntity.
+      managers:
+        type: array
+        items:
+          type: string
+        description: Owners of this AgoraEntity.
   MethodQuery:
     type: object
     properties:

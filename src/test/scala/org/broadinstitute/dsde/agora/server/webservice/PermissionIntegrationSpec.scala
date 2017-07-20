@@ -335,7 +335,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
           val js = jsv.asJsObject
           val entityJs = js.fields("entity").asJsObject
           val eac = js.convertTo[EntityAccessControl]
-          eac.copy(entity = AgoraApiJsonSupportWithManagerRead.AgoraEntityFormatWithManagerRead.read(entityJs))
+          eac.copy(entity = AgoraApiJsonSupportWithManagerAndPublicRead.AgoraEntityFormatWithManagerAndPublicRead.read(entityJs))
         }
 
         assertResult(4) {entityAclList.size}
@@ -367,6 +367,70 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
           val found = entityAclList.find(_.entity.toShortString == stubEntity.toShortString)
           assert(found.isDefined, "fourth")
           assert(found.get.entity.managers.isEmpty, "fourth") // when redacted, nobody owns it
+        }
+      }
+  }
+
+  "Agora" should "return public info when listing permissions for multiple methods simultaneously" in {
+    val payload: Seq[AgoraEntity] = Seq(
+      AgoraEntity(agoraEntity1.namespace, agoraEntity1.name, agoraEntity1.snapshotId),
+      AgoraEntity(agoraEntity2.namespace, agoraEntity2.name, agoraEntity2.snapshotId),
+      AgoraEntity(agoraEntity1.namespace, agoraEntity1.name, Some(12345)),
+      AgoraEntity(redactedEntity.namespace, redactedEntity.name, redactedEntity.snapshotId)
+    )
+
+    // make sure public has read permissions (not manage) on agoraEntity2
+    patiently(permissionBusiness.insertEntityPermission(agoraEntity2, owner2.get,
+      AccessControl("public", AgoraPermissions(AgoraPermissions.Read))))
+
+
+    Post(ApiUtil.Methods.withLeadingVersion + "/permissions", payload) ~>
+      methodsService.multiEntityPermissionsRoute ~>
+      check {
+        assert(status == OK)
+
+        // we hack the json deserialization here, to ensure we can read managers from the http response.
+        // the standard AgoraEntityFormat does NOT read managers from json, and we explicitly do NOT want
+        // to do this for the rest of the application, because owners should always be looked up from the db,
+        // not read from json. However, we do it here in the unit test to validate correctness.
+        // NB: I couldn't get this to work by importing AgoraEntityFormatWithManagerRead as an implicit.
+        val rawJs = responseAs[JsArray]
+        val entityAclList = rawJs.elements.map { jsv =>
+          val js = jsv.asJsObject
+          val entityJs = js.fields("entity").asJsObject
+          val eac = js.convertTo[EntityAccessControl]
+          eac.copy(entity = AgoraApiJsonSupportWithManagerAndPublicRead.AgoraEntityFormatWithManagerAndPublicRead.read(entityJs))
+        }
+
+        assertResult(4) {entityAclList.size}
+
+        // check first - should get permissions
+        {
+          val stubEntity = AgoraEntity(agoraEntity1.namespace, agoraEntity1.name, agoraEntity1.snapshotId)
+          val found = entityAclList.find(_.entity.toShortString == stubEntity.toShortString)
+          assert(found.isDefined, "first")
+          assertResult(Some(false)) {found.get.entity.public}
+        }
+        // check second - it exists, but we only have read on it
+        {
+          val stubEntity = AgoraEntity(agoraEntity2.namespace, agoraEntity2.name, agoraEntity2.snapshotId)
+          val found = entityAclList.find(_.entity.toShortString == stubEntity.toShortString)
+          assert(found.isDefined, "second")
+          assertResult(Some(true)) {found.get.entity.public}
+        }
+        // check third - it doesn't exist in the db
+        {
+          val stubEntity = AgoraEntity(agoraEntity1.namespace, agoraEntity1.name, Some(12345))
+          val found = entityAclList.find(_.entity.toShortString == stubEntity.toShortString)
+          assert(found.isDefined, "third")
+          assertResult(Some(false)) {found.get.entity.public} // entity doesn't exist, so it's not public
+        }
+        // check fourth - it has been redacted, which resolves to us not having permissions to see it
+        {
+          val stubEntity = AgoraEntity(redactedEntity.namespace, redactedEntity.name, redactedEntity.snapshotId)
+          val found = entityAclList.find(_.entity.toShortString == stubEntity.toShortString)
+          assert(found.isDefined, "fourth")
+          assertResult(Some(false)) {found.get.entity.public} // when redacted, so it's not public
         }
       }
   }
@@ -447,16 +511,17 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
 
 }
 
-object AgoraApiJsonSupportWithManagerRead extends DefaultJsonProtocol {
+object AgoraApiJsonSupportWithManagerAndPublicRead extends DefaultJsonProtocol {
 
-  implicit object AgoraEntityFormatWithManagerRead extends RootJsonFormat[AgoraEntity] {
+  implicit object AgoraEntityFormatWithManagerAndPublicRead extends RootJsonFormat[AgoraEntity] {
     override def write(entity: AgoraEntity) = AgoraEntityFormat.write(entity)
 
     override def read(json: JsValue): AgoraEntity = {
       val entityWithoutManagers = AgoraEntityFormat.read(json)
       val jsObject = json.asJsObject
       val managers = if (jsObject.getFields("managers").nonEmpty) jsObject.fields("managers").convertTo[Seq[String]] else Seq.empty[String]
-      entityWithoutManagers.addManagers(managers)
+      val isPublic = if (jsObject.getFields("public").nonEmpty) jsObject.fields("public").convertTo[Option[Boolean]] else None
+      entityWithoutManagers.addManagers(managers).copy(public=isPublic)
     }
   }
 

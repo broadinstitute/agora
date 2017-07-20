@@ -121,7 +121,8 @@ case class AgoraEntity(namespace: Option[String] = None,
                        id: Option[ObjectId] = None,
                        methodId: Option[ObjectId] = None,
                        method: Option[AgoraEntity] = None,
-                       managers: Seq[String] = Seq()) {
+                       managers: Seq[String] = Seq(),
+                       public: Option[Boolean] = None) {
 
   AgoraEntity.validate(this) match {
     case Success(_) => this

@@ -84,6 +84,7 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
       if (entity.id.nonEmpty) map += ("_id" -> entity.id.get.toJson)
       if (entity.methodId.nonEmpty) map += ("methodId" -> entity.methodId.get.toJson)
       if (entity.method.nonEmpty) map += ("method" -> entity.method.get.toJson)
+      if (entity.public.nonEmpty) map += ("public" -> entity.public.get.toJson)
       JsObject(map)
     }
 

@@ -81,16 +81,21 @@ class PermissionBusiness(permissionsDataSource: PermissionsDataSource)(implicit 
   def listEntityPermissions(entities: List[AgoraEntity], requester: String): Future[Seq[EntityAccessControl]] = {
     Future.sequence(entities map {entity =>
       permissionsDataSource.inTransaction { db =>
-        db.aePerms.listOwners(entity)
-      } flatMap { owners =>
-        val entityWithManagers = entity.copy(managers = owners)
+        for {
+          owners <- db.aePerms.listOwners(entity)
+          publicAccess <- db.aePerms.getPermission(entity, "public")
+        } yield {
+          (owners, publicAccess)
+        }
+      } flatMap { case (owners:Seq[String], publicAccess:AgoraPermissions) =>
+        val annotatedEntity = entity.copy(managers = owners, public = Some(publicAccess.canRead))
         listEntityPermissions(entity, requester) map { acls =>
-          EntityAccessControl(entityWithManagers, acls)
+          EntityAccessControl(annotatedEntity, acls)
         } recover {
           // AgoraEntityAuthorizationException means we don't have permissions to read the entity's acls,
           // or the entity doesn't exist. For purposes of this method, call these non-fatal.
           // we don't recover from any other exceptions.
-          case aeae: AgoraEntityAuthorizationException => EntityAccessControl(entityWithManagers, Seq.empty[AccessControl], Some(aeae.getMessage))
+          case aeae: AgoraEntityAuthorizationException => EntityAccessControl(annotatedEntity, Seq.empty[AccessControl], Some(aeae.getMessage))
         }
       }
     })

@@ -1354,11 +1354,26 @@ definitions:
       snapshotId:
         type: integer
         description: SnapshotId of AgoraEntity.
+  EntityShort:
+    type: object
+    properties:
+      namespace:
+        type: string
+        description: Namespace which contains AgoraEntity.
+      name:
+        type: string
+        description: Name of the AgoraEntity.
+      snapshotId:
+        type: integer
+        description: SnapshotId of AgoraEntity.
       managers:
         type: array
         items:
           type: string
         description: Owners of this AgoraEntity.
+      public:
+        type: boolean
+        description: If this AgoraEntity is publicly readable.
   MethodQuery:
     type: object
     properties:
@@ -1527,7 +1542,7 @@ definitions:
     type: object
     properties:
       entity:
-        $ref: '#/definitions/EntityId'
+        $ref: '#/definitions/EntityShort'
       acls:
         type: array
         items:

@@ -31,19 +31,26 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
       DBIO.successful(AgoraPermissions(Nothing))
     }
   }
-  
+
   private def checkInsertPermission[T](db: DataAccess, agoraEntity: AgoraEntity, username: String, snapshots: Seq[AgoraEntity])(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
     // if previous snapshots exist, check ownership on them; if not, check permission on the namespace
     if (snapshots.isEmpty)
       checkNamespacePermission(db, agoraEntity, username, AgoraPermissions(Create))(op)
     else {
       val ownerPerm = AgoraPermissions(Create)
-      DBIO.sequence(snapshots map { db.aePerms.getEntityPermission(_, username) }) flatMap { snapshotPermissions =>
-        val nonRedacted = snapshotPermissions.filter(_.permissions > 0) // ignore redacted snapshots
-        if (!nonRedacted.exists(_.hasPermission(ownerPerm)))
-          DBIO.failed(AgoraEntityAuthorizationException(ownerPerm, agoraEntity, username))
-        else
-          op
+      DBIO.sequence(snapshots map { db.aePerms.listEntityPermissions }) flatMap { snapshotPermissions =>
+        // ignore redacted snapshots. we have to use listEntityPermissions to check that not only does the
+        // current user not have permissions, but nobody has permissions.
+        snapshotPermissions.filter(_.nonEmpty) match {
+          case x if x.isEmpty =>
+            // if all snapshots are redacted, defer to the namespace permissions
+            checkNamespacePermission(db, agoraEntity, username, AgoraPermissions(Create))(op)
+          case y if !y.flatten.exists(acl => acl.user == username && acl.roles.hasPermission(ownerPerm)) =>
+            // if ACLs exist, but current user doesn't have permission, fail
+            DBIO.failed(AgoraEntityAuthorizationException(ownerPerm, agoraEntity, username))
+          case _ =>
+            op
+        }
       }
     }
   }

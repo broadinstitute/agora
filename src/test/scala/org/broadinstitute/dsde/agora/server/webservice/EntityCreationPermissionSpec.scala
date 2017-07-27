@@ -143,6 +143,27 @@ class EntityCreationPermissionSpec extends ApiServiceSpec {
     assertEntityCreation(owner2.get, namespace2.get, name)
   }
 
+  it should "defer to namespace permissions if all previous snapshots are redacted" in {
+    val entityName = randUUID
+
+    // owner3 has no perms on namespace1 - expect rejection
+    assertEntityRejection(owner3.get, namespace1.get, entityName)
+    // owner1 create in namespace1 - expect success
+    assertEntityCreation(owner1.get, namespace1.get, entityName)
+
+    // now, redact the snapshot owner1 just created.
+    redact(namespace1.get, entityName, 1, owner1.get)
+
+    // having a redacted snapshot should make no difference for future creators,
+    // and we should be able to repeat our original test cases.
+
+    // owner3 has no perms on namespace1 - expect rejection
+    assertEntityRejection(owner3.get, namespace1.get, entityName)
+    // owner1 create in namespace1 - expect success
+    assertEntityCreation(owner1.get, namespace1.get, entityName)
+
+  }
+
   // =============================================================================================
   // support methods
   // =============================================================================================
@@ -173,6 +194,11 @@ class EntityCreationPermissionSpec extends ApiServiceSpec {
           })
         }
     }
+  }
+
+  private def redact(namespace:String, name:String, snapshotId: Int, caller: String) = {
+    val ent = AgoraEntity(Some(namespace), Some(name), Some(snapshotId))
+    patiently(agoraBusiness.delete(ent, Seq(AgoraEntityType.Workflow), caller))
   }
 
   private def createRandomMethod(namespace: String, name: String) = {

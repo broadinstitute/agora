@@ -219,7 +219,8 @@ trait AddRouteHelper extends BaseRoute {
   def validatePostRoute(entity: AgoraEntity, path: String): Directive0 = {
     validateEntityType(entity.entityType, path) &
     validate(entity.payload.get.nonEmpty, "You must supply a payload.") &
-    validate(entity.snapshotId.isEmpty, "You cannot specify a snapshotId. It will be assigned by the system.")
+    validate(entity.snapshotId.isEmpty, "You cannot specify a snapshotId. It will be assigned by the system.") &
+    validate(entity.synopsis.toString().length <= 80, "Synopsis must be less than 80 characters" )
   }
 
   def completeWithPerRequest(context: RequestContext,

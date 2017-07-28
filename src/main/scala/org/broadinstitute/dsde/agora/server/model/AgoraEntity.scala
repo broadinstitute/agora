@@ -106,7 +106,7 @@ object AgoraEntity {
 
     // The |@| operator is a combinator that combines the validations into a single object
     // This allows all of the errors to be returned at once!
-    (namespace |@| name |@| _id |@| synopsis |@| doc) {(namespace, name, _id, synopsis, doc) => doNothing }
+    (namespace |@| name |@| _id |@| doc) {(namespace, name, _id, doc) => doNothing }
   }
 
 }
@@ -129,7 +129,7 @@ case class AgoraEntity(namespace: Option[String] = None,
 
   AgoraEntity.validate(this) match {
     case Success(_) => this
-    case Failure(errors) => throw new ValidationException(s"Entity is not valid: $errors")
+    case Failure(errors) => throw ValidationException(s"Entity is not valid: ${errors.toString}")
   }
 
   def agoraUrl: String = {

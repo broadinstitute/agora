@@ -103,7 +103,7 @@ object AgoraEntity {
 
     // The |@| operator is a combinator that combines the validations into a single object
     // This allows all of the errors to be returned at once!
-    (namespace |@| name |@| _id |@| doc) {(namespace, name, _id, doc) => doNothing }
+    (namespace |@| name |@| _id |@| synopsis |@| doc) {(namespace, name, _id, synopsis, doc) => doNothing }
   }
 
 }

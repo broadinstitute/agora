@@ -218,9 +218,13 @@ trait AddRouteHelper extends BaseRoute {
 
   def validatePostRoute(entity: AgoraEntity, path: String): Directive0 = {
     validateEntityType(entity.entityType, path) &
-    validate(entity.payload.get.nonEmpty, "You must supply a payload.") &
-    validate(entity.snapshotId.isEmpty, "You cannot specify a snapshotId. It will be assigned by the system.") &
-    validate(entity.synopsis.toString().length <= 80, "Synopsis must be less than 80 characters" )
+    validate(entity.payload.get.nonEmpty, "\"You must supply a payload.\"") &
+    validate(entity.snapshotId.isEmpty, "\"You cannot specify a snapshotId. It will be assigned by the system.\"") &
+    validate(entity.synopsis.toString.length <= 80, "\"Synopsis must be less than 80 chars\"" ) &
+    validate(entity.namespace.toString.trim.nonEmpty, "\"Namespace cannot be empty\"") &
+    validate(entity.name.toString.trim.nonEmpty, "\"Name cannot be empty\"") &
+    validate(entity.documentation.toString.getBytes.size <= 10000, "\"Documentation must be less than 10kb\"")
+
   }
 
   def completeWithPerRequest(context: RequestContext,
@@ -243,7 +247,7 @@ trait RouteUtil extends Directives {
 
     if (entityType.isDefined) {
       validate(possibleTypes.contains(entityType.get),
-        s"You can't perform operation for entity type $entityType.get at path /$path.")
+        s"${'"'}You can't perform operation for entity type $entityType.get at path /$path.${'"'}")
     }
     else {
       pass

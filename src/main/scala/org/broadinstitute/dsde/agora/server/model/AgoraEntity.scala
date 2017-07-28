@@ -129,7 +129,6 @@ case class AgoraEntity(namespace: Option[String] = None,
 
   AgoraEntity.validate(this) match {
     case Success(_) => this
-    case Failure(errors) => throw ValidationException(s"Entity is not valid: ${errors.toString}")
   }
 
   def agoraUrl: String = {

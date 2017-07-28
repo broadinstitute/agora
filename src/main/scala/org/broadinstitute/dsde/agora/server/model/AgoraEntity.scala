@@ -2,8 +2,11 @@
 package org.broadinstitute.dsde.agora.server.model
 
 import org.broadinstitute.dsde.agora.server.AgoraConfig
+import org.broadinstitute.dsde.agora.server.exceptions
+import org.broadinstitute.dsde.agora.server.exceptions.{AgoraException, ValidationException}
 import org.bson.types.ObjectId
 import org.joda.time.DateTime
+import spray.http.StatusCodes
 
 import scala.annotation.meta.field
 import scalaz.Scalaz._
@@ -126,7 +129,7 @@ case class AgoraEntity(namespace: Option[String] = None,
 
   AgoraEntity.validate(this) match {
     case Success(_) => this
-    case Failure(errors) => throw new IllegalArgumentException(s"Entity is not valid: Errors: $errors")
+    case Failure(errors) => throw new ValidationException(s"Entity is not valid: $errors")
   }
 
   def agoraUrl: String = {

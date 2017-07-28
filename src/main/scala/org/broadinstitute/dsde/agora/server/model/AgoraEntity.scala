@@ -2,11 +2,8 @@
 package org.broadinstitute.dsde.agora.server.model
 
 import org.broadinstitute.dsde.agora.server.AgoraConfig
-import org.broadinstitute.dsde.agora.server.exceptions
-import org.broadinstitute.dsde.agora.server.exceptions.{AgoraException, ValidationException}
 import org.bson.types.ObjectId
 import org.joda.time.DateTime
-import spray.http.StatusCodes
 
 import scala.annotation.meta.field
 import scalaz.Scalaz._

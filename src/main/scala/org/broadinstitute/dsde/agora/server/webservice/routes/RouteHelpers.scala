@@ -247,7 +247,7 @@ trait RouteUtil extends Directives {
 
     if (entityType.isDefined) {
       validate(possibleTypes.contains(entityType.get),
-        s"${'"'}You can't perform operation for entity type $entityType.get at path /$path.${'"'}")
+        s"You can't perform operation for entity type $entityType.get at path /$path.")
     }
     else {
       pass

@@ -73,3 +73,5 @@ Launch the generated docker compose file:
 docker-compose -p agora -f config/docker-compose.yaml up
 ```
 The docker compose configuration is set to point to https://local.broadinstitute.org:30443/
+
+part of a dumb test

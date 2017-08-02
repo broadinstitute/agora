@@ -121,8 +121,10 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
             reject(MethodRejection(HttpMethods.GET), MethodRejection(HttpMethods.DELETE))
           } else {
             entity(as[AgoraEntity]) { newEntity =>
-              parameters("redact".as[Boolean] ? false) { redact =>
-                requestContext => completeEntityCopy(requestContext, targetEntity, newEntity, redact, username, path, queryHandlerProps)
+              validateNewEntity(newEntity) {
+                parameters("redact".as[Boolean] ? false) { redact =>
+                  requestContext => completeEntityCopy(requestContext, targetEntity, newEntity, redact, username, path, queryHandlerProps)
+                }
               }
             }
           }

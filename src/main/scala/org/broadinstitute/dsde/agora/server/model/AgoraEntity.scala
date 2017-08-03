@@ -124,11 +124,6 @@ case class AgoraEntity(namespace: Option[String] = None,
                        managers: Seq[String] = Seq(),
                        public: Option[Boolean] = None) {
 
-  AgoraEntity.validate(this) match {
-    case Success(_) => this
-    case Failure(errors) => throw new IllegalArgumentException(s"Entity is not valid: Errors: $errors")
-  }
-
   def agoraUrl: String = {
     AgoraConfig.urlFromType(entityType) + namespace.get + "/" + name.get + "/" + snapshotId.get
   }

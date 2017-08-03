@@ -13,6 +13,8 @@ import spray.http.HttpMethods
 import spray.httpx.SprayJsonSupport._
 import spray.routing.{HttpService, MethodRejection}
 
+import scalaz.{Failure, Success}
+
 
 /**
  * AgoraService defines routes for ApiServiceActor.
@@ -121,6 +123,10 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
             reject(MethodRejection(HttpMethods.GET), MethodRejection(HttpMethods.DELETE))
           } else {
             entity(as[AgoraEntity]) { newEntity =>
+              AgoraEntity.validate(newEntity) match {
+                case Success(_) => //noop
+                case Failure(errors) => throw new IllegalArgumentException(s"Method is invalid: Errors: $errors")
+              }
               parameters("redact".as[Boolean] ? false) { redact =>
                 requestContext => completeEntityCopy(requestContext, targetEntity, newEntity, redact, username, path, queryHandlerProps)
               }

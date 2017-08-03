@@ -106,13 +106,6 @@ object AgoraEntity {
     (namespace |@| name |@| _id |@| synopsis |@| doc) {(namespace, name, _id, synopsis, doc) => doNothing }
   }
 
-  def getErrors(entity: AgoraEntity): Option[IllegalArgumentException] = {
-    validate(entity) match {
-      case Success(_) => None
-      case Failure(errors) => throw new IllegalArgumentException(s"Entity is not valid: Errors: $errors")
-    }
-  }
-
 }
 
 case class AgoraEntity(namespace: Option[String] = None,

@@ -4,6 +4,8 @@ import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.scalatest.{DoNotDiscover, FlatSpec}
 
+import scalaz.{Failure, Success}
+
 @DoNotDiscover
 class AgoraEntityTest extends FlatSpec {
 
@@ -14,7 +16,7 @@ class AgoraEntityTest extends FlatSpec {
   "Agora" should "validate agoraEntity namespace is not empty" in {
     val ex = intercept[IllegalArgumentException] {
       val entity = AgoraEntity(badNamespace)
-      AgoraEntity.getErrors(entity)
+      getErrors(entity)
     }
     assert(ex.getMessage contains "Namespace")
   }
@@ -22,7 +24,7 @@ class AgoraEntityTest extends FlatSpec {
   "Agora" should "validate agoraEntity name is not empty" in {
     val ex = intercept[IllegalArgumentException] {
       val entity = AgoraEntity(name = badName)
-      AgoraEntity.getErrors(entity)
+      getErrors(entity)
     }
     assert(ex.getMessage contains "Name")
   }
@@ -30,7 +32,7 @@ class AgoraEntityTest extends FlatSpec {
   "Agora" should "validate agoraEntity snapshotId is greater than 0" in {
     val ex = intercept[IllegalArgumentException] {
       val entity = AgoraEntity(snapshotId = badId)
-      AgoraEntity.getErrors(entity)
+      getErrors(entity)
     }
     assert(ex.getMessage contains "SnapshotId")
   }
@@ -39,7 +41,7 @@ class AgoraEntityTest extends FlatSpec {
   "Agora" should "validate agoraEntity synopsis is less than 80 chars" in {
     val ex = intercept[IllegalArgumentException] {
       val entity = AgoraEntity(synopsis = badSynopsis)
-      AgoraEntity.getErrors(entity)
+      getErrors(entity)
     }
     assert(ex.getMessage contains "Synopsis")
   }
@@ -47,7 +49,7 @@ class AgoraEntityTest extends FlatSpec {
   "Agora" should "validate agoraEntity documentation is less than 10kb" in {
     val ex = intercept[IllegalArgumentException] {
       val entity = AgoraEntity(documentation = bigDocumentation)
-      AgoraEntity.getErrors(entity)
+      getErrors(entity)
     }
     assert(ex.getMessage contains "Documentation")
   }
@@ -55,7 +57,7 @@ class AgoraEntityTest extends FlatSpec {
   "Agora" should "return all errors at once" in {
     val ex = intercept[IllegalArgumentException] {
       val entity = AgoraEntity(badNamespace, badName, badId)
-      AgoraEntity.getErrors(entity)
+      getErrors(entity)
     }
     assert(ex.getMessage contains "Namespace")
     assert(ex.getMessage contains "Name")
@@ -65,5 +67,12 @@ class AgoraEntityTest extends FlatSpec {
   "Agora" should "return a URL given an entity with a namespace, name, and id" in {
     val entity = AgoraEntity(namespace = Option("broad"), name = Option("test"), snapshotId = Option(12), entityType = Option(AgoraEntityType.Task))
     assert(entity.agoraUrl === AgoraConfig.methodsUrl + "broad/test/12")
+  }
+
+  def getErrors(entity: AgoraEntity): Option[IllegalArgumentException] = {
+    AgoraEntity.validate(entity) match {
+      case Success(_) => None
+      case Failure(errors) => throw new IllegalArgumentException(s"Entity is not valid: Errors: $errors")
+    }
   }
 }

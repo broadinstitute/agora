@@ -4,7 +4,6 @@ import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.scalatest.{DoNotDiscover, FlatSpec}
 
-
 @DoNotDiscover
 class AgoraEntityTest extends FlatSpec {
 

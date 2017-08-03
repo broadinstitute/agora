@@ -3,7 +3,7 @@ package org.broadinstitute.dsde.agora.server.webservice
 
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
-import org.broadinstitute.dsde.agora.server.model.AgoraEntity
+import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
 import org.scalatest.DoNotDiscover
 import spray.http.MediaTypes._
@@ -130,18 +130,7 @@ class AgoraMethodsSpec extends ApiServiceSpec {
   }
 
   "Agora" should "return a 400 bad request with validation errors when metadata is invalid" in {
-    val entityJSON = s"""{
-                        | "namespace": "  ",
-                        | "name": "  ",
-                        | "synopsis": " ",
-                        | "documentation": "",
-                        | "payload": "",
-                        | "entityType": "Task"
-                        |}""".stripMargin
-
-    val entity = HttpEntity(
-      contentType = ContentType(`application/json`),
-      string = entityJSON)
+    val entity = new AgoraEntity(namespace= Option(" "), name= Option(" ") , synopsis= Option(" "), payload= Option(" "), entityType= Option(AgoraEntityType.Task))
 
     Post(ApiUtil.Methods.withLeadingVersion, entity) ~>
       wrapWithRejectionHandler {

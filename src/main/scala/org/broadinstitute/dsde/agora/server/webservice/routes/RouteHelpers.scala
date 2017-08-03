@@ -144,12 +144,6 @@ trait QuerySingleHelper extends BaseRoute {
     perRequest(context, queryHandler, message)
   }
 
-  def validateNewEntity(entity: AgoraEntity): Directive0 = {
-    validate(entity.payload.get.nonEmpty, "\"You must supply a payload.\"") &
-    validate(entity.synopsis.toString.length <= 80, "\"Synopsis must be less than 80 chars\"" ) &
-    validate(entity.documentation.toString.getBytes.size <= 10000, "\"Documentation must be less than 10kb\"")
-  }
-
   def completeEntityCopy(context: RequestContext,
                            oldEntity: AgoraEntity,
                            newEntity: AgoraEntity,

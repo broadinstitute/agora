@@ -4,6 +4,7 @@ import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.scalatest.{DoNotDiscover, FlatSpec}
 
+
 @DoNotDiscover
 class AgoraEntityTest extends FlatSpec {
 
@@ -13,21 +14,24 @@ class AgoraEntityTest extends FlatSpec {
 
   "Agora" should "validate agoraEntity namespace is not empty" in {
     val ex = intercept[IllegalArgumentException] {
-      AgoraEntity(badNamespace)
+      val entity = AgoraEntity(badNamespace)
+      AgoraEntity.getErrors(entity)
     }
     assert(ex.getMessage contains "Namespace")
   }
 
   "Agora" should "validate agoraEntity name is not empty" in {
     val ex = intercept[IllegalArgumentException] {
-      AgoraEntity(name = badName)
+      val entity = AgoraEntity(name = badName)
+      AgoraEntity.getErrors(entity)
     }
     assert(ex.getMessage contains "Name")
   }
 
   "Agora" should "validate agoraEntity snapshotId is greater than 0" in {
     val ex = intercept[IllegalArgumentException] {
-      AgoraEntity(snapshotId = badId)
+      val entity = AgoraEntity(snapshotId = badId)
+      AgoraEntity.getErrors(entity)
     }
     assert(ex.getMessage contains "SnapshotId")
   }
@@ -35,21 +39,24 @@ class AgoraEntityTest extends FlatSpec {
 
   "Agora" should "validate agoraEntity synopsis is less than 80 chars" in {
     val ex = intercept[IllegalArgumentException] {
-      AgoraEntity(synopsis = badSynopsis)
+      val entity = AgoraEntity(synopsis = badSynopsis)
+      AgoraEntity.getErrors(entity)
     }
     assert(ex.getMessage contains "Synopsis")
   }
 
   "Agora" should "validate agoraEntity documentation is less than 10kb" in {
     val ex = intercept[IllegalArgumentException] {
-      AgoraEntity(documentation = bigDocumentation)
+      val entity = AgoraEntity(documentation = bigDocumentation)
+      AgoraEntity.getErrors(entity)
     }
     assert(ex.getMessage contains "Documentation")
   }
 
   "Agora" should "return all errors at once" in {
     val ex = intercept[IllegalArgumentException] {
-      AgoraEntity(badNamespace, badName, badId)
+      val entity = AgoraEntity(badNamespace, badName, badId)
+      AgoraEntity.getErrors(entity)
     }
     assert(ex.getMessage contains "Namespace")
     assert(ex.getMessage contains "Name")

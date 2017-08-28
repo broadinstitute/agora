@@ -121,6 +121,8 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
     }
   }
 
+  implicit val MethodDefinitionProtocol = jsonFormat9(MethodDefinition.apply)
+
   implicit object AgoraPermissionsFormat extends RootJsonFormat[AgoraPermissions] {
     override def write(obj: AgoraPermissions): JsArray =
       JsArray(obj.toListOfStrings.map(JsString.apply))

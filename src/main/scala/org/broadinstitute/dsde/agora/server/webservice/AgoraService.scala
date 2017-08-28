@@ -3,6 +3,7 @@ package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.actor.Props
 import org.broadinstitute.dsde.agora.server.AgoraConfig
+import org.broadinstitute.dsde.agora.server.AgoraConfig.authenticationDirectives
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, EntityAccessControl, PermissionsDataSource, entities}
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
@@ -11,7 +12,7 @@ import org.broadinstitute.dsde.agora.server.webservice.routes.RouteHelpers
 import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages.Status
 import spray.http.HttpMethods
 import spray.httpx.SprayJsonSupport._
-import spray.routing.{HttpService, MethodRejection}
+import spray.routing.{HttpService, MethodRejection, PathMatcher}
 
 import scalaz.{Failure, Success}
 
@@ -26,7 +27,7 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
 
   def path: String
 
-  def routes = namespacePermissionsRoute ~ multiEntityPermissionsRoute ~ entityPermissionsRoute ~ querySingleRoute ~ queryRoute ~ postRoute ~ statusRoute
+  def routes = namespacePermissionsRoute ~ multiEntityPermissionsRoute ~ entityPermissionsRoute ~ querySingleRoute ~ queryMethodDefinitionsRoute ~ queryRoute ~ postRoute ~ statusRoute
 
   def queryHandlerProps = Props(classOf[QueryHandler], permissionsDataSource, executionContext)
 
@@ -135,6 +136,13 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
         }
       }
     }
+
+  def queryMethodDefinitionsRoute =
+    (versionedPath(PathMatcher("methods" / "definitions")) & get &
+      authenticationDirectives.usernameFromRequest()) { (username) =>
+        requestContext => definitionsWithPerRequest(requestContext, username, queryHandlerProps)
+      }
+
 
   // GET http://root.com/methods?
   // GET http://root.com/configurations?

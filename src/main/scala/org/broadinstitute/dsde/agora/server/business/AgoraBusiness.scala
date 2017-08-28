@@ -4,7 +4,8 @@ import org.broadinstitute.dsde.agora.server.exceptions._
 import org.broadinstitute.dsde.agora.server.dataaccess.{AgoraDao, ReadWriteAction}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
-import org.broadinstitute.dsde.agora.server.model.{AgoraApiJsonSupport, AgoraEntity, AgoraEntityProjection, AgoraEntityType}
+import org.broadinstitute.dsde.agora.server.model._
+import org.bson.types.ObjectId
 import slick.dbio.DBIO
 import spray.http.StatusCodes
 import spray.json._
@@ -16,6 +17,7 @@ import scala.util.{Failure, Success, Try}
 
 object AgoraBusiness {
   val nameRegex = """[a-zA-Z0-9-_.]+""".r // Applies to entity names & namespaces
+  val configIdsProjection = Some(new AgoraEntityProjection(Seq[String]("id", "methodId"), Seq.empty[String]))
 }
 
 class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: ExecutionContext) {
@@ -285,14 +287,43 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     )
   }
 
-  def find(agoraSearch: AgoraEntity,
-           agoraProjection: Option[AgoraEntityProjection],
-           entityTypes: Seq[AgoraEntityType.EntityType],
-           username: String): Future[Seq[AgoraEntity]] = {
+  def listDefinitions(username: String): Future[Seq[MethodDefinition]] = {
+
+    val methodsFuture = findWithIds(AgoraEntity(), None, Seq(AgoraEntityType.Workflow), username)
+    val configsFuture = findWithIds(AgoraEntity(), None, Seq(AgoraEntityType.Configuration), username)
+
+    configsFuture flatMap { configSnapshots =>
+      methodsFuture map { methodSnapshots =>
+        // group/count config snapshots by methodId
+        val configCounts:Map[Option[ObjectId],Int] = configSnapshots
+            .groupBy(_.methodId)
+            .map { kv => kv._1 -> kv._2.size}
+
+        // group method snapshots by namespace/name; count method snapshots and sum config counts
+        val groupedMethods = methodSnapshots.groupBy( ae => (ae.namespace,ae.name))
+
+        groupedMethods.values.map { aes:Seq[AgoraEntity] =>
+          val numSnapshots:Int = aes.size
+          val numConfigurations:Int = aes.map { ae => configCounts.getOrElse(ae.id, 0) }.sum
+
+          // TODO: apply public status; how to define?
+          // TODO: how to define owners, managers??
+          // TODO: is using latest snapshot appropriate?
+          // use the most recent (i.e. highest snapshot value) to populate the definition
+          val latestSnapshot = aes.maxBy(_.snapshotId.getOrElse(Int.MinValue))
+          MethodDefinition(latestSnapshot, numConfigurations, numSnapshots)
+        }.toSeq
+      }
+    }
+  }
+
+  private def findWithIds(agoraSearch: AgoraEntity,
+    agoraProjection: Option[AgoraEntityProjection],
+    entityTypes: Seq[AgoraEntityType.EntityType],
+    username: String): Future[Seq[AgoraEntity]] = {
 
     val entities = AgoraDao.createAgoraDao(entityTypes)
       .find(agoraSearch, agoraProjection)
-      .map(entity => entity.addUrl().removeIds())
 
     permissionsDataSource.inTransaction { db =>
       for {
@@ -301,6 +332,14 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
       } yield entity
     }
   }
+
+  def find(agoraSearch: AgoraEntity,
+           agoraProjection: Option[AgoraEntityProjection],
+           entityTypes: Seq[AgoraEntityType.EntityType],
+           username: String): Future[Seq[AgoraEntity]] =
+    findWithIds(agoraSearch, agoraProjection, entityTypes, username).map { entities =>
+      entities.map(_.addUrl().removeIds())
+    }
 
   def findSingle(namespace: String,
                  name: String,

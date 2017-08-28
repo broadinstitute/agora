@@ -159,5 +159,29 @@ case class AgoraEntity(namespace: Option[String] = None,
   def toShortString: String = s"AgoraEntity($namespace,$name,$snapshotId)"
 }
 
+object MethodDefinition {
+  def apply(ae:AgoraEntity, numConfigurations: Int, numSnapshots: Int): MethodDefinition =
+    new MethodDefinition(ae.namespace,
+      ae.name,
+      ae.synopsis,
+      ae.owner,
+      ae.entityType,
+      ae.managers,
+      ae.public,
+      numConfigurations,
+      numSnapshots)
+
+  def apply(ae:AgoraEntity): MethodDefinition = apply(ae, 0, 0)
+}
+
+case class MethodDefinition(namespace: Option[String] = None,
+                       name: Option[String] = None,
+                       synopsis: Option[String] = None,
+                       owner: Option[String] = None,
+                       entityType: Option[AgoraEntityType.EntityType] = None,
+                       managers: Seq[String] = Seq(),
+                       public: Option[Boolean] = None,
+                       numConfigurations: Int,
+                       numSnapshots: Int)
 
 

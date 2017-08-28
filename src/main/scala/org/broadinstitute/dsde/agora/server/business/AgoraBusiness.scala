@@ -301,34 +301,41 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
 
         // find public-ness
         permissionsDataSource.inTransaction { db =>
-          db.aePerms.listPublicAliases map { publicAliases =>
+          db.aePerms.listPublicAliases flatMap { publicAliases =>
 
             // apply public status
-            val annotatedSnapshots = methodSnapshots.map { snap =>
+            val snapshotsWithPublic = methodSnapshots.map { snap =>
               val snapshotAlias = permissionsDataSource.dataAccess.aePerms.alias(snap)
               snap.copy(public = Some(publicAliases.contains(snapshotAlias)))
             }
 
-            // group method snapshots by namespace/name; count method snapshots and sum config counts
-            val groupedMethods = annotatedSnapshots.groupBy( ae => (ae.namespace,ae.name))
+            // find and add owners
+            db.aePerms.listOwnersAndAliases map { ownersAndAliases =>
 
-            groupedMethods.values.map { aes:Seq[AgoraEntity] =>
-              val numSnapshots:Int = aes.size
-              val numConfigurations:Int = aes.map { ae => configCounts.getOrElse(ae.id, 0) }.sum
-              val isPublic = aes.exists(_.public.contains(true))
+              val annotatedSnapshots = snapshotsWithPublic.map { snap =>
+                val snapshotAlias = permissionsDataSource.dataAccess.aePerms.alias(snap)
+                val owners = ownersAndAliases.collect {
+                  case ((alias:String,email:String)) if alias == snapshotAlias => email
+                }
+                snap.addManagers(owners)
+              }
 
-              // TODO: how to define owners, managers??
-              // TODO: is using latest snapshot appropriate?
-              // use the most recent (i.e. highest snapshot value) to populate the definition
-              val latestSnapshot = aes.maxBy(_.snapshotId.getOrElse(Int.MinValue))
-              MethodDefinition(latestSnapshot, isPublic, numConfigurations, numSnapshots)
-            }.toSeq
+              // group method snapshots by namespace/name; count method snapshots and sum config counts
+              val groupedMethods = annotatedSnapshots.groupBy( ae => (ae.namespace,ae.name))
 
+              groupedMethods.values.map { aes:Seq[AgoraEntity] =>
+                val numSnapshots:Int = aes.size
+                val numConfigurations:Int = aes.map { ae => configCounts.getOrElse(ae.id, 0) }.sum
+                val isPublic = aes.exists(_.public.contains(true))
+                val managers = aes.flatMap { ae => ae.managers }
+
+                // use the most recent (i.e. highest snapshot value) to populate the definition
+                val latestSnapshot = aes.maxBy(_.snapshotId.getOrElse(Int.MinValue))
+                MethodDefinition(latestSnapshot, managers, isPublic, numConfigurations, numSnapshots)
+              }.toSeq
+            }
           }
         }
-
-
-
       }
     }
   }

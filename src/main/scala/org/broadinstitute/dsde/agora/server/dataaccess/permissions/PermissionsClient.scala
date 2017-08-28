@@ -288,6 +288,16 @@ abstract class PermissionsClient(profile: JdbcProfile) {
     publicAliasQuery.result
   }
 
+  def listOwnersAndAliases: ReadAction[Seq[(String,String)]] = {
+    val ownerAndAliasQuery = for {
+      user <- users
+      permission <- permissions if permission.userID === user.id && (permission.roles === Manage || permission.roles === All)
+      entity <- entities if permission.entityID === entity.id
+    } yield (entity.alias, user.email)
+
+    ownerAndAliasQuery.result
+  }
+
   def sqlDBStatus() = {
     sql"select version();".as[String]
   }

@@ -74,6 +74,16 @@ class MethodDefinitionIntegrationSpec extends FlatSpec with RouteTest with Scala
     patiently(permissionBusiness.insertEntityPermission(testMethod("otherowner").copy(snapshotId = Some(2)), owner2.get,
       AccessControl(mockAuthenticatedOwner.get, AgoraPermissions(AgoraPermissions.Nothing))))
 
+    // grant additional owners to a method
+    patiently(permissionBusiness.insertEntityPermission(testMethod("otherowner").copy(snapshotId = Some(3)), mockAuthenticatedOwner.get,
+      AccessControl(owner1.get, AgoraPermissions(AgoraPermissions.All))))
+    patiently(permissionBusiness.insertEntityPermission(testMethod("otherowner").copy(snapshotId = Some(4)), mockAuthenticatedOwner.get,
+      AccessControl(owner3.get, AgoraPermissions(AgoraPermissions.All))))
+
+    // and add another reader to make sure readers don't confuse the system
+    patiently(permissionBusiness.insertEntityPermission(testMethod("otherowner").copy(snapshotId = Some(4)), mockAuthenticatedOwner.get,
+      AccessControl(owner2.get, AgoraPermissions(AgoraPermissions.Read))))
+
     // redact a config
     patiently(agoraBusiness.delete(testConfig("redacts",1).copy(snapshotId = Some(2)), Seq(AgoraEntityType.Configuration), mockAuthenticatedOwner.get))
 
@@ -224,8 +234,28 @@ class MethodDefinitionIntegrationSpec extends FlatSpec with RouteTest with Scala
       }
   }
 
-  it should "return the appropriate owners & managers" ignore {
-    fail("not implemented")
+  it should "return the appropriate managers" in {
+    Get(ApiUtil.Methods.withLeadingVersion + "/definitions") ~>
+      methodsService.queryMethodDefinitionsRoute ~>
+      check {
+        assert(status == OK)
+        val defs = responseAs[Seq[MethodDefinition]]
+        val one = findDefinition("one", defs)
+        assert(one.isDefined)
+        assertResult(Set(mockAuthenticatedOwner.get)) {one.get.managers.toSet}
+        val two = findDefinition("two", defs)
+        assert(two.isDefined)
+        assertResult(Set(mockAuthenticatedOwner.get)) {two.get.managers.toSet}
+        val three = findDefinition("three", defs)
+        assert(three.isDefined)
+        assertResult(Set(mockAuthenticatedOwner.get)) {three.get.managers.toSet}
+        val redacts = findDefinition("redacts", defs)
+        assert(redacts.isDefined)
+        assertResult(Set(mockAuthenticatedOwner.get)) {redacts.get.managers.toSet}
+        val otherowner = findDefinition("otherowner", defs)
+        assert(otherowner.isDefined)
+        assertResult(Set(mockAuthenticatedOwner.get, owner1.get, owner3.get)) {otherowner.get.managers.toSet}
+      }
   }
 
   // =========================================================

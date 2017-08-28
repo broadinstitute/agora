@@ -160,13 +160,13 @@ case class AgoraEntity(namespace: Option[String] = None,
 }
 
 object MethodDefinition {
-  def apply(ae:AgoraEntity, isPublic: Boolean, numConfigurations: Int, numSnapshots: Int): MethodDefinition =
+  def apply(ae:AgoraEntity, managers: Seq[String], isPublic: Boolean, numConfigurations: Int, numSnapshots: Int): MethodDefinition =
     new MethodDefinition(ae.namespace,
       ae.name,
       ae.synopsis,
       ae.owner,
       ae.entityType,
-      ae.managers,
+      managers,
       Some(isPublic),
       numConfigurations,
       numSnapshots)

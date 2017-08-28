@@ -83,6 +83,11 @@ class MethodDefinitionIntegrationSpec extends FlatSpec with RouteTest with Scala
     patiently(permissionBusiness.insertEntityPermission(testConfig("otherowner",3).copy(snapshotId = Some(4)), owner2.get,
       AccessControl(mockAuthenticatedOwner.get, AgoraPermissions(AgoraPermissions.Nothing))))
 
+    // grant public-read to a couple snapshots
+    patiently(permissionBusiness.insertEntityPermission(testMethod("two").copy(snapshotId = Some(2)), mockAuthenticatedOwner.get,
+      AccessControl(AccessControl.publicUser, AgoraPermissions(AgoraPermissions.Read))))
+    patiently(permissionBusiness.insertEntityPermission(testMethod("redacts").copy(snapshotId = Some(4)), mockAuthenticatedOwner.get,
+      AccessControl(AccessControl.publicUser, AgoraPermissions(AgoraPermissions.Read))))
 
   }
 
@@ -195,8 +200,28 @@ class MethodDefinitionIntegrationSpec extends FlatSpec with RouteTest with Scala
       }
   }
 
-  it should "return the appropriate public status" ignore {
-    fail("not implemented")
+  it should "return the appropriate public status" in {
+    Get(ApiUtil.Methods.withLeadingVersion + "/definitions") ~>
+      methodsService.queryMethodDefinitionsRoute ~>
+      check {
+        assert(status == OK)
+        val defs = responseAs[Seq[MethodDefinition]]
+        val one = findDefinition("one", defs)
+        assert(one.isDefined)
+        assert(one.get.public.contains(false))
+        val two = findDefinition("two", defs)
+        assert(two.isDefined)
+        assert(two.get.public.contains(true))
+        val three = findDefinition("three", defs)
+        assert(three.isDefined)
+        assert(three.get.public.contains(false))
+        val redacts = findDefinition("redacts", defs)
+        assert(redacts.isDefined)
+        assert(redacts.get.public.contains(true))
+        val otherowner = findDefinition("otherowner", defs)
+        assert(otherowner.isDefined)
+        assert(otherowner.get.public.contains(false))
+      }
   }
 
   it should "return the appropriate owners & managers" ignore {

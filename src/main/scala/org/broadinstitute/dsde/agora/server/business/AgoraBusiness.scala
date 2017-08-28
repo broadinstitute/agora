@@ -62,7 +62,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     //if we're supposed to check if the user is an admin, create a fake action
     val admAction = makeDummyAdminPermission(checkAdmin, db.nsPerms, username, permLevel)
 
-    DBIO.sequence(Seq(db.nsPerms.getNamespacePermission(agoraEntity, username), db.nsPerms.getNamespacePermission(agoraEntity, "public"), admAction)) flatMap { namespacePerms =>
+    DBIO.sequence(Seq(db.nsPerms.getNamespacePermission(agoraEntity, username), db.nsPerms.getNamespacePermission(agoraEntity, AccessControl.publicUser), admAction)) flatMap { namespacePerms =>
       if (!namespacePerms.exists(_.hasPermission(permLevel))) {
         DBIO.failed(NamespaceAuthorizationException(permLevel, agoraEntity, username))
       } else {
@@ -72,7 +72,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
   }
 
   private def checkEntityPermission[T](db: DataAccess, agoraEntity: AgoraEntity, username: String, permLevel: AgoraPermissions)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
-    DBIO.sequence(Seq(db.aePerms.getEntityPermission(agoraEntity, username), db.aePerms.getEntityPermission(agoraEntity, "public"))) flatMap { entityPerms =>
+    DBIO.sequence(Seq(db.aePerms.getEntityPermission(agoraEntity, username), db.aePerms.getEntityPermission(agoraEntity, AccessControl.publicUser))) flatMap { entityPerms =>
       if (!entityPerms.exists(_.hasPermission(permLevel))) {
         // if the user can't even read the entity, throw NotFound for security.
         // if the user can read, but doesn't have the requested permission, throw Forbidden.
@@ -293,26 +293,42 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     val configsFuture = findWithIds(AgoraEntity(), None, Seq(AgoraEntityType.Configuration), username)
 
     configsFuture flatMap { configSnapshots =>
-      methodsFuture map { methodSnapshots =>
+      methodsFuture flatMap { methodSnapshots =>
         // group/count config snapshots by methodId
         val configCounts:Map[Option[ObjectId],Int] = configSnapshots
             .groupBy(_.methodId)
             .map { kv => kv._1 -> kv._2.size}
 
-        // group method snapshots by namespace/name; count method snapshots and sum config counts
-        val groupedMethods = methodSnapshots.groupBy( ae => (ae.namespace,ae.name))
+        // find public-ness
+        permissionsDataSource.inTransaction { db =>
+          db.aePerms.listPublicAliases map { publicAliases =>
 
-        groupedMethods.values.map { aes:Seq[AgoraEntity] =>
-          val numSnapshots:Int = aes.size
-          val numConfigurations:Int = aes.map { ae => configCounts.getOrElse(ae.id, 0) }.sum
+            // apply public status
+            val annotatedSnapshots = methodSnapshots.map { snap =>
+              val snapshotAlias = permissionsDataSource.dataAccess.aePerms.alias(snap)
+              snap.copy(public = Some(publicAliases.contains(snapshotAlias)))
+            }
 
-          // TODO: apply public status; how to define?
-          // TODO: how to define owners, managers??
-          // TODO: is using latest snapshot appropriate?
-          // use the most recent (i.e. highest snapshot value) to populate the definition
-          val latestSnapshot = aes.maxBy(_.snapshotId.getOrElse(Int.MinValue))
-          MethodDefinition(latestSnapshot, numConfigurations, numSnapshots)
-        }.toSeq
+            // group method snapshots by namespace/name; count method snapshots and sum config counts
+            val groupedMethods = annotatedSnapshots.groupBy( ae => (ae.namespace,ae.name))
+
+            groupedMethods.values.map { aes:Seq[AgoraEntity] =>
+              val numSnapshots:Int = aes.size
+              val numConfigurations:Int = aes.map { ae => configCounts.getOrElse(ae.id, 0) }.sum
+              val isPublic = aes.exists(_.public.contains(true))
+
+              // TODO: how to define owners, managers??
+              // TODO: is using latest snapshot appropriate?
+              // use the most recent (i.e. highest snapshot value) to populate the definition
+              val latestSnapshot = aes.maxBy(_.snapshotId.getOrElse(Int.MinValue))
+              MethodDefinition(latestSnapshot, isPublic, numConfigurations, numSnapshots)
+            }.toSeq
+
+          }
+        }
+
+
+
       }
     }
   }

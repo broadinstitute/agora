@@ -1516,9 +1516,6 @@ definitions:
       synopsis:
         type: string
         description: Synopsis of the method
-      owner:
-        type: string
-        description: Timestamp of creation
       managers:
         type: array
         items:

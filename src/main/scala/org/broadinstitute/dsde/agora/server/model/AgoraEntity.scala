@@ -164,7 +164,6 @@ object MethodDefinition {
     new MethodDefinition(ae.namespace,
       ae.name,
       ae.synopsis,
-      ae.owner,
       ae.entityType,
       managers,
       Some(isPublic),
@@ -175,11 +174,9 @@ object MethodDefinition {
 case class MethodDefinition(namespace: Option[String] = None,
                        name: Option[String] = None,
                        synopsis: Option[String] = None,
-                       owner: Option[String] = None,
                        entityType: Option[AgoraEntityType.EntityType] = None,
                        managers: Seq[String] = Seq(),
                        public: Option[Boolean] = None,
                        numConfigurations: Int,
                        numSnapshots: Int)
-
 

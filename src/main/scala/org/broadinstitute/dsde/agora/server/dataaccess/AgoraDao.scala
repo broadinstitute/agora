@@ -32,4 +32,6 @@ trait AgoraDao {
   def findSingle(namespace: String, name: String, snapshotId: Int): AgoraEntity
 
   def findConfigurations(id: ObjectId): Seq[AgoraEntity]
+
+  def findConfigurations(ids: Seq[ObjectId]): Seq[AgoraEntity]
 }

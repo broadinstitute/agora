@@ -43,6 +43,11 @@ class QueryHandler(dataSource: PermissionsDataSource, implicit val ec: Execution
                           username: String) =>
       queryDefinitions(requestContext, username) pipeTo context.parent
 
+    case QueryAssociatedConfigurations(requestContext: RequestContext,
+                                       namespace: String,
+                                       name: String,
+                                       username: String) =>
+      queryAssociatedConfigurations(requestContext, namespace, name, username) pipeTo context.parent
 
     case Delete(requestContext: RequestContext,
                 entity: AgoraEntity,
@@ -87,6 +92,14 @@ class QueryHandler(dataSource: PermissionsDataSource, implicit val ec: Execution
     }
   }
 
+  def queryAssociatedConfigurations(requestContext: RequestContext,
+                                    namespace: String,
+                                    name: String,
+                                    username: String): Future[PerRequestMessage] = {
+    agoraBusiness.listAssociatedConfigurations(namespace, name, username) map { configs =>
+      RequestComplete(configs)
+    }
+  }
   def delete(requestContext: RequestContext,
               entity: AgoraEntity,
               entityTypes: Seq[AgoraEntityType.EntityType],

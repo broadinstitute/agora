@@ -5,7 +5,7 @@ import akka.pattern._
 import org.broadinstitute.dsde.agora.server.business.{AgoraBusiness, PermissionBusiness}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
-import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection, AgoraEntityType}
+import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection, AgoraEntityType, MethodDefinition}
 import org.broadinstitute.dsde.agora.server.webservice.PerRequest._
 import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages._
 import spray.httpx.SprayJsonSupport._
@@ -38,6 +38,11 @@ class QueryHandler(dataSource: PermissionsDataSource, implicit val ec: Execution
                entityTypes: Seq[AgoraEntityType.EntityType],
                username: String) =>
       query(requestContext, agoraSearch, agoraProjection, entityTypes, username) pipeTo context.parent
+
+    case QueryDefinitions(requestContext: RequestContext,
+                          username: String) =>
+      queryDefinitions(requestContext, username) pipeTo context.parent
+
 
     case Delete(requestContext: RequestContext,
                 entity: AgoraEntity,
@@ -72,6 +77,13 @@ class QueryHandler(dataSource: PermissionsDataSource, implicit val ec: Execution
             username: String): Future[PerRequestMessage] = {
     agoraBusiness.find(agoraSearch, agoraProjection, entityTypes, username) map { entities =>
       RequestComplete(entities)
+    }
+  }
+
+  def queryDefinitions(requestContext: RequestContext,
+                       username: String): Future[PerRequestMessage] = {
+    agoraBusiness.listDefinitions(username) map { definitions =>
+      RequestComplete(definitions)
     }
   }
 

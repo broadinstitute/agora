@@ -133,7 +133,7 @@ class EntityPermissionsClientSpec extends FlatSpec with ScalaFutures with Before
 
   "Agora" should "be able to insert a 'public' permission" in {
     val insertCount = runInDB { db =>
-      db.aePerms.insertEntityPermission(testEntityWithPublicPermissionsWithId, AccessControl("public", AgoraPermissions(All)))
+      db.aePerms.insertEntityPermission(testEntityWithPublicPermissionsWithId, AccessControl(AccessControl.publicUser, AgoraPermissions(All)))
     }
     assert(insertCount == 1)
   }

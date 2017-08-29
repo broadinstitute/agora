@@ -92,6 +92,9 @@ object ServiceMessages {
                    entityTypes: Seq[AgoraEntityType.EntityType],
                    username: String)
 
+  case class QueryDefinitions(requestContext: RequestContext,
+                   username: String)
+
   case class Add(requestContext: RequestContext,
                  agoraAddRequest: AgoraEntity,
                  username: String)

@@ -1,13 +1,25 @@
 
 package org.broadinstitute.dsde.agora.server.model
 
+import com.typesafe.scalalogging.LazyLogging
 import org.broadinstitute.dsde.agora.server.AgoraConfig
+import org.broadinstitute.dsde.agora.server.exceptions.AgoraException
 import org.bson.types.ObjectId
 import org.joda.time.DateTime
 
 import scala.annotation.meta.field
 import scalaz.Scalaz._
 import scalaz._
+import org.broadinstitute.dsde.rawls.model.MethodConfiguration
+import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport.MethodConfigurationFormat
+import org.broadinstitute.dsde.rawls.model.AttributeString
+import org.broadinstitute.dsde.rawls.model.AttributeString._
+import spray.httpx.SprayJsonSupport._
+import spray.json._
+
+import org.broadinstitute.dsde.rawls.model.JsonSupport
+
+
 
 object AgoraEntityType extends Enumeration {
   def byPath(path: String): Seq[EntityType] = path match {
@@ -22,7 +34,7 @@ object AgoraEntityType extends Enumeration {
   val MethodTypes = Seq(Task, Workflow)
 }
 
-object AgoraEntity {
+object AgoraEntity extends JsonSupport {
 
   // ValidationNel is a Non-empty List (Nel) data structure. The left type
   // is the failure type. The right type is the success type.
@@ -116,13 +128,14 @@ case class AgoraEntity(namespace: Option[String] = None,
                        owner: Option[String] = None,
                        createDate: Option[DateTime] = None,
                        payload: Option[String] = None,
+                       payloadObject: Option[MethodConfiguration] = None,
                        url: Option[String] = None,
                        entityType: Option[AgoraEntityType.EntityType] = None,
                        id: Option[ObjectId] = None,
                        methodId: Option[ObjectId] = None,
                        method: Option[AgoraEntity] = None,
                        managers: Seq[String] = Seq(),
-                       public: Option[Boolean] = None) {
+                       public: Option[Boolean] = None) extends LazyLogging {
 
   def agoraUrl: String = {
     AgoraConfig.urlFromType(entityType) + namespace.get + "/" + name.get + "/" + snapshotId.get
@@ -157,6 +170,24 @@ case class AgoraEntity(namespace: Option[String] = None,
   }
 
   def toShortString: String = s"AgoraEntity($namespace,$name,$snapshotId)"
+
+  def canDeserializePayload: Boolean = {
+    entityType.contains(AgoraEntityType.Configuration)
+  }
+
+  def deserializeConfigurationPayload: AgoraEntity = {
+    if (!canDeserializePayload) throw AgoraException(s"Entity type $entityType does not support payload deserialization")
+
+    payload match {
+      case Some(pl: String) =>
+        logger.info(pl.parseJson.convertTo[MethodConfiguration].toString)
+        this.copy(
+          payloadObject = Some(pl.parseJson.convertTo[MethodConfiguration]),
+          payload = None
+        )
+      case _ => this
+    }
+  }
 }
 
 

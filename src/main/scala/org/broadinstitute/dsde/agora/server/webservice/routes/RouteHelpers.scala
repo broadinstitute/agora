@@ -121,14 +121,17 @@ trait QuerySingleHelper extends BaseRoute {
 
   def extractOnlyPayloadParameter = extract(_.request.uri.query.get("onlyPayload"))
 
+  def extractPayloadAsObjectParameter = extract(_.request.uri.query.get("payloadAsObject"))
+
   def completeWithPerRequest(context: RequestContext,
-                              entity: AgoraEntity,
-                              username: String,
-                              onlyPayload: Boolean,
-                              path: String,
-                              queryHandler: Props): Unit = {
+                             entity: AgoraEntity,
+                             username: String,
+                             onlyPayload: Boolean,
+                             payloadAsObject: Boolean,
+                             path: String,
+                             queryHandler: Props): Unit = {
     val entityTypes = AgoraEntityType.byPath(path)
-    val message = QuerySingle(context, entity, entityTypes, username, onlyPayload)
+    val message = QuerySingle(context, entity, entityTypes, username, onlyPayload, payloadAsObject)
 
     perRequest(context, queryHandler, message)
   }
@@ -178,7 +181,7 @@ trait QueryRouteHelper extends BaseRoute {
     val url         = params.getOrElse("url", Nil).headOption
     val _type       = params.getOrElse("entityType", Nil).headOption.toAgoraEntityOption
 
-    AgoraEntity(namespace, name, _id, synopsis, docs, owner, createDate = None, payload, url, _type)
+    AgoraEntity(namespace, name, _id, synopsis, docs, owner, createDate = None, payload, payloadObject = None, url, _type)
   }
 
   def validateEntityType(params: Map[String, List[String]], path: String): Directive0 = {

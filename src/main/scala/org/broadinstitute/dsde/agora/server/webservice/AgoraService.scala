@@ -109,26 +109,28 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
   def querySingleRoute =
     matchQuerySingleRoute(path) { (namespace, name, snapshotId, username) =>
       extractOnlyPayloadParameter { (onlyPayload) =>
-        val targetEntity = AgoraEntity(Option(namespace), Option(name), Option(snapshotId))
+        extractPayloadAsObjectParameter { (payloadAsObject) =>
+          val targetEntity = AgoraEntity(Option(namespace), Option(name), Option(snapshotId))
 
-        get { requestContext =>
-          completeWithPerRequest(requestContext, targetEntity, username, toBool(onlyPayload), path, queryHandlerProps)
-        } ~
-        delete { requestContext =>
-          completeEntityDelete(requestContext, targetEntity, username, path, queryHandlerProps)
-        } ~
-        post {
-          // only allow copying (post) for methods
-          if (path != AgoraConfig.methodsRoute) {
-            reject(MethodRejection(HttpMethods.GET), MethodRejection(HttpMethods.DELETE))
-          } else {
-            entity(as[AgoraEntity]) { newEntity =>
-              AgoraEntity.validate(newEntity) match {
-                case Success(_) => //noop
-                case Failure(errors) => throw new IllegalArgumentException(s"Method is invalid: Errors: $errors")
-              }
-              parameters("redact".as[Boolean] ? false) { redact =>
-                requestContext => completeEntityCopy(requestContext, targetEntity, newEntity, redact, username, path, queryHandlerProps)
+          get { requestContext =>
+            completeWithPerRequest(requestContext, targetEntity, username, toBool(onlyPayload), toBool(payloadAsObject), path, queryHandlerProps)
+          } ~
+          delete { requestContext =>
+            completeEntityDelete(requestContext, targetEntity, username, path, queryHandlerProps)
+          } ~
+          post {
+            // only allow copying (post) for methods
+            if (path != AgoraConfig.methodsRoute) {
+              reject(MethodRejection(HttpMethods.GET), MethodRejection(HttpMethods.DELETE))
+            } else {
+              entity(as[AgoraEntity]) { newEntity =>
+                AgoraEntity.validate(newEntity) match {
+                  case Success(_) => //noop
+                  case Failure(errors) => throw new IllegalArgumentException(s"Method is invalid: Errors: $errors")
+                }
+                parameters("redact".as[Boolean] ? false) { redact =>
+                  requestContext => completeEntityCopy(requestContext, targetEntity, newEntity, redact, username, path, queryHandlerProps)
+                }
               }
             }
           }

@@ -188,7 +188,7 @@ paths:
           schema:
             type: array
             items:
-              $ref: '#/definitions/MethodResponse'
+              $ref: '#/definitions/ConfigurationResponse'
         '404':
           description: Method not found.
           schema:
@@ -1538,7 +1538,7 @@ definitions:
         description: URL where resource can be accessed.
       payload:
         type: string
-        description: Payload of method -- must be in WDL format. MUST BE REQUESTED EXPLICITLY.
+        description: Payload of configuration. MUST BE REQUESTED EXPLICITLY.
         default: >
           { "methodRepoMethod": { "methodNamespace": "YOUR_NAMESPACE",
           "methodName": "BWA", "methodVersion": 1}}

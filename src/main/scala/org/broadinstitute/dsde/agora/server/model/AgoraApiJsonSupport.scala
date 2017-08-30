@@ -10,7 +10,6 @@ import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import spray.json.{JsArray, JsString, _}
 
 import org.broadinstitute.dsde.rawls.model.MethodConfiguration
-import org.broadinstitute.dsde.rawls.model.AttributeString._
 import org.broadinstitute.dsde.rawls.model.AttributeString
 import org.broadinstitute.dsde.rawls.model.MethodRepoMethod
 
@@ -104,6 +103,7 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
       val owner = stringOrNone(jsObject, "owner")
       val createDate = if (jsObject.getFields("createDate").nonEmpty) jsObject.fields("createDate").convertTo[Option[DateTime]] else None
       val payload = stringOrNone(jsObject, "payload")
+      val payloadObject = if (jsObject.getFields("payloadObject").nonEmpty) jsObject.fields("payloadObject").convertTo[Option[MethodConfiguration]] else None
       val url = stringOrNone(jsObject, "url")
       val entityType = if (jsObject.getFields("entityType").nonEmpty) jsObject.fields("entityType").convertTo[Option[AgoraEntityType.EntityType]] else None
       val id = if (jsObject.getFields("_id").nonEmpty) jsObject.fields("_id").convertTo[Option[ObjectId]] else None
@@ -118,6 +118,7 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
                                owner = owner,
                                createDate = createDate,
                                payload = payload,
+                               payloadObject = payloadObject,
                                url = url,
                                entityType = entityType,
                                id = id,

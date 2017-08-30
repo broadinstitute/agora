@@ -2,16 +2,15 @@ package org.broadinstitute.dsde.agora.server.webservice.handlers
 
 import akka.actor.Actor
 import akka.pattern._
-import com.typesafe.scalalogging.LazyLogging
 import org.broadinstitute.dsde.agora.server.business.{AgoraBusiness, PermissionBusiness}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
-import org.broadinstitute.dsde.agora.server.exceptions.AgoraException
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection, AgoraEntityType}
 import org.broadinstitute.dsde.agora.server.webservice.PerRequest._
 import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages._
 import spray.httpx.SprayJsonSupport._
 import spray.routing.RequestContext
+import spray.http.StatusCodes.BadRequest
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -20,7 +19,7 @@ import scala.concurrent.{ExecutionContext, Future}
  * It then handles the returns from the business layer and completes the request. It is responsible for querying the
  * methods repository for methods and method configurations.
  */
-class QueryHandler(dataSource: PermissionsDataSource, implicit val ec: ExecutionContext) extends Actor with LazyLogging {
+class QueryHandler(dataSource: PermissionsDataSource, implicit val ec: ExecutionContext) extends Actor {
   implicit val system = context.system
 
   val agoraBusiness = new AgoraBusiness(dataSource)(ec)
@@ -64,14 +63,18 @@ class QueryHandler(dataSource: PermissionsDataSource, implicit val ec: Execution
             onlyPayload: Boolean,
             payloadAsObject: Boolean): Future[PerRequestMessage] = {
     agoraBusiness.findSingle(entity, entityTypes, username: String) map { foundEntity =>
-      if (onlyPayload && payloadAsObject) throw new IllegalArgumentException("onlyPayload, payloadAsObject cannot be used together")
-
-      if (onlyPayload) {
-        RequestComplete(foundEntity.payload)
-      } else if (payloadAsObject) {
-        RequestComplete(foundEntity.deserializeConfigurationPayload)
+      if (onlyPayload && payloadAsObject) {
+        RequestComplete(BadRequest, "onlyPayload, payloadAsObject cannot be used together")
       } else {
-        RequestComplete(foundEntity)
+
+        if (onlyPayload) {
+          RequestComplete(foundEntity.payload)
+        } else if (payloadAsObject) {
+          RequestComplete(foundEntity.deserializeConfigurationPayload)
+        } else {
+          RequestComplete(foundEntity)
+        }
+
       }
     }
   }

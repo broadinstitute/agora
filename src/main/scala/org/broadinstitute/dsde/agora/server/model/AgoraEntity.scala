@@ -1,20 +1,15 @@
 
 package org.broadinstitute.dsde.agora.server.model
 
-import com.typesafe.scalalogging.LazyLogging
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.exceptions.AgoraException
 import org.bson.types.ObjectId
 import org.joda.time.DateTime
 
-import scala.annotation.meta.field
 import scalaz.Scalaz._
 import scalaz._
 import org.broadinstitute.dsde.rawls.model.MethodConfiguration
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport.MethodConfigurationFormat
-import org.broadinstitute.dsde.rawls.model.AttributeString
-import org.broadinstitute.dsde.rawls.model.AttributeString._
-import spray.httpx.SprayJsonSupport._
 import spray.json._
 
 import org.broadinstitute.dsde.rawls.model.JsonSupport
@@ -135,7 +130,7 @@ case class AgoraEntity(namespace: Option[String] = None,
                        methodId: Option[ObjectId] = None,
                        method: Option[AgoraEntity] = None,
                        managers: Seq[String] = Seq(),
-                       public: Option[Boolean] = None) extends LazyLogging {
+                       public: Option[Boolean] = None) {
 
   def agoraUrl: String = {
     AgoraConfig.urlFromType(entityType) + namespace.get + "/" + name.get + "/" + snapshotId.get
@@ -180,7 +175,6 @@ case class AgoraEntity(namespace: Option[String] = None,
 
     payload match {
       case Some(pl: String) =>
-        logger.info(pl.parseJson.convertTo[MethodConfiguration].toString)
         this.copy(
           payloadObject = Some(pl.parseJson.convertTo[MethodConfiguration]),
           payload = None

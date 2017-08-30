@@ -184,4 +184,13 @@ class AgoraMethodsSpec extends ApiServiceSpec {
       assert(body.asString contains "not found")
     }
   }
+
+  "Agora" should "not let you specify a deserialized payload on the methods route" in {
+    Get(ApiUtil.Methods.withLeadingVersion + "/" + testMethod1.namespace.get + "/" +
+      testMethod1.name.get + "/" + testMethod1.snapshotId.get + "?payloadAsObject=true") ~>
+      methodsService.querySingleRoute ~> check {
+        assert(body.asString contains "does not support payload deserialization")
+        assert(status == InternalServerError)
+    }
+  }
 }

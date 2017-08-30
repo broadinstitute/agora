@@ -9,6 +9,7 @@ import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
 import org.scalatest.DoNotDiscover
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
+import org.broadinstitute.dsde.rawls.model.MethodConfiguration
 import spray.http.StatusCodes._
 import spray.httpx.SprayJsonSupport._
 import spray.httpx.unmarshalling._
@@ -33,6 +34,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec {
     patiently(agoraBusiness.insert(testAgoraConfigurationEntity, mockAuthenticatedOwner.get))
     patiently(agoraBusiness.insert(testAgoraConfigurationEntity2, mockAuthenticatedOwner.get))
     patiently(agoraBusiness.insert(testAgoraConfigurationEntity3, mockAuthenticatedOwner.get))
+    patiently(agoraBusiness.insert(testConfig1, mockAuthenticatedOwner.get))
   }
 
   override def afterAll() = {
@@ -157,6 +159,47 @@ class AgoraConfigurationsSpec extends ApiServiceSpec {
     configurationsService.querySingleRoute ~>
     check {
       assert(body.asString contains "not found")
+    }
+  }
+
+  "Agora" should "return the payload as an object if you ask it to" in {
+    Get(ApiUtil.Configurations.withLeadingVersion + "/" +
+      testConfig1.namespace.get + "/" +
+      testConfig1.name.get + "/" +
+      testConfig1.snapshotId.get + "?payloadAsObject=true") ~>
+      configurationsService.querySingleRoute ~>
+    check {
+      assert(status == OK)
+
+      val entity = responseAs[AgoraEntity]
+      assert(entity.payloadObject.get.isInstanceOf[MethodConfiguration])
+      assert(entity.payload.isEmpty)
+    }
+  }
+
+  "Agora" should "return the payload as a string by default" in {
+    Get(ApiUtil.Configurations.withLeadingVersion + "/" +
+      testConfig1.namespace.get + "/" +
+      testConfig1.name.get + "/" +
+      testConfig1.snapshotId.get) ~>
+      configurationsService.querySingleRoute ~>
+    check {
+      assert(status == OK)
+
+      val entity = responseAs[AgoraEntity]
+      assert(entity.payloadObject.isEmpty)
+      assert(entity.payload.get contains testConfig1.payload.get)
+    }
+  }
+
+  "Agora" should "not let you use payloadAsObject and onlyPayload at the same time" in {
+    Get(ApiUtil.Configurations.withLeadingVersion + "/" +
+      testConfig1.namespace.get + "/" +
+      testConfig1.name.get + "/" +
+      testConfig1.snapshotId.get + "?payloadAsObject=true&onlyPayload=true") ~>
+      configurationsService.querySingleRoute ~> check {
+      assert(body.asString contains "onlyPayload, payloadAsObject cannot be used together")
+      assert(status == BadRequest)
     }
   }
 

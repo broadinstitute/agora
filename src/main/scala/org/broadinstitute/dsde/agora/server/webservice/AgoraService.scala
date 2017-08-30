@@ -108,8 +108,8 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
   // GET http://root.com/configurations/<namespace>/<name>/<snapshotId>
   def querySingleRoute =
     matchQuerySingleRoute(path) { (namespace, name, snapshotId, username) =>
-      extractOnlyPayloadParameter { (onlyPayload) =>
-        extractPayloadAsObjectParameter { (payloadAsObject) =>
+      extractOnlyPayloadParameter { (onlyPayload: Option[String]) =>
+        extractPayloadAsObjectParameter { (payloadAsObject: Option[String]) =>
           val targetEntity = AgoraEntity(Option(namespace), Option(name), Option(snapshotId))
 
           get { requestContext =>

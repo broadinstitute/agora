@@ -99,6 +99,16 @@ class AgoraMongoDao(collections: Seq[MongoCollection]) extends AgoraDao {
   // Find all configurations that have specified method id.
   override def findConfigurations(id: ObjectId) = {
     val dbQuery = "methodId" $eq id
+    queryToEntities(dbQuery)
+  }
+
+  // Find all configurations that have one of the specified method ids.
+  override def findConfigurations(ids: Seq[ObjectId]) = {
+    val dbQuery = "methodId" $in ids
+    queryToEntities(dbQuery)
+  }
+
+  private def queryToEntities(dbQuery: DBObject) = {
     val entityCollections = getCollectionsByEntityType(Option(AgoraEntityType.Configuration))
     val entities = entityCollections.flatMap {
       collection =>

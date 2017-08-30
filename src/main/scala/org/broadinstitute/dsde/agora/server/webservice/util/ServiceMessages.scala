@@ -95,6 +95,11 @@ object ServiceMessages {
   case class QueryDefinitions(requestContext: RequestContext,
                    username: String)
 
+  case class QueryAssociatedConfigurations(requestContext: RequestContext,
+                                           namespace: String,
+                                           name: String,
+                                           username: String)
+
   case class Add(requestContext: RequestContext,
                  agoraAddRequest: AgoraEntity,
                  username: String)

@@ -162,6 +162,48 @@ paths:
             - openid
             - email
             - profile
+  /api/v1/methods/{namespace}/{name}/configurations:
+    get:
+      summary: List configurations associated with a method
+      description: |
+        Given the namespace/name of a method, returns all configurations
+        in the repository that reference that method
+      parameters:
+        - name: namespace
+          in: path
+          description: Namespace of method.
+          required: true
+          type: string
+        - name: name
+          in: path
+          description: Name of method.
+          required: true
+          type: string
+      tags:
+        - Methods
+        - Configurations
+      responses:
+        '200':
+          description: An array of configurations.
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/ConfigurationResponse'
+        '404':
+          description: Method not found.
+          schema:
+            type: object
+            $ref: '#/definitions/NotFound'
+        default:
+          description: Unexpected error
+          schema:
+            type: object
+            $ref: '#/definitions/Error'
+      security:
+        - authorization:
+            - openid
+            - email
+            - profile
   '/api/v1/methods/{namespace}/{name}/{snapshotId}':
     get:
       summary: Find a single method.
@@ -1496,7 +1538,7 @@ definitions:
         description: URL where resource can be accessed.
       payload:
         type: string
-        description: Payload of method -- must be in WDL format. MUST BE REQUESTED EXPLICITLY.
+        description: Payload of configuration. MUST BE REQUESTED EXPLICITLY.
         default: >
           { "methodRepoMethod": { "methodNamespace": "YOUR_NAMESPACE",
           "methodName": "BWA", "methodVersion": 1}}
@@ -1620,4 +1662,13 @@ definitions:
       message:
         type: string
         default: Internal Server Error
+  NotFound:
+    type: object
+    properties:
+      code:
+        type: integer
+        default: 404
+      message:
+        type: string
+        default: Not Found
 

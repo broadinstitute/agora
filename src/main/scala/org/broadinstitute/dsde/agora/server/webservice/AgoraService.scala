@@ -27,7 +27,7 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
 
   def path: String
 
-  def routes = namespacePermissionsRoute ~ multiEntityPermissionsRoute ~ entityPermissionsRoute ~ querySingleRoute ~ queryMethodDefinitionsRoute ~ queryRoute ~ postRoute ~ statusRoute
+  def routes = namespacePermissionsRoute ~ multiEntityPermissionsRoute ~ entityPermissionsRoute ~ queryAssociatedConfigurationsRoute ~ querySingleRoute ~ queryMethodDefinitionsRoute ~ queryRoute ~ postRoute ~ statusRoute
 
   def queryHandlerProps = Props(classOf[QueryHandler], permissionsDataSource, executionContext)
 
@@ -142,6 +142,12 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
       authenticationDirectives.usernameFromRequest()) { (username) =>
         requestContext => definitionsWithPerRequest(requestContext, username, queryHandlerProps)
       }
+
+  def queryAssociatedConfigurationsRoute =
+    (versionedPath(PathMatcher("methods" / Segment / Segment / "configurations")) & get &
+      authenticationDirectives.usernameFromRequest()) { (namespace, name, username) =>
+      requestContext => associatedConfigurationsWithPerRequest(requestContext, namespace, name, username, queryHandlerProps)
+    }
 
 
   // GET http://root.com/methods?

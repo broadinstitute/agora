@@ -327,7 +327,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
                 val numSnapshots:Int = aes.size
                 val numConfigurations:Int = aes.map { ae => configCounts.getOrElse(ae.id, 0) }.sum
                 val isPublic = aes.exists(_.public.contains(true))
-                val managers = aes.flatMap { ae => ae.managers }
+                val managers = aes.flatMap { ae => ae.managers }.distinct
 
                 // use the most recent (i.e. highest snapshot value) to populate the definition
                 val latestSnapshot = aes.maxBy(_.snapshotId.getOrElse(Int.MinValue))
@@ -336,6 +336,33 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
             }
           }
         }
+      }
+    }
+  }
+
+  def listAssociatedConfigurations(namespace: String, name: String, username: String): Future[Seq[AgoraEntity]] = {
+    val methodCriteria = AgoraEntity(Some(namespace), Some(name))
+
+    // get all method snapshots for the supplied namespace/name (that the user has permissions to)
+    val methodsFuture = findWithIds(methodCriteria, AgoraBusiness.configIdsProjection, Seq(AgoraEntityType.Workflow), username)
+
+    methodsFuture flatMap { methods =>
+      // if we didn't find any methods, throw 404
+      if (methods.isEmpty)
+        throw new AgoraEntityNotFoundException(methodCriteria)
+
+      // get ids
+      val methodIds = methods flatMap (_.id)
+      // get configs that have that id
+      val configs = AgoraDao.createAgoraDao(Some(AgoraEntityType.Configuration))
+        .findConfigurations(methodIds)
+        .map(_.addUrl().removeIds())
+
+      permissionsDataSource.inTransaction { db =>
+        for {
+          _ <- db.aePerms.addUserIfNotInDatabase(username)
+          entity <- db.aePerms.filterEntityByRead(configs, username)
+        } yield entity
       }
     }
   }

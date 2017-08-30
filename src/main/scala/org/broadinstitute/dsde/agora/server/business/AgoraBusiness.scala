@@ -327,7 +327,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
                 val numSnapshots:Int = aes.size
                 val numConfigurations:Int = aes.map { ae => configCounts.getOrElse(ae.id, 0) }.sum
                 val isPublic = aes.exists(_.public.contains(true))
-                val managers = aes.flatMap { ae => ae.managers }
+                val managers = aes.flatMap { ae => ae.managers }.distinct
 
                 // use the most recent (i.e. highest snapshot value) to populate the definition
                 val latestSnapshot = aes.maxBy(_.snapshotId.getOrElse(Int.MinValue))

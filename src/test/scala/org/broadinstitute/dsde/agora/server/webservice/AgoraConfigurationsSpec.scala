@@ -7,7 +7,7 @@ import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessContro
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
-import org.scalatest.DoNotDiscover
+import org.scalatest.{DoNotDiscover, FlatSpecLike}
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.rawls.model.MethodConfiguration
 import spray.http.StatusCodes._
@@ -18,7 +18,7 @@ import spray.routing.ValidationRejection
 import scala.concurrent.Future
 
 @DoNotDiscover
-class AgoraConfigurationsSpec extends ApiServiceSpec {
+class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
 
   var method1: AgoraEntity = _
   var testEntityToBeRedacted2WithId: AgoraEntity = _

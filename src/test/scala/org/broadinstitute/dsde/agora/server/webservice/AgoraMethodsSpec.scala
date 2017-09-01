@@ -5,7 +5,7 @@ import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
-import org.scalatest.DoNotDiscover
+import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpecLike}
 import spray.http.MediaTypes._
 import spray.http.StatusCodes._
 import spray.http.{ContentType, HttpEntity}
@@ -14,7 +14,7 @@ import spray.httpx.unmarshalling._
 import spray.routing.ValidationRejection
 
 @DoNotDiscover
-class AgoraMethodsSpec extends ApiServiceSpec {
+class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
 
   var testEntity1WithId: AgoraEntity = _
   var testEntity2WithId: AgoraEntity = _

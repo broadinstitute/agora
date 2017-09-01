@@ -16,7 +16,11 @@ import spray.testkit.ScalatestRouteTest
 import scala.concurrent.duration._
 
 @DoNotDiscover
-class ApiServiceSpec extends FlatSpec with Directives with ScalatestRouteTest with AgoraTestFixture {
+class ApiServiceSpec extends AgoraTestFixture with Directives with Suite with ScalatestRouteTest {
+
+  // ScalatestRouteTest requires that it be mixed in to a thing that is of type Suite. So mix that in as well.
+  // But both have run() methods, so we have to pick the right one. In other places, mixing in *Spec accomplishes this.
+  override def run(testName: Option[String], args: Args): Status = super[ScalatestRouteTest].run(testName, args)
 
   implicit val routeTestTimeout = RouteTestTimeout(5.seconds)
 

@@ -63,19 +63,14 @@ class QueryHandler(dataSource: PermissionsDataSource, implicit val ec: Execution
             onlyPayload: Boolean,
             payloadAsObject: Boolean): Future[PerRequestMessage] = {
     agoraBusiness.findSingle(entity, entityTypes, username: String) map { foundEntity =>
-      if (onlyPayload && payloadAsObject) {
-        RequestComplete(BadRequest, "onlyPayload, payloadAsObject cannot be used together")
-      } else {
 
-        if (onlyPayload) {
-          RequestComplete(foundEntity.payload)
-        } else if (payloadAsObject) {
-          RequestComplete(foundEntity.deserializeConfigurationPayload)
-        } else {
-          RequestComplete(foundEntity)
-        }
-
+      (onlyPayload, payloadAsObject) match {
+        case (true, true) => RequestComplete(BadRequest, "onlyPayload, payloadAsObject cannot be used together")
+        case (true, false) => RequestComplete(foundEntity.payload)
+        case (false, true) => RequestComplete(foundEntity.withDeserializedPayload)
+        case _ => RequestComplete(foundEntity)
       }
+
     }
   }
 

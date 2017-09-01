@@ -162,46 +162,48 @@ class AgoraConfigurationsSpec extends ApiServiceSpec {
     }
   }
 
-  "Agora" should "return the payload as an object if you ask it to" in {
-    Get(ApiUtil.Configurations.withLeadingVersion + "/" +
+  {
+    val baseURL = ApiUtil.Configurations.withLeadingVersion + "/" +
       testConfig1.namespace.get + "/" +
       testConfig1.name.get + "/" +
-      testConfig1.snapshotId.get + "?payloadAsObject=true") ~>
+      testConfig1.snapshotId.get
+
+    "Agora" should "return the payload as an object if you ask it to" in {
+      Get(baseURL + "?payloadAsObject=true") ~>
       configurationsService.querySingleRoute ~>
-    check {
-      assert(status == OK)
+      check {
+        assert(status == OK)
 
-      val entity = responseAs[AgoraEntity]
-      assert(entity.payloadObject.get.isInstanceOf[MethodConfiguration])
-      assert(entity.payload.isEmpty)
+        val entity = responseAs[AgoraEntity]
+
+        val payloadObject = entity.payloadObject.get
+        assert(payloadObject.isInstanceOf[MethodConfiguration])
+        assert(payloadObject.namespace == testConfig1.namespace.get)
+        assert(payloadObject.name == testConfig1.name.get)
+        assert(entity.payload.isEmpty)
+      }
     }
-  }
 
-  "Agora" should "return the payload as a string by default" in {
-    Get(ApiUtil.Configurations.withLeadingVersion + "/" +
-      testConfig1.namespace.get + "/" +
-      testConfig1.name.get + "/" +
-      testConfig1.snapshotId.get) ~>
+    "Agora" should "return the payload as a string by default" in {
+      Get(baseURL) ~>
       configurationsService.querySingleRoute ~>
-    check {
-      assert(status == OK)
+      check {
+        assert(status == OK)
 
-      val entity = responseAs[AgoraEntity]
-      assert(entity.payloadObject.isEmpty)
-      assert(entity.payload.get contains testConfig1.payload.get)
+        val entity = responseAs[AgoraEntity]
+        assert(entity.payloadObject.isEmpty)
+        assert(entity.payload.get contains testConfig1.payload.get)
+      }
     }
-  }
 
-  "Agora" should "not let you use payloadAsObject and onlyPayload at the same time" in {
-    Get(ApiUtil.Configurations.withLeadingVersion + "/" +
-      testConfig1.namespace.get + "/" +
-      testConfig1.name.get + "/" +
-      testConfig1.snapshotId.get + "?payloadAsObject=true&onlyPayload=true") ~>
-      configurationsService.querySingleRoute ~> check {
-      assert(body.asString contains "onlyPayload, payloadAsObject cannot be used together")
-      assert(status == BadRequest)
+    "Agora" should "not let you use payloadAsObject and onlyPayload at the same time" in {
+      Get(baseURL + "?payloadAsObject=true&onlyPayload=true") ~>
+        configurationsService.querySingleRoute ~> check {
+        assert(body.asString contains "onlyPayload, payloadAsObject cannot be used together")
+        assert(status == BadRequest)
+      }
     }
-  }
 
+  }
 
 }

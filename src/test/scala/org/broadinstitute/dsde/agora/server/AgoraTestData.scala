@@ -21,6 +21,7 @@ object AgoraTestData {
   val name2 = Option("testMethod2")
   val name3 = Option("name3")
   val name4 = Option("name4")
+  val name5 = Option("cancer_exome_pipeline_v2")
   val nameWithAllLegalChars = Option("abcdefghijklmnopqrstuvwxyz-ABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789.")
   val snapshotId1 = Option(1)
   val snapshotId2 = Option(2)
@@ -251,7 +252,7 @@ object AgoraTestData {
 
   val methodConfigPayload = Some(s"""
                               |{
-                              |  "name": "cancer_exome_pipeline_v2",
+                              |  "name": "${name5.get}",
                               |  "methodRepoMethod": {
                               |    "methodNamespace": "${namespace1.get}",
                               |    "methodName": "${name1.get}",
@@ -275,7 +276,7 @@ object AgoraTestData {
                               |  "prerequisites": {},
                               |  "methodConfigVersion": 1,
                               |  "deleted": false,
-                              |  "namespace": "broad"
+                              |  "namespace": "${namespace1.get}"
                               |}""".stripMargin)
 
   val payloadWithValidOfficialDockerImageInWdl = Option( """
@@ -496,7 +497,7 @@ object AgoraTestData {
     entityType = Option(AgoraEntityType.Workflow)
   )
 
-  val testMethod1 = new AgoraEntity(
+  val testMethodWithSnapshot1 = new AgoraEntity(
     namespace = namespace3,
     name = name1,
     synopsis = synopsis1,
@@ -507,7 +508,7 @@ object AgoraTestData {
     snapshotId = snapshotId1
   )
 
-  val testConfig1 = new AgoraEntity(
+  val testConfigWithSnapshot1 = new AgoraEntity(
     namespace = namespace3,
     name = name1,
     synopsis = synopsis1,

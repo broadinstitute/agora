@@ -34,7 +34,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
     patiently(agoraBusiness.insert(testAgoraConfigurationEntity, mockAuthenticatedOwner.get))
     patiently(agoraBusiness.insert(testAgoraConfigurationEntity2, mockAuthenticatedOwner.get))
     patiently(agoraBusiness.insert(testAgoraConfigurationEntity3, mockAuthenticatedOwner.get))
-    patiently(agoraBusiness.insert(testConfig1, mockAuthenticatedOwner.get))
+    patiently(agoraBusiness.insert(testConfigWithSnapshot1, mockAuthenticatedOwner.get))
   }
 
   override def afterAll() = {
@@ -164,9 +164,9 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
 
   {
     val baseURL = ApiUtil.Configurations.withLeadingVersion + "/" +
-      testConfig1.namespace.get + "/" +
-      testConfig1.name.get + "/" +
-      testConfig1.snapshotId.get
+      testConfigWithSnapshot1.namespace.get + "/" +
+      testConfigWithSnapshot1.name.get + "/" +
+      testConfigWithSnapshot1.snapshotId.get
 
     "Agora" should "return the payload as an object if you ask it to" in {
       Get(baseURL + "?payloadAsObject=true") ~>
@@ -178,8 +178,8 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
 
         val payloadObject = entity.payloadObject.get
         assert(payloadObject.isInstanceOf[MethodConfiguration])
-        assert(payloadObject.namespace == testConfig1.namespace.get)
-        assert(payloadObject.name == testConfig1.name.get)
+        assert(payloadObject.namespace == namespace1.get)
+        assert(payloadObject.name == name5.get)
         assert(entity.payload.isEmpty)
       }
     }
@@ -192,7 +192,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
 
         val entity = responseAs[AgoraEntity]
         assert(entity.payloadObject.isEmpty)
-        assert(entity.payload.get contains testConfig1.payload.get)
+        assert(entity.payload.get contains testConfigWithSnapshot1.payload.get)
       }
     }
 

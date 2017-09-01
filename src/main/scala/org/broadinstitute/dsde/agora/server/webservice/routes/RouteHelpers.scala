@@ -119,10 +119,6 @@ trait QuerySingleHelper extends BaseRoute {
     versionedPath(_path / Segment / Segment / IntNumber) &
     authenticationDirectives.usernameFromRequest()
 
-  def extractOnlyPayloadParameter = extract(_.request.uri.query.get("onlyPayload"))
-
-  def extractPayloadAsObjectParameter = extract(_.request.uri.query.get("payloadAsObject"))
-
   def completeWithPerRequest(context: RequestContext,
                              entity: AgoraEntity,
                              username: String,

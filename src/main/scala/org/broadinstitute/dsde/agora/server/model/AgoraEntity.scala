@@ -9,7 +9,7 @@ import org.joda.time.DateTime
 import scalaz.Scalaz._
 import scalaz._
 import org.broadinstitute.dsde.rawls.model.MethodConfiguration
-import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport.MethodConfigurationFormat
+import org.broadinstitute.dsde.rawls.model.WorkspaceJsonSupport.MethodConfigurationFormat
 import spray.json._
 
 import org.broadinstitute.dsde.rawls.model.JsonSupport
@@ -170,7 +170,7 @@ case class AgoraEntity(namespace: Option[String] = None,
     entityType.contains(AgoraEntityType.Configuration)
   }
 
-  def deserializeConfigurationPayload: AgoraEntity = {
+  def withDeserializedPayload: AgoraEntity = {
     if (!canDeserializePayload) throw AgoraException(s"Entity type $entityType does not support payload deserialization")
 
     payload match {

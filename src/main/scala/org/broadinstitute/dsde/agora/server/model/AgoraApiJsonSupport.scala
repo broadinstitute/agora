@@ -10,8 +10,7 @@ import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import spray.json.{JsArray, JsString, _}
 
 import org.broadinstitute.dsde.rawls.model.MethodConfiguration
-import org.broadinstitute.dsde.rawls.model.AttributeString
-import org.broadinstitute.dsde.rawls.model.MethodRepoMethod
+import org.broadinstitute.dsde.rawls.model.WorkspaceJsonSupport.MethodConfigurationFormat
 
 import scala.language.implicitConversions
 
@@ -174,19 +173,7 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
 
   implicit val AccessControlPairFormat = jsonFormat3(EntityAccessControl)
 
-  implicit val MethodRepoMethodFormat = jsonFormat3(MethodRepoMethod)
-
-  // AttributeString is just a case class with one String in it, but for some reason jsonFormat1 is not sufficient
-  // https://stackoverflow.com/a/28530361/818054
-  implicit val AttributeStringFormat = jsonFormat1(AttributeString)
-  implicit object attributeStringJsonFormat extends RootJsonFormat[AttributeString] {
-    override def read(value: JsValue) = AttributeString(value.convertTo[String])
-    override def write(f: AttributeString) = JsString(f.value)
-  }
-
-  implicit val MethodConfigurationFormat = jsonFormat10(MethodConfiguration)
-
-    implicit object AgoraStatusFormat extends RootJsonFormat[AgoraStatus] {
+  implicit object AgoraStatusFormat extends RootJsonFormat[AgoraStatus] {
     override def write(obj: AgoraStatus): JsObject = {
       JsObject("status" -> JsString(if (obj.up) "up" else "down"),
         "message" -> JsArray(obj.messages.map(JsString(_)).toVector)

@@ -11,8 +11,8 @@ import scalaz._
 import org.broadinstitute.dsde.rawls.model.MethodConfiguration
 import org.broadinstitute.dsde.rawls.model.WorkspaceJsonSupport.MethodConfigurationFormat
 import spray.json._
-
 import org.broadinstitute.dsde.rawls.model.JsonSupport
+import spray.json.JsonParser.ParsingException
 
 
 
@@ -175,10 +175,21 @@ case class AgoraEntity(namespace: Option[String] = None,
 
     payload match {
       case Some(pl: String) =>
-        this.copy(
-          payloadObject = Some(pl.parseJson.convertTo[MethodConfiguration]),
-          payload = None
-        )
+        try {
+          val parsed = pl.parseJson
+          val deserialized = parsed.convertTo[MethodConfiguration]
+
+          this.copy(
+            payloadObject = Some(deserialized),
+            payload = None
+          )
+
+        } catch {
+          case parseFail: ParsingException =>
+            throw AgoraException(s"Payload for $toShortString could not be deserialized: ${parseFail.summary}")
+          case deserializeFail: DeserializationException =>
+            throw AgoraException(s"Payload for $toShortString is valid JSON but mapping to object model failed: ${deserializeFail.msg}")
+        }
       case _ => this
     }
   }

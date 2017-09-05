@@ -13,7 +13,7 @@ import org.broadinstitute.dsde.rawls.model.MethodConfiguration
 import spray.http.StatusCodes._
 import spray.httpx.SprayJsonSupport._
 import spray.httpx.unmarshalling._
-import spray.routing.ValidationRejection
+import spray.routing.{MalformedQueryParamRejection, ValidationRejection}
 
 import scala.concurrent.Future
 
@@ -201,6 +201,24 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
         configurationsService.querySingleRoute ~> check {
         assert(body.asString contains "onlyPayload, payloadAsObject cannot be used together")
         assert(status == BadRequest)
+      }
+    }
+
+    "Agora" should "throw an error if you try to use an illegal value for both parameters" in {
+      Get(baseURL + "?payloadAsObject=fire&onlyPayload=cloud") ~>
+        wrapWithRejectionHandler {
+          configurationsService.querySingleRoute
+        } ~> check {
+        rejection.isInstanceOf[MalformedQueryParamRejection]
+      }
+    }
+
+    "Agora" should "throw an error if you try to use an illegal value for one parameter" in {
+      Get(baseURL + "?payloadAsObject=fire&onlyPayload=false") ~>
+        wrapWithRejectionHandler {
+          configurationsService.querySingleRoute
+        } ~> check {
+        rejection.isInstanceOf[MalformedQueryParamRejection]
       }
     }
 

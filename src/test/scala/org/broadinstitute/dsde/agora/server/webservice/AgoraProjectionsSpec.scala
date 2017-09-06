@@ -5,13 +5,13 @@ import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
-import org.scalatest.DoNotDiscover
+import org.scalatest.{DoNotDiscover, FlatSpecLike}
 import spray.http.StatusCodes._
 import spray.httpx.SprayJsonSupport._
 import spray.httpx.unmarshalling._
 
 @DoNotDiscover
-class AgoraProjectionsSpec extends ApiServiceSpec {
+class AgoraProjectionsSpec extends ApiServiceSpec with FlatSpecLike {
 
   var testEntity1WithId: AgoraEntity = _
   var testEntity2WithId: AgoraEntity = _

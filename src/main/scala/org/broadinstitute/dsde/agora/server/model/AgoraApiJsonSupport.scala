@@ -3,11 +3,14 @@ package org.broadinstitute.dsde.agora.server.model
 
 import org.broadinstitute.dsde.agora.server.exceptions.AgoraException
 import org.broadinstitute.dsde.agora.server.webservice.util.AgoraOpenAMClient.UserInfoResponse
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, EntityAccessControl, AgoraPermissions}
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraPermissions, EntityAccessControl}
 import org.bson.types.ObjectId
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import spray.json.{JsArray, JsString, _}
+
+import org.broadinstitute.dsde.rawls.model.MethodConfiguration
+import org.broadinstitute.dsde.rawls.model.WorkspaceJsonSupport.MethodConfigurationFormat
 
 import scala.language.implicitConversions
 
@@ -79,6 +82,7 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
       if (entity.managers.nonEmpty) map += ("managers" -> JsArray(entity.managers.map(JsString(_)).toVector))
       if (entity.createDate.nonEmpty) map += ("createDate" -> entity.createDate.get.toJson)
       if (entity.payload.nonEmpty) map += ("payload" -> JsString(entity.payload.get))
+      if (entity.payloadObject.nonEmpty) map += ("payloadObject" -> entity.payloadObject.get.toJson)
       if (entity.url.nonEmpty) map += ("url" -> JsString(entity.url.get))
       if (entity.entityType.nonEmpty) map += ("entityType" -> entity.entityType.get.toJson)
       if (entity.id.nonEmpty) map += ("_id" -> entity.id.get.toJson)
@@ -98,6 +102,7 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
       val owner = stringOrNone(jsObject, "owner")
       val createDate = if (jsObject.getFields("createDate").nonEmpty) jsObject.fields("createDate").convertTo[Option[DateTime]] else None
       val payload = stringOrNone(jsObject, "payload")
+      val payloadObject = if (jsObject.getFields("payloadObject").nonEmpty) jsObject.fields("payloadObject").convertTo[Option[MethodConfiguration]] else None
       val url = stringOrNone(jsObject, "url")
       val entityType = if (jsObject.getFields("entityType").nonEmpty) jsObject.fields("entityType").convertTo[Option[AgoraEntityType.EntityType]] else None
       val id = if (jsObject.getFields("_id").nonEmpty) jsObject.fields("_id").convertTo[Option[ObjectId]] else None
@@ -112,6 +117,7 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
                                owner = owner,
                                createDate = createDate,
                                payload = payload,
+                               payloadObject = payloadObject,
                                url = url,
                                entityType = entityType,
                                id = id,

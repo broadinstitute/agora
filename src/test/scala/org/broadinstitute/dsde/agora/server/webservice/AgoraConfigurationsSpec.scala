@@ -7,17 +7,18 @@ import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessContro
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
-import org.scalatest.DoNotDiscover
+import org.scalatest.{DoNotDiscover, FlatSpecLike}
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
+import org.broadinstitute.dsde.rawls.model.MethodConfiguration
 import spray.http.StatusCodes._
 import spray.httpx.SprayJsonSupport._
 import spray.httpx.unmarshalling._
-import spray.routing.ValidationRejection
+import spray.routing.{MalformedQueryParamRejection, ValidationRejection}
 
 import scala.concurrent.Future
 
 @DoNotDiscover
-class AgoraConfigurationsSpec extends ApiServiceSpec {
+class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
 
   var method1: AgoraEntity = _
   var testEntityToBeRedacted2WithId: AgoraEntity = _
@@ -33,6 +34,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec {
     patiently(agoraBusiness.insert(testAgoraConfigurationEntity, mockAuthenticatedOwner.get))
     patiently(agoraBusiness.insert(testAgoraConfigurationEntity2, mockAuthenticatedOwner.get))
     patiently(agoraBusiness.insert(testAgoraConfigurationEntity3, mockAuthenticatedOwner.get))
+    patiently(agoraBusiness.insert(testConfigWithSnapshot1, mockAuthenticatedOwner.get))
   }
 
   override def afterAll() = {
@@ -160,5 +162,66 @@ class AgoraConfigurationsSpec extends ApiServiceSpec {
     }
   }
 
+  {
+    val baseURL = ApiUtil.Configurations.withLeadingVersion + "/" +
+      testConfigWithSnapshot1.namespace.get + "/" +
+      testConfigWithSnapshot1.name.get + "/" +
+      testConfigWithSnapshot1.snapshotId.get
+
+    "Agora" should "return the payload as an object if you ask it to" in {
+      Get(baseURL + "?payloadAsObject=true") ~>
+      configurationsService.querySingleRoute ~>
+      check {
+        assert(status == OK)
+
+        val entity = responseAs[AgoraEntity]
+
+        val payloadObject = entity.payloadObject.get
+        assert(payloadObject.isInstanceOf[MethodConfiguration])
+        assert(payloadObject.namespace == namespace1.get)
+        assert(payloadObject.name == name5.get)
+        assert(entity.payload.isEmpty)
+      }
+    }
+
+    "Agora" should "return the payload as a string by default" in {
+      Get(baseURL) ~>
+      configurationsService.querySingleRoute ~>
+      check {
+        assert(status == OK)
+
+        val entity = responseAs[AgoraEntity]
+        assert(entity.payloadObject.isEmpty)
+        assert(entity.payload.get contains testConfigWithSnapshot1.payload.get)
+      }
+    }
+
+    "Agora" should "not let you use payloadAsObject and onlyPayload at the same time" in {
+      Get(baseURL + "?payloadAsObject=true&onlyPayload=true") ~>
+        configurationsService.querySingleRoute ~> check {
+        assert(body.asString contains "onlyPayload, payloadAsObject cannot be used together")
+        assert(status == BadRequest)
+      }
+    }
+
+    "Agora" should "throw an error if you try to use an illegal value for both parameters" in {
+      Get(baseURL + "?payloadAsObject=fire&onlyPayload=cloud") ~>
+        wrapWithRejectionHandler {
+          configurationsService.querySingleRoute
+        } ~> check {
+        rejection.isInstanceOf[MalformedQueryParamRejection]
+      }
+    }
+
+    "Agora" should "throw an error if you try to use an illegal value for one parameter" in {
+      Get(baseURL + "?payloadAsObject=fire&onlyPayload=false") ~>
+        wrapWithRejectionHandler {
+          configurationsService.querySingleRoute
+        } ~> check {
+        rejection.isInstanceOf[MalformedQueryParamRejection]
+      }
+    }
+
+  }
 
 }

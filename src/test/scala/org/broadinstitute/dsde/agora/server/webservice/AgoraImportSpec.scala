@@ -6,14 +6,14 @@ import org.broadinstitute.dsde.agora.server.exceptions.AgoraEntityNotFoundExcept
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
-import org.scalatest.DoNotDiscover
+import org.scalatest.{DoNotDiscover, FlatSpecLike}
 import org.scalatest.Matchers._
 import spray.http.StatusCodes._
 import spray.httpx.SprayJsonSupport._
 import spray.httpx.unmarshalling._
 
 @DoNotDiscover
-class AgoraImportSpec extends ApiServiceSpec {
+class AgoraImportSpec extends ApiServiceSpec with FlatSpecLike{
   var testEntityTaskWcWithId: AgoraEntity = _
 
   override def beforeAll() = {

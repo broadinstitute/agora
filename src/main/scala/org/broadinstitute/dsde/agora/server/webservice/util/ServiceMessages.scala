@@ -72,7 +72,8 @@ object ServiceMessages {
                          entity: AgoraEntity,
                          entityType: Seq[AgoraEntityType.EntityType],
                          username: String,
-                         onlyPayload: Boolean)
+                         onlyPayload: Boolean,
+                         payloadAsObject: Boolean)
 
   case class Delete(requestContext: RequestContext,
                          entity: AgoraEntity,

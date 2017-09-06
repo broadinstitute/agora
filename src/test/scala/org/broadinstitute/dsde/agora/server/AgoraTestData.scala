@@ -21,6 +21,7 @@ object AgoraTestData {
   val name2 = Option("testMethod2")
   val name3 = Option("name3")
   val name4 = Option("name4")
+  val name5 = Option("cancer_exome_pipeline_v2")
   val nameWithAllLegalChars = Option("abcdefghijklmnopqrstuvwxyz-ABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789.")
   val snapshotId1 = Option(1)
   val snapshotId2 = Option(2)
@@ -249,6 +250,35 @@ object AgoraTestData {
                                       |  "namespace": "ns"
                                       |}""".stripMargin)
 
+  val methodConfigPayload = Some(s"""
+                              |{
+                              |  "name": "${name5.get}",
+                              |  "methodRepoMethod": {
+                              |    "methodNamespace": "${namespace1.get}",
+                              |    "methodName": "${name1.get}",
+                              |    "methodVersion": 1
+                              |  },
+                              |  "outputs": {
+                              |    "CancerExomePipeline_v2.M2.m2_output_vcf": "this.OUTPUT_VCF"
+                              |  },
+                              |  "inputs": {
+                              |    "CancerExomePipeline_v2.M2.intervals": "this.ref_intervals",
+                              |    "CancerExomePipeline_v2.M2.tumor_bam": "this.case_bam",
+                              |    "CancerExomePipeline_v2.M2.normal_bam": "this.control_bam",
+                              |    "CancerExomePipeline_v2.M2.ref_fasta_dict": "this.ref_dict",
+                              |    "CancerExomePipeline_v2.M2.tumor_bai": "this.case_bai",
+                              |    "CancerExomePipeline_v2.M2.normal_bai": "this.control_bai",
+                              |    "CancerExomePipeline_v2.M2.ref_fasta": "this.ref_fasta",
+                              |    "CancerExomePipeline_v2.M2.ref_fasta_fai": "this.ref_fai",
+                              |    "CancerExomePipeline_v2.M2.m2_output_vcf_name": "this.vcf_output_name"
+                              |  },
+                              |  "rootEntityType": "pair",
+                              |  "prerequisites": {},
+                              |  "methodConfigVersion": 1,
+                              |  "deleted": false,
+                              |  "namespace": "${namespace1.get}"
+                              |}""".stripMargin)
+
   val payloadWithValidOfficialDockerImageInWdl = Option( """
                                     |task wc {
                                     |  Array[File]+ files
@@ -467,6 +497,28 @@ object AgoraTestData {
     entityType = Option(AgoraEntityType.Workflow)
   )
 
+  val testMethodWithSnapshot1 = new AgoraEntity(
+    namespace = namespace3,
+    name = name1,
+    synopsis = synopsis1,
+    documentation = documentation1,
+    owner = owner1,
+    payload = payload1,
+    entityType = Option(AgoraEntityType.Workflow),
+    snapshotId = snapshotId1
+  )
+
+  val testConfigWithSnapshot1 = new AgoraEntity(
+    namespace = namespace3,
+    name = name1,
+    synopsis = synopsis1,
+    documentation = documentation1,
+    owner = mockAuthenticatedOwner,
+    payload = methodConfigPayload,
+    entityType = Option(AgoraEntityType.Configuration),
+    snapshotId = snapshotId1
+  )
+
   val testBadAgoraEntity = new AgoraEntity(
     namespace = namespace1,
     name = name1,
@@ -676,25 +728,5 @@ object AgoraTestData {
     entityType = Option(AgoraEntityType.Workflow),
     snapshotId = snapshotId1
   )
-
-  def populateDatabase(agoraBusiness: AgoraBusiness) = {
-    import scala.concurrent.ExecutionContext.Implicits.global
-    Future.sequence( Seq(
-      agoraBusiness.insert(testEntity1, mockAuthenticatedOwner.get),
-      agoraBusiness.insert(testEntity2, mockAuthenticatedOwner.get),
-      agoraBusiness.insert(testEntity3, mockAuthenticatedOwner.get),
-      agoraBusiness.insert(testEntity4, mockAuthenticatedOwner.get),
-      agoraBusiness.insert(testEntity5, mockAuthenticatedOwner.get),
-      agoraBusiness.insert(testEntity6, mockAuthenticatedOwner.get),
-      agoraBusiness.insert(testEntity7, mockAuthenticatedOwner.get),
-      agoraBusiness.insert(testEntityTaskWc, mockAuthenticatedOwner.get),
-      agoraBusiness.insert(testAgoraConfigurationEntity, mockAuthenticatedOwner.get),
-      agoraBusiness.insert(testAgoraConfigurationEntity2, mockAuthenticatedOwner.get),
-      agoraBusiness.insert(testEntityToBeRedacted, mockAuthenticatedOwner.get),
-      agoraBusiness.insert(testEntityToBeRedacted2, mockAuthenticatedOwner.get),
-      agoraBusiness.insert(testEntityToBeRedacted3, mockAuthenticatedOwner.get),
-      agoraBusiness.insert(testAgoraConfigurationToBeRedacted, mockAuthenticatedOwner.get)
-    ))
-  }
 
 }

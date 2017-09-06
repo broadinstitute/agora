@@ -10,14 +10,14 @@ import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
 import org.broadinstitute.dsde.agora.server.webservice.routes.MockAgoraDirectives
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
-import org.scalatest.DoNotDiscover
+import org.scalatest.{DoNotDiscover, FlatSpecLike}
 import spray.http.StatusCodes._
 import spray.http.StatusCode
 import spray.httpx.SprayJsonSupport._
 import spray.httpx.unmarshalling._
 
 @DoNotDiscover
-class EntityCreationPermissionSpec extends ApiServiceSpec {
+class EntityCreationPermissionSpec extends ApiServiceSpec with FlatSpecLike {
 
   var testEntity1WithId: AgoraEntity = _
   var testEntity2WithId: AgoraEntity = _

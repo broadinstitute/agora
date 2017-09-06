@@ -10,7 +10,7 @@ import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.routes.MockAgoraDirectives
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
-import org.scalatest.DoNotDiscover
+import org.scalatest.{DoNotDiscover, FlatSpecLike}
 import spray.http.{StatusCode, Uri}
 import spray.http.StatusCodes._
 import spray.httpx.SprayJsonSupport._
@@ -19,7 +19,7 @@ import spray.httpx.unmarshalling._
 import scala.concurrent.Future
 
 @DoNotDiscover
-class EntityCopySpec extends ApiServiceSpec {
+class EntityCopySpec extends ApiServiceSpec with FlatSpecLike {
 
   var testEntity1WithId: AgoraEntity = _
 

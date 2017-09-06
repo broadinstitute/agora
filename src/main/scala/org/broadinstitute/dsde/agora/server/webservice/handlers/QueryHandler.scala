@@ -10,6 +10,7 @@ import org.broadinstitute.dsde.agora.server.webservice.PerRequest._
 import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages._
 import spray.httpx.SprayJsonSupport._
 import spray.routing.RequestContext
+import spray.http.StatusCodes.BadRequest
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -29,8 +30,9 @@ class QueryHandler(dataSource: PermissionsDataSource, implicit val ec: Execution
                      entity: AgoraEntity,
                      entityTypes: Seq[AgoraEntityType.EntityType],
                      username: String,
-                     onlyPayload: Boolean) =>
-      query(requestContext, entity, entityTypes, username, onlyPayload) pipeTo context.parent
+                     onlyPayload: Boolean,
+                     payloadAsObject: Boolean) =>
+      query(requestContext, entity, entityTypes, username, onlyPayload, payloadAsObject) pipeTo context.parent
 
     case Query(requestContext: RequestContext,
                agoraSearch: AgoraEntity,
@@ -68,10 +70,17 @@ class QueryHandler(dataSource: PermissionsDataSource, implicit val ec: Execution
             entity: AgoraEntity,
             entityTypes: Seq[AgoraEntityType.EntityType],
             username: String,
-            onlyPayload: Boolean): Future[PerRequestMessage] = {
+            onlyPayload: Boolean,
+            payloadAsObject: Boolean): Future[PerRequestMessage] = {
     agoraBusiness.findSingle(entity, entityTypes, username: String) map { foundEntity =>
-      if (onlyPayload) RequestComplete(foundEntity.payload)
-      else RequestComplete(foundEntity)
+
+      (onlyPayload, payloadAsObject) match {
+        case (true, true) => RequestComplete(BadRequest, "onlyPayload, payloadAsObject cannot be used together")
+        case (true, false) => RequestComplete(foundEntity.payload)
+        case (false, true) => RequestComplete(foundEntity.withDeserializedPayload)
+        case _ => RequestComplete(foundEntity)
+      }
+
     }
   }
 

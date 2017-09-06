@@ -2,11 +2,11 @@ package org.broadinstitute.dsde.agora.server.webservice
 
 import org.broadinstitute.dsde.agora.server.model.AgoraStatus
 import spray.http.StatusCodes
-import org.scalatest.DoNotDiscover
+import org.scalatest.{DoNotDiscover, FlatSpecLike}
 
 
 @DoNotDiscover
-class AgoraServiceStatusSpec extends ApiServiceSpec {
+class AgoraServiceStatusSpec extends ApiServiceSpec with FlatSpecLike {
 
   override def beforeAll() = {
     ensureDatabasesAreRunning()

@@ -2,12 +2,19 @@
 package org.broadinstitute.dsde.agora.server.model
 
 import org.broadinstitute.dsde.agora.server.AgoraConfig
+import org.broadinstitute.dsde.agora.server.exceptions.AgoraException
 import org.bson.types.ObjectId
 import org.joda.time.DateTime
 
-import scala.annotation.meta.field
 import scalaz.Scalaz._
 import scalaz._
+import org.broadinstitute.dsde.rawls.model.MethodConfiguration
+import org.broadinstitute.dsde.rawls.model.WorkspaceJsonSupport.MethodConfigurationFormat
+import spray.json._
+import org.broadinstitute.dsde.rawls.model.JsonSupport
+import spray.json.JsonParser.ParsingException
+
+
 
 object AgoraEntityType extends Enumeration {
   def byPath(path: String): Seq[EntityType] = path match {
@@ -22,7 +29,7 @@ object AgoraEntityType extends Enumeration {
   val MethodTypes = Seq(Task, Workflow)
 }
 
-object AgoraEntity {
+object AgoraEntity extends JsonSupport {
 
   // ValidationNel is a Non-empty List (Nel) data structure. The left type
   // is the failure type. The right type is the success type.
@@ -116,6 +123,7 @@ case class AgoraEntity(namespace: Option[String] = None,
                        owner: Option[String] = None,
                        createDate: Option[DateTime] = None,
                        payload: Option[String] = None,
+                       payloadObject: Option[MethodConfiguration] = None,
                        url: Option[String] = None,
                        entityType: Option[AgoraEntityType.EntityType] = None,
                        id: Option[ObjectId] = None,
@@ -157,6 +165,34 @@ case class AgoraEntity(namespace: Option[String] = None,
   }
 
   def toShortString: String = s"AgoraEntity($namespace,$name,$snapshotId)"
+
+  def canDeserializePayload: Boolean = {
+    entityType.contains(AgoraEntityType.Configuration)
+  }
+
+  def withDeserializedPayload: AgoraEntity = {
+    if (!canDeserializePayload) throw AgoraException(s"Entity type $entityType does not support payload deserialization")
+
+    payload match {
+      case Some(pl: String) =>
+        try {
+          val parsed = pl.parseJson
+          val deserialized = parsed.convertTo[MethodConfiguration]
+
+          this.copy(
+            payloadObject = Some(deserialized),
+            payload = None
+          )
+
+        } catch {
+          case parseFail: ParsingException =>
+            throw AgoraException(s"Payload for $toShortString could not be deserialized: ${parseFail.summary}")
+          case deserializeFail: DeserializationException =>
+            throw AgoraException(s"Payload for $toShortString is valid JSON but mapping to object model failed: ${deserializeFail.msg}")
+        }
+      case _ => this
+    }
+  }
 }
 
 object MethodDefinition {

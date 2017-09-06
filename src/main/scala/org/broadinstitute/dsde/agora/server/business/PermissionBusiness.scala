@@ -83,7 +83,7 @@ class PermissionBusiness(permissionsDataSource: PermissionsDataSource)(implicit 
       permissionsDataSource.inTransaction { db =>
         for {
           owners <- db.aePerms.listOwners(entity)
-          publicAccess <- db.aePerms.getPermission(entity, "public")
+          publicAccess <- db.aePerms.getPermission(entity, AccessControl.publicUser)
         } yield {
           (owners, publicAccess)
         }
@@ -248,7 +248,7 @@ class PermissionBusiness(permissionsDataSource: PermissionsDataSource)(implicit 
   private def withNamespaceACLs[T](db: DataAccess, entity: AgoraEntity, requester: String)(op: Seq[AccessControl] => ReadWriteAction[T]): ReadWriteAction[T] = {
     db.nsPerms.listNamespacePermissions(entity) flatMap { perms =>
       val filteredPerms = perms.filter {
-        perm => perm.user.equals(requester) || perm.user.equals("public")
+        perm => perm.user.equals(requester) || perm.user.equals(AccessControl.publicUser)
       }
       op(filteredPerms)
     }
@@ -257,7 +257,7 @@ class PermissionBusiness(permissionsDataSource: PermissionsDataSource)(implicit 
   private def withEntityACLs[T](db: DataAccess, entity: AgoraEntity, requester: String)(op: Seq[AccessControl] => ReadWriteAction[T]): ReadWriteAction[T] = {
     db.aePerms.listEntityPermissions(entity) flatMap { perms =>
       val filteredPerms = perms.filter {
-        perm => perm.user.equals(requester) || perm.user.equals("public")
+        perm => perm.user.equals(requester) || perm.user.equals(AccessControl.publicUser)
       }
       op(filteredPerms)
     }

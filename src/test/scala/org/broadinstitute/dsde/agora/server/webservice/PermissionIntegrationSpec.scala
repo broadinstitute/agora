@@ -381,7 +381,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
 
     // make sure public has read permissions (not manage) on agoraEntity2
     patiently(permissionBusiness.insertEntityPermission(agoraEntity2, owner2.get,
-      AccessControl("public", AgoraPermissions(AgoraPermissions.Read))))
+      AccessControl(AccessControl.publicUser, AgoraPermissions(AgoraPermissions.Read))))
 
 
     Post(ApiUtil.Methods.withLeadingVersion + "/permissions", payload) ~>

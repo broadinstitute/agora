@@ -19,6 +19,8 @@ object AccessControl {
     else
       throw new IllegalArgumentException("Missing url params: user and/or roles.")
   }
+
+  final val publicUser:String = "public"
 }
 
 case class AccessControl(user: String, roles: AgoraPermissions)

@@ -263,7 +263,7 @@ abstract class PermissionsClient(profile: JdbcProfile) {
 
   def filterEntityByRead(agoraEntities: Seq[AgoraEntity], userEmail: String): ReadAction[Seq[AgoraEntity]] = {
     val entitiesThatUserCanReadQuery = for {
-      user <- users if user.email === userEmail || user.email === "public"
+      user <- users if user.email === userEmail || user.email === AccessControl.publicUser
       permission <- permissions if permission.userID === user.id && (
         permission.roles === 1 || permission.roles === 3 || permission.roles === 5 || permission.roles === 7 || permission.roles === 9 ||
         permission.roles === 11 || permission.roles === 13 || permission.roles === 15 || permission.roles === 17 || permission.roles === 19 ||
@@ -276,6 +276,26 @@ abstract class PermissionsClient(profile: JdbcProfile) {
       val aliasedAgoraEntitiesWithReadPermissions = entitiesThatCanBeRead.map(_.alias) //this map is a seq map, not a dbio map
       agoraEntities.filter(agoraEntity => aliasedAgoraEntitiesWithReadPermissions.contains(alias(agoraEntity)))
     }
+  }
+
+  def listPublicAliases: ReadAction[Seq[String]] = {
+    val publicAliasQuery = for {
+      user <- users if user.email === AccessControl.publicUser
+      permission <- permissions if permission.userID === user.id && permission.roles > 0
+      entity <- entities if permission.entityID === entity.id
+    } yield entity.alias
+
+    publicAliasQuery.result
+  }
+
+  def listOwnersAndAliases: ReadAction[Seq[(String,String)]] = {
+    val ownerAndAliasQuery = for {
+      user <- users
+      permission <- permissions if permission.userID === user.id && (permission.roles === Manage || permission.roles === All)
+      entity <- entities if permission.entityID === entity.id
+    } yield (entity.alias, user.email)
+
+    ownerAndAliasQuery.result
   }
 
   def sqlDBStatus() = {

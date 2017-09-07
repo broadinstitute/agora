@@ -12,7 +12,7 @@ import spray.json.{JsArray, JsString, _}
 import org.broadinstitute.dsde.rawls.model.MethodConfiguration
 import AgoraEntity.AttributeStringFormat
 import org.broadinstitute.dsde.rawls.model.WorkspaceJsonSupport.MethodStoreMethodFormat
-import org.broadinstitute.dsde.rawls.model._
+import org.broadinstitute.dsde.rawls.model.{MethodRepoMethod, AttributeString}
 
 import scala.language.implicitConversions
 

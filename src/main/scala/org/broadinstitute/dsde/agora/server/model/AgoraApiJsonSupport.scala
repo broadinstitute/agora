@@ -10,7 +10,7 @@ import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 import spray.json.{JsArray, JsString, _}
 
 import org.broadinstitute.dsde.rawls.model.MethodConfiguration
-import org.broadinstitute.dsde.rawls.model.WorkspaceJsonSupport.MethodConfigurationFormat
+import AgoraEntity.AttributeStringFormat
 import org.broadinstitute.dsde.rawls.model.WorkspaceJsonSupport.MethodStoreMethodFormat
 import org.broadinstitute.dsde.rawls.model._
 
@@ -69,14 +69,6 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
         UserInfoResponse(username, cn, mail)
       case _ => throw new DeserializationException("only string supported")
     }
-  }
-
-  // AttributeString is a case class with one String in it
-  // jsonFormat1 would translate AttributeString("this.hello") as { "value": "this.hello" } but we want simply "this.hello"
-  implicit val AttributeStringFormat = jsonFormat1(AttributeString)
-  implicit object attributeStringJsonFormat extends RootJsonFormat[AttributeString] {
-    override def read(value: JsValue) = AttributeString(value.convertTo[String])
-    override def write(f: AttributeString) = JsString(f.value)
   }
 
   implicit object MethodConfigurationFormat extends RootJsonFormat[MethodConfiguration] {

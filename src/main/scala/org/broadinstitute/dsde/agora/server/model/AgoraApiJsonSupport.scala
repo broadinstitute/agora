@@ -94,13 +94,20 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
       val jsObject = json.asJsObject
 
       MethodConfiguration(
-        namespace = if (jsObject.getFields("namespace").nonEmpty) jsObject.fields("namespace").convertTo[String] else throw DeserializationException(s"Failed to read field"),
-        name = if (jsObject.getFields("name").nonEmpty) jsObject.fields("name").convertTo[String] else throw DeserializationException(s"Failed to read field"),
-        rootEntityType = if (jsObject.getFields("rootEntityType").nonEmpty) jsObject.fields("rootEntityType").convertTo[String] else throw DeserializationException(s"Failed to read field"),
-        prerequisites = if (jsObject.getFields("prerequisites").nonEmpty) jsObject.fields("prerequisites").convertTo[Map[String, AttributeString]] else throw DeserializationException(s"Failed to read field"),
-        inputs = if (jsObject.getFields("inputs").nonEmpty) jsObject.fields("inputs").convertTo[Map[String, AttributeString]] else throw DeserializationException(s"Failed to read field"),
-        outputs = if (jsObject.getFields("outputs").nonEmpty) jsObject.fields("outputs").convertTo[Map[String, AttributeString]] else throw DeserializationException(s"Failed to read field"),
-        methodRepoMethod = if (jsObject.getFields("methodRepoMethod").nonEmpty) jsObject.fields("methodRepoMethod").convertTo[MethodRepoMethod] else throw DeserializationException(s"Failed to read field"),
+        namespace = if (jsObject.getFields("namespace").nonEmpty) jsObject.fields("namespace").convertTo[String] else
+          throw DeserializationException(s"Failed to read field 'namespace' from method configuration"),
+        name = if (jsObject.getFields("name").nonEmpty) jsObject.fields("name").convertTo[String] else
+          throw DeserializationException(s"Failed to read field 'name' from method configuration"),
+        rootEntityType = if (jsObject.getFields("rootEntityType").nonEmpty) jsObject.fields("rootEntityType").convertTo[String] else
+          throw DeserializationException(s"Failed to read field 'rootEntityType' from method configuration"),
+        prerequisites = if (jsObject.getFields("prerequisites").nonEmpty) jsObject.fields("prerequisites").convertTo[Map[String, AttributeString]] else
+          throw DeserializationException(s"Failed to read field 'prerequisites' from method configuration"),
+        inputs = if (jsObject.getFields("inputs").nonEmpty) jsObject.fields("inputs").convertTo[Map[String, AttributeString]] else
+          throw DeserializationException(s"Failed to read field 'inputs' from method configuration"),
+        outputs = if (jsObject.getFields("outputs").nonEmpty) jsObject.fields("outputs").convertTo[Map[String, AttributeString]] else
+          throw DeserializationException(s"Failed to read field 'outputs' from method configuration"),
+        methodRepoMethod = if (jsObject.getFields("methodRepoMethod").nonEmpty) jsObject.fields("methodRepoMethod").convertTo[MethodRepoMethod] else
+          throw DeserializationException(s"Failed to read field 'methodRepoMethod' from method configuration"),
         methodConfigVersion = if (jsObject.getFields("methodConfigVersion").nonEmpty) jsObject.fields("methodConfigVersion").convertTo[Int] else 1,
         deleted = if (jsObject.getFields("deleted").nonEmpty) jsObject.fields("deleted").convertTo[Boolean] else false,
         deletedDate = if (jsObject.getFields("deletedDate").nonEmpty) jsObject.fields("deletedDate").convertTo[Option[DateTime]] else None

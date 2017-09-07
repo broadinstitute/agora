@@ -11,6 +11,8 @@ import spray.json.{JsArray, JsString, _}
 
 import org.broadinstitute.dsde.rawls.model.MethodConfiguration
 import org.broadinstitute.dsde.rawls.model.WorkspaceJsonSupport.MethodConfigurationFormat
+import org.broadinstitute.dsde.rawls.model.WorkspaceJsonSupport.MethodStoreMethodFormat
+import org.broadinstitute.dsde.rawls.model._
 
 import scala.language.implicitConversions
 
@@ -66,6 +68,51 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
         }
         UserInfoResponse(username, cn, mail)
       case _ => throw new DeserializationException("only string supported")
+    }
+  }
+
+  // AttributeString is a case class with one String in it
+  // jsonFormat1 would translate AttributeString("this.hello") as { "value": "this.hello" } but we want simply "this.hello"
+  implicit val AttributeStringFormat = jsonFormat1(AttributeString)
+  implicit object attributeStringJsonFormat extends RootJsonFormat[AttributeString] {
+    override def read(value: JsValue) = AttributeString(value.convertTo[String])
+    override def write(f: AttributeString) = JsString(f.value)
+  }
+
+  implicit object MethodConfigurationFormat extends RootJsonFormat[MethodConfiguration] {
+    override def write(obj: MethodConfiguration): JsValue = {
+      var map = Map.empty[String, JsValue]
+      map += ("namespace" -> JsString(obj.namespace))
+      map += ("name" -> JsString(obj.name))
+      map += ("rootEntityType" -> JsString(obj.rootEntityType))
+      map += ("prerequisites" -> obj.prerequisites.toJson)
+      map += ("inputs" -> obj.inputs.toJson)
+      map += ("outputs" -> obj.outputs.toJson)
+      map += ("methodRepoMethod" -> obj.methodRepoMethod.toJson)
+      map += ("methodConfigVersion" -> JsNumber(obj.methodConfigVersion))
+      map += ("deleted" -> JsBoolean(obj.deleted))
+      if (obj.deletedDate.nonEmpty) map += ("deletedDate" -> JsString(obj.deletedDate.get.toString()))
+
+      JsObject(map)
+    }
+
+    // Mirror the default values in the MethodConfiguration case class - spray-json does not know how to use them
+    // https://stackoverflow.com/questions/15740925/what-is-a-good-way-to-handle-default-values-with-spray-json
+    override def read(json: JsValue): MethodConfiguration = {
+      val jsObject = json.asJsObject
+
+      MethodConfiguration(
+        namespace = if (jsObject.getFields("namespace").nonEmpty) jsObject.fields("namespace").convertTo[String] else throw DeserializationException(s"Failed to read field"),
+        name = if (jsObject.getFields("name").nonEmpty) jsObject.fields("name").convertTo[String] else throw DeserializationException(s"Failed to read field"),
+        rootEntityType = if (jsObject.getFields("rootEntityType").nonEmpty) jsObject.fields("rootEntityType").convertTo[String] else throw DeserializationException(s"Failed to read field"),
+        prerequisites = if (jsObject.getFields("prerequisites").nonEmpty) jsObject.fields("prerequisites").convertTo[Map[String, AttributeString]] else throw DeserializationException(s"Failed to read field"),
+        inputs = if (jsObject.getFields("inputs").nonEmpty) jsObject.fields("inputs").convertTo[Map[String, AttributeString]] else throw DeserializationException(s"Failed to read field"),
+        outputs = if (jsObject.getFields("outputs").nonEmpty) jsObject.fields("outputs").convertTo[Map[String, AttributeString]] else throw DeserializationException(s"Failed to read field"),
+        methodRepoMethod = if (jsObject.getFields("methodRepoMethod").nonEmpty) jsObject.fields("methodRepoMethod").convertTo[MethodRepoMethod] else throw DeserializationException(s"Failed to read field"),
+        methodConfigVersion = if (jsObject.getFields("methodConfigVersion").nonEmpty) jsObject.fields("methodConfigVersion").convertTo[Int] else 1,
+        deleted = if (jsObject.getFields("deleted").nonEmpty) jsObject.fields("deleted").convertTo[Boolean] else false,
+        deletedDate = if (jsObject.getFields("deletedDate").nonEmpty) jsObject.fields("deletedDate").convertTo[Option[DateTime]] else None
+      )
     }
   }
 

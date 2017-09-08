@@ -244,7 +244,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
       val ex = intercept[DeserializationException] {
         MethodConfigurationFormat.read(JsObject())
       }
-      assertResult("Failed to read field(s) [name,methodRepoMethod,outputs,inputs,rootEntityType,prerequisites,namespace] from method configuration") {
+      assertResult("Deserialization failed due to missing field namespace") {
         ex.getMessage
       }
     }

@@ -79,27 +79,20 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
     // Mirror the default values in the MethodConfiguration case class - spray-json does not know how to use them
     // https://stackoverflow.com/questions/15740925/what-is-a-good-way-to-handle-default-values-with-spray-json
     override def read(json: JsValue): MethodConfiguration = {
-      // get the fields once so we don't do extra work
-      val fields = json.asJsObject.fields
-
-      // check required keys
-      val requiredKeys = Set("namespace","name","rootEntityType","prerequisites","inputs","outputs","methodRepoMethod")
-      val missingKeys = requiredKeys diff fields.keySet
-      if (missingKeys.nonEmpty)
-        throw DeserializationException(s"Failed to read field(s) [${missingKeys.mkString(",")}] from method configuration")
+      val jsObject = json.asJsObject
 
       MethodConfiguration(
-        namespace = fields("namespace").convertTo[String],
-        name = fields("name").convertTo[String],
-        rootEntityType = fields("rootEntityType").convertTo[String],
-        prerequisites = fields("prerequisites").convertTo[Map[String, AttributeString]],
-        inputs = fields("inputs").convertTo[Map[String, AttributeString]],
-        outputs = fields("outputs").convertTo[Map[String, AttributeString]],
-        methodRepoMethod = fields("methodRepoMethod").convertTo[MethodRepoMethod],
+        namespace = getFieldOrFail[String](jsObject, "namespace"),
+        name = getFieldOrFail[String](jsObject, "name"),
+        rootEntityType = getFieldOrFail[String](jsObject, "rootEntityType"),
+        prerequisites = getFieldOrFail[Map[String, AttributeString]](jsObject, "prerequisites"),
+        inputs = getFieldOrFail[Map[String, AttributeString]](jsObject, "inputs"),
+        outputs = getFieldOrFail[Map[String, AttributeString]](jsObject, "outputs"),
+        methodRepoMethod = getFieldOrFail[MethodRepoMethod](jsObject, "methodRepoMethod"),
 
-        methodConfigVersion = fields.getOrElse("methodConfigVersion",JsNumber(1)).convertTo[Int],
-        deleted = fields.getOrElse("deleted",JsBoolean(false)).convertTo[Boolean],
-        deletedDate = fields.get("deletedDate") map (_.convertTo[DateTime])
+        methodConfigVersion = getFieldOrDefault(jsObject, "methodConfigVersion", 1),
+        deleted = getFieldOrDefault(jsObject, "deleted", false),
+        deletedDate = getFieldOrDefault[Option[DateTime]](jsObject, "deletedDate", None)
       )
     }
   }
@@ -199,7 +192,16 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
   private def stringOrNone(json: JsObject, key: String): Option[String] = {
     if (json.getFields(key).nonEmpty) json.fields(key).convertTo[Option[String]] else None
   }
-  
+
+  private def getFieldOrDefault[T : JsonReader](json: JsObject, key: String, default: T): T = {
+    if (json.getFields(key).nonEmpty) json.fields(key).convertTo[T] else default
+  }
+
+  private def getFieldOrFail[T : JsonReader](json: JsObject, key: String): T = {
+    if (json.getFields(key).nonEmpty) json.fields(key).convertTo[T] else
+      throw DeserializationException(s"Deserialization failed due to missing field $key")
+  }
+
   private val parserISO: DateTimeFormatter = {
     ISODateTimeFormat.dateTimeNoMillis()
   }

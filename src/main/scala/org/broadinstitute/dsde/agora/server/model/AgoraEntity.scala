@@ -9,7 +9,7 @@ import org.joda.time.DateTime
 import scalaz.Scalaz._
 import scalaz._
 import org.broadinstitute.dsde.rawls.model.MethodConfiguration
-import org.broadinstitute.dsde.rawls.model.WorkspaceJsonSupport.MethodConfigurationFormat
+import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport.MethodConfigurationFormat
 import spray.json._
 import org.broadinstitute.dsde.rawls.model.JsonSupport
 import spray.json.JsonParser.ParsingException

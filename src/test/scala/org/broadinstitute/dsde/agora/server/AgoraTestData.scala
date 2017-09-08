@@ -279,6 +279,34 @@ object AgoraTestData {
                               |  "namespace": "${namespace1.get}"
                               |}""".stripMargin)
 
+  val methodConfigPayloadMissingConfigVersion = Some(s"""
+                                    |{
+                                    |  "name": "${name5.get}",
+                                    |  "methodRepoMethod": {
+                                    |    "methodNamespace": "${namespace1.get}",
+                                    |    "methodName": "${name1.get}",
+                                    |    "methodVersion": 1
+                                    |  },
+                                    |  "outputs": {
+                                    |    "CancerExomePipeline_v2.M2.m2_output_vcf": "this.OUTPUT_VCF"
+                                    |  },
+                                    |  "inputs": {
+                                    |    "CancerExomePipeline_v2.M2.intervals": "this.ref_intervals",
+                                    |    "CancerExomePipeline_v2.M2.tumor_bam": "this.case_bam",
+                                    |    "CancerExomePipeline_v2.M2.normal_bam": "this.control_bam",
+                                    |    "CancerExomePipeline_v2.M2.ref_fasta_dict": "this.ref_dict",
+                                    |    "CancerExomePipeline_v2.M2.tumor_bai": "this.case_bai",
+                                    |    "CancerExomePipeline_v2.M2.normal_bai": "this.control_bai",
+                                    |    "CancerExomePipeline_v2.M2.ref_fasta": "this.ref_fasta",
+                                    |    "CancerExomePipeline_v2.M2.ref_fasta_fai": "this.ref_fai",
+                                    |    "CancerExomePipeline_v2.M2.m2_output_vcf_name": "this.vcf_output_name"
+                                    |  },
+                                    |  "rootEntityType": "pair",
+                                    |  "prerequisites": {},
+                                    |  "deleted": false,
+                                    |  "namespace": "${namespace1.get}"
+                                    |}""".stripMargin)
+
   val payloadWithValidOfficialDockerImageInWdl = Option( """
                                     |task wc {
                                     |  Array[File]+ files
@@ -518,6 +546,10 @@ object AgoraTestData {
     entityType = Option(AgoraEntityType.Configuration),
     snapshotId = snapshotId1
   )
+
+  val testConfigWithSnapshotMissingConfigVersion =
+    testConfigWithSnapshot1.copy(name = name5, payload = methodConfigPayloadMissingConfigVersion)
+
 
   val testBadAgoraEntity = new AgoraEntity(
     namespace = namespace1,

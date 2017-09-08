@@ -73,44 +73,33 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
 
   implicit object MethodConfigurationFormat extends RootJsonFormat[MethodConfiguration] {
     override def write(obj: MethodConfiguration): JsValue = {
-      var map = Map.empty[String, JsValue]
-      map += ("namespace" -> JsString(obj.namespace))
-      map += ("name" -> JsString(obj.name))
-      map += ("rootEntityType" -> JsString(obj.rootEntityType))
-      map += ("prerequisites" -> obj.prerequisites.toJson)
-      map += ("inputs" -> obj.inputs.toJson)
-      map += ("outputs" -> obj.outputs.toJson)
-      map += ("methodRepoMethod" -> obj.methodRepoMethod.toJson)
-      map += ("methodConfigVersion" -> JsNumber(obj.methodConfigVersion))
-      map += ("deleted" -> JsBoolean(obj.deleted))
-      if (obj.deletedDate.nonEmpty) map += ("deletedDate" -> JsString(obj.deletedDate.get.toString()))
-
-      JsObject(map)
+      jsonFormat10(MethodConfiguration).write(obj)
     }
 
     // Mirror the default values in the MethodConfiguration case class - spray-json does not know how to use them
     // https://stackoverflow.com/questions/15740925/what-is-a-good-way-to-handle-default-values-with-spray-json
     override def read(json: JsValue): MethodConfiguration = {
-      val jsObject = json.asJsObject
+      // get the fields once so we don't do extra work
+      val fields = json.asJsObject.fields
+
+      // check required keys
+      val requiredKeys = Set("namespace","name","rootEntityType","prerequisites","inputs","outputs","methodRepoMethod")
+      val missingKeys = requiredKeys diff fields.keySet
+      if (missingKeys.nonEmpty)
+        throw DeserializationException(s"Failed to read field(s) [${missingKeys.mkString(",")}] from method configuration")
 
       MethodConfiguration(
-        namespace = if (jsObject.getFields("namespace").nonEmpty) jsObject.fields("namespace").convertTo[String] else
-          throw DeserializationException(s"Failed to read field 'namespace' from method configuration"),
-        name = if (jsObject.getFields("name").nonEmpty) jsObject.fields("name").convertTo[String] else
-          throw DeserializationException(s"Failed to read field 'name' from method configuration"),
-        rootEntityType = if (jsObject.getFields("rootEntityType").nonEmpty) jsObject.fields("rootEntityType").convertTo[String] else
-          throw DeserializationException(s"Failed to read field 'rootEntityType' from method configuration"),
-        prerequisites = if (jsObject.getFields("prerequisites").nonEmpty) jsObject.fields("prerequisites").convertTo[Map[String, AttributeString]] else
-          throw DeserializationException(s"Failed to read field 'prerequisites' from method configuration"),
-        inputs = if (jsObject.getFields("inputs").nonEmpty) jsObject.fields("inputs").convertTo[Map[String, AttributeString]] else
-          throw DeserializationException(s"Failed to read field 'inputs' from method configuration"),
-        outputs = if (jsObject.getFields("outputs").nonEmpty) jsObject.fields("outputs").convertTo[Map[String, AttributeString]] else
-          throw DeserializationException(s"Failed to read field 'outputs' from method configuration"),
-        methodRepoMethod = if (jsObject.getFields("methodRepoMethod").nonEmpty) jsObject.fields("methodRepoMethod").convertTo[MethodRepoMethod] else
-          throw DeserializationException(s"Failed to read field 'methodRepoMethod' from method configuration"),
-        methodConfigVersion = if (jsObject.getFields("methodConfigVersion").nonEmpty) jsObject.fields("methodConfigVersion").convertTo[Int] else 1,
-        deleted = if (jsObject.getFields("deleted").nonEmpty) jsObject.fields("deleted").convertTo[Boolean] else false,
-        deletedDate = if (jsObject.getFields("deletedDate").nonEmpty) jsObject.fields("deletedDate").convertTo[Option[DateTime]] else None
+        namespace = fields("namespace").convertTo[String],
+        name = fields("name").convertTo[String],
+        rootEntityType = fields("rootEntityType").convertTo[String],
+        prerequisites = fields("prerequisites").convertTo[Map[String, AttributeString]],
+        inputs = fields("inputs").convertTo[Map[String, AttributeString]],
+        outputs = fields("outputs").convertTo[Map[String, AttributeString]],
+        methodRepoMethod = fields("methodRepoMethod").convertTo[MethodRepoMethod],
+
+        methodConfigVersion = fields.getOrElse("methodConfigVersion",JsNumber(1)).convertTo[Int],
+        deleted = fields.getOrElse("deleted",JsBoolean(false)).convertTo[Boolean],
+        deletedDate = fields.get("deletedDate") map (_.convertTo[DateTime])
       )
     }
   }

@@ -13,6 +13,7 @@ import org.broadinstitute.dsde.rawls.model.MethodConfiguration
 import spray.http.StatusCodes._
 import spray.httpx.SprayJsonSupport._
 import spray.httpx.unmarshalling._
+import spray.json.{DeserializationException, JsObject}
 import spray.routing.{MalformedQueryParamRejection, ValidationRejection}
 
 import scala.concurrent.Future
@@ -235,6 +236,16 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
         val entity = responseAs[AgoraEntity]
 
         assert(entity.payloadObject.get.methodConfigVersion == 1)
+      }
+    }
+
+    "Agora" should "throw DeserializationError if missing keys" in {
+      import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport.MethodConfigurationFormat
+      val ex = intercept[DeserializationException] {
+        MethodConfigurationFormat.read(JsObject())
+      }
+      assertResult("Failed to read field(s) [name,methodRepoMethod,outputs,inputs,rootEntityType,prerequisites,namespace] from method configuration") {
+        ex.getMessage
       }
     }
 

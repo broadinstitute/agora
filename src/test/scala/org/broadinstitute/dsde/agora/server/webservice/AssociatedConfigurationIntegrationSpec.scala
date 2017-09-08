@@ -202,6 +202,8 @@ class AssociatedConfigurationIntegrationSpec extends FlatSpec with RouteTest wit
 
   private def testConfigPayload(label:String, methodSnapshotId:Int): String =
      s"""{
+     |  "name": "a",
+     |  "namespace": "a",
      |  "methodRepoMethod": {
      |    "methodNamespace": "AssociatedConfigurationIntegrationSpec-ns-$label",
      |    "methodName": "AssociatedConfigurationIntegrationSpec-name-$label",
@@ -213,7 +215,8 @@ class AssociatedConfigurationIntegrationSpec extends FlatSpec with RouteTest wit
      |  "inputs": {
      |    "p": "hi"
      |  },
-     |  "rootEntityType": "sample"
+     |  "rootEntityType": "sample",
+     |  "prerequisites": {}
      |}""".stripMargin
 
 

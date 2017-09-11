@@ -356,7 +356,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
       // get configs that have that id
       val configs = AgoraDao.createAgoraDao(Some(AgoraEntityType.Configuration))
         .findConfigurations(methodIds)
-        .map(_.addUrl().removeIds())
+        .map(_.addUrl().removeIds().withDeserializedPayload)
 
       permissionsDataSource.inTransaction { db =>
         for {

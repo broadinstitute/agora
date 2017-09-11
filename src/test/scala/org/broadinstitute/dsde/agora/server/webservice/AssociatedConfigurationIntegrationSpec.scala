@@ -138,6 +138,12 @@ class AssociatedConfigurationIntegrationSpec extends FlatSpec with RouteTest wit
         assert(status == OK)
         val configs = responseAs[Seq[AgoraEntity]]
         assertResult(2) {configs.size}
+
+        assert(configs(0).payloadObject.get.name == payload_name)
+        assert(configs(0).payloadObject.get.namespace == payload_namespace)
+        assert(configs(1).payloadObject.get.name == payload_name)
+        assert(configs(1).payloadObject.get.namespace == payload_namespace)
+
         assert(configs.forall(_.entityType.contains(AgoraEntityType.Configuration)))
         assert(configs.forall(_.name.get.contains("two")))
       }
@@ -149,6 +155,12 @@ class AssociatedConfigurationIntegrationSpec extends FlatSpec with RouteTest wit
       check {
         assert(status == OK)
         val configs = responseAs[Seq[AgoraEntity]]
+
+        assert(configs(0).payloadObject.get.name == payload_name)
+        assert(configs(0).payloadObject.get.namespace == payload_namespace)
+        assert(configs(1).payloadObject.get.name == payload_name)
+        assert(configs(1).payloadObject.get.namespace == payload_namespace)
+
         assertResult(2) {configs.size}
         assert(configs.forall(_.entityType.contains(AgoraEntityType.Configuration)))
         assert(configs.forall(_.name.get.contains("three")))
@@ -200,8 +212,13 @@ class AssociatedConfigurationIntegrationSpec extends FlatSpec with RouteTest wit
     )
   }
 
+  private val payload_name = "AssociatedConfigurationIntegrationSpec-config-payload-name"
+  private val payload_namespace = "AssociatedConfigurationIntegrationSpec-config-payload-namespace"
+
   private def testConfigPayload(label:String, methodSnapshotId:Int): String =
      s"""{
+     |  "name": "$payload_name",
+     |  "namespace": "$payload_namespace",
      |  "methodRepoMethod": {
      |    "methodNamespace": "AssociatedConfigurationIntegrationSpec-ns-$label",
      |    "methodName": "AssociatedConfigurationIntegrationSpec-name-$label",
@@ -213,7 +230,8 @@ class AssociatedConfigurationIntegrationSpec extends FlatSpec with RouteTest wit
      |  "inputs": {
      |    "p": "hi"
      |  },
-     |  "rootEntityType": "sample"
+     |  "rootEntityType": "sample",
+     |  "prerequisites": {}
      |}""".stripMargin
 
 

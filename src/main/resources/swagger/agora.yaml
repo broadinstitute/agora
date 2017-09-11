@@ -1556,8 +1556,6 @@ definitions:
   ConfigurationResponseWithPayloadObject:
     type: object
     properties:
-      method:
-        type: object
       namespace:
         type: string
         description: Namespace which contains AgoraEntity.

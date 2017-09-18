@@ -108,7 +108,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
       val ast = AstTools.getAst(wdl, "string")
       ast.getAttribute("imports").asInstanceOf[AstList].isEmpty
     } match {
-      case Failure(x) => Failure(x) //ast didn't parse nicely
+      case Failure(x) => Failure(ValidationException(s"WDL parsing failure. ${x.getMessage}", x)) //ast didn't parse nicely
       case Success(true) => Success() //no imports, WDL is fine
       case Success(false) => Failure(ValidationException("WDL imports not yet supported."))
     }
@@ -243,21 +243,23 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     permissionsDataSource.inTransaction { db =>
       // do we have permissions to create a new snapshot?
       checkEntityPermission(db, sourceEntity, username, AgoraPermissions(Create)) {
-        // insert target
-        val targetEntity = dao.insert(entityToInsert)
+        checkValidPayload(entityToInsert, username) {
+          // insert target
+          val targetEntity = dao.insert(entityToInsert)
 
-        // get source permissions, copy to target
-        (for {
-          sourcePerms <- db.aePerms.listEntityPermissions(sourceEntity)
-          stub <- db.aePerms.addEntity(targetEntity)
-          targetPerms <- DBIO.sequence(sourcePerms map {
-            db.aePerms.insertEntityPermission(targetEntity, _)
-          })
-        } yield targetEntity.removeIds()) cleanUp {
-          case Some(t: Throwable) =>
-            db.aePerms.deleteAllPermissions(targetEntity)
-            throw new AgoraException("an unexpected error occurred during copy.", t)
-          case None => DBIO.successful(targetEntity.removeIds())
+          // get source permissions, copy to target
+          (for {
+            sourcePerms <- db.aePerms.listEntityPermissions(sourceEntity)
+            stub <- db.aePerms.addEntity(targetEntity)
+            targetPerms <- DBIO.sequence(sourcePerms map {
+              db.aePerms.insertEntityPermission(targetEntity, _)
+            })
+          } yield targetEntity.removeIds()) cleanUp {
+            case Some(t: Throwable) =>
+              db.aePerms.deleteAllPermissions(targetEntity)
+              throw new AgoraException("an unexpected error occurred during copy.", t)
+            case None => DBIO.successful(targetEntity.removeIds())
+          }
         }
       }
     } flatMap { first =>

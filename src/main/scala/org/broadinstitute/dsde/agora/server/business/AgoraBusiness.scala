@@ -10,7 +10,7 @@ import slick.dbio.DBIO
 import spray.http.StatusCodes
 import spray.json._
 import wdl4s.{AstTools, WdlNamespace, WdlNamespaceWithWorkflow}
-import wdl4s.parser.WdlParser.{AstList, AstNode, SyntaxError}
+import wdl4s.parser.WdlParser.{AstList, SyntaxError}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
@@ -367,6 +367,44 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
         } yield entity
       }
     }
+  }
+
+  def listCompatibleConfigurations(namespace: String, name: String, snapshotId: Int, username: String): Future[Seq[AgoraEntity]] = {
+
+    // get the specific method snapshot specified by the user (will throw error if not found)
+    findSingle(namespace, name, snapshotId, Seq(AgoraEntityType.Workflow), username) flatMap { methodSnapshot =>
+      // get all configs that reference any snapshot of this method
+      listAssociatedConfigurations(namespace, name, username) map { configs =>
+        // short-circuit the WDL parsing: if we found no configs, return the empty seq
+        if (configs.isEmpty) configs else {
+          // from the method snapshot, get the WDL and parse it
+          val wdl = methodSnapshot.payload.getOrElse(throw AgoraException(s"Method $namespace:$name:$snapshotId is missing a payload."))
+          parseWDL(wdl) match {
+            case Failure(ex) => throw ex
+            case Success(workflow) =>
+              // get the set of input and output keys for this WDL
+              val inputKeys:Set[String] = workflow.inputs.keySet.map(_.toString)
+              val outputKeys:Set[String] = workflow.outputs.map(_.fullyQualifiedName.toString).toSet
+
+              // filter configs to those that have the exact same input and output keys
+              configs.filter { config =>
+                config.payloadObject match {
+                  case None => false
+                  case Some(mc) => mc.outputs.keySet == outputKeys && mc.inputs.keySet == inputKeys
+                }
+              }
+          }
+        }
+      }
+    }
+  }
+
+  // copied from org.broadinstitute.dsde.rawls.jobexec.MethodConfigResolver
+  def parseWDL(wdl: String): Try[wdl4s.Workflow] = {
+    val parsed: Try[WdlNamespaceWithWorkflow] = WdlNamespaceWithWorkflow.load(wdl, Seq()).recoverWith { case t: SyntaxError =>
+      Failure(new AgoraException("Failed to parse WDL: " + t.getMessage()))
+    }
+    parsed map( _.workflow )
   }
 
   private def findWithIds(agoraSearch: AgoraEntity,

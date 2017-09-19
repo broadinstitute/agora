@@ -101,6 +101,12 @@ object ServiceMessages {
                                            name: String,
                                            username: String)
 
+  case class QueryCompatibleConfigurations(requestContext: RequestContext,
+                                           namespace: String,
+                                           name: String,
+                                           snapshotId: Int,
+                                           username: String)
+
   case class Add(requestContext: RequestContext,
                  agoraAddRequest: AgoraEntity,
                  username: String)

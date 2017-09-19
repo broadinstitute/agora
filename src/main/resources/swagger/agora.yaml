@@ -363,6 +363,54 @@ paths:
             - openid
             - email
             - profile
+  '/api/v1/methods/{namespace}/{name}/{snapshotId}/configurations':
+    get:
+      summary: List compatible configurations for this method snapshot
+      description: |
+        Returns all configurations that 1. have the exact same input and output
+        arguments as the supplied method snapshot, and 2. reference any snapshot
+        of this method.
+      parameters:
+        - name: namespace
+          in: path
+          description: Namespace of method.
+          required: true
+          type: string
+        - name: name
+          in: path
+          description: Name of method.
+          required: true
+          type: string
+        - name: snapshotId
+          in: path
+          description: Snapshot ID of method.
+          required: true
+          type: number
+      tags:
+        - Methods
+        - Configurations
+      responses:
+        '200':
+          description: An array of configurations.
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/ConfigurationResponseWithPayloadObject'
+        '404':
+          description: Method not found.
+          schema:
+            type: object
+            $ref: '#/definitions/NotFound'
+        default:
+          description: Unexpected error
+          schema:
+            type: object
+            $ref: '#/definitions/Error'
+      security:
+        - authorization:
+            - openid
+            - email
+            - profile
   /api/v1/configurations:
     get:
       summary: List configurations

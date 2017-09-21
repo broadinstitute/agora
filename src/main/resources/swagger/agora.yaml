@@ -1315,11 +1315,6 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/Error'
-      security:
-        - authorization:
-            - openid
-            - email
-            - profile
   /ga4gh/tools/{id}/versions/{version-id}/{type}/descriptor:
     get:
       summary: Get the tool descriptor (CWL/WDL) for the specified tool.

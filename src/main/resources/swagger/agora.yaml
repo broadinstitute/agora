@@ -1364,6 +1364,7 @@ paths:
           description: The tool can not be output in the specified type.
           schema:
             $ref: '#/definitions/Error'
+      security: []
 securityDefinitions:
   authorization:
     type: oauth2

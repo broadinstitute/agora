@@ -222,6 +222,16 @@ trait QueryRouteHelper extends BaseRoute {
     val message = QueryAssociatedConfigurations(context, namespace, name, username)
     perRequest(context, queryHandler, message)
   }
+
+  def compatibleConfigurationsWithPerRequest(context: RequestContext,
+                                             namespace: String,
+                                             name: String,
+                                             snapshotId: Int,
+                                             username: String,
+                                             queryHandler: Props): Unit = {
+    val message = QueryCompatibleConfigurations(context, namespace, name, snapshotId, username)
+    perRequest(context, queryHandler, message)
+  }
 }
 
 trait AddRouteHelper extends BaseRoute {

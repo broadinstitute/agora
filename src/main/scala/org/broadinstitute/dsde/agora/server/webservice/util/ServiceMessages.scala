@@ -1,6 +1,7 @@
 package org.broadinstitute.dsde.agora.server.webservice.util
 
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, EntityAccessControl}
+import org.broadinstitute.dsde.agora.server.ga4gh.Models.ToolDescriptorType.DescriptorType
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection, AgoraEntityType}
 import spray.routing.RequestContext
 
@@ -74,6 +75,10 @@ object ServiceMessages {
                          username: String,
                          onlyPayload: Boolean,
                          payloadAsObject: Boolean)
+
+  case class QueryPublicSingle(requestContext: RequestContext,
+                         entity: AgoraEntity,
+                         descriptorType: DescriptorType)
 
   case class Delete(requestContext: RequestContext,
                          entity: AgoraEntity,

@@ -4,6 +4,7 @@ import akka.actor.ActorSystem
 import org.broadinstitute.dsde.agora.server.AgoraTestFixture
 import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
+import org.broadinstitute.dsde.agora.server.exceptions.ValidationException
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.configurations.ConfigurationsService
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
@@ -26,6 +27,7 @@ class ApiServiceSpec extends AgoraTestFixture with Directives with Suite with Sc
 
   val wrapWithExceptionHandler = handleExceptions(ExceptionHandler {
     case e: IllegalArgumentException => complete(BadRequest, e.getMessage)
+    case ve: ValidationException => complete(BadRequest, ve.getMessage)
   })
 
   val wrapWithRejectionHandler = handleRejections(RejectionHandler {

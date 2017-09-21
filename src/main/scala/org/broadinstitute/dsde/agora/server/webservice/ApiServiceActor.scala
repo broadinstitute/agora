@@ -5,12 +5,14 @@ import java.security.Permissions
 import akka.actor.SupervisorStrategy.Restart
 import akka.actor.{OneForOneStrategy, Props}
 import com.github.swagger.spray.SwaggerHttpService
-import com.github.swagger.spray.model.{Contact, License, Info}
+import com.github.swagger.spray.model.{Contact, Info, License}
 import com.typesafe.scalalogging.LazyLogging
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AdminSweeper, PermissionsDataSource}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AdminSweeper
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AdminSweeper.Sweep
+import org.broadinstitute.dsde.agora.server.exceptions.ValidationException
+import org.broadinstitute.dsde.agora.server.ga4gh.Ga4ghService
 import org.broadinstitute.dsde.agora.server.webservice.configurations.ConfigurationsService
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
 import org.parboiled.common.FileUtils
@@ -59,10 +61,12 @@ class ApiServiceActor(permissionsDataSource: PermissionsDataSource) extends Http
   val methodsService = new MethodsService(permissionsDataSource) with ActorRefFactoryContext
   val configurationsService = new ConfigurationsService(permissionsDataSource) with ActorRefFactoryContext
 
+  val ga4ghService = new Ga4ghService(permissionsDataSource) with ActorRefFactoryContext
+
   def withResourceFileContents(path: String)(innerRoute: String => Route): Route =
     innerRoute( FileUtils.readAllTextFromResource(path) )
 
-  def possibleRoutes =  options{ complete(OK) } ~ methodsService.routes ~ configurationsService.routes ~
+  def possibleRoutes =  options{ complete(OK) } ~ ga4ghService.routes ~ methodsService.routes ~ configurationsService.routes ~
     get {
       pathSingleSlash {
         withResourceFileContents("swagger/index.html") { indexHtml =>
@@ -83,6 +87,7 @@ class ApiServiceActor(permissionsDataSource: PermissionsDataSource) extends Http
   implicit def routeExceptionHandler(implicit log: LoggingContext) =
     ExceptionHandler {
       case e: IllegalArgumentException => complete(BadRequest, e.getMessage)
+      case ve: ValidationException => complete(BadRequest, ve.getMessage)
       case ex: Throwable => {
         logger.error(ex.getMessage)
         complete(InternalServerError, s"Something went wrong, but the error is unspecified.")

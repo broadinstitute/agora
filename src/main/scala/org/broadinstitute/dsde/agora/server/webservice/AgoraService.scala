@@ -27,7 +27,9 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
 
   def path: String
 
-  def routes = namespacePermissionsRoute ~ multiEntityPermissionsRoute ~ entityPermissionsRoute ~ queryAssociatedConfigurationsRoute ~ querySingleRoute ~ queryMethodDefinitionsRoute ~ queryRoute ~ postRoute ~ statusRoute
+  def routes = namespacePermissionsRoute ~ multiEntityPermissionsRoute ~ entityPermissionsRoute ~
+    queryAssociatedConfigurationsRoute ~ queryCompatibleConfigurationsRoute ~ querySingleRoute ~
+    queryMethodDefinitionsRoute ~ queryRoute ~ postRoute ~ statusRoute
 
   def queryHandlerProps = Props(classOf[QueryHandler], permissionsDataSource, executionContext)
 
@@ -143,12 +145,20 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
         requestContext => definitionsWithPerRequest(requestContext, username, queryHandlerProps)
       }
 
+  // all configurations that reference any snapshot of the supplied method
   def queryAssociatedConfigurationsRoute =
     (versionedPath(PathMatcher("methods" / Segment / Segment / "configurations")) & get &
       authenticationDirectives.usernameFromRequest()) { (namespace, name, username) =>
       requestContext => associatedConfigurationsWithPerRequest(requestContext, namespace, name, username, queryHandlerProps)
     }
 
+  // all configurations that have the same inputs and outputs of the supplied method snapshot,
+  // as well as referencing any snapshot of the supplied method
+  def queryCompatibleConfigurationsRoute =
+    (versionedPath(PathMatcher("methods" / Segment / Segment / IntNumber / "configurations")) & get &
+      authenticationDirectives.usernameFromRequest()) { (namespace, name, snapshotId, username) =>
+      requestContext => compatibleConfigurationsWithPerRequest(requestContext, namespace, name, snapshotId, username, queryHandlerProps)
+    }
 
   // GET http://root.com/methods?
   // GET http://root.com/configurations?

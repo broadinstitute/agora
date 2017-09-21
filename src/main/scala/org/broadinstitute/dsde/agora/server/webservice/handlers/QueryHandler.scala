@@ -104,6 +104,9 @@ class QueryHandler(dataSource: PermissionsDataSource, implicit val ec: Execution
 
       descriptorType match {
         case ToolDescriptorType.WDL =>
+          // the url we return here is known to be incorrect in FireCloud (GAWB-1741).
+          // we return it anyway because it still provides some information, even if it
+          // requires manual user intervention to work.
           val result = ToolDescriptor(foundEntity.url.getOrElse(""),
             foundEntity.payload.getOrElse(""),
             ToolDescriptorType.WDL)

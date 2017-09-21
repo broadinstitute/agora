@@ -7,6 +7,11 @@ produces:
   - application/json
   - text/plain
 basePath: /
+security:
+  - authorization:
+      - openid
+      - email
+      - profile
 paths:
   /status:
     get:
@@ -20,6 +25,7 @@ paths:
           description: Internal server error
       tags:
         - Status
+      security: []
   /api/v1/methods:
     get:
       summary: List methods
@@ -91,11 +97,6 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/Error'
-      security:
-        - authorization:
-            - openid
-            - email
-            - profile
     post:
       summary: Add a Method.
       description: |
@@ -132,11 +133,6 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/Error'
-      security:
-        - authorization:
-            - openid
-            - email
-            - profile
   /api/v1/methods/definitions:
     get:
       summary: List method definitions
@@ -157,11 +153,6 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/Error'
-      security:
-        - authorization:
-            - openid
-            - email
-            - profile
   /api/v1/methods/{namespace}/{name}/configurations:
     get:
       summary: List configurations associated with a method
@@ -199,11 +190,6 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/Error'
-      security:
-        - authorization:
-            - openid
-            - email
-            - profile
   '/api/v1/methods/{namespace}/{name}/{snapshotId}':
     get:
       summary: Find a single method.
@@ -245,11 +231,6 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/Error'
-      security:
-        - authorization:
-            - openid
-            - email
-            - profile
     delete:
       summary: Redact a single method.
       description: |
@@ -358,11 +339,6 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/Error'
-      security:
-        - authorization:
-            - openid
-            - email
-            - profile
   '/api/v1/methods/{namespace}/{name}/{snapshotId}/configurations':
     get:
       summary: List compatible configurations for this method snapshot
@@ -406,11 +382,6 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/Error'
-      security:
-        - authorization:
-            - openid
-            - email
-            - profile
   /api/v1/configurations:
     get:
       summary: List configurations
@@ -482,11 +453,6 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/Error'
-      security:
-        - authorization:
-            - openid
-            - email
-            - profile
     post:
       summary: Add a Method.
       description: |
@@ -528,11 +494,6 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/Error'
-      security:
-        - authorization:
-            - openid
-            - email
-            - profile
   '/api/v1/configurations/{namespace}/{name}/{snapshotId}':
     get:
       summary: Find a single method configuration.
@@ -574,11 +535,6 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/Error'
-      security:
-        - authorization:
-            - openid
-            - email
-            - profile
     delete:
       summary: Redact a single configuration.
       description: |
@@ -639,11 +595,6 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/Error'
-      security:
-        - authorization:
-            - openid
-            - email
-            - profile
     post:
       summary: Add a permissions on namespace.
       description: >
@@ -695,11 +646,6 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/Error'
-      security:
-        - authorization:
-            - openid
-            - email
-            - profile
     put:
       summary: Edit a permissions on namespace.
       description: |
@@ -738,11 +684,6 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/Error'
-      security:
-        - authorization:
-            - openid
-            - email
-            - profile
     delete:
       summary: Delete a permission on namespace.
       description: |
@@ -776,11 +717,6 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/Error'
-      security:
-        - authorization:
-            - openid
-            - email
-            - profile
   '/api/v1/methods/permissions':
     post:
       summary: List permissions for multiple methods.
@@ -809,11 +745,6 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/Error'
-      security:
-        - authorization:
-            - openid
-            - email
-            - profile
     put:
       summary: Upsert permissions for multiple methods.
       description: |
@@ -841,11 +772,6 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/Error'
-      security:
-        - authorization:
-            - openid
-            - email
-            - profile
   '/api/v1/methods/{namespace}/{name}/{snapshotId}/permissions':
     get:
       summary: List permissions on a specific method.
@@ -881,11 +807,6 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/Error'
-      security:
-        - authorization:
-            - openid
-            - email
-            - profile
     post:
       summary: Add a permissions on a specific method.
       description: >
@@ -945,11 +866,6 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/Error'
-      security:
-        - authorization:
-            - openid
-            - email
-            - profile
     put:
       summary: Edit a permissions on a specific method.
       description: |
@@ -998,11 +914,6 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/Error'
-      security:
-        - authorization:
-            - openid
-            - email
-            - profile
     delete:
       summary: Delete a permission on a specific method.
       description: |
@@ -1046,11 +957,6 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/Error'
-      security:
-        - authorization:
-            - openid
-            - email
-            - profile
   '/api/v1/configurations/{namespace}/permissions':
     get:
       summary: List permissions on namespace.
@@ -1076,11 +982,6 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/Error'
-      security:
-        - authorization:
-            - openid
-            - email
-            - profile
     post:
       summary: Add a permissions on namespace.
       description: >
@@ -1130,11 +1031,6 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/Error'
-      security:
-        - authorization:
-            - openid
-            - email
-            - profile
     put:
       summary: Edit a permissions on namespace.
       description: |
@@ -1173,11 +1069,6 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/Error'
-      security:
-        - authorization:
-            - openid
-            - email
-            - profile
     delete:
       summary: Delete a permission on namespace.
       description: |
@@ -1211,11 +1102,6 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/Error'
-      security:
-        - authorization:
-            - openid
-            - email
-            - profile
   '/api/v1/configurations/{namespace}/{name}/{snapshotId}/permissions':
     get:
       summary: List permissions on a specific method.
@@ -1251,11 +1137,6 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/Error'
-      security:
-        - authorization:
-            - openid
-            - email
-            - profile
     post:
       summary: Add a permissions on a specific method.
       description: >
@@ -1315,11 +1196,6 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/Error'
-      security:
-        - authorization:
-            - openid
-            - email
-            - profile
     put:
       summary: Edit a permissions on a specific method.
       description: |
@@ -1368,11 +1244,6 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/Error'
-      security:
-        - authorization:
-            - openid
-            - email
-            - profile
     delete:
       summary: Delete a permission on a specific method.
       description: |
@@ -1416,11 +1287,6 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/Error'
-      security:
-        - authorization:
-            - openid
-            - email
-            - profile
   '/api/v1/configurations/permissions':
     post:
       summary: List permissions for multiple configurations.
@@ -1449,11 +1315,6 @@ paths:
           schema:
             type: object
             $ref: '#/definitions/Error'
-      security:
-        - authorization:
-            - openid
-            - email
-            - profile
 securityDefinitions:
   authorization:
     type: oauth2

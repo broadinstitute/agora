@@ -118,6 +118,7 @@ object AgoraEntity extends JsonSupport {
 case class AgoraEntity(namespace: Option[String] = None,
                        name: Option[String] = None,
                        snapshotId: Option[Int] = None,
+                       snapshotComment: Option[String] = None,
                        synopsis: Option[String] = None,
                        documentation: Option[String] = None,
                        owner: Option[String] = None,

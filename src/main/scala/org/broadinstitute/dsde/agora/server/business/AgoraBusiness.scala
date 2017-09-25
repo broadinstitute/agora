@@ -285,7 +285,8 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
       synopsis = if (newEntity.synopsis.isDefined) newEntity.synopsis else sourceEntity.synopsis,
       documentation = if (newEntity.documentation.isDefined) newEntity.documentation else sourceEntity.documentation,
       payload = if (newEntity.payload.isDefined) newEntity.payload else sourceEntity.payload,
-      entityType=sourceEntity.entityType
+      entityType=sourceEntity.entityType,
+      snapshotComment = newEntity.snapshotComment // Snapshot comments always replace the previous comment (possibly with nothing) [GAWB-2032]
     )
   }
 

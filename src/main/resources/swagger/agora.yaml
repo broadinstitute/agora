@@ -261,7 +261,6 @@ paths:
       responses:
         '200':
           description: An integer showing how many methods were deleted.
-          format: number
         default:
           description: Error upon redaction
           schema:

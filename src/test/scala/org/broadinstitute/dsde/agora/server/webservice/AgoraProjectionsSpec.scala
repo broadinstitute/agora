@@ -54,7 +54,7 @@ class AgoraProjectionsSpec extends ApiServiceSpec with FlatSpecLike {
     Get(ApiUtil.Methods.withLeadingVersion
       + "?namespace=" + namespace1.get
       + "&name=" + name2.get
-      + "&excludedField=synopsis&excludedField=documentation&excludedField=createDate&excludedField=payload") ~>
+      + "&excludedField=synopsis&excludedField=documentation&excludedField=createDate&excludedField=payload&excludedField=snapshotComment") ~>
       methodsService.queryRoute ~> check {
       handleError(
         entity.as[Seq[AgoraEntity]],

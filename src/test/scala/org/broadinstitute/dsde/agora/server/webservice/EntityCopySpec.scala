@@ -136,6 +136,10 @@ class EntityCopySpec extends ApiServiceSpec with FlatSpecLike {
               assert(entity.payload == argument.payload)
             else
               assert(entity.payload == testEntity1WithId.payload)
+            if (argument.snapshotComment.isDefined)
+              assert(entity.snapshotComment == argument.snapshotComment)
+            else
+              assert(entity.snapshotComment.isEmpty)
           })
         }
       }

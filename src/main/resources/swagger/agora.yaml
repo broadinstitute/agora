@@ -271,9 +271,9 @@ paths:
       description: |
         Inserts a new snapshot of the method into the method repository and
         copies access permissions from previous snapshot, optionally redacting
-        the source snapshot. Documentation, synopsis, and payload are the only
-        arguments considered for the new snapshot; everything else is copied
-        from the source.
+        the source snapshot. Documentation, synopsis, snapshot comment, and
+        payload are the only arguments considered for the new snapshot;
+        everything else is copied from the source.
       consumes:
         - application/json
       produces:

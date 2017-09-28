@@ -65,6 +65,7 @@ class ApiServiceSpec extends AgoraTestFixture with Directives with Suite with Sc
       AgoraEntity(namespace = entity.namespace,
         name = entity.name,
         snapshotId = entity.snapshotId,
+        snapshotComment = entity.snapshotComment,
         synopsis = entity.synopsis,
         owner = entity.owner,
         url = entity.url,
@@ -98,6 +99,7 @@ class ApiServiceSpec extends AgoraTestFixture with Directives with Suite with Sc
         namespace = entity.namespace,
         name = entity.name,
         snapshotId = entity.snapshotId,
+        snapshotComment = entity.snapshotComment,
         entityType = entity.entityType,
         url = Option(entity.agoraUrl)
       )

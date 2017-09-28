@@ -460,7 +460,7 @@ paths:
             type: object
             $ref: '#/definitions/Error'
     post:
-      summary: Add a Method.
+      summary: Add a Configuration.
       description: |
         Inserts a method into the method repository and
         gives the owner full access permissions. Must supply a namespace

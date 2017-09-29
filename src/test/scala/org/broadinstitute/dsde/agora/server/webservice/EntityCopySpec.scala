@@ -22,6 +22,7 @@ import scala.concurrent.Future
 class EntityCopySpec extends ApiServiceSpec with FlatSpecLike {
 
   var testEntity1WithId: AgoraEntity = _
+  var testEntityWithSnapshotComment: AgoraEntity = _
 
   val testRoute = ApiUtil.Methods.withLeadingVersion + "/%s/%s/%s"
 
@@ -33,6 +34,8 @@ class EntityCopySpec extends ApiServiceSpec with FlatSpecLike {
     patiently(permissionBusiness.insertEntityPermission(testEntity1WithId, owner1.get, AccessControl(owner2.get, AgoraPermissions(Read))))
     // add owner3 with Create (but not Redact) on entity1
     patiently(permissionBusiness.insertEntityPermission(testEntity1WithId, owner1.get, AccessControl(owner3.get, AgoraPermissions(Create))))
+
+    testEntityWithSnapshotComment = patiently(agoraBusiness.insert(testMethodWithSnapshotComment1, owner1.get))
   }
 
   override def afterAll() = {
@@ -97,6 +100,10 @@ class EntityCopySpec extends ApiServiceSpec with FlatSpecLike {
 
   it should "return PartialContent if I can create but not redact" in {
     patiently(Future(testEntityCopy(PartialContent, owner3.get, namespace1.get, name1.get, 3, redact=true)))
+  }
+
+  it should "not copy snapshot comments" in {
+    patiently(Future(testEntityCopy(OK, owner1.get, namespace3.get, name4.get, 1, testEntityWithSnapshotComment)))
   }
 
 

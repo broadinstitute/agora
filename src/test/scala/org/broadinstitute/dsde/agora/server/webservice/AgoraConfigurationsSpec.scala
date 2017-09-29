@@ -42,6 +42,34 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
     clearDatabases()
   }
 
+  "Agora" should "accept and record a snapshot comment when creating the initial snapshot of a config" in {
+    Post(ApiUtil.Configurations.withLeadingVersion, testConfigWithSnapshotComment1.copy(snapshotId = None, payload = taskConfigPayload)) ~>
+      configurationsService.postRoute ~> check {
+      println(response)
+      assert(status == Created)
+      assert(responseAs[AgoraEntity].snapshotComment == snapshotComment1)
+      assert(responseAs[AgoraEntity].snapshotId.contains(1))
+    }
+  }
+
+  "Agora" should "apply a new snapshot comment when creating a new config snapshot" in {
+    Post(ApiUtil.Configurations.withLeadingVersion, testConfigWithSnapshotComment1.copy(snapshotId = None, snapshotComment = snapshotComment2, method = Some(method1))) ~>
+      configurationsService.postRoute ~> check {
+      assert(status == Created)
+      assert(responseAs[AgoraEntity].snapshotComment == snapshotComment2)
+      assert(responseAs[AgoraEntity].snapshotId.contains(2))
+    }
+  }
+
+  "Agora" should "record no snapshot comment for a new config snapshot if none is provided" in {
+    Post(ApiUtil.Configurations.withLeadingVersion, testConfigWithSnapshotComment1.copy(snapshotId = None, snapshotComment = None, method = Some(method1))) ~>
+      configurationsService.postRoute ~> check {
+      assert(status == Created)
+      assert(responseAs[AgoraEntity].snapshotComment.isEmpty)
+      assert(responseAs[AgoraEntity].snapshotId.contains(3))
+    }
+  }
+
   "Agora" should "be able to store a task configuration" in {
     Post(ApiUtil.Configurations.withLeadingVersion, testAgoraConfigurationEntity3) ~>
       configurationsService.postRoute ~> check {

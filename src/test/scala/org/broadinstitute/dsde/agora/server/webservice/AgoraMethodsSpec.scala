@@ -193,4 +193,31 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
         assert(status == InternalServerError)
     }
   }
+
+  "Agora" should "accept and record a snapshot comment when creating the initial snapshot of a method" in {
+    Post(ApiUtil.Methods.withLeadingVersion, testMethodWithSnapshotComment1.copy(snapshotId = None)) ~>
+      methodsService.postRoute ~> check {
+      assert(status == Created)
+      assert(responseAs[AgoraEntity].snapshotComment == snapshotComment1)
+      assert(responseAs[AgoraEntity].snapshotId.contains(1))
+    }
+  }
+
+  "Agora" should "apply a new snapshot comment when creating a new method snapshot" in {
+    Post(ApiUtil.Methods.withLeadingVersion, testMethodWithSnapshotComment1.copy(snapshotId = None, snapshotComment = snapshotComment2)) ~>
+      methodsService.postRoute ~> check {
+      assert(status == Created)
+      assert(responseAs[AgoraEntity].snapshotComment == snapshotComment2)
+      assert(responseAs[AgoraEntity].snapshotId.contains(2))
+    }
+  }
+
+  "Agora" should "record no snapshot comment for a new method snapshot if none is provided" in {
+    Post(ApiUtil.Methods.withLeadingVersion, testMethodWithSnapshotComment1.copy(snapshotId = None, snapshotComment = None)) ~>
+      methodsService.postRoute ~> check {
+      assert(status == Created)
+      assert(responseAs[AgoraEntity].snapshotComment.isEmpty)
+      assert(responseAs[AgoraEntity].snapshotId.contains(3))
+    }
+  }
 }

@@ -86,8 +86,10 @@ class EntityCopySpec extends ApiServiceSpec with FlatSpecLike {
     testEntityCopy(OK, owner1.get, namespace1.get, name1.get, 1, arg2)
     val arg3 = AgoraEntity(payload=payload2)
     testEntityCopy(OK, owner1.get, namespace1.get, name1.get, 1, arg3)
-    val arg4 = AgoraEntity(synopsis=Some(randUUID), documentation=Some(randUUID), payload=payloadWcTask)
+    val arg4 = AgoraEntity(snapshotComment = Some(randUUID))
     testEntityCopy(OK, owner1.get, namespace1.get, name1.get, 1, arg4)
+    val arg5 = AgoraEntity(synopsis=Some(randUUID), documentation=Some(randUUID), payload=payloadWcTask, snapshotComment = Some(randUUID))
+    testEntityCopy(OK, owner1.get, namespace1.get, name1.get, 1, arg5)
   }
 
   it should "not redact the source entity by default" in {

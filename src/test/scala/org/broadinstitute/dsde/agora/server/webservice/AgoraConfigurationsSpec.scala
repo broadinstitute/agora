@@ -45,7 +45,6 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
   "Agora" should "accept and record a snapshot comment when creating the initial snapshot of a config" in {
     Post(ApiUtil.Configurations.withLeadingVersion, testConfigWithSnapshotComment1.copy(snapshotId = None, payload = taskConfigPayload)) ~>
       configurationsService.postRoute ~> check {
-      println(response)
       assert(status == Created)
       assert(responseAs[AgoraEntity].snapshotComment == snapshotComment1)
       assert(responseAs[AgoraEntity].snapshotId.contains(1))

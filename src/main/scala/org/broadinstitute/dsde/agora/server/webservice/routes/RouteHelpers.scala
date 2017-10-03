@@ -165,20 +165,18 @@ trait QueryRouteHelper extends BaseRoute {
     versionedPath(_path) &
     authenticationDirectives.usernameFromRequest()
 
-  def entityFromParams(params: Map[String, List[String]]): AgoraEntity = {
-    AgoraEntity(
-      namespace       = params.getOrElse("namespace", Nil).headOption,
-      name            = params.getOrElse("name", Nil).headOption,
-      snapshotId      = params.getOrElse("snapshotId", Nil).headOption.toIntOption,
-      snapshotComment = params.getOrElse("snapshotComment", Nil).headOption,
-      synopsis        = params.getOrElse("synopsis", Nil).headOption,
-      documentation   = params.getOrElse("documentation", Nil).headOption,
-      owner           = params.getOrElse("owner", Nil).headOption,
-      payload         = params.getOrElse("payload", Nil).headOption,
-      url             = params.getOrElse("url", Nil).headOption,
-      entityType      = params.getOrElse("entityType", Nil).headOption.toAgoraEntityOption
-    )
-  }
+  def entityFromParams(params: Map[String, List[String]]): AgoraEntity = AgoraEntity(
+    namespace       = params.getOrElse("namespace", Nil).headOption,
+    name            = params.getOrElse("name", Nil).headOption,
+    snapshotId      = params.getOrElse("snapshotId", Nil).headOption.toIntOption,
+    snapshotComment = params.getOrElse("snapshotComment", Nil).headOption,
+    synopsis        = params.getOrElse("synopsis", Nil).headOption,
+    documentation   = params.getOrElse("documentation", Nil).headOption,
+    owner           = params.getOrElse("owner", Nil).headOption,
+    payload         = params.getOrElse("payload", Nil).headOption,
+    url             = params.getOrElse("url", Nil).headOption,
+    entityType      = params.getOrElse("entityType", Nil).headOption.toAgoraEntityOption
+  )
 
   def validateEntityType(params: Map[String, List[String]], path: String): Directive0 = {
     val _type = params.getOrElse("entityType", Nil).headOption.toAgoraEntityOption

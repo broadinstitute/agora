@@ -176,12 +176,12 @@ class MethodDefinitionIntegrationSpec extends FlatSpec with RouteTest with Scala
         assert(redacts.isDefined)
         // has 4 configs, one of which points at the redacted snapshot
         // and one of which is itself redacted
-        assertResult(2) {redacts.get.numConfigurations}
+        assertResult(3) {redacts.get.numConfigurations}
         val otherowner = findDefinition("otherowner", defs)
         assert(otherowner.isDefined)
         // has 5 configs, one of which points at the snapshot owned
         // by somebody else, and one which is itself owned by somebody else
-        assertResult(3) {otherowner.get.numConfigurations}
+        assertResult(4) {otherowner.get.numConfigurations}
       }
   }
 
@@ -296,6 +296,9 @@ class MethodDefinitionIntegrationSpec extends FlatSpec with RouteTest with Scala
      |    "methodName": "MethodDefinitionIntegrationSpec-name-$label",
      |    "methodVersion": $methodSnapshotId
      |  },
+     |  "prerequisites": {},
+     |  "namespace": "confignamespace",
+     |  "name": "configname",
      |  "outputs": {
      |
      |  },

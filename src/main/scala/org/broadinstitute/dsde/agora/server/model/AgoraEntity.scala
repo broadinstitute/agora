@@ -216,3 +216,15 @@ case class MethodDefinition(namespace: Option[String] = None,
                        numConfigurations: Int,
                        numSnapshots: Int)
 
+case class Moniker(namespace:Option[String], name:Option[String])
+object Moniker {
+  def apply(entity:AgoraEntity) = {
+    new Moniker(entity.namespace, entity.name)
+  }
+  def apply(methodConfiguration: Option[MethodConfiguration]) = {
+    methodConfiguration match {
+      case None => new Moniker(None, None)
+      case Some(mc) => new Moniker(Some(mc.methodRepoMethod.methodNamespace), Some(mc.methodRepoMethod.methodName))
+    }
+  }
+}

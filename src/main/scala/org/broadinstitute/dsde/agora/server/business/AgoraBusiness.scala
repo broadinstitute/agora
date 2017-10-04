@@ -283,14 +283,15 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
   def listDefinitions(username: String): Future[Seq[MethodDefinition]] = {
 
     val methodsFuture = findWithIds(AgoraEntity(), None, Seq(AgoraEntityType.Workflow), username)
-    val configsFuture = findWithIds(AgoraEntity(), None, Seq(AgoraEntityType.Configuration), username)
+    val configsFuture = findWithIds(AgoraEntity(), Some(AgoraEntityProjection(Seq("payload"), Seq.empty[String])), Seq(AgoraEntityType.Configuration), username)
 
     configsFuture flatMap { configSnapshots =>
       methodsFuture flatMap { methodSnapshots =>
-        // group/count config snapshots by methodId
-        val configCounts:Map[Option[ObjectId],Int] = configSnapshots
-            .groupBy(_.methodId)
-            .map { kv => kv._1 -> kv._2.size}
+
+        // group/count config snapshots by the (namespace,name) of the method they reference
+        val configCounts:Map[Moniker,Int] = configSnapshots
+          .groupBy{ config => Moniker(config.withDeserializedPayload.payloadObject) }
+          .map { kv => kv._1 -> kv._2.size}
 
         // find public-ness
         permissionsDataSource.inTransaction { db =>
@@ -318,7 +319,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
 
               groupedMethods.values.map { aes:Seq[AgoraEntity] =>
                 val numSnapshots:Int = aes.size
-                val numConfigurations:Int = aes.map { ae => configCounts.getOrElse(ae.id, 0) }.sum
+                val numConfigurations:Int = configCounts.getOrElse(Moniker(aes.head), 0)
                 val isPublic = aes.exists(_.public.contains(true))
                 val managers = aes.flatMap { ae => ae.managers }.distinct
 

@@ -29,6 +29,7 @@ class AgoraTestSuite extends Suites(
   new MethodDefinitionIntegrationSpec,
   new AssociatedConfigurationIntegrationSpec,
   new Ga4ghServiceSpec,
+  new CompatibleConfigurationIntegrationSpec,
   new AdminSweeperSpec(ActorSystem("test"))) with BeforeAndAfterAll with AgoraTestFixture {
 
   val agora = new Agora()

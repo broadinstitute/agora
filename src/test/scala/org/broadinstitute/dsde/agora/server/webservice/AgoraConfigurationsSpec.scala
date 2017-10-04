@@ -152,14 +152,14 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
     }
   }
 
-  "Agora" should "redact associated configurations when the referenced method is redacted" in {
+  "Agora" should "not redact associated configurations when the referenced method is redacted" in {
     Get(ApiUtil.Configurations.withLeadingVersion + "/" +
       testAgoraConfigurationToBeRedactedWithId.namespace.get + "/" +
       testAgoraConfigurationToBeRedactedWithId.name.get + "/" +
       testAgoraConfigurationToBeRedactedWithId.snapshotId.get) ~>
     configurationsService.querySingleRoute ~>
     check {
-      assert(body.asString contains "not found")
+      assert(status == OK)
     }
   }
 

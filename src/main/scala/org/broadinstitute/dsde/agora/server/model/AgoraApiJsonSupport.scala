@@ -111,6 +111,7 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
       if (entity.namespace.nonEmpty) map += ("namespace" -> JsString(entity.namespace.get))
       if (entity.name.nonEmpty) map += ("name" -> JsString(entity.name.get))
       if (entity.snapshotId.nonEmpty) map += ("snapshotId" -> JsNumber(entity.snapshotId.get))
+      if (entity.snapshotComment.nonEmpty) map += ("snapshotComment" -> JsString(entity.snapshotComment.get))
       if (entity.synopsis.nonEmpty) map += ("synopsis" -> JsString(entity.synopsis.get))
       if (entity.documentation.nonEmpty) map += ("documentation" -> JsString(entity.documentation.get))
       if (entity.owner.nonEmpty) map += ("owner" -> JsString(entity.owner.get))
@@ -132,6 +133,7 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
       val namespace = stringOrNone(jsObject, "namespace")
       val name = stringOrNone(jsObject, "name")
       val snapshotId = if (jsObject.getFields("snapshotId").nonEmpty) jsObject.fields("snapshotId").convertTo[Option[Int]] else None
+      val snapshotComment = stringOrNone(jsObject, "snapshotComment")
       val synopsis = stringOrNone(jsObject, "synopsis")
       val documentation = stringOrNone(jsObject, "documentation")
       val owner = stringOrNone(jsObject, "owner")
@@ -147,6 +149,7 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
       val entity = AgoraEntity(namespace = namespace,
                                name = name,
                                snapshotId = snapshotId,
+                               snapshotComment = snapshotComment,
                                synopsis = synopsis,
                                documentation = documentation,
                                owner = owner,

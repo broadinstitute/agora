@@ -39,7 +39,7 @@ class AgoraProjectionsSpec extends ApiServiceSpec with FlatSpecLike {
   }
 
   "Agora" should "return only included fields in the entity" in {
-    Get(ApiUtil.Methods.withLeadingVersion + "?namespace=" + namespace1.get + "&name=" + name2.get + "&includedField=name&includedField=snapshotId") ~>
+    Get(ApiUtil.Methods.withLeadingVersion + "?namespace=" + namespace1.get + "&name=" + name2.get + "&includedField=name&includedField=snapshotId&includedField=snapshotComment") ~>
       methodsService.queryRoute ~> check {
       handleError(
         entity.as[Seq[AgoraEntity]],
@@ -54,7 +54,7 @@ class AgoraProjectionsSpec extends ApiServiceSpec with FlatSpecLike {
     Get(ApiUtil.Methods.withLeadingVersion
       + "?namespace=" + namespace1.get
       + "&name=" + name2.get
-      + "&excludedField=synopsis&excludedField=documentation&excludedField=createDate&excludedField=payload") ~>
+      + "&excludedField=synopsis&excludedField=documentation&excludedField=createDate&excludedField=payload&excludedField=snapshotComment") ~>
       methodsService.queryRoute ~> check {
       handleError(
         entity.as[Seq[AgoraEntity]],

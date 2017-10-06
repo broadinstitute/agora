@@ -48,6 +48,11 @@ paths:
           description: Snapshot ID of method.
           required: false
           type: number
+        - name: snapshotComment
+          in: query
+          description: Snapshot comment of method.
+          required: false
+          type: string
         - name: synopsis
           in: query
           description: Synopsis of method.
@@ -255,10 +260,9 @@ paths:
         - Methods
       responses:
         '200':
-          description: |
-            An integer showing how many methods were deleted.
+          description: An integer showing how many methods were deleted. Should be 1.
           schema:
-            type: number
+            $ref: '#/definitions/Number'
         default:
           description: Error upon redaction
           schema:
@@ -269,9 +273,9 @@ paths:
       description: |
         Inserts a new snapshot of the method into the method repository and
         copies access permissions from previous snapshot, optionally redacting
-        the source snapshot. Documentation, synopsis, and payload are the only
-        arguments considered for the new snapshot; everything else is copied
-        from the source.
+        the source snapshot. Documentation, synopsis, snapshot comment, and
+        payload are the only arguments considered for the new snapshot;
+        everything else is copied from the source.
       consumes:
         - application/json
       produces:
@@ -391,42 +395,47 @@ paths:
       parameters:
         - name: namespace
           in: query
-          description: Namespace of method.
+          description: Namespace of configuration.
           required: false
           type: string
         - name: name
           in: query
-          description: Name of method.
+          description: Name of configuration.
           required: false
           type: string
         - name: snapshotId
           in: query
-          description: Snapshot ID of method.
+          description: Snapshot ID of configuration.
           required: false
           type: number
+        - name: snapshotComment
+          in: query
+          description: Snapshot comment of AgoraEntity
+          required: false
+          type: string
         - name: synopsis
           in: query
-          description: Synopsis of method.
+          description: Synopsis of configuration.
           required: false
           type: string
         - name: documentation
           in: query
-          description: Documentation of method.
+          description: Documentation of configuration.
           required: false
           type: string
         - name: owner
           in: query
-          description: Owner of method.
+          description: Owner of configuration.
           required: false
           type: string
         - name: payload
           in: query
-          description: Payload of method in WDL.
+          description: Payload of config (i.e. a method) as JSON string.
           required: false
           type: string
         - name: entityType
           in: query
-          description: Type of Method - Task or Workflow
+          description: The only supported value is "Configuration"
           required: false
           type: string
         - name: excludedFields
@@ -454,7 +463,7 @@ paths:
             type: object
             $ref: '#/definitions/Error'
     post:
-      summary: Add a Method.
+      summary: Add a Configuration.
       description: |
         Inserts a method into the method repository and
         gives the owner full access permissions. Must supply a namespace
@@ -475,7 +484,7 @@ paths:
         - Configurations
       responses:
         '201':
-          description: Method successfully added.
+          description: Configuration successfully added.
           schema:
             type: object
             $ref: '#/definitions/ConfigurationResponse'
@@ -538,7 +547,7 @@ paths:
     delete:
       summary: Redact a single configuration.
       description: |
-        Redacts a configuration and all of its associated configurations
+        Redacts a configuration
       parameters:
         - name: namespace
           in: path
@@ -559,11 +568,9 @@ paths:
         - Configurations
       responses:
         '200':
-          description: >
-            An integer showing how many configurations were deleted. Should be
-            1.
+          description: An integer showing how many configurations were deleted. Should be 1.
           schema:
-            type: number
+            $ref: '#/definitions/Number'
         default:
           description: Error upon redaction
           schema:
@@ -1422,6 +1429,10 @@ definitions:
         type: string
         description: Synopsis which contains AgoraEntity.
         default: Quickly aligns short nucleotide sequences.
+      snapshotComment:
+        type: string
+        description: Snapshot comment of AgoraEntity
+        default: Improved spline reticulation
       documentation:
         type: string
         description: Documentation of the AgoraEntity.
@@ -1454,6 +1465,10 @@ definitions:
         type: string
         description: Synopsis which contains Configuration.
         default: Quick synopsis of configuration.
+      snapshotComment:
+        type: string
+        description: Snapshot comment of AgoraEntity
+        default: Improved spline reticulation
       documentation:
         type: string
         description: Documentation of the Configuration.
@@ -1485,6 +1500,10 @@ definitions:
       snapshotId:
         type: integer
         description: SnapshotId of AgoraEntity
+      snapshotComment:
+        type: string
+        description: Snapshot comment of AgoraEntity
+        default: Improved spline reticulation
       synopsis:
         type: string
         description: Synopsis which contains AgoraEntity.
@@ -1530,6 +1549,10 @@ definitions:
         type: string
         description: Synopsis which contains AgoraEntity.
         default: Quickly aligns short nucleotide sequences.
+      snapshotComment:
+        type: string
+        description: Snapshot comment of AgoraEntity
+        default: Improved spline reticulation
       documentation:
         type: string
         description: Documentation of the AgoraEntity. MUST BE REQUESTED EXPLICITLY.
@@ -1593,6 +1616,10 @@ definitions:
       snapshotId:
         type: integer
         description: SnapshotId of AgoraEntity
+      snapshotComment:
+        type: string
+        description: Snapshot comment of AgoraEntity
+        default: Improved spline reticulation
       synopsis:
         type: string
         description: Synopsis which contains AgoraEntity.
@@ -1738,5 +1765,7 @@ definitions:
       url:
         type: string
         description: 'Optional url to the tool descriptor used to build this image, should include version information, and can include a git hash (e.g. https://raw.githubusercontent.com/ICGC-TCGA-PanCancer/pcawg_delly_workflow/ea2a5db69bd20a42976838790bc29294df3af02b/delly_docker/Delly.cwl )'
-
+  Number:
+    type: number
+    example: 1
 

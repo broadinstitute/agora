@@ -22,6 +22,7 @@ import scala.concurrent.Future
 class EntityCopySpec extends ApiServiceSpec with FlatSpecLike {
 
   var testEntity1WithId: AgoraEntity = _
+  var testEntityWithSnapshotComment: AgoraEntity = _
 
   val testRoute = ApiUtil.Methods.withLeadingVersion + "/%s/%s/%s"
 
@@ -33,6 +34,8 @@ class EntityCopySpec extends ApiServiceSpec with FlatSpecLike {
     patiently(permissionBusiness.insertEntityPermission(testEntity1WithId, owner1.get, AccessControl(owner2.get, AgoraPermissions(Read))))
     // add owner3 with Create (but not Redact) on entity1
     patiently(permissionBusiness.insertEntityPermission(testEntity1WithId, owner1.get, AccessControl(owner3.get, AgoraPermissions(Create))))
+
+    testEntityWithSnapshotComment = patiently(agoraBusiness.insert(testMethodWithSnapshotComment1, owner1.get))
   }
 
   override def afterAll() = {
@@ -83,8 +86,10 @@ class EntityCopySpec extends ApiServiceSpec with FlatSpecLike {
     testEntityCopy(OK, owner1.get, namespace1.get, name1.get, 1, arg2)
     val arg3 = AgoraEntity(payload=payload2)
     testEntityCopy(OK, owner1.get, namespace1.get, name1.get, 1, arg3)
-    val arg4 = AgoraEntity(synopsis=Some(randUUID), documentation=Some(randUUID), payload=payloadWcTask)
+    val arg4 = AgoraEntity(snapshotComment = Some(randUUID))
     testEntityCopy(OK, owner1.get, namespace1.get, name1.get, 1, arg4)
+    val arg5 = AgoraEntity(synopsis=Some(randUUID), documentation=Some(randUUID), payload=payloadWcTask, snapshotComment = Some(randUUID))
+    testEntityCopy(OK, owner1.get, namespace1.get, name1.get, 1, arg5)
   }
 
   it should "not redact the source entity by default" in {
@@ -97,6 +102,10 @@ class EntityCopySpec extends ApiServiceSpec with FlatSpecLike {
 
   it should "return PartialContent if I can create but not redact" in {
     patiently(Future(testEntityCopy(PartialContent, owner3.get, namespace1.get, name1.get, 3, redact=true)))
+  }
+
+  it should "not copy snapshot comments" in {
+    patiently(Future(testEntityCopy(OK, owner1.get, namespace3.get, name4.get, 1, testEntityWithSnapshotComment)))
   }
 
 
@@ -136,6 +145,10 @@ class EntityCopySpec extends ApiServiceSpec with FlatSpecLike {
               assert(entity.payload == argument.payload)
             else
               assert(entity.payload == testEntity1WithId.payload)
+            if (argument.snapshotComment.isDefined)
+              assert(entity.snapshotComment == argument.snapshotComment)
+            else
+              assert(entity.snapshotComment.isEmpty)
           })
         }
       }

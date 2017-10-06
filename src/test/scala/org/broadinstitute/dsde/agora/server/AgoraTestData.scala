@@ -24,7 +24,8 @@ object AgoraTestData {
   val name5 = Option("cancer_exome_pipeline_v2")
   val nameWithAllLegalChars = Option("abcdefghijklmnopqrstuvwxyz-ABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789.")
   val snapshotId1 = Option(1)
-  val snapshotId2 = Option(2)
+  val snapshotComment1 = Option("snapshot comment 1")
+  val snapshotComment2 = Option("snapshot comment 2")
   val nameNonExistent = Option("nonexistent")
   val synopsis1 = Option("This is a test method")
   val synopsis2 = Option("This is another test method")
@@ -460,7 +461,9 @@ object AgoraTestData {
     documentation = documentation1,
     owner = owner2,
     payload = payload1,
-    entityType = Option(AgoraEntityType.Workflow))
+    entityType = Option(AgoraEntityType.Workflow),
+    snapshotComment = snapshotComment1
+  )
 
   val testEntity7 = AgoraEntity(namespace = namespace1,
     name = name2,
@@ -468,7 +471,9 @@ object AgoraTestData {
     documentation = documentation1,
     owner = owner1,
     payload = payload2,
-    entityType = Option(AgoraEntityType.Task))
+    entityType = Option(AgoraEntityType.Task),
+    snapshotComment = snapshotComment1
+  )
 
   val testEntityToBeRedacted = AgoraEntity(namespace = namespace1,
     name = name3,
@@ -550,6 +555,9 @@ object AgoraTestData {
   val testConfigWithSnapshotMissingConfigVersion =
     testConfigWithSnapshot1.copy(name = name5, payload = methodConfigPayloadMissingConfigVersion)
 
+  val testConfigWithSnapshotComment1 = testConfigWithSnapshot1.copy(snapshotComment = snapshotComment1, name = name4)
+
+  val testMethodWithSnapshotComment1 = testMethodWithSnapshot1.copy(snapshotComment = snapshotComment1, name = name4)
 
   val testBadAgoraEntity = new AgoraEntity(
     namespace = namespace1,

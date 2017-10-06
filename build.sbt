@@ -18,7 +18,10 @@ resolvers += "artifactory-releases" at artifactory + "libs-release"
 resolvers += "artifactory-snapshots" at artifactory + "libs-snapshot"
 
 libraryDependencies ++= Seq(
-  "ch.qos.logback" % "logback-classic" % "1.1.3",
+  "com.fasterxml.jackson.core"     % "jackson-annotations" % "2.8.8",
+  "com.fasterxml.jackson.core"     % "jackson-databind"    % "2.8.8.1",
+  "com.fasterxml.jackson.core"     % "jackson-core"        % "2.8.8",
+  "ch.qos.logback" % "logback-classic" % "1.2.2",
   "com.github.swagger-spray" %% "swagger-spray" % "0.8.0",
   "com.github.simplyscala" %% "scalatest-embedmongo" % "0.2.2",
   "com.google.api-client" % "google-api-client" % "1.20.0" excludeAll ExclusionRule(organization = "com.google.guava"),

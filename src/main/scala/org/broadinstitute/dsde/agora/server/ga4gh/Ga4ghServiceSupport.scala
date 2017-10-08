@@ -9,7 +9,7 @@ import scala.util.{Failure, Success, Try}
 trait Ga4ghServiceSupport {
 
   def parseId(id:String): ToolId = {
-    val ids = id.split(":")
+    val ids = id.split(Models.ID_DELIMITER)
     if (ids.length != 2)
       throw ValidationException(s"This service requires the id to be a colon-delimited namespace and name. Found: $id")
 

@@ -67,7 +67,7 @@ class Ga4ghServiceSpec extends ApiServiceSpec with FreeSpecLike with RouteTest w
         }
       }
       "should return BadRequest when given a non-integer versionId" in {
-        val mungedUrl = defaultTestUrl().replace("1", "notanumber")
+        val mungedUrl = defaultTestUrl().replace("/1", "/notanumber")
         Get(mungedUrl) ~> testRoutes ~> check {
           assert(status == BadRequest)
         }
@@ -139,7 +139,7 @@ class Ga4ghServiceSpec extends ApiServiceSpec with FreeSpecLike with RouteTest w
 
 
   private def testUrl(namespace:String, name:String, snapshotId:Int, descriptorType:String): String =
-    s"/ga4gh/tools/$namespace:$name/versions/$snapshotId/$descriptorType/descriptor"
+    s"/ga4gh/v1/tools/$namespace:$name/versions/$snapshotId/$descriptorType/descriptor"
 
   private def testUrl(entity:AgoraEntity): String =
     testUrl(entity.namespace.get, entity.name.get, entity.snapshotId.get, "WDL")

@@ -137,4 +137,5 @@ object Models {
   implicit val toolDockerfileFormat = jsonFormat2(ToolDockerfile)
   implicit val MetadataFormat = jsonFormat4(Metadata)
 
+  // TODO: ensure json formats read/write keys according to the ga4gh model specs
 }

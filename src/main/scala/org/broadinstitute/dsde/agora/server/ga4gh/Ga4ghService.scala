@@ -18,7 +18,7 @@ abstract class Ga4ghService(permissionsDataSource: PermissionsDataSource)
 
   override implicit val executionContext = scala.concurrent.ExecutionContext.Implicits.global
 
-  def queryHandler = Props(classOf[QueryHandler], permissionsDataSource, executionContext)
+  def queryHandler = Props(classOf[Ga4ghQueryHandler], permissionsDataSource, executionContext)
 
   def routes =
     pathPrefix("ga4gh" / "v1") {

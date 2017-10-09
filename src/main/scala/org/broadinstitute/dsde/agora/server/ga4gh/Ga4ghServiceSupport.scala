@@ -33,10 +33,18 @@ trait Ga4ghServiceSupport {
   // validate url arguments supplied by the user and return an AgoraEntity that can be used as criteria
   // for querying the db.
   def entityFromArguments(id: String, versionId: String): AgoraEntity = {
-    val snapshotId = parseVersionId(versionId)
+    argsToEntity(id, Some(versionId))
+  }
+
+  def entityFromArguments(id: String): AgoraEntity = {
+    argsToEntity(id, None)
+  }
+
+  private def argsToEntity(id: String, versionId: Option[String]): AgoraEntity = {
+    val snapshotOption:Option[Int] = versionId map parseVersionId
     val toolId = parseId(id)
 
-    AgoraEntity(Some(toolId.namespace), Some(toolId.name), Some(snapshotId), entityType = Some(AgoraEntityType.Workflow))
+    AgoraEntity(Some(toolId.namespace), Some(toolId.name), snapshotOption, entityType = Some(AgoraEntityType.Workflow))
   }
 
 

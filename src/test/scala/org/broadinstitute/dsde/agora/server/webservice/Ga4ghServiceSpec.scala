@@ -32,16 +32,25 @@ class Ga4ghServiceSpec extends ApiServiceSpec with FreeSpecLike with RouteTest w
 
   private var agoraEntity1: AgoraEntity = _
   private var agoraEntity2: AgoraEntity = _
+  private var agoraEntity2Snapshot: AgoraEntity = _
   private var redactedEntity: AgoraEntity = _
 
   override def beforeAll(): Unit = {
     ensureDatabasesAreRunning()
     // private method
     agoraEntity1 = patiently(agoraBusiness.insert(testIntegrationEntity, mockAuthenticatedOwner.get))
+
     // public method
     agoraEntity2 = patiently(agoraBusiness.insert(testIntegrationEntity2, owner2.get))
     patiently(permissionBusiness.insertEntityPermission(testIntegrationEntity2.copy(snapshotId = Some(1)), owner2.get,
       AccessControl(AccessControl.publicUser, AgoraPermissions(AgoraPermissions.Read))))
+    // additional non-public snapshot of this public method
+    patiently(agoraBusiness.insert(testIntegrationEntity2, owner2.get))
+    // additional public snapshot of this public method
+    agoraEntity2Snapshot = patiently(agoraBusiness.insert(testIntegrationEntity2, owner2.get))
+    patiently(permissionBusiness.insertEntityPermission(testIntegrationEntity2.copy(snapshotId = Some(3)), owner2.get,
+      AccessControl(AccessControl.publicUser, AgoraPermissions(AgoraPermissions.Read))))
+
     // redacted public method
     redactedEntity = patiently(agoraBusiness.insert(testEntityToBeRedacted2, mockAuthenticatedOwner.get))
     patiently(permissionBusiness.insertEntityPermission(testEntityToBeRedacted2.copy(snapshotId = Some(1)), mockAuthenticatedOwner.get,
@@ -60,6 +69,9 @@ class Ga4ghServiceSpec extends ApiServiceSpec with FreeSpecLike with RouteTest w
       s"at $endpoint" - {
         testNonGet(endpoint)
         // TODO: endpoint-specific tests
+        "should have endpoint-specific tests" in {
+          fail("tests not written")
+        }
       }
     }
 
@@ -68,6 +80,9 @@ class Ga4ghServiceSpec extends ApiServiceSpec with FreeSpecLike with RouteTest w
       s"at $endpointTemplate" - {
         commonTests(endpointTemplate, runVersionTests = false, runDescriptorTypeTests = false)
         // TODO: endpoint-specific tests
+        "should have endpoint-specific tests" in {
+          fail("tests not written")
+        }
       }
     }
 
@@ -75,7 +90,36 @@ class Ga4ghServiceSpec extends ApiServiceSpec with FreeSpecLike with RouteTest w
       val endpointTemplate = "/ga4gh/v1/tools/%s:%s/versions"
       s"at $endpointTemplate" - {
         commonTests(endpointTemplate, runVersionTests = false, runDescriptorTypeTests = false)
-        // TODO: endpoint-specific tests
+        "should return a list of public ToolVersion when asked" in {
+          Get(fromTemplate(endpointTemplate)) ~> testRoutes ~> check {
+            assert(status == OK)
+            val actual = responseAs[Seq[ToolVersion]]
+            assert(actual.size == 2)
+            val firstToolVersion = ToolVersion(
+              name = agoraEntity2.name.get,
+              url = agoraEntity2.url.get,
+              id = agoraEntity2.namespace.get + ":" + agoraEntity2.name.get,
+              image = "",
+              descriptorType = List("WDL"),
+              dockerfile = false,
+              metaVersion = agoraEntity2.snapshotId.get.toString,
+              verified = false,
+              verifiedSource = "")
+            val secondToolVersion = ToolVersion(
+              name = agoraEntity2Snapshot.name.get,
+              url = agoraEntity2Snapshot.url.get,
+              id = agoraEntity2Snapshot.namespace.get + ":" + agoraEntity2Snapshot.name.get,
+              image = "",
+              descriptorType = List("WDL"),
+              dockerfile = false,
+              metaVersion = agoraEntity2Snapshot.snapshotId.get.toString,
+              verified = false,
+              verifiedSource = "")
+            val expected = Set(firstToolVersion, secondToolVersion)
+
+            assertResult(expected) { actual.toSet }
+          }
+        }
       }
     }
 
@@ -153,6 +197,9 @@ class Ga4ghServiceSpec extends ApiServiceSpec with FreeSpecLike with RouteTest w
       s"at $endpointTemplate" - {
         commonTests(endpointTemplate, runDescriptorTypeTests = false)
         // TODO: endpoint-specific tests
+        "should have endpoint-specific tests" in {
+          fail("tests not written")
+        }
       }
     }
 

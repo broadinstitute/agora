@@ -22,15 +22,17 @@ class Ga4ghServiceSpec extends ApiServiceSpec with FreeSpecLike with RouteTest w
     def actorRefFactory: ActorSystem = system
   }
 
-  val ga4ghService = new Ga4ghService(permsDataSource) with ActorRefFactoryContext
+  private val ga4ghService = new Ga4ghService(permsDataSource) with ActorRefFactoryContext
 
   // these routes depend on the exception handler defined in ApiServiceActor, so
   // we have to add the exception handler back here.
-  val testRoutes = wrapWithExceptionHandler{ga4ghService.routes}
+  private val testRoutes = wrapWithExceptionHandler {
+    ga4ghService.routes
+  }
 
-  var agoraEntity1: AgoraEntity = _
-  var agoraEntity2: AgoraEntity = _
-  var redactedEntity: AgoraEntity = _
+  private var agoraEntity1: AgoraEntity = _
+  private var agoraEntity2: AgoraEntity = _
+  private var redactedEntity: AgoraEntity = _
 
   override def beforeAll(): Unit = {
     ensureDatabasesAreRunning()
@@ -52,138 +54,247 @@ class Ga4ghServiceSpec extends ApiServiceSpec with FreeSpecLike with RouteTest w
   }
 
   "Agora's GA4GH API" - {
-    "Tool descriptor endpoint" - {
-      "should return WDL plus metadata when asked for WDL of a public snapshot" in {
-        Get(defaultTestUrl()) ~> testRoutes ~> check {
-          assert(status == OK)
-          val td = responseAs[ToolDescriptor]
-          assert(td.`type` == ToolDescriptorType.WDL)
-          assert(td.descriptor == testIntegrationEntity2.payload.get)
-        }
-      }
-      "should return WDL only when asked for plain-WDL of a public snapshot" in {
-        Get(defaultTestUrl(descriptorType="plain-WDL")) ~> testRoutes ~> check {
-          assert(status == OK)
-          val td = responseAs[String]
-          assert(td == testIntegrationEntity2.payload.get)
-        }
-      }
-      "should return BadRequest when given a non-integer versionId" in {
-        val mungedUrl = defaultTestUrl().replace("/1", "/notanumber")
-        Get(mungedUrl) ~> testRoutes ~> check {
-          assert(status == BadRequest)
-        }
-      }
-      "should return BadRequest when no colon in the namespace:name id" in {
-        val mungedUrl = defaultTestUrl().replace(":", "")
-        Get(mungedUrl) ~> testRoutes ~> check {
-          assert(status == BadRequest)
-        }
-      }
-      "should return BadRequest when too many elements in the namespace:name id" in {
-        val mungedUrl = defaultTestUrl().replace("testWorkflow", "testWorkflow:more:evenmore")
-        Get(mungedUrl) ~> testRoutes ~> check {
-          assert(status == BadRequest)
-        }
-      }
-      "should return BadRequest when asked for CWL" in {
-        Get(defaultTestUrl(descriptorType="CWL")) ~> testRoutes ~> check {
-          assert(status == BadRequest)
-        }
-      }
-      "should return BadRequest when asked for plain-CWL" in {
-        Get(defaultTestUrl(descriptorType="plain-CWL")) ~> testRoutes ~> check {
-          assert(status == BadRequest)
-        }
-      }
-      "should return BadRequest when asked for an unknown type" in {
-        Get(defaultTestUrl(descriptorType="woodle")) ~> testRoutes ~> check {
-          assert(status == BadRequest)
-        }
-      }
-      "should return NotFound when asked for a method that doesn't exist" in {
-        Get(testUrl("not","found",1,"WDL")) ~> testRoutes ~> check {
-          assert(status == NotFound)
-        }
-      }
-      "should return NotFound when asked for a snapshot that doesn't exist" in {
-        Get(defaultTestUrl(snapshotId=123)) ~> testRoutes ~> check {
-          assert(status == NotFound)
-        }
-      }
-      "should return NotFound when asked for a private snapshot" in {
-        // check that the test is set up correctly -
-        // will throw an error if the entity doesn't exist in the db
-        val privateEntity = patiently(agoraBusiness.findSingle(agoraEntity1, Seq(agoraEntity1.entityType.get), mockAuthenticatedOwner.get))
 
-        Get(testUrl(agoraEntity1)) ~> testRoutes ~> check {
-          assert(status == NotFound)
-        }
-      }
-      "should return NotFound when asked for a redacted snapshot" in {
-        Get(testUrl(redactedEntity)) ~> testRoutes ~> check {
-          assert(status == NotFound)
-        }
-      }
-      "should reject when asked for anything other than GET" in {
-        testNonGet(defaultTestUrl())
+    "List all tools endpoint" - {
+      val endpoint = "/ga4gh/v1/tools"
+      s"at $endpoint" - {
+        testNonGet(endpoint)
+        // TODO: endpoint-specific tests
       }
     }
+
+    "Single tool endpoint" - {
+      val endpointTemplate = "/ga4gh/v1/tools/%s:%s"
+      s"at $endpointTemplate" - {
+        commonTests(endpointTemplate, runVersionTests = false, runDescriptorTypeTests = false)
+        // TODO: endpoint-specific tests
+      }
+    }
+
+    "List all versions for tool endpoint" - {
+      val endpointTemplate = "/ga4gh/v1/tools/%s:%s/versions"
+      s"at $endpointTemplate" - {
+        commonTests(endpointTemplate, runVersionTests = false, runDescriptorTypeTests = false)
+        // TODO: endpoint-specific tests
+      }
+    }
+
+    "Single tool version endpoint" - {
+      val endpointTemplate = "/ga4gh/v1/tools/%s:%s/versions/%d"
+      s"at $endpointTemplate" - {
+        commonTests(endpointTemplate, runDescriptorTypeTests = false)
+        // TODO: endpoint-specific tests
+      }
+    }
+
+    "Single tool version descriptor endpoint" - {
+      val endpointTemplate = "/ga4gh/v1/tools/%s:%s/versions/%d/%s/descriptor"
+      s"at $endpointTemplate" - {
+        commonTests(endpointTemplate)
+        "should return WDL plus metadata when asked for WDL of a public snapshot" in {
+          Get(fromTemplate(endpointTemplate)) ~> testRoutes ~> check {
+            assert(status == OK)
+            val td = responseAs[ToolDescriptor]
+            assert(td.`type` == ToolDescriptorType.WDL)
+            assert(td.descriptor == testIntegrationEntity2.payload.get)
+          }
+        }
+        "should return WDL only when asked for plain-WDL of a public snapshot" in {
+          Get(fromTemplate(endpointTemplate, descriptorType = "plain-WDL")) ~> testRoutes ~> check {
+            assert(status == OK)
+            val td = responseAs[String]
+            assert(td == testIntegrationEntity2.payload.get)
+          }
+        }
+      }
+    }
+
+    "Unsupported/undocumented relative-path endpoint" - {
+      val endpointTemplate = "/ga4gh/v1/tools/%s:%s/versions/%d/%s/descriptor/relative-path"
+      s"at $endpointTemplate" - {
+        testNonGet(fromTemplate(endpointTemplate))
+        "should return NotImplemented when called" in {
+          Get(fromTemplate(endpointTemplate)) ~> testRoutes ~> check {
+            assert(status == NotImplemented)
+          }
+        }
+      }
+    }
+
+    "Unsupported/undocumented tests endpoint" - {
+      val endpointTemplate = "/ga4gh/v1/tools/%s:%s/versions/%d/$s/tests"
+      s"at $endpointTemplate" - {
+        testNonGet(fromTemplate(endpointTemplate))
+        "should return NotImplemented when called" in {
+          Get(fromTemplate(endpointTemplate)) ~> testRoutes ~> check {
+            assert(status == NotImplemented)
+          }
+        }
+      }
+    }
+
+    "Single tool version dockerfile endpoint" - {
+      val endpointTemplate = "/ga4gh/v1/tools/%s:%s/versions/%d/dockerfile"
+      s"at $endpointTemplate" - {
+        commonTests(endpointTemplate, runDescriptorTypeTests = false)
+        // TODO: endpoint-specific tests
+      }
+    }
+
     "Metadata endpoint" - {
-      "should reject when asked for anything other than GET" in {
-        testNonGet("/ga4gh/v1/metadata")
-      }
-      "should return expected metadata" in {
-        val expected =
-          """
-            |{
-            |  "version": "1.0.0",
-            |  "api-version": "1.0.0",
-            |  "country": "USA",
-            |  "friendly-name": "FireCloud"
-            |}
-          """.stripMargin.parseJson
-        Get("/ga4gh/v1/metadata") ~> testRoutes ~> check {
-          assert(status == OK)
-          assertResult(expected) { responseAs[String].parseJson }
+      val endpoint = "/ga4gh/v1/metadata"
+      s"at $endpoint" - {
+        testNonGet(endpoint)
+        "should return expected metadata" in {
+          val expected =
+            """
+              |{
+              |  "version": "1.0.0",
+              |  "api-version": "1.0.0",
+              |  "country": "USA",
+              |  "friendly-name": "FireCloud"
+              |}
+            """.stripMargin.parseJson
+          Get(endpoint) ~> testRoutes ~> check {
+            assert(status == OK)
+            assertResult(expected) {
+              responseAs[String].parseJson
+            }
+          }
         }
       }
     }
+
     "Tool-classes endpoint" - {
-      "should reject when asked for anything other than GET" in {
-        testNonGet("/ga4gh/v1/tool-classes")
-      }
-      "should return expected tool classes" in {
-        val expected = Seq(ToolClass("Workflow","Workflow",""))
-        Get("/ga4gh/v1/tool-classes") ~> testRoutes ~> check {
-          assert(status == OK)
-          assertResult(expected) { responseAs[Seq[ToolClass]] }
+      val endpoint = "/ga4gh/v1/tool-classes"
+      s"at $endpoint" - {
+        testNonGet(endpoint)
+        "should return expected tool classes" in {
+          val expected = Seq(ToolClass("Workflow", "Workflow", ""))
+          Get(endpoint) ~> testRoutes ~> check {
+            assert(status == OK)
+            assertResult(expected) {
+              responseAs[Seq[ToolClass]]
+            }
+          }
         }
+      }
+    }
+
+  }
+
+
+  // =============== COMMON TESTS ===============
+
+  private def commonTests(endpointTemplate: String,
+                          runNamespaceTests: Boolean = true,
+                          runVersionTests: Boolean = true,
+                          runDescriptorTypeTests: Boolean = true): Unit = {
+    lazy val endpoint = fromTemplate(endpointTemplate)
+    testNonGet(endpoint)
+    if (runNamespaceTests) commonNamespaceTests(endpoint)
+    if (runVersionTests) commonVersionTests(endpointTemplate)
+    if (runDescriptorTypeTests) commonDescriptorTypeTests(endpoint)
+  }
+
+  private def commonNamespaceTests(endpoint: => String): Unit = {
+    "should return BadRequest when no colon in the namespace:name id" in {
+      val mungedUrl = endpoint.replace(":", "")
+      Get(mungedUrl) ~> testRoutes ~> check {
+        assert(status == BadRequest)
+      }
+    }
+    "should return BadRequest when too many elements in the namespace:name id" in {
+      val mungedUrl = endpoint.replace(":", ":more:")
+      Get(mungedUrl) ~> testRoutes ~> check {
+        assert(status == BadRequest)
+      }
+    }
+  }
+
+  private def commonVersionTests(endpointTemplate: String): Unit = {
+    lazy val endpoint = fromTemplate(endpointTemplate)
+    "should return BadRequest when given a non-integer versionId" in {
+      val mungedUrl = endpoint.replace("/1", "/notanumber")
+      Get(mungedUrl) ~> testRoutes ~> check {
+        assert(status == BadRequest)
+      }
+    }
+    "should return NotFound when asked for a method that doesn't exist" in {
+      val mungedUrl = fromTemplate(endpointTemplate, namespace = "not", name = "found")
+      Get(mungedUrl) ~> testRoutes ~> check {
+        assert(status == NotFound)
+      }
+    }
+    "should return NotFound when asked for a snapshot that doesn't exist" in {
+      val mungedUrl = fromTemplate(endpointTemplate, snapshotId = 123)
+      Get(mungedUrl) ~> testRoutes ~> check {
+        assert(status == NotFound)
+      }
+    }
+    "should return NotFound when asked for a private snapshot" in {
+      // check that the test is set up correctly -
+      // will throw an error if the entity doesn't exist in the db
+      val privateEntity = patiently(agoraBusiness.findSingle(agoraEntity1, Seq(agoraEntity1.entityType.get), mockAuthenticatedOwner.get))
+      val mungedUrl = fromTemplate(endpointTemplate,
+        namespace = agoraEntity1.namespace.get, name = agoraEntity1.name.get, snapshotId = agoraEntity1.snapshotId.get)
+      Get(mungedUrl) ~> testRoutes ~> check {
+        assert(status == NotFound)
+      }
+    }
+    "should return NotFound when asked for a redacted snapshot" in {
+      val mungedUrl = fromTemplate(endpointTemplate,
+        namespace = redactedEntity.namespace.get, name = redactedEntity.name.get, snapshotId = redactedEntity.snapshotId.get)
+      Get(mungedUrl) ~> testRoutes ~> check {
+        assert(status == NotFound)
+      }
+    }
+
+  }
+
+  private def commonDescriptorTypeTests(endpoint: => String): Unit = {
+    "should return BadRequest when asked for CWL" in {
+      val mungedUrl = endpoint.replace("WDL", "CWL")
+      Get(mungedUrl) ~> testRoutes ~> check {
+        assert(status == BadRequest)
+      }
+    }
+    "should return BadRequest when asked for plain-CWL" in {
+      val mungedUrl = endpoint.replace("WDL", "plain-CWL")
+      Get(mungedUrl) ~> testRoutes ~> check {
+        assert(status == BadRequest)
+      }
+    }
+    "should return BadRequest when asked for an unknown type" in {
+      val mungedUrl = endpoint.replace("WDL", "woodle")
+      Get(mungedUrl) ~> testRoutes ~> check {
+        assert(status == BadRequest)
+      }
+    }
+  }
+
+  private def testNonGet(endpoint: => String) = {
+    "should reject when asked for anything other than GET" in {
+      val disallowedMethods = List(HttpMethods.POST, HttpMethods.PUT,
+        HttpMethods.DELETE, HttpMethods.PATCH, HttpMethods.HEAD)
+
+      disallowedMethods foreach {
+        method =>
+          new RequestBuilder(method)(endpoint) ~> testRoutes ~> check {
+            assert(!handled)
+          }
       }
     }
   }
 
 
-  private def testUrl(namespace:String, name:String, snapshotId:Int, descriptorType:String): String =
-    s"/ga4gh/v1/tools/$namespace:$name/versions/$snapshotId/$descriptorType/descriptor"
+  // =============== HELPER METHODS ===============
 
-  private def testUrl(entity:AgoraEntity): String =
-    testUrl(entity.namespace.get, entity.name.get, entity.snapshotId.get, "WDL")
-
-  // this is the known-good public snapshot
-  private def defaultTestUrl(snapshotId:Int=agoraEntity2.snapshotId.get, descriptorType:String="WDL"): String =
-    testUrl(agoraEntity2.namespace.get, agoraEntity2.name.get, snapshotId, descriptorType)
-
-  private def testNonGet(targetUrl: String) = {
-    val disallowedMethods = List(HttpMethods.POST, HttpMethods.PUT,
-      HttpMethods.DELETE, HttpMethods.PATCH, HttpMethods.HEAD)
-
-    disallowedMethods foreach {
-      method =>
-        new RequestBuilder(method)(targetUrl) ~> testRoutes ~> check {
-          assert(!handled)
-        }
-    }
-  }
+  private def fromTemplate(urlTemplate: String,
+                           namespace: String = agoraEntity2.namespace.get,
+                           name: String = agoraEntity2.name.get,
+                           snapshotId: Int = agoraEntity2.snapshotId.get,
+                           descriptorType: String = "WDL"): String =
+    urlTemplate.format(namespace, name, snapshotId, descriptorType)
 
 }

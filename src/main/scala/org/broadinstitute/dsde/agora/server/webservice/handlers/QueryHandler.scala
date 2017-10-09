@@ -36,9 +36,11 @@ class QueryHandler(dataSource: PermissionsDataSource, implicit val ec: Execution
                      payloadAsObject: Boolean) =>
       query(requestContext, entity, entityTypes, username, onlyPayload, payloadAsObject) pipeTo context.parent
 
-    case QueryPublicSingle(requestContext: RequestContext, entity: AgoraEntity, descriptorType: ToolDescriptorType.DescriptorType) =>
-      queryPublic(requestContext, entity, descriptorType) pipeTo context.parent
+    case QueryPublicSingle(requestContext: RequestContext, entity: AgoraEntity) =>
+      queryPublic(requestContext, entity) pipeTo context.parent
 
+    case QueryPublicSinglePayload(requestContext: RequestContext, entity: AgoraEntity, descriptorType: ToolDescriptorType.DescriptorType) =>
+      queryPublicPayload(requestContext, entity, descriptorType) pipeTo context.parent
 
     case Query(requestContext: RequestContext,
                agoraSearch: AgoraEntity,
@@ -98,7 +100,14 @@ class QueryHandler(dataSource: PermissionsDataSource, implicit val ec: Execution
     }
   }
 
-  def queryPublic(requestContext: RequestContext, entity: AgoraEntity, descriptorType: ToolDescriptorType.DescriptorType): Future[PerRequestMessage] = {
+  def queryPublic(requestContext: RequestContext, entity: AgoraEntity): Future[PerRequestMessage] = {
+    val entityTypes = Seq(entity.entityType.getOrElse(throw new ValidationException("need an entity type")))
+    agoraBusiness.findSingle(entity, entityTypes, AccessControl.publicUser) map { foundEntity =>
+      RequestComplete(ToolVersion(foundEntity))
+    }
+  }
+
+  def queryPublicPayload(requestContext: RequestContext, entity: AgoraEntity, descriptorType: ToolDescriptorType.DescriptorType): Future[PerRequestMessage] = {
     val entityTypes = Seq(entity.entityType.getOrElse(throw new ValidationException("need an entity type")))
     agoraBusiness.findSingle(entity, entityTypes, AccessControl.publicUser) map { foundEntity =>
 

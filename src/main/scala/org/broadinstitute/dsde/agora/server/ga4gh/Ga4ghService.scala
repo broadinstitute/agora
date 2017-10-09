@@ -4,10 +4,10 @@ import akka.actor.Props
 import com.typesafe.scalalogging.LazyLogging
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
 import org.broadinstitute.dsde.agora.server.ga4gh.Models._
-import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
+import org.broadinstitute.dsde.agora.server.model.AgoraEntityType
 import org.broadinstitute.dsde.agora.server.webservice.PerRequestCreator
 import org.broadinstitute.dsde.agora.server.webservice.handlers.QueryHandler
-import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages.QueryPublicSingle
+import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages.{QueryPublicSingle, QueryPublicSinglePayload}
 import spray.http.{MediaTypes, StatusCodes}
 import spray.httpx.SprayJsonSupport._
 import spray.json.DefaultJsonProtocol._
@@ -55,9 +55,11 @@ abstract class Ga4ghService(permissionsDataSource: PermissionsDataSource)
           // TODO: tools/{id}/versions endpoint
           complete(spray.http.StatusCodes.NotImplemented)
         } ~
-        path("tools" / Segment / "versions" / Segment) { (id, versionId) =>
-          // TODO: tools/{id}/versions/{version-id} endpoint
-          complete(spray.http.StatusCodes.NotImplemented)
+        path("tools" / Segment / "versions" / Segment) { (id, versionId) => requestContext =>
+          // tools/{id}/versions/{version-id} endpoint
+          val entity = entityFromArguments(id, versionId)
+          val message = QueryPublicSingle(requestContext, entity)
+          perRequest(requestContext, queryHandler, message)
         } ~
         path("tools" / Segment / "versions" / Segment / "dockerfile") { (id, versionId) =>
           // TODO: tools/{id}/versions/{version-id}/dockerfile endpoint
@@ -65,15 +67,9 @@ abstract class Ga4ghService(permissionsDataSource: PermissionsDataSource)
         } ~
         path("tools" / Segment / "versions" / Segment / Segment / "descriptor") { (id, versionId, descriptorType) => requestContext =>
           // /tools/{id}/versions/{version-id}/{type}/descriptor endpoint
-
-            val dType = parseDescriptorType(descriptorType)
-            val snapshotId = parseVersionId(versionId)
-            val toolId = parseId(id)
-
-            val entity = AgoraEntity(Some(toolId.namespace), Some(toolId.name), Some(snapshotId), entityType = Some(AgoraEntityType.Workflow))
-
-            val message = QueryPublicSingle(requestContext, entity, dType)
-            perRequest(requestContext, queryHandler, message)
+          val entity = entityFromArguments(id, versionId)
+          val message = QueryPublicSinglePayload(requestContext, entity, parseDescriptorType(descriptorType))
+          perRequest(requestContext, queryHandler, message)
         } ~
         path("tools" / Segment / "versions" / Segment / Segment / "descriptor" / Segment) { (id, versionId, descriptorType, relativePath) =>
           // /tools/{id}/versions/{version-id}/{type}/descriptor/{relative-path} endpoint not supported

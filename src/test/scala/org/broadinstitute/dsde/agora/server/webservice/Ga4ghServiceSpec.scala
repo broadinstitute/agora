@@ -83,7 +83,22 @@ class Ga4ghServiceSpec extends ApiServiceSpec with FreeSpecLike with RouteTest w
       val endpointTemplate = "/ga4gh/v1/tools/%s:%s/versions/%d"
       s"at $endpointTemplate" - {
         commonTests(endpointTemplate, runDescriptorTypeTests = false)
-        // TODO: endpoint-specific tests
+        "should return a ToolVersion when asked for a public snapshot" in {
+          Get(fromTemplate(endpointTemplate)) ~> testRoutes ~> check {
+            assert(status == OK)
+            val expected = ToolVersion(
+              name = agoraEntity2.name.get,
+              url = agoraEntity2.url.get,
+              id = agoraEntity2.namespace.get + ":" + agoraEntity2.name.get,
+              image = "",
+              descriptorType = List("WDL"),
+              dockerfile = false,
+              metaVersion = agoraEntity2.snapshotId.get.toString,
+              verified = false,
+              verifiedSource = "")
+            assertResult(expected) { responseAs[ToolVersion] }
+          }
+        }
       }
     }
 
@@ -237,7 +252,7 @@ class Ga4ghServiceSpec extends ApiServiceSpec with FreeSpecLike with RouteTest w
       // will throw an error if the entity doesn't exist in the db
       val privateEntity = patiently(agoraBusiness.findSingle(agoraEntity1, Seq(agoraEntity1.entityType.get), mockAuthenticatedOwner.get))
       val mungedUrl = fromTemplate(endpointTemplate,
-        namespace = agoraEntity1.namespace.get, name = agoraEntity1.name.get, snapshotId = agoraEntity1.snapshotId.get)
+        namespace = privateEntity.namespace.get, name = privateEntity.name.get, snapshotId = privateEntity.snapshotId.get)
       Get(mungedUrl) ~> testRoutes ~> check {
         assert(status == NotFound)
       }
@@ -273,7 +288,7 @@ class Ga4ghServiceSpec extends ApiServiceSpec with FreeSpecLike with RouteTest w
     }
   }
 
-  private def testNonGet(endpoint: => String) = {
+  private def testNonGet(endpoint: => String): Unit = {
     "should reject when asked for anything other than GET" in {
       val disallowedMethods = List(HttpMethods.POST, HttpMethods.PUT,
         HttpMethods.DELETE, HttpMethods.PATCH, HttpMethods.HEAD)

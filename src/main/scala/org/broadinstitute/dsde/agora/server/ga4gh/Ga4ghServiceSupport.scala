@@ -3,6 +3,7 @@ package org.broadinstitute.dsde.agora.server.ga4gh
 import org.broadinstitute.dsde.agora.server.exceptions.ValidationException
 import org.broadinstitute.dsde.agora.server.ga4gh.Models.ToolDescriptorType.DescriptorType
 import org.broadinstitute.dsde.agora.server.ga4gh.Models.{ToolDescriptorType, ToolId}
+import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
 
 import scala.util.{Failure, Success, Try}
 
@@ -29,6 +30,14 @@ trait Ga4ghServiceSupport {
     ToolDescriptorType.withName(descriptorType)
   }
 
+  // validate url arguments supplied by the user and return an AgoraEntity that can be used as criteria
+  // for querying the db.
+  def entityFromArguments(id: String, versionId: String): AgoraEntity = {
+    val snapshotId = parseVersionId(versionId)
+    val toolId = parseId(id)
+
+    AgoraEntity(Some(toolId.namespace), Some(toolId.name), Some(snapshotId), entityType = Some(AgoraEntityType.Workflow))
+  }
 
 
 }

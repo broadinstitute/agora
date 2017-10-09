@@ -77,8 +77,11 @@ object ServiceMessages {
                          payloadAsObject: Boolean)
 
   case class QueryPublicSingle(requestContext: RequestContext,
-                         entity: AgoraEntity,
-                         descriptorType: DescriptorType)
+                               entity: AgoraEntity)
+
+  case class QueryPublicSinglePayload(requestContext: RequestContext,
+                                      entity: AgoraEntity,
+                                      descriptorType: DescriptorType)
 
   case class Delete(requestContext: RequestContext,
                          entity: AgoraEntity,

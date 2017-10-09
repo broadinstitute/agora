@@ -29,7 +29,8 @@ object Models {
     def apply(method:MethodDefinition) = fromEntityType(method.entityType)
     def fromEntityType(entityType: Option[AgoraEntityType.EntityType]) = {
       assert(entityType.nonEmpty, "cannot create a ToolClass if entity type is empty")
-      new ToolClass(entityType.get.toString, entityType.get.toString, "")
+      val str = entityType.get.toString
+      new ToolClass(str, str, "")
     }
   }
 

@@ -11,6 +11,8 @@ import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FreeSpecLike}
 import spray.http.HttpMethods
 import spray.http.StatusCodes._
 import spray.httpx.SprayJsonSupport._
+import spray.json._
+import spray.json.DefaultJsonProtocol._
 import spray.testkit.{RouteTest, ScalatestRouteTest}
 
 @DoNotDiscover
@@ -124,14 +126,38 @@ class Ga4ghServiceSpec extends ApiServiceSpec with FreeSpecLike with RouteTest w
         }
       }
       "should reject when asked for anything other than GET" in {
-        val disallowedMethods = List(HttpMethods.POST, HttpMethods.PUT,
-          HttpMethods.DELETE, HttpMethods.PATCH, HttpMethods.HEAD)
-
-        disallowedMethods foreach {
-          method =>
-            new RequestBuilder(method)(defaultTestUrl()) ~> testRoutes ~> check {
-              assert(!handled)
-            }
+        testNonGet(defaultTestUrl())
+      }
+    }
+    "Metadata endpoint" - {
+      "should reject when asked for anything other than GET" in {
+        testNonGet("/ga4gh/v1/metadata")
+      }
+      "should return expected metadata" in {
+        val expected =
+          """
+            |{
+            |  "version": "1.0.0",
+            |  "api-version": "1.0.0",
+            |  "country": "USA",
+            |  "friendly-name": "FireCloud"
+            |}
+          """.stripMargin.parseJson
+        Get("/ga4gh/v1/metadata") ~> testRoutes ~> check {
+          assert(status == OK)
+          assertResult(expected) { responseAs[String].parseJson }
+        }
+      }
+    }
+    "Tool-classes endpoint" - {
+      "should reject when asked for anything other than GET" in {
+        testNonGet("/ga4gh/v1/tool-classes")
+      }
+      "should return expected tool classes" in {
+        val expected = Seq(ToolClass("Workflow","Workflow",""))
+        Get("/ga4gh/v1/tool-classes") ~> testRoutes ~> check {
+          assert(status == OK)
+          assertResult(expected) { responseAs[Seq[ToolClass]] }
         }
       }
     }
@@ -147,5 +173,17 @@ class Ga4ghServiceSpec extends ApiServiceSpec with FreeSpecLike with RouteTest w
   // this is the known-good public snapshot
   private def defaultTestUrl(snapshotId:Int=agoraEntity2.snapshotId.get, descriptorType:String="WDL"): String =
     testUrl(agoraEntity2.namespace.get, agoraEntity2.name.get, snapshotId, descriptorType)
+
+  private def testNonGet(targetUrl: String) = {
+    val disallowedMethods = List(HttpMethods.POST, HttpMethods.PUT,
+      HttpMethods.DELETE, HttpMethods.PATCH, HttpMethods.HEAD)
+
+    disallowedMethods foreach {
+      method =>
+        new RequestBuilder(method)(targetUrl) ~> testRoutes ~> check {
+          assert(!handled)
+        }
+    }
+  }
 
 }

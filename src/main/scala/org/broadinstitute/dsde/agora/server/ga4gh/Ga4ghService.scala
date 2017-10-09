@@ -3,10 +3,14 @@ package org.broadinstitute.dsde.agora.server.ga4gh
 import akka.actor.Props
 import com.typesafe.scalalogging.LazyLogging
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
+import org.broadinstitute.dsde.agora.server.ga4gh.Models._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
 import org.broadinstitute.dsde.agora.server.webservice.PerRequestCreator
 import org.broadinstitute.dsde.agora.server.webservice.handlers.QueryHandler
 import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages.QueryPublicSingle
+import spray.http.{MediaTypes, StatusCodes}
+import spray.httpx.SprayJsonSupport._
+import spray.json.DefaultJsonProtocol._
 import spray.routing._
 
 abstract class Ga4ghService(permissionsDataSource: PermissionsDataSource)
@@ -20,12 +24,24 @@ abstract class Ga4ghService(permissionsDataSource: PermissionsDataSource)
     pathPrefix("ga4gh" / "v1") {
       get {
         path("metadata") {
-          // TODO: metadata endpoint
-          complete(spray.http.StatusCodes.NotImplemented)
+          // because of the dashes in these names, using the automatic spray json marshalling is annoying.
+          // this is a constant response anyway, so hardcode it as a string.
+          val metadataResponse:String =
+            """
+              |{
+              |  "version": "1.0.0",
+              |  "api-version": "1.0.0",
+              |  "country": "USA",
+              |  "friendly-name": "FireCloud"
+              |}
+            """.stripMargin
+          respondWithMediaType(MediaTypes.`application/json`) {
+            complete(StatusCodes.OK, metadataResponse)
+          }
         } ~
         path("tool-classes") {
-          // TODO: tool-classes endpoint
-          complete(spray.http.StatusCodes.NotImplemented)
+          val toolClassesResponse:Seq[ToolClass] = Seq(ToolClass.fromEntityType(Some(AgoraEntityType.Workflow)))
+          complete(toolClassesResponse)
         } ~
         path("tools") {
             // TODO: tools endpoint

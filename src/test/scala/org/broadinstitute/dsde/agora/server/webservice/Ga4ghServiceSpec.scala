@@ -313,13 +313,14 @@ class Ga4ghServiceSpec extends ApiServiceSpec with FreeSpecLike with RouteTest w
       }
     }
 
-    "Single tool version dockerfile endpoint" - {
+    "Unsupported/undocumented single tool version dockerfile endpoint" - {
       val endpointTemplate = "/ga4gh/v1/tools/%s:%s/versions/%d/dockerfile"
       s"at $endpointTemplate" - {
-        commonTests(endpointTemplate, runDescriptorTypeTests = false)
-        // TODO: endpoint-specific tests
-        "should have endpoint-specific tests" in {
-          fail("tests not written")
+        testNonGet(fromTemplate(endpointTemplate))
+        "should return NotImplemented when called" in {
+          Get(fromTemplate(endpointTemplate)) ~> testRoutes ~> check {
+            assert(status == NotImplemented)
+          }
         }
       }
     }

@@ -7,7 +7,7 @@ import org.broadinstitute.dsde.agora.server.ga4gh.Models._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntityType
 import org.broadinstitute.dsde.agora.server.webservice.PerRequestCreator
 import org.broadinstitute.dsde.agora.server.webservice.handlers.QueryHandler
-import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages.{QueryPublic, QueryPublicSingle, QueryPublicSinglePayload}
+import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages.{QueryPublic, QueryPublicSingle, QueryPublicSinglePayload, QueryPublicTool}
 import spray.http.{MediaTypes, StatusCodes}
 import spray.httpx.SprayJsonSupport._
 import spray.json.DefaultJsonProtocol._
@@ -46,10 +46,13 @@ abstract class Ga4ghService(permissionsDataSource: PermissionsDataSource)
         path("tools") {
           // TODO: tools endpoint, with query params and response headers
           complete(spray.http.StatusCodes.NotImplemented)
+          // very similar to method definitions endpoint, except versions are not rolled up
         } ~
-        path("tools" / Segment) { id =>
-          // TODO: tools/{id} endpoint
-          complete(spray.http.StatusCodes.NotImplemented)
+        path("tools" / Segment) { id => requestContext =>
+          // tools/{id} endpoint
+          val entity = entityFromArguments(id)
+          val message = QueryPublicTool(requestContext, entity)
+          perRequest(requestContext, queryHandler, message)
         } ~
         path("tools" / Segment / "versions") { id => requestContext =>
           // tools/{id}/versions endpoint

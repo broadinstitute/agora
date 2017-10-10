@@ -50,21 +50,24 @@ object Models {
     versions: List[ToolVersion])
 
   object Tool {
-    def apply(method:MethodDefinition) = new Tool(
-      url="", // TODO
-      id=ToolId(method).toString,
-      organization="",
-      toolname="", // TODO
-      toolclass=ToolClass(method),
-      description="", // TODO: should we use a snapshot synopsis or description?
-      author="", // TODO: can we get this from the WDL?
-      metaVersion="", // TODO
-      contains=List.empty[String],
-      verified=false,
-      verifiedSource="",
-      signed=false,
-      versions=List.empty[ToolVersion]
-    )
+    def apply(entities:Seq[AgoraEntity]) = {
+      val representative = entities.last
+      new Tool(
+        url="", // TODO
+        id=ToolId(representative).toString,
+        organization="",
+        toolname="", // TODO
+        toolclass=ToolClass(representative),
+        description="", // TODO: should we use a snapshot synopsis or description?
+        author="", // TODO: can we get this from the WDL?
+        metaVersion="", // TODO
+        contains=List.empty[String],
+        verified=false,
+        verifiedSource="",
+        signed=false,
+        versions=entities.toList map (x => ToolVersion(x))
+      )
+    }
   }
 
   case class ToolVersion(

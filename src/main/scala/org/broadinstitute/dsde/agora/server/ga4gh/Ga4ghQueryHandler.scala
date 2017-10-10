@@ -1,14 +1,13 @@
 package org.broadinstitute.dsde.agora.server.ga4gh
 
 import akka.pattern.pipe
-
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, PermissionsDataSource}
 import org.broadinstitute.dsde.agora.server.exceptions.ValidationException
 import org.broadinstitute.dsde.agora.server.ga4gh.Models._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
 import org.broadinstitute.dsde.agora.server.webservice.PerRequest.{PerRequestMessage, RequestComplete}
 import org.broadinstitute.dsde.agora.server.webservice.handlers.QueryHandler
-import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages.{QueryPublic, QueryPublicSingle, QueryPublicSinglePayload}
+import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages.{QueryPublic, QueryPublicSingle, QueryPublicSinglePayload, QueryPublicTool}
 import spray.httpx.SprayJsonSupport._
 import spray.json.DefaultJsonProtocol._
 import spray.routing.RequestContext
@@ -27,6 +26,10 @@ class Ga4ghQueryHandler(dataSource: PermissionsDataSource, override implicit val
 
     case QueryPublic(requestContext: RequestContext, agoraSearch: AgoraEntity) =>
       queryPublic(requestContext, agoraSearch) pipeTo context.parent
+
+    case QueryPublicTool(requestContext: RequestContext, agoraSearch: AgoraEntity) =>
+      queryPublicTool(requestContext, agoraSearch) pipeTo context.parent
+
   }
 
   def queryPublicSingle(requestContext: RequestContext, entity: AgoraEntity): Future[PerRequestMessage] = {
@@ -59,6 +62,13 @@ class Ga4ghQueryHandler(dataSource: PermissionsDataSource, override implicit val
     agoraBusiness.find(agoraSearch, None, Seq(AgoraEntityType.Workflow), AccessControl.publicUser) map { entities =>
       val toolVersions = entities map ToolVersion.apply
       RequestComplete(toolVersions)
+    }
+  }
+
+  def queryPublicTool(requestContext: RequestContext,
+                      agoraSearch: AgoraEntity): Future[PerRequestMessage] = {
+    agoraBusiness.find(agoraSearch, None, Seq(AgoraEntityType.Workflow), AccessControl.publicUser) map { entities =>
+      RequestComplete(Tool(entities))
     }
   }
 

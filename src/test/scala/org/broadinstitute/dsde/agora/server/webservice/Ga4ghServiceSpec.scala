@@ -80,8 +80,54 @@ class Ga4ghServiceSpec extends ApiServiceSpec with FreeSpecLike with RouteTest w
       s"at $endpointTemplate" - {
         commonTests(endpointTemplate, runVersionTests = false, runDescriptorTypeTests = false)
         // TODO: endpoint-specific tests
-        "should have endpoint-specific tests" in {
-          fail("tests not written")
+        "should return a public Tool when asked, with associated ToolVersions" in {
+          Get(fromTemplate(endpointTemplate)) ~> testRoutes ~> check {
+            assert(status == OK)
+            val actual = responseAs[Tool]
+
+            val expected = Tool(
+              url="", // TODO
+              id=agoraEntity2.namespace.get + ":" + agoraEntity2.name.get,
+              organization="",
+              toolname="", // TODO
+              toolclass=ToolClass("Workflow","Workflow",""),
+              description="", // TODO
+              author="", // TODO
+              metaVersion="", // TODO
+              contains=List.empty[String],
+              verified=false,
+              verifiedSource="",
+              signed=false,
+              versions=List.empty[ToolVersion]
+            )
+
+            assertResult(expected) { actual.copy(versions=List.empty[ToolVersion]) }
+
+            val firstToolVersion = ToolVersion(
+              name = agoraEntity2.name.get,
+              url = agoraEntity2.url.get,
+              id = agoraEntity2.namespace.get + ":" + agoraEntity2.name.get,
+              image = "",
+              descriptorType = List("WDL"),
+              dockerfile = false,
+              metaVersion = agoraEntity2.snapshotId.get.toString,
+              verified = false,
+              verifiedSource = "")
+            val secondToolVersion = ToolVersion(
+              name = agoraEntity2Snapshot.name.get,
+              url = agoraEntity2Snapshot.url.get,
+              id = agoraEntity2Snapshot.namespace.get + ":" + agoraEntity2Snapshot.name.get,
+              image = "",
+              descriptorType = List("WDL"),
+              dockerfile = false,
+              metaVersion = agoraEntity2Snapshot.snapshotId.get.toString,
+              verified = false,
+              verifiedSource = "")
+            val expectedVersions = Set(firstToolVersion, secondToolVersion)
+
+            assertResult(expectedVersions) { actual.versions.toSet }
+
+          }
         }
       }
     }

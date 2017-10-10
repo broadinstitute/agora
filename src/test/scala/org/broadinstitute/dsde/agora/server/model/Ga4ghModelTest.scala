@@ -59,15 +59,24 @@ class Ga4ghModelTest extends FreeSpec {
     }
     "Tool" - {
       "should create from MethodDefinition" in {
-        val definition = MethodDefinition(
-          namespace = Some("namespace"),
-          name = Some("name"),
-          synopsis = Some("synopsis"),
-          entityType = Some(AgoraEntityType.Workflow),
-          managers = Seq("manager1","manager2"),
-          public = Some(true),
-          numConfigurations = 1,
-          numSnapshots = 2)
+        val entities = Seq(
+          AgoraEntity(
+            namespace = Some("namespace"),
+            name = Some("name"),
+            snapshotId = Some(1),
+            synopsis = Some("synopsis"),
+            entityType = Some(AgoraEntityType.Workflow),
+            managers = Seq("manager1","manager2")
+          ),
+          AgoraEntity(
+            namespace = Some("namespace"),
+            name = Some("name"),
+            snapshotId = Some(3),
+            synopsis = Some("synopsis3"),
+            entityType = Some(AgoraEntityType.Workflow),
+            managers = Seq("manager1","manager2")
+          )
+        )
 
         val expected = Tool(
           url = "",
@@ -82,10 +91,9 @@ class Ga4ghModelTest extends FreeSpec {
           verified = false,
           verifiedSource = "",
           signed = false,
-          versions = List.empty[ToolVersion]
+          versions = entities.toList map (x => ToolVersion(x))
         )
-        val actual = Tool(definition)
-        // TODO: assert(actual.versions.nonEmpty)
+        val actual = Tool(entities)
         assertResult(expected) { actual }
       }
     }

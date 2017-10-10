@@ -76,13 +76,6 @@ object ServiceMessages {
                          onlyPayload: Boolean,
                          payloadAsObject: Boolean)
 
-  case class QueryPublicSingle(requestContext: RequestContext,
-                               entity: AgoraEntity)
-
-  case class QueryPublicSinglePayload(requestContext: RequestContext,
-                                      entity: AgoraEntity,
-                                      descriptorType: DescriptorType)
-
   case class Delete(requestContext: RequestContext,
                          entity: AgoraEntity,
                          entityTypes: Seq[AgoraEntityType.EntityType],
@@ -100,14 +93,6 @@ object ServiceMessages {
                    agoraProjection: Option[AgoraEntityProjection],
                    entityTypes: Seq[AgoraEntityType.EntityType],
                    username: String)
-
-  case class QueryPublic(requestContext: RequestContext,
-                   agoraSearch: AgoraEntity)
-
-  case class QueryPublicTool(requestContext: RequestContext,
-                         agoraSearch: AgoraEntity)
-
-  case class QueryPublicTools(requestContext: RequestContext)
 
   case class QueryDefinitions(requestContext: RequestContext,
                    username: String)

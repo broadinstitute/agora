@@ -211,20 +211,11 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
   }
 
   def delete(agoraEntity: AgoraEntity, entityTypes: Seq[AgoraEntityType.EntityType], username: String): Future[Int] = {
-    //list of associated configurations. Goes to Mongo so we do it outside the sql txn
-    val configurations = if (entityTypes equals AgoraEntityType.MethodTypes) {
-      val dao = AgoraDao.createAgoraDao(entityTypes)
-      val entityWithId = dao.findSingle(agoraEntity.namespace.get, agoraEntity.name.get, agoraEntity.snapshotId.get)
-      dao.findConfigurations(entityWithId.id.get)
-    } else {
-      Seq()
-    }
-
+    // NB: redacting a method snapshot previously also redacted all configurations for that snapshot. No longer.
     permissionsDataSource.inTransaction { db =>
       db.aePerms.addUserIfNotInDatabase(username) flatMap { _ =>
         checkNamespacePermission(db, agoraEntity, username, AgoraPermissions(Redact)) {
-          DBIO.sequence(configurations map { config => db.aePerms.deleteAllPermissions(config) }) andThen
-            db.aePerms.deleteAllPermissions(agoraEntity)
+          db.aePerms.deleteAllPermissions(agoraEntity)
         }
       }
     }
@@ -293,14 +284,15 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
   def listDefinitions(username: String): Future[Seq[MethodDefinition]] = {
 
     val methodsFuture = findWithIds(AgoraEntity(), None, Seq(AgoraEntityType.Workflow), username)
-    val configsFuture = findWithIds(AgoraEntity(), None, Seq(AgoraEntityType.Configuration), username)
+    val configsFuture = findWithIds(AgoraEntity(), Some(AgoraEntityProjection(Seq("payload"), Seq.empty[String])), Seq(AgoraEntityType.Configuration), username)
 
     configsFuture flatMap { configSnapshots =>
       methodsFuture flatMap { methodSnapshots =>
-        // group/count config snapshots by methodId
-        val configCounts:Map[Option[ObjectId],Int] = configSnapshots
-            .groupBy(_.methodId)
-            .map { kv => kv._1 -> kv._2.size}
+
+        // group/count config snapshots by the (namespace,name) of the method they reference
+        val configCounts:Map[Moniker,Int] = configSnapshots
+          .groupBy{ config => Moniker(config.withDeserializedPayload.payloadObject) }
+          .map { kv => kv._1 -> kv._2.size}
 
         // find public-ness
         permissionsDataSource.inTransaction { db =>
@@ -328,7 +320,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
 
               groupedMethods.values.map { aes:Seq[AgoraEntity] =>
                 val numSnapshots:Int = aes.size
-                val numConfigurations:Int = aes.map { ae => configCounts.getOrElse(ae.id, 0) }.sum
+                val numConfigurations:Int = configCounts.getOrElse(Moniker(aes.head), 0)
                 val isPublic = aes.exists(_.public.contains(true))
                 val managers = aes.flatMap { ae => ae.managers }.distinct
 
@@ -343,13 +335,8 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     }
   }
 
-  def listAssociatedConfigurations(namespace: String, name: String, username: String): Future[Seq[AgoraEntity]] = {
-    val methodCriteria = AgoraEntity(Some(namespace), Some(name))
-
-    // get all method snapshots for the supplied namespace/name (that the user has permissions to)
-    val methodsFuture = findWithIds(methodCriteria, AgoraBusiness.configIdsProjection, Seq(AgoraEntityType.Workflow), username)
-
-    methodsFuture flatMap { methods =>
+  private def listConfigurationsForSnapshots(snapshots: Future[Seq[AgoraEntity]], methodCriteria: AgoraEntity, username:String): Future[Seq[AgoraEntity]] = {
+    snapshots flatMap { methods =>
       // if we didn't find any methods, throw 404
       if (methods.isEmpty)
         throw new AgoraEntityNotFoundException(methodCriteria)
@@ -370,12 +357,28 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     }
   }
 
-  def listCompatibleConfigurations(namespace: String, name: String, snapshotId: Int, username: String): Future[Seq[AgoraEntity]] = {
+  def listAssociatedConfigurations(namespace: String, name: String, username: String): Future[Seq[AgoraEntity]] = {
+    // get all method snapshots for the supplied namespace/name (that the user has permissions to)
+    val methodCriteria = AgoraEntity(Some(namespace), Some(name))
+    val methodsFuture = findWithIds(methodCriteria, AgoraBusiness.configIdsProjection, Seq(AgoraEntityType.Workflow), username)
+    // get all configurations for these snapshots
+    listConfigurationsForSnapshots(methodsFuture, methodCriteria, username)
+  }
 
+  private def listAllConfigurationsForMethod(namespace: String, name: String, username: String): Future[Seq[AgoraEntity]] = {
+    // get all method snapshots for the supplied namespace/name, regardless of permissions
+    val methodCriteria = AgoraEntity(Some(namespace), Some(name))
+    val methodsFuture = Future(AgoraDao.createAgoraDao(Seq(AgoraEntityType.Workflow))
+      .find(methodCriteria, AgoraBusiness.configIdsProjection))
+    // get all configurations for these snapshots
+    listConfigurationsForSnapshots(methodsFuture, methodCriteria, username)
+  }
+
+  def listCompatibleConfigurations(namespace: String, name: String, snapshotId: Int, username: String): Future[Seq[AgoraEntity]] = {
     // get the specific method snapshot specified by the user (will throw error if not found)
     findSingle(namespace, name, snapshotId, Seq(AgoraEntityType.Workflow), username) flatMap { methodSnapshot =>
-      // get all configs that reference any snapshot of this method
-      listAssociatedConfigurations(namespace, name, username) map { configs =>
+      // get all configs that reference any snapshot of this method (regardless of snapshot permission)
+      listAllConfigurationsForMethod(namespace, name, username) map { configs =>
         // short-circuit the WDL parsing: if we found no configs, return the empty seq
         if (configs.isEmpty) configs else {
           // from the method snapshot, get the WDL and parse it

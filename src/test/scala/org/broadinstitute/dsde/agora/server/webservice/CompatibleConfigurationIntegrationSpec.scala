@@ -84,6 +84,19 @@ class CompatibleConfigurationIntegrationSpec extends FreeSpec with RouteTest wit
       Seq("in1"), Seq("out1", "out2")), mockAuthenticatedOwner.get)) // <-- wrong inputs
     patiently(agoraBusiness.insert(testConfig("F", 1,
       Seq("in1","in2"), Seq("out1")), mockAuthenticatedOwner.get)) // <-- wrong outputs
+
+    // two method snapshots, with one and two compatible configs, but first snapshot is redacted
+    val toRedact:AgoraEntity = patiently(agoraBusiness.insert(testMethod("G",
+      Seq("in1","in2","in3"), Seq("out1", "out2","out3")), mockAuthenticatedOwner.get))
+    patiently(agoraBusiness.insert(testMethod("G",
+      Seq("in1","in2","in3"), Seq("out1", "out2","out3")), mockAuthenticatedOwner.get))
+    patiently(agoraBusiness.insert(testConfig("G", 1,
+      Seq("in1","in2","in3"), Seq("out1", "out2","out3")), mockAuthenticatedOwner.get))
+    patiently(agoraBusiness.insert(testConfig("G", 2,
+      Seq("in1","in2","in3"), Seq("out1", "out2","out3")), mockAuthenticatedOwner.get))
+    patiently(agoraBusiness.insert(testConfig("G", 2,
+      Seq("in1","in2","in3"), Seq("out1", "out2","out3")), mockAuthenticatedOwner.get))
+    patiently(agoraBusiness.delete(toRedact, Seq(toRedact.entityType.get), mockAuthenticatedOwner.get))
   }
 
   override def afterAll(): Unit = {
@@ -163,6 +176,16 @@ class CompatibleConfigurationIntegrationSpec extends FreeSpec with RouteTest wit
         assert(configs.isEmpty)
       }
     }
+    "should return compatible configurations that reference a redacted snapshot" in {
+      Get(testUrl("G", 2)) ~> testRoutes ~> check {
+        assert(status == OK)
+        val configs = responseAs[Seq[AgoraEntity]]
+        assert(configs.size == 3)
+        configs.foreach { config =>
+          validateConfig(config, "G", Seq("in1","in2","in3"), Seq("out1", "out2","out3")) }
+      }
+    }
+
   }
 
 

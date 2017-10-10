@@ -5,7 +5,7 @@ name := "Agora"
 
 organization := "org.broadinstitute"
 
-scalaVersion := "2.11.7"
+scalaVersion := "2.11.11"
 
 val sprayV = "1.3.2"
 
@@ -21,6 +21,8 @@ libraryDependencies ++= Seq(
   "com.fasterxml.jackson.core"     % "jackson-annotations" % "2.8.8",
   "com.fasterxml.jackson.core"     % "jackson-databind"    % "2.8.8.1",
   "com.fasterxml.jackson.core"     % "jackson-core"        % "2.8.8",
+  "org.apache.commons" % "commons-compress" % "1.4.1",  // upgrading a transitive dependency to avoid security warnings
+  "org.apache.httpcomponents" % "httpclient" % "4.5.3",  // upgrading a transitive dependency to avoid security warnings
   "ch.qos.logback" % "logback-classic" % "1.2.2",
   "com.github.swagger-spray" %% "swagger-spray" % "0.8.0",
   "com.github.simplyscala" %% "scalatest-embedmongo" % "0.2.2",
@@ -37,7 +39,7 @@ libraryDependencies ++= Seq(
   "io.spray" %% "spray-client" % sprayV,
   "io.spray" %% "spray-json" % "1.3.1", // NB: Not at sprayV. 1.3.2 does not exist.
   "io.spray" %% "spray-routing" % sprayV,
-  "mysql" % "mysql-connector-java" % "5.1.35",
+  "mysql" % "mysql-connector-java" % "5.1.42",
   "org.broadinstitute" %% "wdl4s" % wdl4sV,
   "org.broadinstitute.dsde.vault" %% "vault-common" % "0.1-15-bf74315",
   "org.broadinstitute.dsde" %% "rawls-model" % "0.1-8c63c48-SNAP"

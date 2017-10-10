@@ -33,6 +33,7 @@ class Ga4ghServiceSpec extends ApiServiceSpec with FreeSpecLike with RouteTest w
   private var agoraEntity1: AgoraEntity = _
   private var agoraEntity2: AgoraEntity = _
   private var agoraEntity2Snapshot: AgoraEntity = _
+  private var agoraEntity3: AgoraEntity = _
   private var redactedEntity: AgoraEntity = _
 
   override def beforeAll(): Unit = {
@@ -56,6 +57,12 @@ class Ga4ghServiceSpec extends ApiServiceSpec with FreeSpecLike with RouteTest w
     patiently(permissionBusiness.insertEntityPermission(testEntityToBeRedacted2.copy(snapshotId = Some(1)), mockAuthenticatedOwner.get,
       AccessControl(AccessControl.publicUser, AgoraPermissions(AgoraPermissions.Read))))
     patiently(agoraBusiness.delete(redactedEntity, Seq(redactedEntity.entityType.get), mockAuthenticatedOwner.get))
+
+    // another public method
+    agoraEntity3 = patiently(agoraBusiness.insert(testIntegrationEntity3, owner2.get))
+    patiently(permissionBusiness.insertEntityPermission(testIntegrationEntity3.copy(snapshotId = Some(1)), owner2.get,
+      AccessControl(AccessControl.publicUser, AgoraPermissions(AgoraPermissions.Read))))
+
   }
 
   override def afterAll(): Unit = {
@@ -68,24 +75,34 @@ class Ga4ghServiceSpec extends ApiServiceSpec with FreeSpecLike with RouteTest w
       val endpoint = "/ga4gh/v1/tools"
       s"at $endpoint" - {
         testNonGet(endpoint)
-        // TODO: endpoint-specific tests
-        "should have endpoint-specific tests" in {
-          fail("tests not written")
-        }
-      }
-    }
-
-    "Single tool endpoint" - {
-      val endpointTemplate = "/ga4gh/v1/tools/%s:%s"
-      s"at $endpointTemplate" - {
-        commonTests(endpointTemplate, runVersionTests = false, runDescriptorTypeTests = false)
-        // TODO: endpoint-specific tests
-        "should return a public Tool when asked, with associated ToolVersions" in {
-          Get(fromTemplate(endpointTemplate)) ~> testRoutes ~> check {
+        "should return a list of public Tools" in {
+          Get(endpoint) ~> testRoutes ~> check {
             assert(status == OK)
-            val actual = responseAs[Tool]
+            val actual = responseAs[Seq[Tool]]
 
-            val expected = Tool(
+            val method1Versions = List(
+              ToolVersion(
+                name = agoraEntity2.name.get,
+                url = agoraEntity2.url.get,
+                id = agoraEntity2.namespace.get + ":" + agoraEntity2.name.get,
+                image = "",
+                descriptorType = List("WDL"),
+                dockerfile = false,
+                metaVersion = agoraEntity2.snapshotId.get.toString,
+                verified = false,
+                verifiedSource = ""),
+              ToolVersion(
+                name = agoraEntity2Snapshot.name.get,
+                url = agoraEntity2Snapshot.url.get,
+                id = agoraEntity2Snapshot.namespace.get + ":" + agoraEntity2Snapshot.name.get,
+                image = "",
+                descriptorType = List("WDL"),
+                dockerfile = false,
+                metaVersion = agoraEntity2Snapshot.snapshotId.get.toString,
+                verified = false,
+                verifiedSource = ""))
+
+            val method1 = Tool(
               url="", // TODO
               id=agoraEntity2.namespace.get + ":" + agoraEntity2.name.get,
               organization="",
@@ -98,10 +115,53 @@ class Ga4ghServiceSpec extends ApiServiceSpec with FreeSpecLike with RouteTest w
               verified=false,
               verifiedSource="",
               signed=false,
-              versions=List.empty[ToolVersion]
+              versions=method1Versions
             )
 
-            assertResult(expected) { actual.copy(versions=List.empty[ToolVersion]) }
+            val method2Versions = List(
+              ToolVersion(
+                name = agoraEntity3.name.get,
+                url = agoraEntity3.url.get,
+                id = agoraEntity3.namespace.get + ":" + agoraEntity3.name.get,
+                image = "",
+                descriptorType = List("WDL"),
+                dockerfile = false,
+                metaVersion = agoraEntity3.snapshotId.get.toString,
+                verified = false,
+                verifiedSource = ""))
+
+            val method2 = Tool(
+              url="", // TODO
+              id=agoraEntity3.namespace.get + ":" + agoraEntity3.name.get,
+              organization="",
+              toolname="", // TODO
+              toolclass=ToolClass("Workflow","Workflow",""),
+              description="", // TODO
+              author="", // TODO
+              metaVersion="", // TODO
+              contains=List.empty[String],
+              verified=false,
+              verifiedSource="",
+              signed=false,
+              versions=method2Versions
+            )
+
+            val expected = Seq(method1, method2)
+
+            assertResult(expected) { actual }
+          }
+        }
+      }
+    }
+
+    "Single tool endpoint" - {
+      val endpointTemplate = "/ga4gh/v1/tools/%s:%s"
+      s"at $endpointTemplate" - {
+        commonTests(endpointTemplate, runVersionTests = false, runDescriptorTypeTests = false)
+        "should return a public Tool when asked, with associated ToolVersions" in {
+          Get(fromTemplate(endpointTemplate)) ~> testRoutes ~> check {
+            assert(status == OK)
+            val actual = responseAs[Tool]
 
             val firstToolVersion = ToolVersion(
               name = agoraEntity2.name.get,
@@ -123,10 +183,25 @@ class Ga4ghServiceSpec extends ApiServiceSpec with FreeSpecLike with RouteTest w
               metaVersion = agoraEntity2Snapshot.snapshotId.get.toString,
               verified = false,
               verifiedSource = "")
-            val expectedVersions = Set(firstToolVersion, secondToolVersion)
+            val expectedVersions = List(firstToolVersion, secondToolVersion)
 
-            assertResult(expectedVersions) { actual.versions.toSet }
+            val expected = Tool(
+              url="", // TODO
+              id=agoraEntity2.namespace.get + ":" + agoraEntity2.name.get,
+              organization="",
+              toolname="", // TODO
+              toolclass=ToolClass("Workflow","Workflow",""),
+              description="", // TODO
+              author="", // TODO
+              metaVersion="", // TODO
+              contains=List.empty[String],
+              verified=false,
+              verifiedSource="",
+              signed=false,
+              versions=expectedVersions
+            )
 
+            assertResult(expected) { actual }
           }
         }
       }

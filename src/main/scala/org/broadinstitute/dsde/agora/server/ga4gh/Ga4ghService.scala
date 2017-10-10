@@ -7,7 +7,7 @@ import org.broadinstitute.dsde.agora.server.ga4gh.Models._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntityType
 import org.broadinstitute.dsde.agora.server.webservice.PerRequestCreator
 import org.broadinstitute.dsde.agora.server.webservice.handlers.QueryHandler
-import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages.{QueryPublic, QueryPublicSingle, QueryPublicSinglePayload, QueryPublicTool}
+import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages._
 import spray.http.{MediaTypes, StatusCodes}
 import spray.httpx.SprayJsonSupport._
 import spray.json.DefaultJsonProtocol._
@@ -43,10 +43,11 @@ abstract class Ga4ghService(permissionsDataSource: PermissionsDataSource)
           val toolClassesResponse:Seq[ToolClass] = Seq(ToolClass.fromEntityType(Some(AgoraEntityType.Workflow)))
           complete(toolClassesResponse)
         } ~
-        path("tools") {
-          // TODO: tools endpoint, with query params and response headers
-          complete(spray.http.StatusCodes.NotImplemented)
-          // very similar to method definitions endpoint, except versions are not rolled up
+        path("tools") { requestContext =>
+          // tools endpoint
+          // TODO: query params and response headers
+          val message = QueryPublicTools(requestContext)
+          perRequest(requestContext, queryHandler, message)
         } ~
         path("tools" / Segment) { id => requestContext =>
           // tools/{id} endpoint

@@ -107,6 +107,8 @@ object ServiceMessages {
   case class QueryPublicTool(requestContext: RequestContext,
                          agoraSearch: AgoraEntity)
 
+  case class QueryPublicTools(requestContext: RequestContext)
+
   case class QueryDefinitions(requestContext: RequestContext,
                    username: String)
 

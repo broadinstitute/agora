@@ -7,7 +7,7 @@ import org.broadinstitute.dsde.agora.server.ga4gh.Models._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
 import org.broadinstitute.dsde.agora.server.webservice.PerRequest.{PerRequestMessage, RequestComplete}
 import org.broadinstitute.dsde.agora.server.webservice.handlers.QueryHandler
-import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages.{QueryPublic, QueryPublicSingle, QueryPublicSinglePayload, QueryPublicTool}
+import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages._
 import spray.httpx.SprayJsonSupport._
 import spray.json.DefaultJsonProtocol._
 import spray.routing.RequestContext
@@ -29,6 +29,10 @@ class Ga4ghQueryHandler(dataSource: PermissionsDataSource, override implicit val
 
     case QueryPublicTool(requestContext: RequestContext, agoraSearch: AgoraEntity) =>
       queryPublicTool(requestContext, agoraSearch) pipeTo context.parent
+
+    case QueryPublicTools(requestContext: RequestContext) =>
+      queryPublicTools(requestContext) pipeTo context.parent
+
 
   }
 
@@ -72,4 +76,11 @@ class Ga4ghQueryHandler(dataSource: PermissionsDataSource, override implicit val
     }
   }
 
+  def queryPublicTools(requestContext: RequestContext): Future[PerRequestMessage] = {
+    agoraBusiness.find(AgoraEntity(), None, Seq(AgoraEntityType.Workflow), AccessControl.publicUser) map { allentities =>
+      val groupedSnapshots = allentities.groupBy( ae => (ae.namespace,ae.name))
+      val tools:Seq[Tool] = (groupedSnapshots.values map { entities => Tool(entities )}).toSeq
+      RequestComplete(tools.sortBy(_.id))
+    }
+  }
 }

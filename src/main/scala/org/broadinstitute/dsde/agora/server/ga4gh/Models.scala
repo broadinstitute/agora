@@ -42,10 +42,10 @@ object Models {
     toolclass: ToolClass,
     description: String,
     author: String,
-    metaVersion: String,
+    `meta-version`: String,
     contains: List[String],
     verified: Boolean,
-    verifiedSource: String,
+    `verified-source`: String,
     signed: Boolean,
     versions: List[ToolVersion])
 
@@ -60,10 +60,10 @@ object Models {
         toolclass=ToolClass(representative),
         description="", // TODO: should we use a snapshot synopsis or description?
         author="", // TODO: can we get this from the WDL?
-        metaVersion="", // TODO
+        `meta-version`="", // TODO
         contains=List.empty[String],
         verified=false,
-        verifiedSource="",
+        `verified-source`="",
         signed=false,
         versions=entities.toList map (x => ToolVersion(x))
       )
@@ -75,11 +75,11 @@ object Models {
     url: String,
     id: String,
     image: String,
-    descriptorType: List[String],
+    `descriptor-type`: List[String],
     dockerfile: Boolean,
-    metaVersion: String,
+    `meta-version`: String,
     verified: Boolean,
-    verifiedSource: String)
+    `verified-source`: String)
 
   object ToolVersion{
     def apply(entity: AgoraEntity) = {
@@ -90,11 +90,11 @@ object Models {
         url = entity.url.getOrElse(""),
         id = ToolId(entity).toString,
         image = "",
-        descriptorType = List("WDL"),
+        `descriptor-type` = List("WDL"),
         dockerfile = false, // TODO
-        metaVersion = entity.snapshotId.getOrElse(Int.MinValue).toString,
+        `meta-version` = entity.snapshotId.getOrElse(Int.MinValue).toString,
         verified = false,
-        verifiedSource = ""
+        `verified-source` = ""
       )
     }
   }

@@ -86,10 +86,10 @@ class Ga4ghModelTest extends FreeSpec {
           toolclass = ToolClass("Workflow","Workflow",""),
           description = "",
           author = "",
-          metaVersion = "",
+          `meta-version` = "",
           contains = List.empty[String],
           verified = false,
-          verifiedSource = "",
+          `verified-source` = "",
           signed = false,
           versions = entities.toList map (x => ToolVersion(x))
         )
@@ -137,11 +137,11 @@ class Ga4ghModelTest extends FreeSpec {
           url = "",
           id = "namespace:name",
           image = "",
-          descriptorType = List("WDL"),
+          `descriptor-type` = List("WDL"),
           dockerfile = false,
-          metaVersion = "3",
+          `meta-version` = "3",
           verified = false,
-          verifiedSource = "")
+          `verified-source` = "")
         val actual = ToolVersion(defaultEntity)
       }
     }

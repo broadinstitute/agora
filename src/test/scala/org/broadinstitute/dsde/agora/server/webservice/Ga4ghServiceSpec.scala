@@ -86,21 +86,21 @@ class Ga4ghServiceSpec extends ApiServiceSpec with FreeSpecLike with RouteTest w
                 url = agoraEntity2.url.get,
                 id = agoraEntity2.namespace.get + ":" + agoraEntity2.name.get,
                 image = "",
-                descriptorType = List("WDL"),
+                `descriptor-type` = List("WDL"),
                 dockerfile = false,
-                metaVersion = agoraEntity2.snapshotId.get.toString,
+                `meta-version` = agoraEntity2.snapshotId.get.toString,
                 verified = false,
-                verifiedSource = ""),
+                `verified-source` = ""),
               ToolVersion(
                 name = agoraEntity2Snapshot.name.get,
                 url = agoraEntity2Snapshot.url.get,
                 id = agoraEntity2Snapshot.namespace.get + ":" + agoraEntity2Snapshot.name.get,
                 image = "",
-                descriptorType = List("WDL"),
+                `descriptor-type` = List("WDL"),
                 dockerfile = false,
-                metaVersion = agoraEntity2Snapshot.snapshotId.get.toString,
+                `meta-version` = agoraEntity2Snapshot.snapshotId.get.toString,
                 verified = false,
-                verifiedSource = ""))
+                `verified-source` = ""))
 
             val method1 = Tool(
               url="", // TODO
@@ -110,10 +110,10 @@ class Ga4ghServiceSpec extends ApiServiceSpec with FreeSpecLike with RouteTest w
               toolclass=ToolClass("Workflow","Workflow",""),
               description="", // TODO
               author="", // TODO
-              metaVersion="", // TODO
+              `meta-version`="", // TODO
               contains=List.empty[String],
               verified=false,
-              verifiedSource="",
+              `verified-source`="",
               signed=false,
               versions=method1Versions
             )
@@ -124,11 +124,11 @@ class Ga4ghServiceSpec extends ApiServiceSpec with FreeSpecLike with RouteTest w
                 url = agoraEntity3.url.get,
                 id = agoraEntity3.namespace.get + ":" + agoraEntity3.name.get,
                 image = "",
-                descriptorType = List("WDL"),
+                `descriptor-type` = List("WDL"),
                 dockerfile = false,
-                metaVersion = agoraEntity3.snapshotId.get.toString,
+                `meta-version` = agoraEntity3.snapshotId.get.toString,
                 verified = false,
-                verifiedSource = ""))
+                `verified-source` = ""))
 
             val method2 = Tool(
               url="", // TODO
@@ -138,10 +138,10 @@ class Ga4ghServiceSpec extends ApiServiceSpec with FreeSpecLike with RouteTest w
               toolclass=ToolClass("Workflow","Workflow",""),
               description="", // TODO
               author="", // TODO
-              metaVersion="", // TODO
+              `meta-version`="", // TODO
               contains=List.empty[String],
               verified=false,
-              verifiedSource="",
+              `verified-source`="",
               signed=false,
               versions=method2Versions
             )
@@ -168,21 +168,21 @@ class Ga4ghServiceSpec extends ApiServiceSpec with FreeSpecLike with RouteTest w
               url = agoraEntity2.url.get,
               id = agoraEntity2.namespace.get + ":" + agoraEntity2.name.get,
               image = "",
-              descriptorType = List("WDL"),
+              `descriptor-type` = List("WDL"),
               dockerfile = false,
-              metaVersion = agoraEntity2.snapshotId.get.toString,
+              `meta-version` = agoraEntity2.snapshotId.get.toString,
               verified = false,
-              verifiedSource = "")
+              `verified-source` = "")
             val secondToolVersion = ToolVersion(
               name = agoraEntity2Snapshot.name.get,
               url = agoraEntity2Snapshot.url.get,
               id = agoraEntity2Snapshot.namespace.get + ":" + agoraEntity2Snapshot.name.get,
               image = "",
-              descriptorType = List("WDL"),
+              `descriptor-type` = List("WDL"),
               dockerfile = false,
-              metaVersion = agoraEntity2Snapshot.snapshotId.get.toString,
+              `meta-version` = agoraEntity2Snapshot.snapshotId.get.toString,
               verified = false,
-              verifiedSource = "")
+              `verified-source` = "")
             val expectedVersions = List(firstToolVersion, secondToolVersion)
 
             val expected = Tool(
@@ -193,10 +193,10 @@ class Ga4ghServiceSpec extends ApiServiceSpec with FreeSpecLike with RouteTest w
               toolclass=ToolClass("Workflow","Workflow",""),
               description="", // TODO
               author="", // TODO
-              metaVersion="", // TODO
+              `meta-version`="", // TODO
               contains=List.empty[String],
               verified=false,
-              verifiedSource="",
+              `verified-source`="",
               signed=false,
               versions=expectedVersions
             )
@@ -221,21 +221,21 @@ class Ga4ghServiceSpec extends ApiServiceSpec with FreeSpecLike with RouteTest w
               url = agoraEntity2.url.get,
               id = agoraEntity2.namespace.get + ":" + agoraEntity2.name.get,
               image = "",
-              descriptorType = List("WDL"),
+              `descriptor-type` = List("WDL"),
               dockerfile = false,
-              metaVersion = agoraEntity2.snapshotId.get.toString,
+              `meta-version` = agoraEntity2.snapshotId.get.toString,
               verified = false,
-              verifiedSource = "")
+              `verified-source` = "")
             val secondToolVersion = ToolVersion(
               name = agoraEntity2Snapshot.name.get,
               url = agoraEntity2Snapshot.url.get,
               id = agoraEntity2Snapshot.namespace.get + ":" + agoraEntity2Snapshot.name.get,
               image = "",
-              descriptorType = List("WDL"),
+              `descriptor-type` = List("WDL"),
               dockerfile = false,
-              metaVersion = agoraEntity2Snapshot.snapshotId.get.toString,
+              `meta-version` = agoraEntity2Snapshot.snapshotId.get.toString,
               verified = false,
-              verifiedSource = "")
+              `verified-source` = "")
             val expected = Set(firstToolVersion, secondToolVersion)
 
             assertResult(expected) { actual.toSet }
@@ -256,11 +256,11 @@ class Ga4ghServiceSpec extends ApiServiceSpec with FreeSpecLike with RouteTest w
               url = agoraEntity2.url.get,
               id = agoraEntity2.namespace.get + ":" + agoraEntity2.name.get,
               image = "",
-              descriptorType = List("WDL"),
+              `descriptor-type` = List("WDL"),
               dockerfile = false,
-              metaVersion = agoraEntity2.snapshotId.get.toString,
+              `meta-version` = agoraEntity2.snapshotId.get.toString,
               verified = false,
-              verifiedSource = "")
+              `verified-source` = "")
             assertResult(expected) { responseAs[ToolVersion] }
           }
         }

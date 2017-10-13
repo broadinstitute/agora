@@ -1649,6 +1649,20 @@ securityDefinitions:
       openid: open id authorization
       email: email authorization
       profile: profile authorization
+
+parameters:
+  limit:
+      name: limit
+      in: query
+      description: Amount of records to return in a given page.  By default it is 1000.
+      type: integer
+      format: int32
+  offset:
+      name: offset
+      in: query
+      description: Start index of paging. Pagination results can be based on numbers or other values chosen by the registry implementor (for example, SHA values). If this exceeds the current result set return an empty set.  If not specified in the request this will start at the beginning of the results.
+      type: string
+
 definitions:
   EntityId:
     type: object
@@ -2138,6 +2152,17 @@ definitions:
       url:
         type: string
         description: 'Optional url to the tool descriptor used to build this image, should include version information, and can include a git hash (e.g. https://raw.githubusercontent.com/ICGC-TCGA-PanCancer/pcawg_delly_workflow/ea2a5db69bd20a42976838790bc29294df3af02b/delly_docker/Delly.cwl )'
+  ToolTests:
+    description: A tool document that describes how to test with one or more sample test JSON.
+    required:
+      - test
+    properties:
+      test:
+        type: string
+        description: The test JSON content for this tool.
+      url:
+        type: string
+        description: 'Optional url to the test JSON used to test this tool'
   ToolDockerfile:
     description: A tool dockerfile is a document that describes how to build a particular Docker image.
     required:

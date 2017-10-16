@@ -3,11 +3,9 @@ package org.broadinstitute.dsde.agora.server.webservice.handlers
 import akka.actor.Actor
 import akka.pattern._
 import org.broadinstitute.dsde.agora.server.business.{AgoraBusiness, PermissionBusiness}
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, PermissionsDataSource}
-import org.broadinstitute.dsde.agora.server.exceptions.ValidationException
-import org.broadinstitute.dsde.agora.server.ga4gh.Models._
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
-import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection, AgoraEntityType, MethodDefinition}
+import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection, AgoraEntityType}
 import org.broadinstitute.dsde.agora.server.webservice.PerRequest._
 import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages._
 import spray.httpx.SprayJsonSupport._
@@ -35,10 +33,6 @@ class QueryHandler(dataSource: PermissionsDataSource, implicit val ec: Execution
                      onlyPayload: Boolean,
                      payloadAsObject: Boolean) =>
       query(requestContext, entity, entityTypes, username, onlyPayload, payloadAsObject) pipeTo context.parent
-
-    case QueryPublicSingle(requestContext: RequestContext, entity: AgoraEntity, descriptorType: ToolDescriptorType.DescriptorType) =>
-      queryPublic(requestContext, entity, descriptorType) pipeTo context.parent
-
 
     case Query(requestContext: RequestContext,
                agoraSearch: AgoraEntity,
@@ -95,25 +89,6 @@ class QueryHandler(dataSource: PermissionsDataSource, implicit val ec: Execution
         case _ => RequestComplete(foundEntity)
       }
 
-    }
-  }
-
-  def queryPublic(requestContext: RequestContext, entity: AgoraEntity, descriptorType: ToolDescriptorType.DescriptorType): Future[PerRequestMessage] = {
-    val entityTypes = Seq(entity.entityType.getOrElse(throw new ValidationException("need an entity type")))
-    agoraBusiness.findSingle(entity, entityTypes, AccessControl.publicUser) map { foundEntity =>
-
-      descriptorType match {
-        case ToolDescriptorType.WDL =>
-          // the url we return here is known to be incorrect in FireCloud (GAWB-1741).
-          // we return it anyway because it still provides some information, even if it
-          // requires manual user intervention to work.
-          val result = ToolDescriptor(foundEntity.url.getOrElse(""),
-            foundEntity.payload.getOrElse(""),
-            ToolDescriptorType.WDL)
-          RequestComplete(result)
-        case ToolDescriptorType.PLAIN_WDL =>
-          RequestComplete(foundEntity.payload.getOrElse(""))
-      }
     }
   }
 

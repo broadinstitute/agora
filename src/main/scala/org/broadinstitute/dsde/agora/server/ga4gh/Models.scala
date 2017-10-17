@@ -16,6 +16,7 @@ object Models {
     def apply(method:MethodDefinition): ToolId = ModelSupport.toolIdFromMethod(method)
   }
 
+  // Verified against ga4gh swagger spec
   case class ToolClass(id: String, name: String, description: String)
   object ToolClass {
     def apply(entity:AgoraEntity): ToolClass = ModelSupport.toolClassFromEntityType(entity.entityType)
@@ -23,6 +24,7 @@ object Models {
     def apply(entityType:Some[AgoraEntityType.EntityType]): ToolClass =  ModelSupport.toolClassFromEntityType(entityType)
   }
 
+  // Verified against ga4gh swagger spec
   case class Tool(
     url:String,
     id: String,
@@ -41,6 +43,7 @@ object Models {
     def apply(entities:Seq[AgoraEntity]): Tool = ModelSupport.toolFromEntities(entities)
   }
 
+  // Verified against ga4gh swagger spec
   case class ToolVersion(
     name: String,
     url: String,
@@ -55,10 +58,8 @@ object Models {
     def apply(entity: AgoraEntity): ToolVersion = ModelSupport.toolVersionFromEntity(entity)
   }
 
-  case class ToolDescriptor (
-    url: String,
-    descriptor: String ,
-    `type`: ToolDescriptorType.DescriptorType)
+  // Verified against ga4gh swagger spec
+  case class ToolDescriptor (`type`: ToolDescriptorType.DescriptorType, descriptor: String , url: String)
   object ToolDescriptor {
     def apply(agoraEntity: AgoraEntity): ToolDescriptor = ModelSupport.toolDescriptorFromEntity(agoraEntity)
   }
@@ -70,6 +71,7 @@ object Models {
     val PLAIN_CWL: ToolDescriptorType.Value = Value("plain-CWL")
   }
 
+  // Verified against ga4gh swagger spec
   case class Metadata(
     version: String,
     `api-version`: String,
@@ -92,7 +94,5 @@ object Models {
   implicit val toolVersionFormat: RootJsonFormat[ToolVersion] =jsonFormat9(ToolVersion.apply)
   implicit val toolFormat: RootJsonFormat[Tool] =jsonFormat13(Tool.apply)
   implicit val MetadataFormat: RootJsonFormat[Metadata] = jsonFormat4(Metadata.apply)
-
-  // TODO: ensure json formats read/write keys according to the ga4gh model specs
 
 }

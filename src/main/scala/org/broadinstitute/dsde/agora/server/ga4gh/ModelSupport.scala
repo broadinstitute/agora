@@ -75,9 +75,9 @@ object ModelSupport {
 
   def toolDescriptorFromEntity(entity: AgoraEntity): ToolDescriptor = {
     new ToolDescriptor(
-      url = entity.url.getOrElse(""),
+      `type` = ToolDescriptorType.WDL,
       descriptor = entity.payload.getOrElse(""),
-      ToolDescriptorType.WDL
+      url = entity.url.getOrElse("")
     )
   }
 

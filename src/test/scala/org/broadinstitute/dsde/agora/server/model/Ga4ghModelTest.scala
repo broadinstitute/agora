@@ -226,10 +226,9 @@ class Ga4ghModelTest extends FreeSpec {
 
       "should create from AgoraEntity" in {
         val expected = ToolDescriptor(
-          url = "http://localhost/url",
+          `type` = ToolDescriptorType.WDL,
           descriptor = payload,
-          ToolDescriptorType.WDL
-        )
+          url = "http://localhost/url")
         val actual = ToolDescriptor(entity)
         assertResult(expected) { actual }
       }

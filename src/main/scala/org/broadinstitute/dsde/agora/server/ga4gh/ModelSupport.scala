@@ -39,7 +39,7 @@ object ModelSupport {
     val latestVersion = versions.last
     val id = ToolId(representative).toString
     val url = AgoraConfig.GA4GH.toolUrl(id, latestVersion.id, latestVersion.`descriptor-type`.last)
-    val author = findAuthorInWdl(representative.payload)
+    val author = findAuthorsInWdl(representative.payload)
     new Tool(
       url=url,
       id=id,
@@ -93,13 +93,13 @@ object ModelSupport {
   /**
    * Looks for all populated "meta: author=" fields in the optional wdl meta fields.
    */
-  def findAuthorInWdl(payload: Option[String]): String = {
+  def findAuthorsInWdl(payload: Option[String]): String = {
     val field = "author"
     payload match {
       case Some(wdl) =>
         WdlNamespaceWithWorkflow.load(wdl, Seq.empty) match {
-          case Success(fullWdl) =>
-            val authors = fullWdl.tasks.map(_.meta.getOrElse(field, "")) ++ fullWdl.workflows.map(_.meta.getOrElse(field, ""))
+          case Success(parsed) =>
+            val authors = parsed.tasks.map(_.meta.getOrElse(field, "")) ++ parsed.workflows.map(_.meta.getOrElse(field, ""))
             authors.filterNot(_.isEmpty).mkString(", ")
           case _ => ""
         }

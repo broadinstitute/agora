@@ -201,11 +201,21 @@ class Ga4ghModelTest extends FreeSpec {
           verified = false,
           `verified-source` = "")
         val actual = ToolVersion(defaultEntity)
+        assertResult(expected) { actual }
       }
     }
     // TODO: 
     "ToolDescriptor" - {}
-    "Metadata" - {}
+
+    "Metadata" - {
+      "should create a default Metadata" in {
+        val actual = Metadata.apply()
+        assertResult("1.0.0") { actual.version }
+        assertResult("1.0.0") { actual.`api-version` }
+        assertResult("USA") { actual.country }
+        assertResult("FireCloud") { actual.`friendly-name`}
+      }
+    }
 
   }
 }

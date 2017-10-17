@@ -12,15 +12,15 @@ object Models {
     override def toString: String = s"$namespace$ID_DELIMITER$name"
   }
   object ToolId {
-    def apply(entity:AgoraEntity): ToolId = ModelSupport.ToolId(entity)
-    def apply(method:MethodDefinition): ToolId = ModelSupport.ToolId(method)
+    def apply(entity:AgoraEntity): ToolId = ModelSupport.toolIdFromEntity(entity)
+    def apply(method:MethodDefinition): ToolId = ModelSupport.toolIdFromMethod(method)
   }
 
   case class ToolClass(id: String, name: String, description: String)
   object ToolClass {
-    def apply(entity:AgoraEntity): ToolClass = ModelSupport.ToolClass(entity)
-    def apply(method:MethodDefinition): ToolClass = ModelSupport.ToolClass(method)
-    def apply(entityType:Some[AgoraEntityType.EntityType]): ToolClass =  ModelSupport.ToolClass(entityType)
+    def apply(entity:AgoraEntity): ToolClass = ModelSupport.toolClassFromEntityType(entity.entityType)
+    def apply(method:MethodDefinition): ToolClass = ModelSupport.toolClassFromEntityType(method.entityType)
+    def apply(entityType:Some[AgoraEntityType.EntityType]): ToolClass =  ModelSupport.toolClassFromEntityType(entityType)
   }
 
   case class Tool(
@@ -39,7 +39,7 @@ object Models {
     versions: List[ToolVersion])
 
   object Tool {
-    def apply(entities:Seq[AgoraEntity]): Tool = ModelSupport.Tool(entities)
+    def apply(entities:Seq[AgoraEntity]): Tool = ModelSupport.toolFromEntities(entities)
   }
 
   case class ToolVersion(
@@ -54,7 +54,7 @@ object Models {
     `verified-source`: String)
 
   object ToolVersion{
-    def apply(entity: AgoraEntity): ToolVersion = ModelSupport.ToolVersion(entity)
+    def apply(entity: AgoraEntity): ToolVersion = ModelSupport.toolVersionFromEntity(entity)
   }
 
   case class ToolDescriptor (

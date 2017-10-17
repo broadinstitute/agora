@@ -13,81 +13,70 @@ import scala.util.Success
 object ModelSupport {
 
   final val ORGANIZATION = "The Broad Institute or Harvard and MIT"
+  final val VERIFIED_SOURCE = ""
 
-
-  object ToolId {
-    def apply(entity:AgoraEntity): ToolId = {
-      assert(entity.namespace.nonEmpty, "cannot create a ToolId if entity namespace is empty")
-      assert(entity.name.nonEmpty, "cannot create a ToolId if entity name is empty")
-      new ToolId(entity.namespace.get, entity.name.get)
-    }
-    def apply(method:MethodDefinition): ToolId = {
-      assert(method.namespace.nonEmpty, "cannot create a ToolId if method definition namespace is empty")
-      assert(method.name.nonEmpty, "cannot create a ToolId if method definition name is empty")
-      new ToolId(method.namespace.get, method.name.get)
-    }
+  def toolIdFromEntity(entity:AgoraEntity): ToolId = {
+    assert(entity.namespace.nonEmpty, "cannot create a ToolId if entity namespace is empty")
+    assert(entity.name.nonEmpty, "cannot create a ToolId if entity name is empty")
+    new ToolId(entity.namespace.get, entity.name.get)
   }
 
-
-  object ToolClass {
-    def apply(entity:AgoraEntity): ToolClass = apply(entity.entityType)
-    def apply(method:MethodDefinition): ToolClass = apply(method.entityType)
-    def apply(entityType: Option[AgoraEntityType.EntityType]): ToolClass = {
-      assert(entityType.nonEmpty, "cannot create a ToolClass if entity type is empty")
-      val str = entityType.get.toString
-      new ToolClass(str, str, "")
-    }
+  def toolIdFromMethod(method:MethodDefinition): ToolId = {
+    assert(method.namespace.nonEmpty, "cannot create a ToolId if method definition namespace is empty")
+    assert(method.name.nonEmpty, "cannot create a ToolId if method definition name is empty")
+    new ToolId(method.namespace.get, method.name.get)
   }
 
-
-  object Tool {
-    def apply(entities:Seq[AgoraEntity]): Tool = {
-      val representative = entities.last
-      val versions = entities.toList map (x => ModelSupport.ToolVersion(x))
-      val latestVersion = versions.last
-      val id = ToolId(representative).toString
-      val url = AgoraConfig.GA4GH.toolUrl(id, latestVersion.id, latestVersion.`descriptor-type`.last)
-      val author = findAuthorInWdl(representative.payload)
-      new Tool(
-        url=url,
-        id=id,
-        organization=ORGANIZATION,
-        toolname=latestVersion.name,
-        toolclass=ToolClass(representative),
-        description=representative.synopsis.getOrElse(""),
-        author=author,
-        `meta-version` = latestVersion.`meta-version`,
-        contains=List.empty[String],
-        verified=false,
-        `verified-source`="",
-        signed=false,
-        versions=versions
-      )
-    }
+  def toolClassFromEntityType(entityType: Option[AgoraEntityType.EntityType]): ToolClass = {
+    assert(entityType.nonEmpty, "cannot create a ToolClass if entity type is empty")
+    val str = entityType.get.toString
+    new ToolClass(str, str, "")
   }
 
-
-  object ToolVersion{
-    def apply(entity: AgoraEntity): ToolVersion = {
-      assert(entity.entityType.contains(AgoraEntityType.Workflow), "cannot create a ToolVersion if entityType is not Workflow")
-      assert(entity.snapshotId.nonEmpty, "cannot create a ToolVersion if snapshot id is empty")
-      new ToolVersion(
-        name = entity.name.getOrElse(""),
-        url = entity.url.getOrElse(""),
-        id = ToolId(entity).toString,
-        image = "",
-        `descriptor-type` = List("WDL"),
-        dockerfile = false, // TODO
-        `meta-version` = entity.snapshotId.getOrElse(Int.MinValue).toString,
-        verified = false,
-        `verified-source` = ""
-      )
-    }
+  def toolFromEntities(entities:Seq[AgoraEntity]): Tool = {
+    val representative = entities.last
+    val versions = entities.toList map (x => ModelSupport.toolVersionFromEntity(x))
+    val latestVersion = versions.last
+    val id = ToolId(representative).toString
+    val url = AgoraConfig.GA4GH.toolUrl(id, latestVersion.id, latestVersion.`descriptor-type`.last)
+    val author = findAuthorInWdl(representative.payload)
+    new Tool(
+      url=url,
+      id=id,
+      organization=ORGANIZATION,
+      toolname=latestVersion.name,
+      toolclass=ToolClass(representative),
+      description=representative.synopsis.getOrElse(""),
+      author=author,
+      `meta-version` = latestVersion.`meta-version`,
+      contains=List.empty[String],
+      verified=false,
+      `verified-source`= VERIFIED_SOURCE,
+      signed=false,
+      versions=versions
+    )
   }
 
+  def toolVersionFromEntity(entity: AgoraEntity): ToolVersion = {
+    assert(entity.entityType.contains(AgoraEntityType.Workflow), "cannot create a ToolVersion if entityType is not Workflow")
+    assert(entity.snapshotId.nonEmpty, "cannot create a ToolVersion if snapshot id is empty")
+    new ToolVersion(
+      name = entity.name.getOrElse(""),
+      url = entity.url.getOrElse(""),
+      id = ToolId(entity).toString,
+      image = "",
+      `descriptor-type` = List("WDL"),
+      dockerfile = false,
+      `meta-version` = entity.snapshotId.getOrElse(Int.MinValue).toString,
+      verified = false,
+      `verified-source` = VERIFIED_SOURCE
+    )
+  }
 
-  // Looks for the last populated "meta: author" field in the wdl meta data
-  private def findAuthorInWdl(payload: Option[String]): String = {
+  /**
+   * Looks for all populated "meta: author=" fields in the optional wdl meta fields.
+   */
+  def findAuthorInWdl(payload: Option[String]): String = {
     val field = "author"
     payload match {
       case Some(wdl) =>

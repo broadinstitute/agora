@@ -105,7 +105,7 @@ class Ga4ghServiceSpec extends ApiServiceSpec with FreeSpecLike with RouteTest w
             val method1 = Tool(
               url=AgoraConfig.GA4GH.toolUrl(agoraEntity2.namespace.get + ":" + agoraEntity2.name.get, method1Versions.last.id, method1Versions.last.`descriptor-type`.last),
               id=agoraEntity2.namespace.get + ":" + agoraEntity2.name.get,
-              organization=ModelSupport.ORGANIZATION,
+              organization=ModelSupport.organization,
               toolname=agoraEntity2.name.get,
               toolclass=ToolClass("Workflow","Workflow",""),
               description=agoraEntity2.synopsis.get,
@@ -133,7 +133,7 @@ class Ga4ghServiceSpec extends ApiServiceSpec with FreeSpecLike with RouteTest w
             val method2 = Tool(
               url=AgoraConfig.GA4GH.toolUrl(agoraEntity3.namespace.get + ":" + agoraEntity3.name.get, method2Versions.last.id, method2Versions.last.`descriptor-type`.last),
               id=agoraEntity3.namespace.get + ":" + agoraEntity3.name.get,
-              organization=ModelSupport.ORGANIZATION,
+              organization=ModelSupport.organization,
               toolname=agoraEntity3.name.get,
               toolclass=ToolClass("Workflow","Workflow",""),
               description=agoraEntity3.synopsis.get,
@@ -188,7 +188,7 @@ class Ga4ghServiceSpec extends ApiServiceSpec with FreeSpecLike with RouteTest w
             val expected = Tool(
               url=AgoraConfig.GA4GH.toolUrl(agoraEntity2.namespace.get + ":" + agoraEntity2.name.get, secondToolVersion.id, secondToolVersion.`descriptor-type`.last),
               id=agoraEntity2.namespace.get + ":" + agoraEntity2.name.get,
-              organization=ModelSupport.ORGANIZATION,
+              organization=ModelSupport.organization,
               toolname=agoraEntity2.name.get,
               toolclass=ToolClass("Workflow","Workflow",""),
               description=agoraEntity2.synopsis.get,

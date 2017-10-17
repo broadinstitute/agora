@@ -12,8 +12,12 @@ import scala.util.Success
   */
 object ModelSupport {
 
-  final val ORGANIZATION = "The Broad Institute or Harvard and MIT"
-  final val VERIFIED_SOURCE = ""
+  final val organization = "The Broad Institute or Harvard and MIT"
+  final val verifiedSource = ""
+  final val version = "1.0.0"
+  final val apiVersion = version
+  final val country = "USA"
+  final val friendlyName = "FireCloud"
 
   def toolIdFromEntity(entity:AgoraEntity): ToolId = {
     assert(entity.namespace.nonEmpty, "cannot create a ToolId if entity namespace is empty")
@@ -43,7 +47,7 @@ object ModelSupport {
     new Tool(
       url=url,
       id=id,
-      organization=ORGANIZATION,
+      organization=organization,
       toolname=latestVersion.name,
       toolclass=ToolClass(representative),
       description=representative.synopsis.getOrElse(""),
@@ -51,7 +55,7 @@ object ModelSupport {
       `meta-version` = latestVersion.`meta-version`,
       contains=List.empty[String],
       verified=false,
-      `verified-source`= VERIFIED_SOURCE,
+      `verified-source`= verifiedSource,
       signed=false,
       versions=versions
     )
@@ -69,7 +73,7 @@ object ModelSupport {
       dockerfile = false,
       `meta-version` = entity.snapshotId.getOrElse(Int.MinValue).toString,
       verified = false,
-      `verified-source` = VERIFIED_SOURCE
+      `verified-source` = verifiedSource
     )
   }
 
@@ -83,11 +87,9 @@ object ModelSupport {
 
   /**
     * Metadata is always a constant.
-    *
-    * @return Metadata
     */
   def metadata(): Metadata = {
-    new Metadata(version = "1.0.0", `api-version` = "1.0.0", country = "USA", `friendly-name` = "FireCloud")
+    new Metadata(version = version, `api-version` = apiVersion, country = country, `friendly-name` = friendlyName)
   }
 
   /**

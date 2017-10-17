@@ -106,7 +106,7 @@ class Ga4ghModelTest extends FreeSpec {
         val expected = Tool(
           url = "http://localhost/ga4gh/v1/tools/namespace:name/versions/namespace:name/WDL/descriptor",
           id = "namespace:name",
-          organization = ModelSupport.ORGANIZATION,
+          organization = ModelSupport.organization,
           toolname = "name",
           toolclass = ToolClass("Workflow","Workflow",""),
           description = "synopsis3",
@@ -144,7 +144,7 @@ class Ga4ghModelTest extends FreeSpec {
         val expected = Tool(
           url = "http://localhost/ga4gh/v1/tools/namespace:name/versions/namespace:name/WDL/descriptor",
           id = "namespace:name",
-          organization = ModelSupport.ORGANIZATION,
+          organization = ModelSupport.organization,
           toolname = "name",
           toolclass = ToolClass("Workflow","Workflow",""),
           description = "synopsis3",
@@ -239,10 +239,10 @@ class Ga4ghModelTest extends FreeSpec {
 
       "should create a default Metadata" in {
         val actual = Metadata.apply()
-        assertResult("1.0.0") { actual.version }
-        assertResult("1.0.0") { actual.`api-version` }
-        assertResult("USA") { actual.country }
-        assertResult("FireCloud") { actual.`friendly-name`}
+        assertResult(ModelSupport.version) { actual.version }
+        assertResult(ModelSupport.apiVersion) { actual.`api-version` }
+        assertResult(ModelSupport.country) { actual.country }
+        assertResult(ModelSupport.friendlyName) { actual.`friendly-name`}
       }
 
     }

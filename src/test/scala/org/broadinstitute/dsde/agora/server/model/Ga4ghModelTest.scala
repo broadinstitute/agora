@@ -205,7 +205,6 @@ class Ga4ghModelTest extends FreeSpec {
     }
     // TODO: 
     "ToolDescriptor" - {}
-    "ToolDockerfile" - {}
     "Metadata" - {}
 
   }

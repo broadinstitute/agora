@@ -70,12 +70,6 @@ object Models {
     val PLAIN_CWL: ToolDescriptorType.Value = Value("plain-CWL")
   }
 
-  // ToolTests
-
-  case class ToolDockerfile(
-    dockerfile: String,
-    url: String)
-
   case class Metadata(
     version: String,
     apiVersion: String,
@@ -95,7 +89,6 @@ object Models {
   implicit val ToolDescriptorFormat: RootJsonFormat[ToolDescriptor] = jsonFormat3(ToolDescriptor)
   implicit val toolVersionFormat: RootJsonFormat[ToolVersion] =jsonFormat9(ToolVersion.apply)
   implicit val toolFormat: RootJsonFormat[Tool] =jsonFormat13(Tool.apply)
-  implicit val toolDockerfileFormat: RootJsonFormat[ToolDockerfile] = jsonFormat2(ToolDockerfile)
   implicit val MetadataFormat: RootJsonFormat[Metadata] = jsonFormat4(Metadata)
 
   // TODO: ensure json formats read/write keys according to the ga4gh model specs

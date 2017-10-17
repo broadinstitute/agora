@@ -1,7 +1,7 @@
 package org.broadinstitute.dsde.agora.server.ga4gh
 
 import org.broadinstitute.dsde.agora.server.AgoraConfig
-import org.broadinstitute.dsde.agora.server.ga4gh.Models.{Tool, ToolClass, ToolId, ToolVersion}
+import org.broadinstitute.dsde.agora.server.ga4gh.Models.{Metadata, Tool, ToolClass, ToolId, ToolVersion}
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType, MethodDefinition}
 import wdl4s.WdlNamespaceWithWorkflow
 
@@ -71,6 +71,15 @@ object ModelSupport {
       verified = false,
       `verified-source` = VERIFIED_SOURCE
     )
+  }
+
+  /**
+    * Metadata is always a constant.
+    *
+    * @return Metadata
+    */
+  def metadata(): Metadata = {
+    new Metadata(version = "1.0.0", `api-version` = "1.0.0", country = "USA", `friendly-name` = "FireCloud")
   }
 
   /**

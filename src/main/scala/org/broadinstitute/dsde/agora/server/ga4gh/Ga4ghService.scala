@@ -23,19 +23,8 @@ abstract class Ga4ghService(permissionsDataSource: PermissionsDataSource)
     pathPrefix("ga4gh" / "v1") {
       get {
         path("metadata") {
-          // because of the dashes in these names, using the automatic spray json marshalling is annoying.
-          // this is a constant response anyway, so hardcode it as a string.
-          val metadataResponse:String =
-            """
-              |{
-              |  "version": "1.0.0",
-              |  "api-version": "1.0.0",
-              |  "country": "USA",
-              |  "friendly-name": "FireCloud"
-              |}
-            """.stripMargin
           respondWithMediaType(MediaTypes.`application/json`) {
-            complete(StatusCodes.OK, metadataResponse)
+            complete(StatusCodes.OK, Metadata())
           }
         } ~
         path("tool-classes") {

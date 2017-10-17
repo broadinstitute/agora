@@ -7,9 +7,9 @@ organization := "org.broadinstitute"
 
 scalaVersion := "2.11.11"
 
-val sprayV = "1.3.2"
+val sprayV = "1.3.4"
 
-val wdl4sV = "0.13"
+val wdl4sV = "0.15-814d203"
 
 val artifactory = "https://broadinstitute.jfrog.io/broadinstitute/"
 
@@ -24,7 +24,7 @@ libraryDependencies ++= Seq(
   "org.apache.commons" % "commons-compress" % "1.4.1",  // upgrading a transitive dependency to avoid security warnings
   "org.apache.httpcomponents" % "httpclient" % "4.5.3",  // upgrading a transitive dependency to avoid security warnings
   "ch.qos.logback" % "logback-classic" % "1.2.2",
-  "com.github.swagger-spray" %% "swagger-spray" % "0.8.0",
+  "com.github.swagger-spray" %% "swagger-spray" % "0.8.0" excludeAll ExclusionRule(organization = "io.spray"),
   "com.github.simplyscala" %% "scalatest-embedmongo" % "0.2.2",
   "com.google.api-client" % "google-api-client" % "1.20.0" excludeAll ExclusionRule(organization = "com.google.guava"),
   "com.google.apis" % "google-api-services-admin-directory" % "directory_v1-rev53-1.20.0" excludeAll ExclusionRule(organization = "com.google.guava"),
@@ -35,12 +35,12 @@ libraryDependencies ++= Seq(
   "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0",
   "com.typesafe.slick" %% "slick" % "3.2.0",
   "com.zaxxer" % "HikariCP" % "2.3.9",
+  "org.broadinstitute" %% "wdl4s" % wdl4sV,
   "io.spray" %% "spray-can" % sprayV,
   "io.spray" %% "spray-client" % sprayV,
-  "io.spray" %% "spray-json" % "1.3.1", // NB: Not at sprayV. 1.3.2 does not exist.
-  "io.spray" %% "spray-routing" % sprayV,
+  "io.spray" %% "spray-json" % "1.3.3", // NB: Not at sprayV. 1.3.4 does not exist.
+  "io.spray" %% "spray-routing-shapeless23" % sprayV,
   "mysql" % "mysql-connector-java" % "5.1.42",
-  "org.broadinstitute" %% "wdl4s" % wdl4sV,
   "org.broadinstitute.dsde.vault" %% "vault-common" % "0.1-15-bf74315",
   "org.broadinstitute.dsde" %% "rawls-model" % "0.1-8c63c48-SNAP"
     exclude("com.typesafe.scala-logging", "scala-logging_2.11"),

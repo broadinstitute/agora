@@ -8,6 +8,27 @@ import org.scalatest.{DoNotDiscover, FreeSpec}
 class Ga4ghModelTest extends FreeSpec {
 
   "GA4GH model classes" - {
+
+    val payload = """|task a {
+                     |  String prefix
+                     |  Array[Int] ints
+                     |  command {
+                     |    python script.py ${write_lines(ints)} > ${prefix + ".out"}
+                     |  }
+                     |  meta {
+                     |    author: "Test User"
+                     |    email: "test@company.org"
+                     |  }
+                     |}
+                     |workflow wf {
+                     |  call a
+                     |  meta {
+                     |    author: "Test User 2"
+                     |    email: "test2@company.org"
+                     |  }
+                     |}
+                     |""".stripMargin
+
     "ToolId" - {
       "should error with empty namespace" in {
         val entity = AgoraEntity(None, Some("name"))
@@ -38,6 +59,7 @@ class Ga4ghModelTest extends FreeSpec {
         assertResult("methodNamespace:methodName") { ToolId(method).toString }
       }
     }
+
     "ToolClass" - {
       "should error with empty entityType" in {
         val entity = AgoraEntity()
@@ -58,6 +80,7 @@ class Ga4ghModelTest extends FreeSpec {
         assertResult( ToolClass("Workflow", "Workflow", "")) { ToolClass(method) }
       }
     }
+
     "Tool" - {
       "should create from MethodDefinition with author" in {
         val entities = Seq(
@@ -76,25 +99,7 @@ class Ga4ghModelTest extends FreeSpec {
             synopsis = Some("synopsis3"),
             entityType = Some(AgoraEntityType.Workflow),
             managers = Seq("manager1","manager2"),
-            payload = Some("""|task a {
-                              |  String prefix
-                              |  Array[Int] ints
-                              |  command {
-                              |    python script.py ${write_lines(ints)} > ${prefix + ".out"}
-                              |  }
-                              |  meta {
-                              |    author: "Test User"
-                              |    email: "test@company.org"
-                              |  }
-                              |}
-                              |workflow wf {
-                              |  call a
-                              |  meta {
-                              |    author: "Test User 2"
-                              |    email: "test2@company.org"
-                              |  }
-                              |}
-                              |""".stripMargin)
+            payload = Some(payload)
           )
         )
 
@@ -155,6 +160,7 @@ class Ga4ghModelTest extends FreeSpec {
         assertResult(expected) { actual }
       }
     }
+
     "ToolVersion" - {
 
       val defaultEntity = AgoraEntity(namespace = Some("namespace"), name = Some("name"), snapshotId = Some(3), entityType = Some(AgoraEntityType.Workflow))
@@ -204,8 +210,32 @@ class Ga4ghModelTest extends FreeSpec {
         assertResult(expected) { actual }
       }
     }
-    // TODO: 
-    "ToolDescriptor" - {}
+
+    "ToolDescriptor" - {
+
+      val entity = AgoraEntity(
+        namespace = Some("namespace"),
+        name = Some("name"),
+        snapshotId = Some(3),
+        synopsis = Some("synopsis3"),
+        entityType = Some(AgoraEntityType.Workflow),
+        managers = Seq("manager1","manager2"),
+        payload = Some(payload),
+        url = Some("http://localhost/url")
+      )
+
+      "should create from AgoraEntity" in {
+        val expected = ToolDescriptor(
+          url = "http://localhost/url",
+          descriptor = payload,
+          ToolDescriptorType.WDL
+        )
+        val actual = ToolDescriptor(entity)
+        assertResult(expected) { actual }
+      }
+
+    }
+
 
     "Metadata" - {
       "should create a default Metadata" in {

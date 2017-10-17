@@ -59,6 +59,9 @@ object Models {
     url: String,
     descriptor: String ,
     `type`: ToolDescriptorType.DescriptorType)
+  object ToolDescriptor {
+    def apply(agoraEntity: AgoraEntity): ToolDescriptor = ModelSupport.toolDescriptorFromEntity(agoraEntity)
+  }
   object ToolDescriptorType extends Enumeration {
     type DescriptorType = Value
     val WDL: ToolDescriptorType.Value = Value("WDL")
@@ -85,7 +88,7 @@ object Models {
       case _ => throw DeserializationException("only string supported")
     }
   }
-  implicit val ToolDescriptorFormat: RootJsonFormat[ToolDescriptor] = jsonFormat3(ToolDescriptor)
+  implicit val ToolDescriptorFormat: RootJsonFormat[ToolDescriptor] = jsonFormat3(ToolDescriptor.apply)
   implicit val toolVersionFormat: RootJsonFormat[ToolVersion] =jsonFormat9(ToolVersion.apply)
   implicit val toolFormat: RootJsonFormat[Tool] =jsonFormat13(Tool.apply)
   implicit val MetadataFormat: RootJsonFormat[Metadata] = jsonFormat4(Metadata.apply)

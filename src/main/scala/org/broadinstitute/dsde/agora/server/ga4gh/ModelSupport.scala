@@ -1,7 +1,7 @@
 package org.broadinstitute.dsde.agora.server.ga4gh
 
 import org.broadinstitute.dsde.agora.server.AgoraConfig
-import org.broadinstitute.dsde.agora.server.ga4gh.Models.{Metadata, Tool, ToolClass, ToolId, ToolVersion}
+import org.broadinstitute.dsde.agora.server.ga4gh.Models.{Metadata, Tool, ToolClass, ToolDescriptor, ToolDescriptorType, ToolId, ToolVersion}
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType, MethodDefinition}
 import wdl4s.WdlNamespaceWithWorkflow
 
@@ -70,6 +70,14 @@ object ModelSupport {
       `meta-version` = entity.snapshotId.getOrElse(Int.MinValue).toString,
       verified = false,
       `verified-source` = VERIFIED_SOURCE
+    )
+  }
+
+  def toolDescriptorFromEntity(entity: AgoraEntity): ToolDescriptor = {
+    new ToolDescriptor(
+      url = entity.url.getOrElse(""),
+      descriptor = entity.payload.getOrElse(""),
+      ToolDescriptorType.WDL
     )
   }
 

@@ -51,9 +51,7 @@ class Ga4ghQueryHandler(dataSource: PermissionsDataSource, override implicit val
           // the url we return here is known to be incorrect in FireCloud (GAWB-1741).
           // we return it anyway because it still provides some information, even if it
           // requires manual user intervention to work.
-          val result = ToolDescriptor(foundEntity.url.getOrElse(""),
-            foundEntity.payload.getOrElse(""),
-            ToolDescriptorType.WDL)
+          val result = ToolDescriptor(foundEntity)
           RequestComplete(result)
         case ToolDescriptorType.PLAIN_WDL =>
           RequestComplete(foundEntity.payload.getOrElse(""))

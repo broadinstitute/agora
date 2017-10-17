@@ -235,8 +235,8 @@ class Ga4ghModelTest extends FreeSpec {
 
     }
 
-
     "Metadata" - {
+
       "should create a default Metadata" in {
         val actual = Metadata.apply()
         assertResult("1.0.0") { actual.version }
@@ -244,7 +244,9 @@ class Ga4ghModelTest extends FreeSpec {
         assertResult("USA") { actual.country }
         assertResult("FireCloud") { actual.`friendly-name`}
       }
+
     }
 
   }
+
 }

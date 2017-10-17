@@ -1,5 +1,6 @@
 package org.broadinstitute.dsde.agora.server.model
 
+import org.broadinstitute.dsde.agora.server.ga4gh.ModelSupport
 import org.broadinstitute.dsde.agora.server.ga4gh.Models._
 import org.scalatest.{DoNotDiscover, FreeSpec}
 
@@ -100,7 +101,7 @@ class Ga4ghModelTest extends FreeSpec {
         val expected = Tool(
           url = "http://localhost/ga4gh/v1/tools/namespace:name/versions/namespace:name/WDL/descriptor",
           id = "namespace:name",
-          organization = "",
+          organization = ModelSupport.ORGANIZATION,
           toolname = "name",
           toolclass = ToolClass("Workflow","Workflow",""),
           description = "synopsis3",
@@ -138,7 +139,7 @@ class Ga4ghModelTest extends FreeSpec {
         val expected = Tool(
           url = "http://localhost/ga4gh/v1/tools/namespace:name/versions/namespace:name/WDL/descriptor",
           id = "namespace:name",
-          organization = "",
+          organization = ModelSupport.ORGANIZATION,
           toolname = "name",
           toolclass = ToolClass("Workflow","Workflow",""),
           description = "synopsis3",

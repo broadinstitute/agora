@@ -39,7 +39,7 @@ abstract class Ga4ghService(permissionsDataSource: PermissionsDataSource)
           }
         } ~
         path("tool-classes") {
-          val toolClassesResponse:Seq[ToolClass] = Seq(ToolClass.fromEntityType(Some(AgoraEntityType.Workflow)))
+          val toolClassesResponse:Seq[ToolClass] = Seq(ToolClass.apply(Some(AgoraEntityType.Workflow)))
           complete(toolClassesResponse)
         } ~
         path("tools") { requestContext =>

@@ -1,12 +1,8 @@
 package org.broadinstitute.dsde.agora.server.ga4gh
 
-import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType, MethodDefinition}
 import spray.json.DefaultJsonProtocol._
 import spray.json.{DeserializationException, JsString, JsValue, RootJsonFormat}
-import wdl4s.WdlNamespaceWithWorkflow
-
-import scala.util.Success
 
 object Models {
 
@@ -16,26 +12,15 @@ object Models {
     override def toString: String = s"$namespace$ID_DELIMITER$name"
   }
   object ToolId {
-    def apply(entity:AgoraEntity): ToolId = {
-      assert(entity.namespace.nonEmpty, "cannot create a ToolId if entity namespace is empty")
-      assert(entity.name.nonEmpty, "cannot create a ToolId if entity name is empty")
-      new ToolId(entity.namespace.get, entity.name.get)
-    }
-    def apply(method:MethodDefinition): ToolId = {
-      assert(method.namespace.nonEmpty, "cannot create a ToolId if method definition namespace is empty")
-      assert(method.name.nonEmpty, "cannot create a ToolId if method definition name is empty")
-      new ToolId(method.namespace.get, method.name.get)
-    }
+    def apply(entity:AgoraEntity): ToolId = ModelSupport.ToolId(entity)
+    def apply(method:MethodDefinition): ToolId = ModelSupport.ToolId(method)
   }
+
   case class ToolClass(id: String, name: String, description: String)
   object ToolClass {
-    def apply(entity:AgoraEntity): ToolClass = fromEntityType(entity.entityType)
-    def apply(method:MethodDefinition): ToolClass = fromEntityType(method.entityType)
-    def fromEntityType(entityType: Option[AgoraEntityType.EntityType]): ToolClass = {
-      assert(entityType.nonEmpty, "cannot create a ToolClass if entity type is empty")
-      val str = entityType.get.toString
-      new ToolClass(str, str, "")
-    }
+    def apply(entity:AgoraEntity): ToolClass = ModelSupport.ToolClass(entity)
+    def apply(method:MethodDefinition): ToolClass = ModelSupport.ToolClass(method)
+    def apply(entityType:Some[AgoraEntityType.EntityType]): ToolClass =  ModelSupport.ToolClass(entityType)
   }
 
   case class Tool(
@@ -54,29 +39,7 @@ object Models {
     versions: List[ToolVersion])
 
   object Tool {
-    def apply(entities:Seq[AgoraEntity]): Tool = {
-      val representative = entities.last
-      val versions = entities.toList map (x => ToolVersion(x))
-      val latestVersion = versions.last
-      val id = ToolId(representative).toString
-      val url = AgoraConfig.GA4GH.toolUrl(id, latestVersion.id, latestVersion.`descriptor-type`.last)
-      val author = findAuthorInWdl(representative.payload)
-      new Tool(
-        url=url,
-        id=id,
-        organization="", // TODO: is this always the Broad?
-        toolname=latestVersion.name,
-        toolclass=ToolClass(representative),
-        description=representative.synopsis.getOrElse(""),
-        author=author,
-        `meta-version` = latestVersion.`meta-version`,
-        contains=List.empty[String],
-        verified=false,
-        `verified-source`="",
-        signed=false,
-        versions=versions
-      )
-    }
+    def apply(entities:Seq[AgoraEntity]): Tool = ModelSupport.Tool(entities)
   }
 
   case class ToolVersion(
@@ -91,21 +54,7 @@ object Models {
     `verified-source`: String)
 
   object ToolVersion{
-    def apply(entity: AgoraEntity): ToolVersion = {
-      assert(entity.entityType.contains(AgoraEntityType.Workflow), "cannot create a ToolVersion if entityType is not Workflow")
-      assert(entity.snapshotId.nonEmpty, "cannot create a ToolVersion if snapshot id is empty")
-      new ToolVersion(
-        name = entity.name.getOrElse(""),
-        url = entity.url.getOrElse(""),
-        id = ToolId(entity).toString,
-        image = "",
-        `descriptor-type` = List("WDL"),
-        dockerfile = false, // TODO
-        `meta-version` = entity.snapshotId.getOrElse(Int.MinValue).toString,
-        verified = false,
-        `verified-source` = ""
-      )
-    }
+    def apply(entity: AgoraEntity): ToolVersion = ModelSupport.ToolVersion(entity)
   }
 
   case class ToolDescriptor (
@@ -150,20 +99,5 @@ object Models {
   implicit val MetadataFormat: RootJsonFormat[Metadata] = jsonFormat4(Metadata)
 
   // TODO: ensure json formats read/write keys according to the ga4gh model specs
-
-  // Looks for the last populated "meta: author" field in the wdl meta data
-  private def findAuthorInWdl(payload: Option[String]): String = {
-    val field = "author"
-    payload match {
-      case Some(wdl) =>
-        WdlNamespaceWithWorkflow.load(wdl, Seq.empty) match {
-          case Success(fullWdl) =>
-            val authors = fullWdl.tasks.map(_.meta.getOrElse(field, "")) ++ fullWdl.workflows.map(_.meta.getOrElse(field, ""))
-            authors.filterNot(_.isEmpty).mkString(", ")
-          case _ => ""
-        }
-      case _ => ""
-    }
-  }
 
 }

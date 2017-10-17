@@ -2,7 +2,7 @@ package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.actor.ActorSystem
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
-import org.broadinstitute.dsde.agora.server.AgoraTestFixture
+import org.broadinstitute.dsde.agora.server.{AgoraConfig, AgoraTestFixture}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraPermissions}
 import org.broadinstitute.dsde.agora.server.ga4gh.Ga4ghService
 import org.broadinstitute.dsde.agora.server.ga4gh.Models._
@@ -103,14 +103,14 @@ class Ga4ghServiceSpec extends ApiServiceSpec with FreeSpecLike with RouteTest w
                 `verified-source` = ""))
 
             val method1 = Tool(
-              url="", // TODO
+              url=AgoraConfig.GA4GH.toolUrl(agoraEntity2.namespace.get + ":" + agoraEntity2.name.get, method1Versions.last.id, method1Versions.last.`descriptor-type`.last),
               id=agoraEntity2.namespace.get + ":" + agoraEntity2.name.get,
               organization="",
-              toolname="", // TODO
+              toolname=agoraEntity2.name.get,
               toolclass=ToolClass("Workflow","Workflow",""),
-              description="", // TODO
-              author="", // TODO
-              `meta-version`="", // TODO
+              description=agoraEntity2.synopsis.get,
+              author="",
+              `meta-version`= method1Versions.last.`meta-version`,
               contains=List.empty[String],
               verified=false,
               `verified-source`="",
@@ -131,14 +131,14 @@ class Ga4ghServiceSpec extends ApiServiceSpec with FreeSpecLike with RouteTest w
                 `verified-source` = ""))
 
             val method2 = Tool(
-              url="", // TODO
+              url=AgoraConfig.GA4GH.toolUrl(agoraEntity3.namespace.get + ":" + agoraEntity3.name.get, method2Versions.last.id, method2Versions.last.`descriptor-type`.last),
               id=agoraEntity3.namespace.get + ":" + agoraEntity3.name.get,
               organization="",
-              toolname="", // TODO
+              toolname=agoraEntity3.name.get,
               toolclass=ToolClass("Workflow","Workflow",""),
-              description="", // TODO
-              author="", // TODO
-              `meta-version`="", // TODO
+              description=agoraEntity3.synopsis.get,
+              author="",
+              `meta-version` = method2Versions.last.`meta-version`,
               contains=List.empty[String],
               verified=false,
               `verified-source`="",
@@ -186,14 +186,14 @@ class Ga4ghServiceSpec extends ApiServiceSpec with FreeSpecLike with RouteTest w
             val expectedVersions = List(firstToolVersion, secondToolVersion)
 
             val expected = Tool(
-              url="", // TODO
+              url=AgoraConfig.GA4GH.toolUrl(agoraEntity2.namespace.get + ":" + agoraEntity2.name.get, secondToolVersion.id, secondToolVersion.`descriptor-type`.last),
               id=agoraEntity2.namespace.get + ":" + agoraEntity2.name.get,
               organization="",
-              toolname="", // TODO
+              toolname=agoraEntity2.name.get,
               toolclass=ToolClass("Workflow","Workflow",""),
-              description="", // TODO
-              author="", // TODO
-              `meta-version`="", // TODO
+              description=agoraEntity2.synopsis.get,
+              author="",
+              `meta-version`=secondToolVersion.`meta-version`,
               contains=List.empty[String],
               verified=false,
               `verified-source`="",

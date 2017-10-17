@@ -58,7 +58,64 @@ class Ga4ghModelTest extends FreeSpec {
       }
     }
     "Tool" - {
-      "should create from MethodDefinition" in {
+      "should create from MethodDefinition with author" in {
+        val entities = Seq(
+          AgoraEntity(
+            namespace = Some("namespace"),
+            name = Some("name"),
+            snapshotId = Some(1),
+            synopsis = Some("synopsis"),
+            entityType = Some(AgoraEntityType.Workflow),
+            managers = Seq("manager1","manager2")
+          ),
+          AgoraEntity(
+            namespace = Some("namespace"),
+            name = Some("name"),
+            snapshotId = Some(3),
+            synopsis = Some("synopsis3"),
+            entityType = Some(AgoraEntityType.Workflow),
+            managers = Seq("manager1","manager2"),
+            payload = Some("""|task a {
+                              |  String prefix
+                              |  Array[Int] ints
+                              |  command {
+                              |    python script.py ${write_lines(ints)} > ${prefix + ".out"}
+                              |  }
+                              |  meta {
+                              |    author: "Test User"
+                              |    email: "test@company.org"
+                              |  }
+                              |}
+                              |workflow wf {
+                              |  call a
+                              |  meta {
+                              |    author: "Test User 2"
+                              |    email: "test2@company.org"
+                              |  }
+                              |}
+                              |""".stripMargin)
+          )
+        )
+
+        val expected = Tool(
+          url = "http://localhost/ga4gh/v1/tools/namespace:name/versions/namespace:name/WDL/descriptor",
+          id = "namespace:name",
+          organization = "",
+          toolname = "name",
+          toolclass = ToolClass("Workflow","Workflow",""),
+          description = "synopsis3",
+          author = "Test User 2",
+          `meta-version` = "3",
+          contains = List.empty[String],
+          verified = false,
+          `verified-source` = "",
+          signed = false,
+          versions = entities.toList map (x => ToolVersion(x))
+        )
+        val actual = Tool(entities)
+        assertResult(expected) { actual }
+      }
+      "should create from MethodDefinition with no author" in {
         val entities = Seq(
           AgoraEntity(
             namespace = Some("namespace"),
@@ -79,14 +136,14 @@ class Ga4ghModelTest extends FreeSpec {
         )
 
         val expected = Tool(
-          url = "",
+          url = "http://localhost/ga4gh/v1/tools/namespace:name/versions/namespace:name/WDL/descriptor",
           id = "namespace:name",
           organization = "",
-          toolname = "",
+          toolname = "name",
           toolclass = ToolClass("Workflow","Workflow",""),
-          description = "",
+          description = "synopsis3",
           author = "",
-          `meta-version` = "",
+          `meta-version` = "3",
           contains = List.empty[String],
           verified = false,
           `verified-source` = "",

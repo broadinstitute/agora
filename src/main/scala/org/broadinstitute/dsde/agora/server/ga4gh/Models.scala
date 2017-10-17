@@ -159,7 +159,7 @@ object Models {
         WdlNamespaceWithWorkflow.load(wdl, Seq.empty) match {
           case Success(fullWdl) =>
             val authors = fullWdl.tasks.map(_.meta.getOrElse(field, "")) ++ fullWdl.workflows.map(_.meta.getOrElse(field, ""))
-            authors.filterNot(_.isEmpty).reverse.head
+            authors.filterNot(_.isEmpty).mkString(", ")
           case _ => ""
         }
       case _ => ""

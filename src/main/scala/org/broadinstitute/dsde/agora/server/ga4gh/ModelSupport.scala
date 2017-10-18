@@ -106,7 +106,7 @@ object ModelSupport {
             val authorEmails: Seq[(String, String)] = {
               parsed.tasks.map(_.meta.getOrElse(authorField, "")).zip(parsed.tasks.map(_.meta.getOrElse(emailField, ""))) ++
                 parsed.workflows.map(_.meta.getOrElse(authorField, "")).zip(parsed.workflows.map(_.meta.getOrElse(emailField, "")))
-            }.filterNot(_._1.isEmpty)
+            }.filterNot(_._1.isEmpty).distinct
             authorEmails map Function.tupled{ (author: String, email: String) =>
               if (email.isEmpty) author
               else stringFormat.format(author, email)

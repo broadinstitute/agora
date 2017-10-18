@@ -93,16 +93,24 @@ object ModelSupport {
   }
 
   /**
-   * Looks for all populated "meta: author=" fields in the optional wdl meta fields.
+   * Looks for all populated "meta: author=X" and "meta: email=Y" fields in the optional wdl meta fields.
    */
   def findAuthorsInWdl(payload: Option[String]): String = {
-    val field = "author"
+    val authorField = "author"
+    val emailField = "email"
+    val stringFormat = "%s <%s>"
     payload match {
       case Some(wdl) =>
         WdlNamespaceWithWorkflow.load(wdl, Seq.empty) match {
           case Success(parsed) =>
-            val authors = parsed.tasks.map(_.meta.getOrElse(field, "")) ++ parsed.workflows.map(_.meta.getOrElse(field, ""))
-            authors.filterNot(_.isEmpty).mkString(", ")
+            val authorEmails: Seq[(String, String)] = {
+              parsed.tasks.map(_.meta.getOrElse(authorField, "")).zip(parsed.tasks.map(_.meta.getOrElse(emailField, ""))) ++
+                parsed.workflows.map(_.meta.getOrElse(authorField, "")).zip(parsed.workflows.map(_.meta.getOrElse(emailField, "")))
+            }.filterNot(_._1.isEmpty)
+            authorEmails map Function.tupled{ (author: String, email: String) =>
+              if (email.isEmpty) { author }
+              else { stringFormat.format(author, email) }
+            } mkString ", "
           case _ => ""
         }
       case _ => ""

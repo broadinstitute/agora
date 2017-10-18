@@ -110,7 +110,7 @@ class Ga4ghModelTest extends FreeSpec {
           toolname = "name",
           toolclass = ToolClass("Workflow","Workflow",""),
           description = "synopsis3",
-          author = "Test User, Test User 2",
+          author = "Test User <test@company.org>, Test User 2 <test2@company.org>",
           `meta-version` = "3",
           contains = List.empty[String],
           verified = false,

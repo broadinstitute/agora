@@ -91,8 +91,8 @@ object Models {
     }
   }
   implicit val ToolDescriptorFormat: RootJsonFormat[ToolDescriptor] = jsonFormat3(ToolDescriptor.apply)
-  implicit val toolVersionFormat: RootJsonFormat[ToolVersion] =jsonFormat9(ToolVersion.apply)
-  implicit val toolFormat: RootJsonFormat[Tool] =jsonFormat13(Tool.apply)
+  implicit val ToolVersionFormat: RootJsonFormat[ToolVersion] =jsonFormat9(ToolVersion.apply)
+  implicit val ToolFormat: RootJsonFormat[Tool] =jsonFormat13(Tool.apply)
   implicit val MetadataFormat: RootJsonFormat[Metadata] = jsonFormat4(Metadata.apply)
 
 }

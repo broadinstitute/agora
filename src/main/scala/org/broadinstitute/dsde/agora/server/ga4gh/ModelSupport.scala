@@ -108,8 +108,8 @@ object ModelSupport {
                 parsed.workflows.map(_.meta.getOrElse(authorField, "")).zip(parsed.workflows.map(_.meta.getOrElse(emailField, "")))
             }.filterNot(_._1.isEmpty)
             authorEmails map Function.tupled{ (author: String, email: String) =>
-              if (email.isEmpty) { author }
-              else { stringFormat.format(author, email) }
+              if (email.isEmpty) author
+              else stringFormat.format(author, email)
             } mkString ", "
           case _ => ""
         }

@@ -12,7 +12,7 @@ import scala.util.Success
   */
 object ModelSupport {
 
-  final val organization = "The Broad Institute or Harvard and MIT"
+  final val organization = "The Broad Institute of Harvard and MIT"
   final val verifiedSource = ""
   final val version = "1.0.0"
   final val apiVersion = version

@@ -37,7 +37,7 @@ class AgoraImportSpec extends ApiServiceSpec with FlatSpecLike{
     Post(ApiUtil.Methods.withLeadingVersion, testBadAgoraEntityInvalidWdlImportFormat) ~>
       methodsService.postRoute ~> check {
       assert(status == InternalServerError)
-      assert(body.asString contains "Failed to import workflow invalid_syntax_for_tool.:\\ninvalid_syntax_for_tool: nodename nor servname provided, or not known")
+      assert(body.asString contains "Failed to import workflow invalid_syntax_for_tool.:\\ninvalid_syntax_for_tool:")
     }
   }
 
@@ -45,7 +45,7 @@ class AgoraImportSpec extends ApiServiceSpec with FlatSpecLike{
     Post(ApiUtil.Methods.withLeadingVersion, testBadAgoraEntityNonExistentWdlImportFormat) ~>
       methodsService.postRoute ~> check {
       assert(status == InternalServerError)
-      assert(body.asString contains "Failed to import workflow http://broad.non_existent_grep.1.:\\nbroad.non_existent_grep.1: nodename nor servname provided, or not known")
+      assert(body.asString contains "Failed to import workflow http://broad.non_existent_grep.1.:\\nbroad.non_existent_grep.1:")
     }
   }
 

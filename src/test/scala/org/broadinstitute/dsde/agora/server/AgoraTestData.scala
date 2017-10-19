@@ -110,7 +110,7 @@ object AgoraTestData {
                                 |
                                 | """.stripMargin)
   val payloadReferencingExternalMethod = Option( """
-                                                   |import "methods://broad.wc.1"
+                                                   |import "http://broad.wc.1"
                                                    |
                                                    |task grep {
                                                    |  String pattern
@@ -161,7 +161,7 @@ object AgoraTestData {
                                           |
                                           | """.stripMargin)
   val badPayloadNonExistentImport = Option( """
-                                              |import "methods://broad.non_existent_grep.1"
+                                              |import "http://broad.non_existent_grep.1"
                                               |import "broad.wc.1"
                                               |
                                               |workflow scatter_gather_grep_wc {

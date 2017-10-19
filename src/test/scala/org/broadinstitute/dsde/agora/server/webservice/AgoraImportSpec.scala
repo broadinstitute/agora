@@ -67,17 +67,19 @@ class AgoraImportSpec extends ApiServiceSpec with FlatSpecLike{
     }
   }
 
-  "MethodsService" should "return a 400 when copying a method and specifying a WDL with an invalid import statement" in {
+  "MethodsService" should "return a 500 when copying a method and specifying a WDL with an invalid import statement" in {
     Post(copyUrl, copyPayload(testBadAgoraEntityInvalidWdlImportFormat.payload)) ~>
       methodsService.querySingleRoute ~> check {
-      assert(status == BadRequest)
+      assert(status == InternalServerError)
+      assert(body.asString contains "Failed to import workflow invalid_syntax_for_tool.:\\ninvalid_syntax_for_tool")
     }
   }
 
-  "MethodsService" should "return a 400 when copying a method and specifying a WDL with an import statement that references a non-existent method" in {
+  "MethodsService" should "return a 500 when copying a method and specifying a WDL with an import statement that references a non-existent method" in {
     Post(copyUrl, copyPayload(testBadAgoraEntityNonExistentWdlImportFormat.payload)) ~>
       methodsService.querySingleRoute ~> check {
-      assert(status == BadRequest)
+      assert(status == InternalServerError)
+      assert(body.asString contains "Failed to import workflow http://broad.non_existent_grep.1.:\\nbroad.non_existent_grep.1")
     }
   }
 

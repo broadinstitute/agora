@@ -102,7 +102,6 @@ object ModelSupport {
   def findAuthorsInWdl(wdl: Option[WdlNamespaceWithWorkflow]): String = {
     val authorField = "author"
     val emailField = "email"
-    val stringFormat = "%s <%s>"
     val authors: List[String] = wdl match {
       case Some(parsed) =>
         parsed.tasks.map { task =>

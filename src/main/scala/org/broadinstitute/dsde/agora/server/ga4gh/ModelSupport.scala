@@ -93,7 +93,7 @@ object ModelSupport {
     * Metadata is always a constant.
     */
   def metadata(): Metadata = {
-    new Metadata(version = version, `api-version` = apiVersion, country = country, `friendly-name` = friendlyName)
+    Metadata(version = version, `api-version` = apiVersion, country = country, `friendly-name` = friendlyName)
   }
 
   /**

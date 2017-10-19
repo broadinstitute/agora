@@ -36,14 +36,16 @@ class AgoraImportSpec extends ApiServiceSpec with FlatSpecLike{
   "MethodsService" should "return a 400 when posting a WDL with an invalid import statement" in {
     Post(ApiUtil.Methods.withLeadingVersion, testBadAgoraEntityInvalidWdlImportFormat) ~>
       methodsService.postRoute ~> check {
-      assert(status == BadRequest)
+      assert(status == InternalServerError)
+      assert(body.asString contains "Failed to import workflow invalid_syntax_for_tool.:\\ninvalid_syntax_for_tool: nodename nor servname provided, or not known")
     }
   }
 
   "MethodsService" should "return a 400 when posting a WDL with an import statement that references a non-existent method" in {
     Post(ApiUtil.Methods.withLeadingVersion, testBadAgoraEntityNonExistentWdlImportFormat) ~>
       methodsService.postRoute ~> check {
-      assert(status == BadRequest)
+      assert(status == InternalServerError)
+      assert(body.asString contains "Failed to import workflow http://broad.non_existent_grep.1.:\\nbroad.non_existent_grep.1: nodename nor servname provided, or not known")
     }
   }
 

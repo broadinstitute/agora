@@ -9,8 +9,9 @@ import org.bson.types.ObjectId
 import slick.dbio.DBIO
 import spray.http.StatusCodes
 import spray.json._
-import wdl4s.parser.WdlParser.{AstList, SyntaxError}
-import wdl4s.wdl.{AstTools, WdlNamespace, WdlNamespaceWithWorkflow}
+import wdl4s.parser.WdlParser.{SyntaxError}
+import wdl4s.wdl.{WdlNamespace, WdlNamespaceWithWorkflow}
+import wdl4s.wdl.WdlNamespace.httpResolver
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
@@ -100,31 +101,17 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     }
   }
 
-  //Workaround for https://github.com/broadinstitute/wdl4s/issues/103
-  //Checks to see if the WDL has imports, since loading a WDL that contains imports without specifying a resolver
-  //barfs in an unintuitive way.
-  private def checkWdlHasNoImports(wdl: String): Try[Unit] = {
-    Try { //AST loader might syntax error if the wdl is crap
-      val ast = AstTools.getAst(wdl, "string")
-      ast.getAttribute("imports").asInstanceOf[AstList].isEmpty
-    } match {
-      case Failure(x) => Failure(ValidationException(s"WDL parsing failure. ${x.getMessage}", x)) //ast didn't parse nicely
-      case Success(true) => Success() //no imports, WDL is fine
-      case Success(false) => Failure(ValidationException("WDL imports not yet supported."))
-    }
-  }
-
   private def checkValidPayload[T](agoraEntity: AgoraEntity, username: String)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
     val payload = agoraEntity.payload.get
 
     val payloadOK = agoraEntity.entityType match {
         case Some(AgoraEntityType.Task) =>
-          checkWdlHasNoImports(payload) flatMap ( _ => WdlNamespace.loadUsingSource(payload, None, Option(Seq())) )
+          WdlNamespace.loadUsingSource(payload, None, Option(Seq(httpResolver(_)))) // TODO: we may not need this change if we don't need Tasks
         // NOTE: Still not validating existence of docker images.
         // namespace.tasks.foreach { validateDockerImage }
 
         case Some(AgoraEntityType.Workflow) =>
-          checkWdlHasNoImports(payload) flatMap ( _ => WdlNamespaceWithWorkflow.load(payload, Seq()) )
+          WdlNamespaceWithWorkflow.load(payload, Seq(httpResolver(_)))
         // NOTE: Still not validating existence of docker images.
         //namespace.tasks.foreach { validateDockerImage }
 

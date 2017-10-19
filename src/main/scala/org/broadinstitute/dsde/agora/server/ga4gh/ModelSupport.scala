@@ -5,8 +5,6 @@ import org.broadinstitute.dsde.agora.server.ga4gh.Models.{Metadata, Tool, ToolCl
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType, MethodDefinition}
 import wdl4s.WdlNamespaceWithWorkflow
 
-import scala.util.Success
-
 /**
   * Support class to handle apply methods with some degree of business logic
   */
@@ -15,45 +13,49 @@ object ModelSupport {
   final val organization = "The Broad Institute of Harvard and MIT"
   final val verifiedSource = ""
   final val version = "1.0.0"
-  final val apiVersion = version
+  final val apiVersion = "1.0.0"
   final val country = "USA"
   final val friendlyName = "FireCloud"
 
   def toolIdFromEntity(entity:AgoraEntity): ToolId = {
     assert(entity.namespace.nonEmpty, "cannot create a ToolId if entity namespace is empty")
     assert(entity.name.nonEmpty, "cannot create a ToolId if entity name is empty")
-    new ToolId(entity.namespace.get, entity.name.get)
+    ToolId(entity.namespace.get, entity.name.get)
   }
 
   def toolIdFromMethod(method:MethodDefinition): ToolId = {
     assert(method.namespace.nonEmpty, "cannot create a ToolId if method definition namespace is empty")
     assert(method.name.nonEmpty, "cannot create a ToolId if method definition name is empty")
-    new ToolId(method.namespace.get, method.name.get)
+    ToolId(method.namespace.get, method.name.get)
   }
 
   def toolClassFromEntityType(entityType: Option[AgoraEntityType.EntityType]): ToolClass = {
     assert(entityType.nonEmpty, "cannot create a ToolClass if entity type is empty")
     val str = entityType.get.toString
-    new ToolClass(str, str, "")
+    ToolClass(str, str, "")
   }
 
   def toolFromEntities(entities:Seq[AgoraEntity]): Tool = {
     val representative = entities.last
-    val versions = entities.toList map (x => ModelSupport.toolVersionFromEntity(x))
+    val versions = entities.toList map (x => toolVersionFromEntity(x))
     val latestVersion = versions.last
     val id = ToolId(representative).toString
     val url = AgoraConfig.GA4GH.toolUrl(id, latestVersion.id, latestVersion.`descriptor-type`.last)
-    val author = findAuthorsInWdl(representative.payload)
-    new Tool(
+    // Parse the wdl once since we need to get different things from it
+    val wdl = representative.payload match {
+      case x if x.isDefined => Some(WdlNamespaceWithWorkflow.load(x.get, Seq.empty).get)
+      case _ => None
+    }
+    Tool(
       url=url,
       id=id,
       organization=organization,
       toolname=latestVersion.name,
       toolclass=ToolClass(representative),
       description=representative.synopsis.getOrElse(""),
-      author=author,
+      author=findAuthorsInWdl(wdl),
       `meta-version` = latestVersion.`meta-version`,
-      contains=List.empty[String],
+      contains=findContainsInWdl(wdl),
       verified=false,
       `verified-source`= verifiedSource,
       signed=false,
@@ -64,7 +66,7 @@ object ModelSupport {
   def toolVersionFromEntity(entity: AgoraEntity): ToolVersion = {
     assert(entity.entityType.contains(AgoraEntityType.Workflow), "cannot create a ToolVersion if entityType is not Workflow")
     assert(entity.snapshotId.nonEmpty, "cannot create a ToolVersion if snapshot id is empty")
-    new ToolVersion(
+    ToolVersion(
       name = entity.name.getOrElse(""),
       url = entity.url.getOrElse(""),
       id = ToolId(entity).toString,
@@ -78,10 +80,12 @@ object ModelSupport {
   }
 
   def toolDescriptorFromEntity(entity: AgoraEntity): ToolDescriptor = {
-    new ToolDescriptor(
+    val id = ToolId(entity).toString
+    val version = toolVersionFromEntity(entity)
+    ToolDescriptor(
       `type` = ToolDescriptorType.WDL,
       descriptor = entity.payload.getOrElse(""),
-      url = entity.url.getOrElse("")
+      url = AgoraConfig.GA4GH.toolUrl(id, version.id, version.`descriptor-type`.last)
     )
   }
 
@@ -95,25 +99,39 @@ object ModelSupport {
   /**
    * Looks for all populated "meta: author=X" and "meta: email=Y" fields in the optional wdl meta fields.
    */
-  def findAuthorsInWdl(payload: Option[String]): String = {
+  def findAuthorsInWdl(wdl: Option[WdlNamespaceWithWorkflow]): String = {
     val authorField = "author"
     val emailField = "email"
     val stringFormat = "%s <%s>"
-    payload match {
-      case Some(wdl) =>
-        WdlNamespaceWithWorkflow.load(wdl, Seq.empty) match {
-          case Success(parsed) =>
-            val authorEmails: Seq[(String, String)] = {
-              parsed.tasks.map(_.meta.getOrElse(authorField, "")).zip(parsed.tasks.map(_.meta.getOrElse(emailField, ""))) ++
-                parsed.workflows.map(_.meta.getOrElse(authorField, "")).zip(parsed.workflows.map(_.meta.getOrElse(emailField, "")))
-            }.filterNot(_._1.isEmpty).distinct
-            authorEmails map Function.tupled{ (author: String, email: String) =>
-              if (email.isEmpty) author
-              else stringFormat.format(author, email)
-            } mkString ", "
-          case _ => ""
+    val authors: List[String] = wdl match {
+      case Some(parsed) =>
+        parsed.tasks.map { task =>
+          formatAuthorEmail(task.meta.getOrElse(emailField,""), task.meta.getOrElse(authorField,""))
+        }.toList ++ parsed.workflows.map { workflow =>
+          formatAuthorEmail(workflow.meta.getOrElse(emailField,""), workflow.meta.getOrElse(authorField,""))
         }
+      case _ => List.empty[String]
+    }
+    authors.filterNot(_.isEmpty).distinct.mkString(", ")
+  }
+
+  private def formatAuthorEmail(email: String, author: String): String = {
+    val stringFormat = "%s <%s>"
+    (email.trim.isEmpty, author.trim.isEmpty) match {
+      case (true, false) => author.trim
+      case (false, true) => email.trim
+      case (false, false) => stringFormat.format(author.trim, email.trim)
       case _ => ""
+    }
+  }
+
+  /**
+   * Looks for all task and workflow names in wdl
+   */
+  def findContainsInWdl(wdl: Option[WdlNamespaceWithWorkflow]): List[String] = {
+    wdl match {
+      case Some(parsed) => parsed.tasks.map(_.fullyQualifiedName).toList ++ parsed.workflows.map(_.fullyQualifiedName)
+      case _ => List.empty[String]
     }
   }
 

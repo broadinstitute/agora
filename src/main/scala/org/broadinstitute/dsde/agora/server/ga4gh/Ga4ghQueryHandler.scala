@@ -18,7 +18,7 @@ class Ga4ghQueryHandler(dataSource: PermissionsDataSource, override implicit val
   extends QueryHandler(dataSource, ec) {
 
   // Include entity payloads in returned results
-  val DefaultProjection = Option(new AgoraEntityProjection(Seq[String]("payload", "synopsis"), Seq.empty[String]))
+  val DefaultProjection = Some(AgoraEntityProjection(Seq[String]("payload", "synopsis"), Seq.empty[String]))
 
   override def receive: akka.actor.Actor.Receive = {
     case QueryPublicSingle(requestContext: RequestContext, entity: AgoraEntity) =>

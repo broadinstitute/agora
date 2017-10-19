@@ -112,7 +112,7 @@ class Ga4ghModelTest extends FreeSpec {
           description = "synopsis3",
           author = "Test User <test@company.org>, Test User 2 <test2@company.org>",
           `meta-version` = "3",
-          contains = List.empty[String],
+          contains = List("a", "wf"),
           verified = false,
           `verified-source` = "",
           signed = false,
@@ -228,7 +228,7 @@ class Ga4ghModelTest extends FreeSpec {
         val expected = ToolDescriptor(
           `type` = ToolDescriptorType.WDL,
           descriptor = payload,
-          url = "http://localhost/url")
+          url = "http://localhost/ga4gh/v1/tools/namespace:name/versions/namespace:name/WDL/descriptor")
         val actual = ToolDescriptor(entity)
         assertResult(expected) { actual }
       }

@@ -47,13 +47,6 @@ class AgoraImportSpec extends ApiServiceSpec with FlatSpecLike{
     }
   }
 
-  "MethodsService" should "return 400 when posting a WDL that contains an import, because imports are no longer allowed" in {
-    Post(ApiUtil.Methods.withLeadingVersion, testEntityWorkflowWithExistentWdlImport) ~>
-      methodsService.postRoute ~> check {
-      assert(status == BadRequest)
-    }
-  }
-
   // tests for copying a method and specifying new WDL for the copy
 
   private val copyUrl = ApiUtil.Methods.withLeadingVersion +
@@ -80,13 +73,6 @@ class AgoraImportSpec extends ApiServiceSpec with FlatSpecLike{
       methodsService.querySingleRoute ~> check {
       assert(status == InternalServerError)
       assert(body.asString contains "Failed to import workflow http://broad.non_existent_grep.1.:\\nbroad.non_existent_grep.1")
-    }
-  }
-
-  "MethodsService" should "return 400 when copying a method and specifying a WDL that contains an import, because imports are no longer allowed" in {
-    Post(copyUrl, copyPayload(testEntityWorkflowWithExistentWdlImport.payload)) ~>
-      methodsService.querySingleRoute ~> check {
-      assert(status == BadRequest)
     }
   }
 

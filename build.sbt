@@ -35,12 +35,12 @@ libraryDependencies ++= Seq(
   "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0",
   "com.typesafe.slick" %% "slick" % "3.2.0",
   "com.zaxxer" % "HikariCP" % "2.3.9",
-  "org.broadinstitute" %% "wdl4s" % wdl4sV,
   "io.spray" %% "spray-can" % sprayV,
   "io.spray" %% "spray-client" % sprayV,
   "io.spray" %% "spray-json" % "1.3.3", // NB: Not at sprayV. 1.3.4 does not exist.
   "io.spray" %% "spray-routing-shapeless23" % sprayV,
   "mysql" % "mysql-connector-java" % "5.1.42",
+  "org.broadinstitute" %% "wdl4s" % wdl4sV,
   "org.broadinstitute.dsde.vault" %% "vault-common" % "0.1-15-bf74315",
   "org.broadinstitute.dsde" %% "rawls-model" % "0.1-8c63c48-SNAP"
     exclude("com.typesafe.scala-logging", "scala-logging_2.11"),

@@ -37,7 +37,7 @@ class AgoraImportSpec extends ApiServiceSpec with FlatSpecLike{
     Post(ApiUtil.Methods.withLeadingVersion, testBadAgoraEntityInvalidWdlImportFormat) ~>
       methodsService.postRoute ~> check {
       assert(status == InternalServerError)
-      assert(body.asString contains "Failed to import workflow invalid_syntax_for_tool.:\\ninvalid_syntax_for_tool:")
+      assert(body.asString contains "Failed to import workflow invalid_syntax_for_tool.:")
     }
   }
 
@@ -45,14 +45,16 @@ class AgoraImportSpec extends ApiServiceSpec with FlatSpecLike{
     Post(ApiUtil.Methods.withLeadingVersion, testBadAgoraEntityNonExistentWdlImportFormat) ~>
       methodsService.postRoute ~> check {
       assert(status == InternalServerError)
-      assert(body.asString contains "Failed to import workflow http://broad.non_existent_grep.1.:\\nbroad.non_existent_grep.1:")
+      assert(body.asString contains "Failed to import workflow broad.non_existent_grep.1.:")
     }
   }
 
-  "MethodsService" should "return 200 when posting a valid WDL that contains an import" in {
+  "MethodsService" should "return 201 when posting a valid WDL that contains an import" in {
     Post(ApiUtil.Methods.withLeadingVersion, testEntityWorkflowWithExistentWdlImport) ~>
       methodsService.postRoute ~> check {
-      assert(status == OK)
+      assert(status == Created)
+      assert(body.asString contains "\"name\": \"testMethod1\"")
+      assert(body.asString contains "\"createDate\"")
     }
   }
 
@@ -73,7 +75,7 @@ class AgoraImportSpec extends ApiServiceSpec with FlatSpecLike{
     Post(copyUrl, copyPayload(testBadAgoraEntityInvalidWdlImportFormat.payload)) ~>
       methodsService.querySingleRoute ~> check {
       assert(status == InternalServerError)
-      assert(body.asString contains "Failed to import workflow invalid_syntax_for_tool.:\\ninvalid_syntax_for_tool")
+      assert(body.asString contains "Failed to import workflow invalid_syntax_for_tool.:")
     }
   }
 
@@ -81,7 +83,7 @@ class AgoraImportSpec extends ApiServiceSpec with FlatSpecLike{
     Post(copyUrl, copyPayload(testBadAgoraEntityNonExistentWdlImportFormat.payload)) ~>
       methodsService.querySingleRoute ~> check {
       assert(status == InternalServerError)
-      assert(body.asString contains "Failed to import workflow http://broad.non_existent_grep.1.:\\nbroad.non_existent_grep.1")
+      assert(body.asString contains "Failed to import workflow broad.non_existent_grep.1.:")
     }
   }
 
@@ -89,6 +91,8 @@ class AgoraImportSpec extends ApiServiceSpec with FlatSpecLike{
     Post(copyUrl, copyPayload(testEntityWorkflowWithExistentWdlImport.payload)) ~>
       methodsService.querySingleRoute ~> check {
       assert(status == OK)
+      assert(body.asString contains "\"name\": \"testMethod1\"")
+      assert(body.asString contains "\"createDate\"")
     }
   }
 

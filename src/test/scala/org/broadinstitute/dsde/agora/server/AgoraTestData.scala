@@ -109,8 +109,20 @@ object AgoraTestData {
                                 |}
                                 |
                                 | """.stripMargin)
+
+  val testAgoraEntity = new AgoraEntity(
+    namespace = namespace3,
+    name = name1,
+    synopsis = synopsis1,
+    documentation = documentation1,
+    owner = owner1,
+    payload = payload1,
+    entityType = Option(AgoraEntityType.Workflow)
+  )
+
+  // TODO: import a method from the local server, not dev!
   val payloadReferencingExternalMethod = Option( """
-                                                   |import "http://broad.wc.1"
+                                                   |import "https://firecloud-orchestration.dsde-dev.broadinstitute.org/ga4gh/v1/tools/anichols:cnv_common_tasks/versions/4/plain-WDL/descriptor" as CNVTasks
                                                    |
                                                    |task grep {
                                                    |  String pattern
@@ -137,9 +149,6 @@ object AgoraTestData {
                                                    |      input: file_name = f
                                                    |    }
                                                    |  }
-                                                   |  call wc {
-                                                   |    input: files = grep.out
-                                                   |  }
                                                    |}
                                                    | """.stripMargin)
   val badPayload = Option("task test {")
@@ -161,7 +170,7 @@ object AgoraTestData {
                                           |
                                           | """.stripMargin)
   val badPayloadNonExistentImport = Option( """
-                                              |import "http://broad.non_existent_grep.1"
+                                              |import "broad.non_existent_grep.1"
                                               |import "broad.wc.1"
                                               |
                                               |workflow scatter_gather_grep_wc {
@@ -518,16 +527,6 @@ object AgoraTestData {
     owner = owner1,
     payload = payloadWcTask,
     entityType = Option(AgoraEntityType.Task)
-  )
-
-  val testAgoraEntity = new AgoraEntity(
-    namespace = namespace3,
-    name = name1,
-    synopsis = synopsis1,
-    documentation = documentation1,
-    owner = owner1,
-    payload = payload1,
-    entityType = Option(AgoraEntityType.Workflow)
   )
 
   val testMethodWithSnapshot1 = new AgoraEntity(

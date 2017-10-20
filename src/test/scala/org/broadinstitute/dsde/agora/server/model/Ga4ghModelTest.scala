@@ -112,7 +112,7 @@ class Ga4ghModelTest extends FreeSpec {
           description = "synopsis3",
           author = "Test User <test@company.org>, Test User 2 <test2@company.org>",
           `meta-version` = "3",
-          contains = List("a", "wf"),
+          contains = List.empty[String],
           verified = false,
           `verified-source` = "",
           signed = false,

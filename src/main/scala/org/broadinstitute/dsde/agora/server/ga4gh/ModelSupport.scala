@@ -5,6 +5,8 @@ import org.broadinstitute.dsde.agora.server.ga4gh.Models.{Metadata, Tool, ToolCl
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType, MethodDefinition}
 import wdl4s.WdlNamespaceWithWorkflow
 
+import scala.util.Success
+
 /**
   * Support class to handle apply methods with some degree of business logic
   */
@@ -41,9 +43,12 @@ object ModelSupport {
     val latestVersion = versions.last
     val id = ToolId(representative).toString
     val url = AgoraConfig.GA4GH.toolUrl(id, latestVersion.id, latestVersion.`descriptor-type`.last)
-    // Parse the wdl once since we need to get different things from it
     val wdl = representative.payload match {
-      case x if x.isDefined => Some(WdlNamespaceWithWorkflow.load(x.get, Seq.empty).get)
+      case x if x.isDefined =>
+        WdlNamespaceWithWorkflow.load(x.get, Seq.empty) match {
+          case Success(parsed) => Some(parsed)
+          case _ => None
+        }
       case _ => None
     }
     Tool(
@@ -55,7 +60,7 @@ object ModelSupport {
       description=representative.synopsis.getOrElse(""),
       author=findAuthorsInWdl(wdl),
       `meta-version` = latestVersion.`meta-version`,
-      contains=findContainsInWdl(wdl),
+      contains=List.empty[String],
       verified=false,
       `verified-source`= verifiedSource,
       signed=false,
@@ -121,16 +126,6 @@ object ModelSupport {
       case (false, true) => email.trim
       case (false, false) => stringFormat.format(author.trim, email.trim)
       case _ => ""
-    }
-  }
-
-  /**
-   * Looks for all task and workflow names in wdl
-   */
-  def findContainsInWdl(wdl: Option[WdlNamespaceWithWorkflow]): List[String] = {
-    wdl match {
-      case Some(parsed) => parsed.tasks.map(_.fullyQualifiedName).toList ++ parsed.workflows.map(_.fullyQualifiedName)
-      case _ => List.empty[String]
     }
   }
 

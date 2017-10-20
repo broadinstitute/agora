@@ -85,6 +85,12 @@ object AgoraConfig {
     lazy val appName = gcsProjectId
   }
 
+  // GA4GH
+  object GA4GH {
+    private lazy val baseGA4GHUrl = "%s://%s%s/ga4gh/%s/".format(scheme, host, embeddedUrlPortStr, version)
+    def toolUrl(id: String, versionId: String, toolType: String): String = baseGA4GHUrl + "tools/%s/versions/%s/%s/descriptor".format(id, versionId, toolType)
+  }
+
   def urlFromType(entityType: Option[EntityType]): String = {
     entityType match {
       case Some(AgoraEntityType.Task) | Some(AgoraEntityType.Workflow) => methodsUrl
@@ -114,4 +120,5 @@ object AgoraConfig {
       }
     }
   }
+
 }

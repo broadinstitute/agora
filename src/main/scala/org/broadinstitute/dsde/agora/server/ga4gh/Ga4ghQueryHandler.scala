@@ -5,7 +5,7 @@ import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessContro
 import org.broadinstitute.dsde.agora.server.exceptions.ValidationException
 import org.broadinstitute.dsde.agora.server.ga4gh.Ga4ghServiceMessages._
 import org.broadinstitute.dsde.agora.server.ga4gh.Models._
-import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
+import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection, AgoraEntityType}
 import org.broadinstitute.dsde.agora.server.webservice.PerRequest.{PerRequestMessage, RequestComplete}
 import org.broadinstitute.dsde.agora.server.webservice.handlers.QueryHandler
 import spray.httpx.SprayJsonSupport._
@@ -16,6 +16,9 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class Ga4ghQueryHandler(dataSource: PermissionsDataSource, override implicit val ec: ExecutionContext)
   extends QueryHandler(dataSource, ec) {
+
+  // Include entity payloads in returned results
+  val DefaultProjection = Some(AgoraEntityProjection(Seq[String]("payload", "synopsis"), Seq.empty[String]))
 
   override def receive: akka.actor.Actor.Receive = {
     case QueryPublicSingle(requestContext: RequestContext, entity: AgoraEntity) =>
@@ -51,9 +54,7 @@ class Ga4ghQueryHandler(dataSource: PermissionsDataSource, override implicit val
           // the url we return here is known to be incorrect in FireCloud (GAWB-1741).
           // we return it anyway because it still provides some information, even if it
           // requires manual user intervention to work.
-          val result = ToolDescriptor(foundEntity.url.getOrElse(""),
-            foundEntity.payload.getOrElse(""),
-            ToolDescriptorType.WDL)
+          val result = ToolDescriptor(foundEntity)
           RequestComplete(result)
         case ToolDescriptorType.PLAIN_WDL =>
           RequestComplete(foundEntity.payload.getOrElse(""))
@@ -63,7 +64,7 @@ class Ga4ghQueryHandler(dataSource: PermissionsDataSource, override implicit val
 
   def queryPublic(requestContext: RequestContext,
                   agoraSearch: AgoraEntity): Future[PerRequestMessage] = {
-    agoraBusiness.find(agoraSearch, None, Seq(AgoraEntityType.Workflow), AccessControl.publicUser) map { entities =>
+    agoraBusiness.find(agoraSearch, DefaultProjection, Seq(AgoraEntityType.Workflow), AccessControl.publicUser) map { entities =>
       val toolVersions = entities map ToolVersion.apply
       RequestComplete(toolVersions)
     }
@@ -71,13 +72,13 @@ class Ga4ghQueryHandler(dataSource: PermissionsDataSource, override implicit val
 
   def queryPublicTool(requestContext: RequestContext,
                       agoraSearch: AgoraEntity): Future[PerRequestMessage] = {
-    agoraBusiness.find(agoraSearch, None, Seq(AgoraEntityType.Workflow), AccessControl.publicUser) map { entities =>
+    agoraBusiness.find(agoraSearch, DefaultProjection, Seq(AgoraEntityType.Workflow), AccessControl.publicUser) map { entities =>
       RequestComplete(Tool(entities))
     }
   }
 
   def queryPublicTools(requestContext: RequestContext): Future[PerRequestMessage] = {
-    agoraBusiness.find(AgoraEntity(), None, Seq(AgoraEntityType.Workflow), AccessControl.publicUser) map { allentities =>
+    agoraBusiness.find(AgoraEntity(), DefaultProjection, Seq(AgoraEntityType.Workflow), AccessControl.publicUser) map { allentities =>
       val groupedSnapshots = allentities.groupBy( ae => (ae.namespace,ae.name))
       val tools:Seq[Tool] = (groupedSnapshots.values map { entities => Tool(entities )}).toSeq
       RequestComplete(tools.sortBy(_.id))

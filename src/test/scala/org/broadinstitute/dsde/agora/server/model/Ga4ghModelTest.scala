@@ -1,5 +1,6 @@
 package org.broadinstitute.dsde.agora.server.model
 
+import org.broadinstitute.dsde.agora.server.ga4gh.ModelSupport
 import org.broadinstitute.dsde.agora.server.ga4gh.Models._
 import org.scalatest.{DoNotDiscover, FreeSpec}
 
@@ -7,6 +8,27 @@ import org.scalatest.{DoNotDiscover, FreeSpec}
 class Ga4ghModelTest extends FreeSpec {
 
   "GA4GH model classes" - {
+
+    val payload = """|task a {
+                     |  String prefix
+                     |  Array[Int] ints
+                     |  command {
+                     |    python script.py ${write_lines(ints)} > ${prefix + ".out"}
+                     |  }
+                     |  meta {
+                     |    author: "Test User"
+                     |    email: "test@company.org"
+                     |  }
+                     |}
+                     |workflow wf {
+                     |  call a
+                     |  meta {
+                     |    author: "Test User 2"
+                     |    email: "test2@company.org"
+                     |  }
+                     |}
+                     |""".stripMargin
+
     "ToolId" - {
       "should error with empty namespace" in {
         val entity = AgoraEntity(None, Some("name"))
@@ -37,6 +59,7 @@ class Ga4ghModelTest extends FreeSpec {
         assertResult("methodNamespace:methodName") { ToolId(method).toString }
       }
     }
+
     "ToolClass" - {
       "should error with empty entityType" in {
         val entity = AgoraEntity()
@@ -57,8 +80,48 @@ class Ga4ghModelTest extends FreeSpec {
         assertResult( ToolClass("Workflow", "Workflow", "")) { ToolClass(method) }
       }
     }
+
     "Tool" - {
-      "should create from MethodDefinition" in {
+      "should create from MethodDefinition with author" in {
+        val entities = Seq(
+          AgoraEntity(
+            namespace = Some("namespace"),
+            name = Some("name"),
+            snapshotId = Some(1),
+            synopsis = Some("synopsis"),
+            entityType = Some(AgoraEntityType.Workflow),
+            managers = Seq("manager1","manager2")
+          ),
+          AgoraEntity(
+            namespace = Some("namespace"),
+            name = Some("name"),
+            snapshotId = Some(3),
+            synopsis = Some("synopsis3"),
+            entityType = Some(AgoraEntityType.Workflow),
+            managers = Seq("manager1","manager2"),
+            payload = Some(payload)
+          )
+        )
+
+        val expected = Tool(
+          url = "http://localhost/ga4gh/v1/tools/namespace:name/versions/namespace:name/WDL/descriptor",
+          id = "namespace:name",
+          organization = ModelSupport.organization,
+          toolname = "name",
+          toolclass = ToolClass("Workflow","Workflow",""),
+          description = "synopsis3",
+          author = "Test User <test@company.org>, Test User 2 <test2@company.org>",
+          `meta-version` = "3",
+          contains = List.empty[String],
+          verified = false,
+          `verified-source` = "",
+          signed = false,
+          versions = entities.toList map (x => ToolVersion(x))
+        )
+        val actual = Tool(entities)
+        assertResult(expected) { actual }
+      }
+      "should create from MethodDefinition with no author" in {
         val entities = Seq(
           AgoraEntity(
             namespace = Some("namespace"),
@@ -79,14 +142,14 @@ class Ga4ghModelTest extends FreeSpec {
         )
 
         val expected = Tool(
-          url = "",
+          url = "http://localhost/ga4gh/v1/tools/namespace:name/versions/namespace:name/WDL/descriptor",
           id = "namespace:name",
-          organization = "",
-          toolname = "",
+          organization = ModelSupport.organization,
+          toolname = "name",
           toolclass = ToolClass("Workflow","Workflow",""),
-          description = "",
+          description = "synopsis3",
           author = "",
-          `meta-version` = "",
+          `meta-version` = "3",
           contains = List.empty[String],
           verified = false,
           `verified-source` = "",
@@ -97,6 +160,7 @@ class Ga4ghModelTest extends FreeSpec {
         assertResult(expected) { actual }
       }
     }
+
     "ToolVersion" - {
 
       val defaultEntity = AgoraEntity(namespace = Some("namespace"), name = Some("name"), snapshotId = Some(3), entityType = Some(AgoraEntityType.Workflow))
@@ -143,12 +207,46 @@ class Ga4ghModelTest extends FreeSpec {
           verified = false,
           `verified-source` = "")
         val actual = ToolVersion(defaultEntity)
+        assertResult(expected) { actual }
       }
     }
-    // TODO: 
-    "ToolDescriptor" - {}
-    "ToolDockerfile" - {}
-    "Metadata" - {}
+
+    "ToolDescriptor" - {
+
+      val entity = AgoraEntity(
+        namespace = Some("namespace"),
+        name = Some("name"),
+        snapshotId = Some(3),
+        synopsis = Some("synopsis3"),
+        entityType = Some(AgoraEntityType.Workflow),
+        managers = Seq("manager1","manager2"),
+        payload = Some(payload),
+        url = Some("http://localhost/url")
+      )
+
+      "should create from AgoraEntity" in {
+        val expected = ToolDescriptor(
+          `type` = ToolDescriptorType.WDL,
+          descriptor = payload,
+          url = "http://localhost/ga4gh/v1/tools/namespace:name/versions/namespace:name/WDL/descriptor")
+        val actual = ToolDescriptor(entity)
+        assertResult(expected) { actual }
+      }
+
+    }
+
+    "Metadata" - {
+
+      "should create a default Metadata" in {
+        val actual = Metadata.apply()
+        assertResult(ModelSupport.version) { actual.version }
+        assertResult(ModelSupport.apiVersion) { actual.`api-version` }
+        assertResult(ModelSupport.country) { actual.country }
+        assertResult(ModelSupport.friendlyName) { actual.`friendly-name`}
+      }
+
+    }
 
   }
+
 }

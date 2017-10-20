@@ -1391,41 +1391,9 @@ paths:
     get:
       summary: List all tools
       description: >
-        This endpoint returns all tools available or a filtered subset using
-        metadata query parameters.
+        This endpoint returns all tools available.
       tags:
         - GA4GH
-      parameters:
-        - name: id
-          type: string
-          in: query
-          description: A unique identifier of the tool, scoped to this registry, for example `123456`
-        - name: registry
-          in: query
-          type: string
-          description: The image registry that contains the image.
-        - name: organization
-          in: query
-          type: string
-          description: The organization in the registry that published the image.
-        - name: name
-          in: query
-          type: string
-          description: The name of the image.
-        - name: toolname
-          in: query
-          type: string
-          description: The name of the tool.
-        - name: description
-          in: query
-          type: string
-          description: The description of the tool.
-        - name: author
-          in: query
-          type: string
-          description: 'The author of the tool (TODO a thought occurs, are we assuming that the author of the CWL and the image are the same?).'
-        - $ref: '#/parameters/offset'
-        - $ref: '#/parameters/limit'
       responses:
         '200':
           description: An array of Tools that match the filter.
@@ -1433,25 +1401,12 @@ paths:
             type: array
             items:
               $ref: '#/definitions/Tool'
-          headers:
-            next-page:
-              description: A URL that can be used to reach the next page based on the current offset and page record limit
-              type: string
-            last-page:
-              description: A URL that can be used to reach the last page based on the current page record limit
-              type: string
-            current-offset:
-              description: The current start index of the paging used for this result
-              type: string
-            current-limit:
-              description: The current page record limit used for this result
-              type: integer
       security: []
 
   /ga4gh/v1/tools/{id}/versions/{version-id}/{type}/descriptor:
     get:
-      summary: Get the tool descriptor (CWL/WDL) for the specified tool.
-      description: Returns the CWL or WDL descriptor for the specified tool.
+      summary: Get the tool descriptor (WDL) for the specified tool.
+      description: Returns the WDL descriptor for the specified tool.
       tags:
         - GA4GH
       parameters:
@@ -1463,13 +1418,9 @@ paths:
             implementation to determine which output type to return. Plain types return the
             bare descriptor while the "non-plain" types return a descriptor wrapped
             with metadata.
-
-              *In Agora, only WDL and plain-WDL are supported.*
           type: string
           enum:
-            - CWL
             - WDL
-            - plain-CWL
             - plain-WDL
         - name: id
           in: path
@@ -1495,118 +1446,6 @@ paths:
             $ref: '#/definitions/ToolDescriptor'
         '404':
           description: The tool can not be output in the specified type.
-          schema:
-            $ref: '#/definitions/Error'
-      security: []
-
-  /ga4gh/v1/tools/{id}/versions/{version-id}/{type}/descriptor/{relative-path}:
-    get:
-      summary: Get additional tool descriptor files (CWL/WDL) relative to the main file
-      description: Returns additional CWL or WDL descriptors for the specified tool in the same or subdirectories
-      tags:
-        - GA4GH
-      parameters:
-        - name: type
-          in: path
-          required: true
-          description: The output type of the descriptor. If not specified it is up to the underlying implementation to determine which output type to return.  Plain types return the bare descriptor while the "non-plain" types return a descriptor wrapped
-            with metadata
-          type: string
-          enum:
-            - CWL
-            - WDL
-            - plain-CWL
-            - plain-WDL
-        - name: id
-          in: path
-          description: A unique identifier of the tool, scoped to this registry, for example `123456`
-          required: true
-          type: string
-        - name: version-id
-          in: path
-          required: true
-          type: string
-          description: An identifier of the tool version for this particular tool registry, for example `v1`
-        - name: relative-path
-          in: path
-          required: true
-          type: string
-          description: A relative path to the additional file (same directory or subdirectories), for example 'foo.cwl' would return a 'foo.cwl' from the same directory as the main descriptor
-      responses:
-        '200':
-          description: The tool descriptor.
-          schema:
-            $ref: '#/definitions/ToolDescriptor'
-        '404':
-          description: The tool can not be output in the specified type.
-          schema:
-            $ref: '#/definitions/Error'
-      security: []
-
-  /ga4gh/v1/tools/{id}/versions/{version-id}/{type}/tests:
-    get:
-      summary: Get an array of test JSONs suitable for use with this descriptor type.
-      tags:
-        - GA4GH
-      parameters:
-        - name: type
-          required: true
-          in: path
-          description: The output type of the descriptor. If not specified it is up to the underlying implementation to determine which output type to return. Plain types return the bare descriptor while the "non-plain" types return a descriptor wrapped
-            with metadata
-          type: string
-          enum:
-            - CWL
-            - WDL
-            - plain-CWL
-            - plain-WDL
-        - name: id
-          in: path
-          description: A unique identifier of the tool, scoped to this registry, for example `123456`
-          required: true
-          type: string
-        - name: version-id
-          in: path
-          required: true
-          type: string
-          description: An identifier of the tool version for this particular tool registry, for example `v1`
-      responses:
-        '200':
-          description: The tool test JSON response.
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/ToolTests'
-        '404':
-          description: The tool can not be output in the specified type.
-          schema:
-            $ref: '#/definitions/Error'
-      security: []
-
-  /ga4gh/v1/tools/{id}/versions/{version-id}/dockerfile:
-    get:
-      summary: Get the dockerfile for the specified image.
-      description: Returns the dockerfile for the specified image.
-      tags:
-        - GA4GH
-      parameters:
-        - name: id
-          in: path
-          description: A unique identifier of the tool, scoped to this registry, for example `123456`
-          required: true
-          type: string
-        - name: version-id
-          in: path
-          required: true
-          type: string
-          description: An identifier of the tool version for this particular tool registry, for example `v1`
-      responses:
-        '200':
-          description: The tool payload.
-          schema:
-            $ref: '#/definitions/ToolDockerfile'
-        '404':
-          description: The tool payload is not present in the service.
           schema:
             $ref: '#/definitions/Error'
       security: []
@@ -1649,19 +1488,6 @@ securityDefinitions:
       openid: open id authorization
       email: email authorization
       profile: profile authorization
-
-parameters:
-  limit:
-      name: limit
-      in: query
-      description: Amount of records to return in a given page.  By default it is 1000.
-      type: integer
-      format: int32
-  offset:
-      name: offset
-      in: query
-      description: Start index of paging. Pagination results can be based on numbers or other values chosen by the registry implementor (for example, SHA values). If this exceeds the current result set return an empty set.  If not specified in the request this will start at the beginning of the results.
-      type: string
 
 definitions:
   EntityId:
@@ -2078,19 +1904,19 @@ definitions:
         type: string
         description: 'The version of this tool in the registry. Iterates when fields like the description, author, etc. are updated.'
       contains:
-        description: An array of IDs for the applications that are stored inside this tool (for example `https://bio.tools/tool/mytum.de/SNAP2/1`)
+        description: An array of IDs for the applications that are stored inside this tool (for example `https://bio.tools/tool/mytum.de/SNAP2/1`). This always returns an empty array.
         type: array
         items:
            type: string
       verified:
         type: boolean
-        description: Reports whether this tool has been verified by a specific organization or individual
+        description: Reports whether this tool has been verified by a specific organization or individual.  This always returns false.
       verified-source:
         type: string
         description: Source of metadata that can support a verified tool, such as an email or URL
       signed:
         type: boolean
-        description: Reports whether this tool has been signed.
+        description: Reports whether this tool has been signed.  This always returns false.
       versions:
         description: A list of versions for this tool
         type: array
@@ -2114,27 +1940,20 @@ definitions:
         description: An identifier of the version of this tool for this particular tool registry, for example `v1`
       image:
         type: string
-        description: The docker path to the image (and version) for this tool. (e.g. quay.io/seqware/seqware_full/1.1)
+        description: The docker path to the image (and version) for this tool. (e.g. quay.io/seqware/seqware_full/1.1). This always returns an empty string.
       descriptor-type:
         type: array
         description: The type (or types) of descriptors available.
         items:
           type: string
           enum:
-            - CWL
             - WDL
       dockerfile:
         type: boolean
-        description: Reports if this tool has a dockerfile available.
+        description: Reports if this tool has a dockerfile available. This always returns false.
       meta-version:
         type: string
         description: 'The version of this tool version in the registry. Iterates when fields like the description, author, etc. are updated.'
-      verified:
-        type: boolean
-        description: Reports whether this tool has been verified by a specific organization or individual
-      verified-source:
-        type: string
-        description: Source of metadata that can support a verified tool, such as an email or URL
   ToolDescriptor:
     description: A tool descriptor is a metadata document that describes one or more tools.
     required:
@@ -2144,36 +1963,13 @@ definitions:
       type:
         type: string
         enum:
-          - CWL
           - WDL
       descriptor:
         type: string
-        description: The descriptor that represents this version of the tool. (CWL or WDL)
+        description: The descriptor that represents this version of the tool. (WDL)
       url:
         type: string
         description: 'Optional url to the tool descriptor used to build this image, should include version information, and can include a git hash (e.g. https://raw.githubusercontent.com/ICGC-TCGA-PanCancer/pcawg_delly_workflow/ea2a5db69bd20a42976838790bc29294df3af02b/delly_docker/Delly.cwl )'
-  ToolTests:
-    description: A tool document that describes how to test with one or more sample test JSON.
-    required:
-      - test
-    properties:
-      test:
-        type: string
-        description: The test JSON content for this tool.
-      url:
-        type: string
-        description: 'Optional url to the test JSON used to test this tool'
-  ToolDockerfile:
-    description: A tool dockerfile is a document that describes how to build a particular Docker image.
-    required:
-      - dockerfile
-    properties:
-      dockerfile:
-        type: string
-        description: The dockerfile content for this tool.
-      url:
-        type: string
-        description: 'Optional url to the dockerfile used to build this image, should include version information, and can include a git hash  (e.g. https://raw.githubusercontent.com/ICGC-TCGA-PanCancer/pcawg_delly_workflow/c83478829802b4d36374870843821abe1b625a71/delly_docker/Dockerfile )'
   Metadata:
     description: Describes this registry to better allow for mirroring and indexing.
     required:

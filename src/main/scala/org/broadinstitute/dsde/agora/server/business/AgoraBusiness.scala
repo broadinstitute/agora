@@ -389,7 +389,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
 
   // copied from org.broadinstitute.dsde.rawls.jobexec.MethodConfigResolver
   def parseWDL(wdl: String): Try[wdl4s.wdl.WdlWorkflow] = {
-    val parsed: Try[WdlNamespaceWithWorkflow] = WdlNamespaceWithWorkflow.load(wdl, Seq()).recoverWith { case t: SyntaxError =>
+    val parsed: Try[WdlNamespaceWithWorkflow] = WdlNamespaceWithWorkflow.load(wdl, Seq(httpResolver(_))).recoverWith { case t: SyntaxError =>
       Failure(AgoraException("Failed to parse WDL: " + t.getMessage))
     }
     parsed map( _.workflow )

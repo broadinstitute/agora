@@ -41,7 +41,7 @@ libraryDependencies ++= Seq(
   "io.spray" %% "spray-routing-shapeless23" % sprayV,
   "mysql" % "mysql-connector-java" % "5.1.42",
   "org.broadinstitute" %% "wdl4s" % wdl4sV,
-  "org.broadinstitute.dsde.vault" %% "vault-common" % "0.1-15-bf74315",
+  "org.broadinstitute.dsde.vault" %% "vault-common" % "0.1-15-bf74315" excludeAll ExclusionRule(organization = "io.spray"),
   "org.broadinstitute.dsde" %% "rawls-model" % "0.1-8c63c48-SNAP"
     exclude("com.typesafe.scala-logging", "scala-logging_2.11"),
   "org.mongodb" %% "casbah" % "2.8.2",
@@ -82,6 +82,8 @@ logLevel in assembly := Level.Info
 assemblyMergeStrategy in assembly := {
   case x if Assembly.isConfigFile(x) =>
     MergeStrategy.concat
+  case x if x.endsWith("io.netty.versions.properties") => 
+    MergeStrategy.discard
   case PathList(ps@_*) if Assembly.isReadme(ps.last) || Assembly.isLicenseFile(ps.last) =>
     MergeStrategy.rename
   case PathList("META-INF", xs@_*) =>

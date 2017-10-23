@@ -76,7 +76,7 @@ test in assembly := {}
 
 assemblyJarName in assembly := "agora-" + version.value + ".jar"
 
-logLevel in assembly := Level.Info
+logLevel in assembly := Level.Debug
 
 assemblyMergeStrategy in assembly := {
   case x if Assembly.isConfigFile(x) =>

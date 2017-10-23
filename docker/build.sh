@@ -16,7 +16,7 @@ function docker_cmd()
         echo "building docker image..."
         GIT_SHA=$(git rev-parse ${GIT_BRANCH})
         echo GIT_SHA=$GIT_SHA > env.properties  # for jenkins jobs
-        docker build -t $REPO:${GIT_SHA:0:12} .
+        docker build --no-cache -t $REPO:${GIT_SHA:0:12} .
 
         if [ $DOCKER_CMD = "push" ]; then
             echo "pushing docker image..."

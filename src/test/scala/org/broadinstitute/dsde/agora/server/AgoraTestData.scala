@@ -32,6 +32,7 @@ object AgoraTestData {
   val synopsis3 = Option("This is a test configuration")
   val documentation1 = Option("This is the documentation")
   val documentation2 = Option("This is documentation for another method")
+  val testGA4GHpath = "/ga4gh/v1/tools/test_ns:test_wdl/versions/1/WDL/descriptor"
 
   val badNamespace = Option("    ")
   val badName = Option("   ")
@@ -120,9 +121,8 @@ object AgoraTestData {
     entityType = Option(AgoraEntityType.Workflow)
   )
 
-  // TODO: import a method from the local server, not dev!
-  val payloadReferencingExternalMethod = Option( """
-                                                   |import "https://firecloud-orchestration.dsde-dev.broadinstitute.org/ga4gh/v1/tools/anichols:cnv_common_tasks/versions/4/plain-WDL/descriptor" as CNVTasks
+  val payloadReferencingExternalMethod = Option( s"""
+                                                   |import "http://localhost:${AgoraConfig.port}$testGA4GHpath"
                                                    |
                                                    |task grep {
                                                    |  String pattern
@@ -130,7 +130,7 @@ object AgoraTestData {
                                                    |  File file_name
                                                    |
                                                    |  command {
-                                                   |    grep ${pattern} ${flags} ${file_name}
+                                                   |    grep $${pattern} $${flags} $${file_name}
                                                    |  }
                                                    |  output {
                                                    |    File out = "stdout"

@@ -49,7 +49,8 @@ libraryDependencies ++= Seq(
   "org.webjars" % "swagger-ui"  % "2.2.5",
   //---------- Test libraries -------------------//
   "io.spray" %% "spray-testkit" % sprayV % Test,
-  "org.scalatest" %% "scalatest" % "2.2.6" % Test
+  "org.scalatest" %% "scalatest" % "2.2.6" % Test,
+  "org.mock-server" % "mockserver-netty" % "3.10.2" % "test"
 )
 
 //These can be overrided with system properties:

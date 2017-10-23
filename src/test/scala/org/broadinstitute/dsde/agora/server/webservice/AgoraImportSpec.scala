@@ -1,6 +1,7 @@
 
 package org.broadinstitute.dsde.agora.server.webservice
 
+import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.exceptions.AgoraEntityNotFoundException
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
@@ -11,18 +12,32 @@ import org.scalatest.Matchers._
 import spray.http.StatusCodes._
 import spray.httpx.SprayJsonSupport._
 import spray.httpx.unmarshalling._
+import org.mockserver.integration.ClientAndServer
+import org.mockserver.integration.ClientAndServer._
+import org.mockserver.model.HttpRequest.request
 
 @DoNotDiscover
 class AgoraImportSpec extends ApiServiceSpec with FlatSpecLike{
   var testAgoraEntityWithId: AgoraEntity = _
 
+  var mockServer: ClientAndServer = _
+
   override def beforeAll() = {
     ensureDatabasesAreRunning()
     testAgoraEntityWithId = patiently(agoraBusiness.insert(testAgoraEntity, mockAuthenticatedOwner.get))
+
+    mockServer = startClientAndServer(AgoraConfig.port)
+
+    mockServer.when(
+      request()
+      .withMethod("GET")
+      .withPath(testGA4GHpath))
+      .respond(org.mockserver.model.HttpResponse.response().withBody(payload1.get).withStatusCode(OK.intValue).withHeader("Content-Type", "text/plain"))
   }
 
   override def afterAll() = {
     clearDatabases()
+    mockServer.stop()
   }
 
   // tests for creating new methods

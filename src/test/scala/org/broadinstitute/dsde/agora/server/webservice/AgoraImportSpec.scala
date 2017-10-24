@@ -26,7 +26,7 @@ class AgoraImportSpec extends ApiServiceSpec with FlatSpecLike{
     ensureDatabasesAreRunning()
     testAgoraEntityWithId = patiently(agoraBusiness.insert(testAgoraEntity, mockAuthenticatedOwner.get))
 
-    mockServer = startClientAndServer(AgoraConfig.port)
+    mockServer = startClientAndServer(mockServerPort)
 
     mockServer.when(
       request()

@@ -33,6 +33,7 @@ object AgoraTestData {
   val documentation1 = Option("This is the documentation")
   val documentation2 = Option("This is documentation for another method")
   val testGA4GHpath = "/ga4gh/v1/tools/test_ns:test_wdl/versions/1/WDL/descriptor"
+  val mockServerPort = 8001
 
   val badNamespace = Option("    ")
   val badName = Option("   ")
@@ -122,7 +123,7 @@ object AgoraTestData {
   )
 
   val payloadReferencingExternalMethod = Option( s"""
-                                                   |import "http://localhost:${AgoraConfig.port}$testGA4GHpath"
+                                                   |import "http://localhost:$mockServerPort$testGA4GHpath"
                                                    |
                                                    |task grep {
                                                    |  String pattern

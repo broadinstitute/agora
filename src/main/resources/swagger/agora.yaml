@@ -1417,7 +1417,8 @@ paths:
             The output type of the descriptor. If not specified it is up to the underlying
             implementation to determine which output type to return. Plain types return the
             bare descriptor while the "non-plain" types return a descriptor wrapped
-            with metadata.
+            with metadata. Choose "Response Content Type: application/json" for WDL and
+            "Response Content Type: text/plain" for plain-WDL
           type: string
           enum:
             - WDL
@@ -1439,6 +1440,9 @@ paths:
             An identifier of the tool version for this particular tool registry, for example `v1`.
 
               *In Agora, this must be an integer representing the Agora snapshot id.*
+      produces:
+        - application/json
+        - text/plain
       responses:
         '200':
           description: The tool descriptor.

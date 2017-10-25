@@ -51,7 +51,7 @@ class AgoraImportSpec extends ApiServiceSpec with FlatSpecLike{
   "MethodsService" should "return a 400 when posting a WDL with an invalid import statement" in {
     Post(ApiUtil.Methods.withLeadingVersion, testBadAgoraEntityInvalidWdlImportFormat) ~>
       methodsService.postRoute ~> check {
-      assert(status == InternalServerError)
+      assert(status == BadRequest)
       assert(body.asString contains "Failed to import workflow invalid_syntax_for_tool.:")
     }
   }
@@ -59,7 +59,7 @@ class AgoraImportSpec extends ApiServiceSpec with FlatSpecLike{
   "MethodsService" should "return a 400 when posting a WDL with an import statement that references a non-existent method" in {
     Post(ApiUtil.Methods.withLeadingVersion, testBadAgoraEntityNonExistentWdlImportFormat) ~>
       methodsService.postRoute ~> check {
-      assert(status == InternalServerError)
+      assert(status == BadRequest)
       assert(body.asString contains "Failed to import workflow broad.non_existent_grep.1.:")
     }
   }
@@ -86,18 +86,18 @@ class AgoraImportSpec extends ApiServiceSpec with FlatSpecLike{
     }
   }
 
-  "MethodsService" should "return a 500 when copying a method and specifying a WDL with an invalid import statement" in {
+  "MethodsService" should "return a 400 when copying a method and specifying a WDL with an invalid import statement" in {
     Post(copyUrl, copyPayload(testBadAgoraEntityInvalidWdlImportFormat.payload)) ~>
       methodsService.querySingleRoute ~> check {
-      assert(status == InternalServerError)
+      assert(status == BadRequest)
       assert(body.asString contains "Failed to import workflow invalid_syntax_for_tool.:")
     }
   }
 
-  "MethodsService" should "return a 500 when copying a method and specifying a WDL with an import statement that references a non-existent method" in {
+  "MethodsService" should "return a 400 when copying a method and specifying a WDL with an import statement that references a non-existent method" in {
     Post(copyUrl, copyPayload(testBadAgoraEntityNonExistentWdlImportFormat.payload)) ~>
       methodsService.querySingleRoute ~> check {
-      assert(status == InternalServerError)
+      assert(status == BadRequest)
       assert(body.asString contains "Failed to import workflow broad.non_existent_grep.1.:")
     }
   }

@@ -102,6 +102,14 @@ class AgoraImportSpec extends ApiServiceSpec with FlatSpecLike{
     }
   }
 
+  "MethodsService" should "return a 400 when copying a method and specifying a WDL with an import URL that returns a 404" in {
+    Post(copyUrl, copyPayload(testBadAgoraEntityWdlImportNotFound.payload)) ~>
+      methodsService.querySingleRoute ~> check {
+      assert(status == BadRequest)
+      assert(body.asString contains s"Failed to import workflow http://localhost:$mockServerPort/not-found")
+    }
+  }
+
   "MethodsService" should "return 200 when copying a method and specifying a valid WDL that contains an import" in {
     Post(copyUrl, copyPayload(testEntityWorkflowWithExistentWdlImport.payload)) ~>
       methodsService.querySingleRoute ~> check {

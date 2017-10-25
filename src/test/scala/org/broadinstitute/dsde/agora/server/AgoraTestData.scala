@@ -152,6 +152,38 @@ object AgoraTestData {
                                                    |  }
                                                    |}
                                                    | """.stripMargin)
+
+  val payloadReferencingExternalMethodNotFound = Option( s"""
+                                                    |import "http://localhost:$mockServerPort/not-found"
+                                                    |
+                                                    |task grep {
+                                                    |  String pattern
+                                                    |  String? flags
+                                                    |  File file_name
+                                                    |
+                                                    |  command {
+                                                    |    grep $${pattern} $${flags} $${file_name}
+                                                    |  }
+                                                    |  output {
+                                                    |    File out = "stdout"
+                                                    |  }
+                                                    |  runtime {
+                                                    |    memory: "2 MB"
+                                                    |    cpu: 1
+                                                    |    defaultDisks: "mydisk 3 LOCAL_SSD"
+                                                    |  }
+                                                    |}
+                                                    |
+                                                   |workflow scatter_gather_grep_wc {
+                                                    |  Array[File] input_files
+                                                    |  scatter(f in input_files) {
+                                                    |    call grep {
+                                                    |      input: file_name = f
+                                                    |    }
+                                                    |  }
+                                                    |}
+                                                    | """.stripMargin)
+
   val badPayload = Option("task test {")
   val badPayloadInvalidImport = Option( """
                                           |import "invalid_syntax_for_tool"
@@ -588,6 +620,8 @@ object AgoraTestData {
     payload = badPayloadNonExistentImport,
     entityType = Option(AgoraEntityType.Workflow)
   )
+
+  val testBadAgoraEntityWdlImportNotFound = testBadAgoraEntityNonExistentWdlImportFormat.copy(payload = payloadReferencingExternalMethodNotFound)
 
   val testAgoraEntityWithInvalidOfficialDockerImageInWdl = new AgoraEntity(namespace = namespace1,
     name = name1,

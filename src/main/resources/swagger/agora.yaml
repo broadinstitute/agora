@@ -1439,6 +1439,9 @@ paths:
             An identifier of the tool version for this particular tool registry, for example `v1`.
 
               *In Agora, this must be an integer representing the Agora snapshot id.*
+      produces:
+        - application/json
+        - text/plain
       responses:
         '200':
           description: The tool descriptor.

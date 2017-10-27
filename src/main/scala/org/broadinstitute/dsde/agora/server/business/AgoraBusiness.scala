@@ -9,8 +9,9 @@ import org.bson.types.ObjectId
 import slick.dbio.DBIO
 import spray.http.StatusCodes
 import spray.json._
-import wdl4s.{AstTools, WdlNamespace, WdlNamespaceWithWorkflow}
-import wdl4s.parser.WdlParser.{AstList, SyntaxError}
+import wdl4s.parser.WdlParser.{SyntaxError}
+import wdl4s.wdl.{WdlNamespace, WdlNamespaceWithWorkflow}
+import wdl4s.wdl.WdlNamespace.httpResolver
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
@@ -100,31 +101,17 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     }
   }
 
-  //Workaround for https://github.com/broadinstitute/wdl4s/issues/103
-  //Checks to see if the WDL has imports, since loading a WDL that contains imports without specifying a resolver
-  //barfs in an unintuitive way.
-  private def checkWdlHasNoImports(wdl: String): Try[Unit] = {
-    Try { //AST loader might syntax error if the wdl is crap
-      val ast = AstTools.getAst(wdl, "string")
-      ast.getAttribute("imports").asInstanceOf[AstList].isEmpty
-    } match {
-      case Failure(x) => Failure(ValidationException(s"WDL parsing failure. ${x.getMessage}", x)) //ast didn't parse nicely
-      case Success(true) => Success() //no imports, WDL is fine
-      case Success(false) => Failure(ValidationException("WDL imports not yet supported."))
-    }
-  }
-
   private def checkValidPayload[T](agoraEntity: AgoraEntity, username: String)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
     val payload = agoraEntity.payload.get
 
     val payloadOK = agoraEntity.entityType match {
         case Some(AgoraEntityType.Task) =>
-          checkWdlHasNoImports(payload) flatMap ( _ => WdlNamespace.loadUsingSource(payload, None, Option(Seq())) )
+          WdlNamespace.loadUsingSource(payload, None, Option(Seq(httpResolver(_))))
         // NOTE: Still not validating existence of docker images.
         // namespace.tasks.foreach { validateDockerImage }
 
         case Some(AgoraEntityType.Workflow) =>
-          checkWdlHasNoImports(payload) flatMap ( _ => WdlNamespaceWithWorkflow.load(payload, Seq()) )
+          WdlNamespaceWithWorkflow.load(payload, Seq(httpResolver(_)))
         // NOTE: Still not validating existence of docker images.
         //namespace.tasks.foreach { validateDockerImage }
 
@@ -401,8 +388,8 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
   }
 
   // copied from org.broadinstitute.dsde.rawls.jobexec.MethodConfigResolver
-  def parseWDL(wdl: String): Try[wdl4s.Workflow] = {
-    val parsed: Try[WdlNamespaceWithWorkflow] = WdlNamespaceWithWorkflow.load(wdl, Seq()).recoverWith { case t: SyntaxError =>
+  def parseWDL(wdl: String): Try[wdl4s.wdl.WdlWorkflow] = {
+    val parsed: Try[WdlNamespaceWithWorkflow] = WdlNamespaceWithWorkflow.load(wdl, Seq(httpResolver(_))).recoverWith { case t: SyntaxError =>
       Failure(AgoraException("Failed to parse WDL: " + t.getMessage))
     }
     parsed map( _.workflow )
@@ -473,11 +460,11 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(queryMethod)
   }
 
-  /**
-   * Parses out user/image:tag from a docker string.
-   *
-   * @param imageId docker imageId string.  Looks like ubuntu:latest ggrant/joust:latest
-   */
+//  /**
+//   * Parses out user/image:tag from a docker string.
+//   *
+//   * @param imageId docker imageId string.  Looks like ubuntu:latest ggrant/joust:latest
+//   */
 //  private def parseDockerString(imageId: String) : Option[DockerImageReference] = {
 //    if (imageId.startsWith("gcr.io")) {
 //      None

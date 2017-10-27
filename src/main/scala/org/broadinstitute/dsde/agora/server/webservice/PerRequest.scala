@@ -92,6 +92,8 @@ trait PerRequest extends Actor with LazyLogging {
       r.complete(BadRequest,AgoraException(e.getMessage, e.getCause, BadRequest))
     case e: AgoraException =>
       r.complete(e.statusCode, e)
+    case e: wdl4s.wdl.exception.ValidationException =>
+      r.complete(BadRequest,AgoraException(e.getMessage, e.getCause, BadRequest))
     case e: Throwable =>
       logger.error("Exception caught by PerRequest: ", e)
       r.complete(InternalServerError, AgoraException(e.getMessage, e.getCause, InternalServerError))

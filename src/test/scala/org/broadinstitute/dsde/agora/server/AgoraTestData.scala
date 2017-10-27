@@ -32,6 +32,8 @@ object AgoraTestData {
   val synopsis3 = Option("This is a test configuration")
   val documentation1 = Option("This is the documentation")
   val documentation2 = Option("This is documentation for another method")
+  val testGA4GHpath = "/ga4gh/v1/tools/test_ns:test_wdl/versions/1/WDL/descriptor"
+  val mockServerPort = 8001
 
   val badNamespace = Option("    ")
   val badName = Option("   ")
@@ -109,8 +111,19 @@ object AgoraTestData {
                                 |}
                                 |
                                 | """.stripMargin)
-  val payloadReferencingExternalMethod = Option( """
-                                                   |import "methods://broad.wc.1"
+
+  val testAgoraEntity = new AgoraEntity(
+    namespace = namespace3,
+    name = name1,
+    synopsis = synopsis1,
+    documentation = documentation1,
+    owner = owner1,
+    payload = payload1,
+    entityType = Option(AgoraEntityType.Workflow)
+  )
+
+  val payloadReferencingExternalMethod = Option( s"""
+                                                   |import "http://localhost:$mockServerPort$testGA4GHpath"
                                                    |
                                                    |task grep {
                                                    |  String pattern
@@ -118,7 +131,7 @@ object AgoraTestData {
                                                    |  File file_name
                                                    |
                                                    |  command {
-                                                   |    grep ${pattern} ${flags} ${file_name}
+                                                   |    grep $${pattern} $${flags} $${file_name}
                                                    |  }
                                                    |  output {
                                                    |    File out = "stdout"
@@ -137,11 +150,40 @@ object AgoraTestData {
                                                    |      input: file_name = f
                                                    |    }
                                                    |  }
-                                                   |  call wc {
-                                                   |    input: files = grep.out
-                                                   |  }
                                                    |}
                                                    | """.stripMargin)
+
+  val payloadReferencingExternalMethodNotFound = Option( s"""
+                                                    |import "http://localhost:$mockServerPort/not-found"
+                                                    |
+                                                    |task grep {
+                                                    |  String pattern
+                                                    |  String? flags
+                                                    |  File file_name
+                                                    |
+                                                    |  command {
+                                                    |    grep $${pattern} $${flags} $${file_name}
+                                                    |  }
+                                                    |  output {
+                                                    |    File out = "stdout"
+                                                    |  }
+                                                    |  runtime {
+                                                    |    memory: "2 MB"
+                                                    |    cpu: 1
+                                                    |    defaultDisks: "mydisk 3 LOCAL_SSD"
+                                                    |  }
+                                                    |}
+                                                    |
+                                                   |workflow scatter_gather_grep_wc {
+                                                    |  Array[File] input_files
+                                                    |  scatter(f in input_files) {
+                                                    |    call grep {
+                                                    |      input: file_name = f
+                                                    |    }
+                                                    |  }
+                                                    |}
+                                                    | """.stripMargin)
+
   val badPayload = Option("task test {")
   val badPayloadInvalidImport = Option( """
                                           |import "invalid_syntax_for_tool"
@@ -161,7 +203,7 @@ object AgoraTestData {
                                           |
                                           | """.stripMargin)
   val badPayloadNonExistentImport = Option( """
-                                              |import "methods://broad.non_existent_grep.1"
+                                              |import "broad.non_existent_grep.1"
                                               |import "broad.wc.1"
                                               |
                                               |workflow scatter_gather_grep_wc {
@@ -520,16 +562,6 @@ object AgoraTestData {
     entityType = Option(AgoraEntityType.Task)
   )
 
-  val testAgoraEntity = new AgoraEntity(
-    namespace = namespace3,
-    name = name1,
-    synopsis = synopsis1,
-    documentation = documentation1,
-    owner = owner1,
-    payload = payload1,
-    entityType = Option(AgoraEntityType.Workflow)
-  )
-
   val testMethodWithSnapshot1 = new AgoraEntity(
     namespace = namespace3,
     name = name1,
@@ -588,6 +620,8 @@ object AgoraTestData {
     payload = badPayloadNonExistentImport,
     entityType = Option(AgoraEntityType.Workflow)
   )
+
+  val testBadAgoraEntityWdlImportNotFound = testBadAgoraEntityNonExistentWdlImportFormat.copy(payload = payloadReferencingExternalMethodNotFound)
 
   val testAgoraEntityWithInvalidOfficialDockerImageInWdl = new AgoraEntity(namespace = namespace1,
     name = name1,

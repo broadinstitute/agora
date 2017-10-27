@@ -106,7 +106,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
 
     val payloadOK = agoraEntity.entityType match {
         case Some(AgoraEntityType.Task) =>
-          WdlNamespace.loadUsingSource(payload, None, Option(Seq(httpResolver(_)))) // TODO: we may not need this change if we don't need Tasks
+          WdlNamespace.loadUsingSource(payload, None, Option(Seq(httpResolver(_))))
         // NOTE: Still not validating existence of docker images.
         // namespace.tasks.foreach { validateDockerImage }
 

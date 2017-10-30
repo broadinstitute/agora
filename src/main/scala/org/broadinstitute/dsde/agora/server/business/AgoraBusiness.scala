@@ -9,7 +9,7 @@ import org.bson.types.ObjectId
 import slick.dbio.DBIO
 import spray.http.StatusCodes
 import spray.json._
-import wdl4s.parser.WdlParser.{SyntaxError}
+import wdl4s.parser.WdlParser.SyntaxError
 import wdl4s.wdl.{WdlNamespace, WdlNamespaceWithWorkflow}
 import wdl4s.wdl.WdlNamespace.httpResolver
 
@@ -370,15 +370,30 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
           parseWDL(wdl) match {
             case Failure(ex) => throw ex
             case Success(workflow) =>
-              // get the set of input and output keys for this WDL
-              val inputKeys:Set[String] = workflow.inputs.keySet.map(_.toString)
+              // get the set of required input keys, optional input keys, and output keys for this WDL
+              val (optionalInputs, requiredInputs) = workflow.inputs.partition(_._2.optional)
+              val optionalInputKeys = optionalInputs.keySet.map(_.toString)
+              val requiredInputKeys = requiredInputs.keySet.map(_.toString)
               val outputKeys:Set[String] = workflow.outputs.map(_.fullyQualifiedName.toString).toSet
 
-              // filter configs to those that have the exact same input and output keys
+              // define "compatible" to be:
+              //  - config has exact same set of output keys as method's WDL
+              //  - config has all required input keys in the method's WDL
+              //  - any additional input keys in the config must exist in the set of optional WDL inputs
               configs.filter { config =>
                 config.payloadObject match {
                   case None => false
-                  case Some(mc) => mc.outputs.keySet == outputKeys && mc.inputs.keySet == inputKeys
+                  case Some(mc) =>
+                    // do outputs match?
+                    val outputsMatch = mc.outputs.keySet == outputKeys
+                    // are all required inputs satisfied?
+                    val requiredsMatch = (requiredInputKeys diff mc.inputs.keySet).isEmpty
+                    // if the config has inputs beyond those that are required, are those extra
+                    // inputs defined as optionals in the WDL?
+                    val extraInputs = mc.inputs.keySet diff requiredInputKeys
+                    val optionalsMatch = extraInputs.isEmpty || (extraInputs diff optionalInputKeys).isEmpty
+
+                    outputsMatch && requiredsMatch && optionalsMatch
                 }
               }
           }

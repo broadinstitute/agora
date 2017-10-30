@@ -84,6 +84,22 @@ class CompatibleConfigurationIntegrationSpec extends FreeSpec with RouteTest wit
       Seq("in1"), Seq("out1", "out2")), mockAuthenticatedOwner.get)) // <-- wrong inputs
     patiently(agoraBusiness.insert(testConfig("F", 1,
       Seq("in1","in2"), Seq("out1")), mockAuthenticatedOwner.get)) // <-- wrong outputs
+
+    // method has optional inputs
+    patiently(agoraBusiness.insert(testMethod("G",
+      Seq("in1","in2"), Seq("out1", "out2"), Seq("optional1", "optional2")), mockAuthenticatedOwner.get))
+    patiently(agoraBusiness.insert(testConfig("G", 1,
+      Seq("in1","in2"), Seq("out1", "out2")), mockAuthenticatedOwner.get)) // <-- all required, no optionals
+    patiently(agoraBusiness.insert(testConfig("G", 1,
+      Seq("in1","in2","optional1"), Seq("out1","out2")), mockAuthenticatedOwner.get)) // <-- all required, some optional
+    patiently(agoraBusiness.insert(testConfig("G", 1,
+      Seq("in1","in2","optional1","optional2"), Seq("out1","out2")), mockAuthenticatedOwner.get)) // <-- all required, all optional
+    patiently(agoraBusiness.insert(testConfig("G", 1,
+      Seq("in1", "optional1", "optional2"), Seq("out1","out2")), mockAuthenticatedOwner.get)) // <-- some required, all optional
+    patiently(agoraBusiness.insert(testConfig("G", 1,
+      Seq("in1", "in2", "in3"), Seq("out1","out2")), mockAuthenticatedOwner.get)) // <-- extraneous inputs
+
+
   }
 
   override def afterAll(): Unit = {
@@ -163,18 +179,32 @@ class CompatibleConfigurationIntegrationSpec extends FreeSpec with RouteTest wit
         assert(configs.isEmpty)
       }
     }
+    "should consider configurations compatible if they don't satisfy all optionals" in {
+      Get(testUrl("G", 1)) ~> testRoutes ~> check {
+        assert(status == OK)
+        val configs = responseAs[Seq[AgoraEntity]]
+        assert(configs.size == 3)
+        configs.foreach { config =>
+          validateConfig(config, "G", Seq("in1","in2"), Seq("out1","out2"), allowOptionals = true) }
+      }
+
+    }
   }
 
 
   // =========================================================
   // =================== helper methods
   // =========================================================
-  private def validateConfig(config:AgoraEntity, label:String, expectedInputs:Seq[String], expectedOutputs:Seq[String]) = {
+  private def validateConfig(config:AgoraEntity, label:String, expectedInputs:Seq[String], expectedOutputs:Seq[String], allowOptionals:Boolean=false) = {
     assert(config.payloadObject.isDefined)
     assert(config.payloadObject.get.methodRepoMethod.methodName == s"name-$label")
     assert(config.payloadObject.get.methodRepoMethod.methodNamespace == s"namespace-$label")
-    assert(config.payloadObject.get.inputs.keySet == expectedInputs.map(in=>s"TheWorkflow.TheTask.$in").toSet)
     assert(config.payloadObject.get.outputs.keySet == expectedOutputs.map(out=>s"TheWorkflow.TheTask.$out").toSet)
+    if (allowOptionals)
+      assert((expectedInputs.map(in=>s"TheWorkflow.TheTask.$in").toSet diff config.payloadObject.get.inputs.keySet).isEmpty)
+    else
+      assert(config.payloadObject.get.inputs.keySet == expectedInputs.map(in=>s"TheWorkflow.TheTask.$in").toSet)
+
   }
 
   private def testUrl(namespace:String, name:String, snapshotId:Int): String =
@@ -183,10 +213,10 @@ class CompatibleConfigurationIntegrationSpec extends FreeSpec with RouteTest wit
   private def testUrl(label:String, snapshotId: Int): String =
     testUrl(s"namespace-$label", s"name-$label", snapshotId)
 
-  private def testMethod(label:String, inputs:Seq[String], outputs:Seq[String]): AgoraEntity =
+  private def testMethod(label:String, inputs:Seq[String], outputs:Seq[String], optionalInputs:Seq[String] = Seq.empty[String]): AgoraEntity =
     testIntegrationEntity.copy(namespace=Some(s"namespace-$label"),
       name=Some(s"name-$label"),
-      payload=Some(makeWDL(inputs,outputs)))
+      payload=Some(makeWDL(inputs,outputs,optionalInputs)))
 
   private def testConfig(label:String, methodSnapshotId:Int, inputs:Seq[String], outputs:Seq[String]): AgoraEntity = {
     testAgoraConfigurationEntity.copy(
@@ -196,13 +226,15 @@ class CompatibleConfigurationIntegrationSpec extends FreeSpec with RouteTest wit
     )
   }
 
-  private def makeWDL(inputs:Seq[String], outputs:Seq[String]) = {
+  private def makeWDL(inputs:Seq[String], outputs:Seq[String], optionalInputs:Seq[String]) = {
 
     val inputWDL = (inputs map (in => s"$randType $in")).mkString("\n")
+    val optionalInputWDL = (optionalInputs map (in => s"$randType? $in")).mkString("\n")
     val outputWDL = (outputs map (out => s"""$randType $out = "foo"""")).mkString("\n")
 
     val templateWDL = s"""task TheTask {
                         |  $inputWDL
+                        |  $optionalInputWDL
                         |
                         |  command { foo }
                         |
@@ -218,7 +250,7 @@ class CompatibleConfigurationIntegrationSpec extends FreeSpec with RouteTest wit
     templateWDL
   }
 
-  private def randType:String = Random.shuffle(Seq("String","String?","File","File?")).head
+  private def randType:String = Random.shuffle(Seq("String","File")).head
 
   private def makeConfig(label:String, snapshotId:Int, inputs:Seq[String], outputs:Seq[String]) = {
 

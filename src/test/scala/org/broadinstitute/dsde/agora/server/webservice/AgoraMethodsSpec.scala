@@ -129,18 +129,144 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
     }
   }
 
-  "Agora" should "return a 400 bad request with validation errors when metadata is invalid" in {
+  "Agora" should "reject the request with validation errors when metadata is invalid" in {
     val entity = new AgoraEntity(namespace= Option(" "), name= Option(" ") , synopsis= Option(" "), payload= Option(" "), entityType= Option(AgoraEntityType.Task))
 
     Post(ApiUtil.Methods.withLeadingVersion, entity) ~>
       wrapWithRejectionHandler {
         methodsService.postRoute
       } ~> check {
-      assert(status == BadRequest)
+      assert(!handled)
+      assert(rejections.nonEmpty)
     }
   }
 
-  "Agora" should "store 10kb of github markdown as method documentation and return it without alteration" in {
+  "Agora" should "reject the request when posting with a payload of None" in {
+    Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(payload = None)) ~>
+      wrapWithRejectionHandler {
+        methodsService.postRoute
+      } ~> check {
+      assert(!handled)
+      assert(rejections.contains(ValidationRejection("You must supply a payload.",None)))
+    }
+  }
+
+  "Agora" should "reject the request when posting with a payload of whitespace only" in {
+    Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(payload = Some(" "))) ~>
+      wrapWithRejectionHandler {
+        methodsService.postRoute
+      } ~> check {
+      assert(!handled)
+      assert(rejections.contains(ValidationRejection("You must supply a payload.",None)))
+    }
+  }
+
+  "Agora" should "reject the request when posting with a snapshotId" in {
+    Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(snapshotId = Some(123))) ~>
+      wrapWithRejectionHandler {
+        methodsService.postRoute
+      } ~> check {
+      assert(!handled)
+      assert(rejections.contains(ValidationRejection("You cannot specify a snapshotId. It will be assigned by the system.",None)))
+    }
+  }
+
+  "Agora" should "reject the request when posting with a namespace of None" in {
+    Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(namespace = None)) ~>
+      wrapWithRejectionHandler {
+        methodsService.postRoute
+      } ~> check {
+      assert(!handled)
+      assert(rejections.contains(ValidationRejection("Namespace cannot be empty",None)))
+    }
+  }
+
+  "Agora" should "reject the request when posting with a namespace of whitespace only" in {
+    Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(namespace = Some(" "))) ~>
+      wrapWithRejectionHandler {
+        methodsService.postRoute
+      } ~> check {
+      assert(!handled)
+      assert(rejections.contains(ValidationRejection("Namespace cannot be empty",None)))
+    }
+  }
+
+  "Agora" should "reject the request when posting with a name of None" in {
+    Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(name = None)) ~>
+      wrapWithRejectionHandler {
+        methodsService.postRoute
+      } ~> check {
+      assert(!handled)
+      assert(rejections.contains(ValidationRejection("Name cannot be empty",None)))
+    }
+  }
+
+  "Agora" should "reject the request when posting with a name of whitespace only" in {
+    Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(name = Some(" "))) ~>
+      wrapWithRejectionHandler {
+        methodsService.postRoute
+      } ~> check {
+      assert(!handled)
+      assert(rejections.contains(ValidationRejection("Name cannot be empty",None)))
+    }
+  }
+
+  "Agora" should "reject the request when posting with a synopsis of 81 characters" in {
+    val testSynopsis = Some(fillerText.take(81))
+    Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(synopsis = testSynopsis)) ~>
+      wrapWithRejectionHandler {
+        methodsService.postRoute
+      } ~> check {
+      assert(!handled)
+      assert(rejections.contains(ValidationRejection("Synopsis must be less than 80 chars",None)))
+    }
+  }
+
+  "Agora" should "return a Created success code when posting with a synopsis of 80 characters" in {
+    val testSynopsis = Some(fillerText.take(80))
+    Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(synopsis = testSynopsis)) ~>
+      methodsService.postRoute ~> check {
+      handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => {
+        assert(entity.synopsis == testSynopsis)
+      })
+      assert(status == Created)
+    }
+  }
+
+  "Agora" should "return a Created success code when posting with a synopsis of 79 characters" in {
+    val testSynopsis = Some(fillerText.take(79))
+    Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(synopsis = testSynopsis)) ~>
+      methodsService.postRoute ~> check {
+      handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => {
+        assert(entity.synopsis == testSynopsis)
+      })
+      assert(status == Created)
+    }
+  }
+
+  "Agora" should "return a Created success code when posting with a synopsis of 74 characters" in {
+    val testSynopsis = Some(fillerText.take(74))
+    Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(synopsis = testSynopsis)) ~>
+      methodsService.postRoute ~> check {
+      handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => {
+        assert(entity.synopsis == testSynopsis)
+      })
+      assert(status == Created)
+    }
+  }
+
+  "Agora" should "reject the request when posting with a documentation of 10001 chars" in {
+    val testDocumentation = Some("x" * 10001)
+    Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(documentation = testDocumentation)) ~>
+      wrapWithRejectionHandler {
+        methodsService.postRoute
+      } ~> check {
+      assert(!handled)
+      assert(rejections.contains(ValidationRejection("Documentation must be less than 10kb",None)))
+    }
+  }
+
+  "Agora" should "reject 10kb of github markdown as method documentation" in {
     val entityJSON = s"""{
                         | "namespace": "$namespace1",
                         | "name": "$name1",

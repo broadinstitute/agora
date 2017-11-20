@@ -11,7 +11,7 @@ import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AdminSweeper, PermissionsDataSource}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AdminSweeper
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AdminSweeper.Sweep
-import org.broadinstitute.dsde.agora.server.exceptions.ValidationException
+import org.broadinstitute.dsde.agora.server.exceptions.{AgoraException, ValidationException}
 import org.broadinstitute.dsde.agora.server.ga4gh.Ga4ghService
 import org.broadinstitute.dsde.agora.server.webservice.configurations.ConfigurationsService
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
@@ -35,6 +35,10 @@ class ApiServiceActor(permissionsDataSource: PermissionsDataSource) extends Http
   trait ActorRefFactoryContext {
     def actorRefFactory = context
   }
+
+  // JSON Serialization Support
+  import spray.httpx.SprayJsonSupport._
+  import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 
   override val supervisorStrategy =
     OneForOneStrategy(loggingEnabled = AgoraConfig.supervisorLogging) {
@@ -86,18 +90,21 @@ class ApiServiceActor(permissionsDataSource: PermissionsDataSource) extends Http
 
   implicit def routeExceptionHandler(implicit log: LoggingContext) =
     ExceptionHandler {
-      case e: IllegalArgumentException => complete(BadRequest, e.getMessage)
-      case ve: ValidationException => complete(BadRequest, ve.getMessage)
+      case e: IllegalArgumentException => complete(BadRequest, e)
+      case ve: ValidationException => complete(BadRequest, ve)
       case ex: Throwable => {
         logger.error(ex.getMessage)
-        complete(InternalServerError, s"Something went wrong, but the error is unspecified.")
+        complete(InternalServerError, AgoraException("Something went wrong, but the error is unspecified."))
       }
     }
 
   implicit val routeRejectionHandler =
     RejectionHandler {
-      case MalformedRequestContentRejection(message, cause) :: _ => complete(BadRequest, message)
+      case MalformedRequestContentRejection(message, cause) :: _ => complete(BadRequest, AgoraException(message=message, cause, BadRequest))
+      case ValidationRejection(message, cause) :: _ => complete(BadRequest, AgoraException(message=message, cause, BadRequest))
   }
+
+
 
   val swaggerService = new SwaggerHttpService {
     override val apiTypes = Seq(typeOf[MethodsService], typeOf[ConfigurationsService])

@@ -222,7 +222,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
     }
   }
 
-  "Agora" should "return a 400 bad request when posting with a synopsis of 80 characters" in {
+  "Agora" should "return a Created success code when posting with a synopsis of 80 characters" in {
     val testSynopsis = Some(fillerText.take(80))
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(synopsis = testSynopsis)) ~>
       methodsService.postRoute ~> check {
@@ -233,7 +233,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
     }
   }
 
-  "Agora" should "return a 400 bad request when posting with a synopsis of 79 characters" in {
+  "Agora" should "return a Created success code when posting with a synopsis of 79 characters" in {
     val testSynopsis = Some(fillerText.take(79))
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(synopsis = testSynopsis)) ~>
       methodsService.postRoute ~> check {
@@ -244,7 +244,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
     }
   }
 
-  "Agora" should "return a 400 bad request when posting with a synopsis of 74 characters" in {
+  "Agora" should "return a Created success code when posting with a synopsis of 74 characters" in {
     val testSynopsis = Some(fillerText.take(74))
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(synopsis = testSynopsis)) ~>
       methodsService.postRoute ~> check {

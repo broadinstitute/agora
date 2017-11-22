@@ -444,7 +444,12 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     permissionsDataSource.inTransaction { db =>
       db.aePerms.addUserIfNotInDatabase(username) flatMap { _ =>
         db.aePerms.filterEntityByRead(Seq(foundEntity), username) flatMap {
-          case Seq(ae: AgoraEntity) => db.aePerms.listOwners(foundEntity) map { owners => ae.addUrl().removeIds().addManagers(owners) }
+          case Seq(ae: AgoraEntity) =>
+            db.aePerms.listOwners(foundEntity) flatMap { owners =>
+              db.aePerms.getEntityPermission(foundEntity, AccessControl.publicUser) map { perms: AgoraPermissions =>
+                ae.addUrl().removeIds().addManagers(owners).setIsPublic(perms.canRead)
+              }
+            }
           case _ => DBIO.failed(AgoraEntityNotFoundException(foundEntity))
         }
       }

@@ -165,6 +165,10 @@ case class AgoraEntity(namespace: Option[String] = None,
     copy(managers = managers)
   }
 
+  def setIsPublic(isPublic: Boolean): AgoraEntity = {
+    copy(public = Some(isPublic))
+  }
+
   def toShortString: String = s"AgoraEntity($namespace,$name,$snapshotId)"
 
   def canDeserializePayload: Boolean = {

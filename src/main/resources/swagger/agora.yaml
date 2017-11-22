@@ -1522,7 +1522,7 @@ definitions:
         type: array
         items:
           type: string
-        description: Owners of this AgoraEntity.
+        description: List of users with the Manage permission
       public:
         type: boolean
         description: If this AgoraEntity is publicly readable.
@@ -1599,6 +1599,11 @@ definitions:
   ConfigurationResponse:
     type: object
     properties:
+      managers:
+        type: array
+        items:
+          type: string
+        description: List of users with the Manage permission
       method:
         type: object
       namespace:
@@ -1643,6 +1648,9 @@ definitions:
         type: string
         description: Type of the AgoraEntity -- Task or Workflow.
         default: Task
+      public:
+        type: boolean
+        description: Is this method publicly readable?
   ConfigurationResponseWithPayloadObject:
     type: object
     properties:
@@ -1700,7 +1708,7 @@ definitions:
         type: array
         items:
           type: string
-        description: managers of this method
+        description: List of users with the Manage permission
       public:
         type: boolean
         description: true if the method is publicly readable
@@ -1717,6 +1725,11 @@ definitions:
   MethodResponse:
     type: object
     properties:
+      managers:
+        type: array
+        items:
+          type: string
+        description: List of users with the Manage permission
       namespace:
         type: string
         description: Namespace which contains AgoraEntity.
@@ -1759,6 +1772,9 @@ definitions:
         type: string
         description: Type of the AgoraEntity -- Task or Workflow.
         default: Task
+      public:
+        type: boolean
+        description: Is this method publicly readable?
   AccessControl:
     type: object
     properties:

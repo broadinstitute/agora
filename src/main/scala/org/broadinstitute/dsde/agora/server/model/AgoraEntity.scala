@@ -165,7 +165,7 @@ case class AgoraEntity(namespace: Option[String] = None,
     copy(managers = managers)
   }
 
-  def setIsPublic(isPublic: Boolean): AgoraEntity = {
+  def addIsPublic(isPublic: Boolean): AgoraEntity = {
     copy(public = Some(isPublic))
   }
 

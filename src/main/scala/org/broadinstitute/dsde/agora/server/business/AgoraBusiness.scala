@@ -447,7 +447,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
           case Seq(ae: AgoraEntity) =>
             db.aePerms.listOwners(foundEntity) flatMap { owners =>
               db.aePerms.getEntityPermission(foundEntity, AccessControl.publicUser) map { perms: AgoraPermissions =>
-                ae.addUrl().removeIds().addManagers(owners).setIsPublic(perms.canRead)
+                ae.addUrl().removeIds().addManagers(owners).addIsPublic(perms.canRead)
               }
             }
           case _ => DBIO.failed(AgoraEntityNotFoundException(foundEntity))

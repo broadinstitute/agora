@@ -1650,7 +1650,7 @@ definitions:
         default: Task
       public:
         type: boolean
-        description: Is this method publicly readable?
+        description: Is this configuration publicly readable?
   ConfigurationResponseWithPayloadObject:
     type: object
     properties:

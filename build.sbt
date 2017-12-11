@@ -5,7 +5,7 @@ name := "Agora"
 
 organization := "org.broadinstitute"
 
-scalaVersion := "2.11.11"
+scalaVersion := "2.11.12"
 
 val sprayV = "1.3.4"
 
@@ -18,9 +18,9 @@ resolvers += "artifactory-releases" at artifactory + "libs-release"
 resolvers += "artifactory-snapshots" at artifactory + "libs-snapshot"
 
 libraryDependencies ++= Seq(
-  "com.fasterxml.jackson.core"     % "jackson-annotations" % "2.8.8",
-  "com.fasterxml.jackson.core"     % "jackson-databind"    % "2.8.8.1",
-  "com.fasterxml.jackson.core"     % "jackson-core"        % "2.8.8",
+  "com.fasterxml.jackson.core"     % "jackson-annotations" % "2.8.10",
+  "com.fasterxml.jackson.core"     % "jackson-databind"    % "2.8.10",
+  "com.fasterxml.jackson.core"     % "jackson-core"        % "2.8.10",
   "org.apache.commons" % "commons-compress" % "1.4.1",  // upgrading a transitive dependency to avoid security warnings
   "org.apache.httpcomponents" % "httpclient" % "4.5.3",  // upgrading a transitive dependency to avoid security warnings
   "ch.qos.logback" % "logback-classic" % "1.2.2",

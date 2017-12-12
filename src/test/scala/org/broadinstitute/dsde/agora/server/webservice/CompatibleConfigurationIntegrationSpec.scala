@@ -1,7 +1,5 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
-
-
 import akka.actor.ActorSystem
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.AgoraTestFixture

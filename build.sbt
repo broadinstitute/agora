@@ -6,6 +6,7 @@ name := "Agora"
 organization := "org.broadinstitute"
 
 scalaVersion := "2.11.12"
+dependencyOverrides += "org.scala-lang" % "scala-compiler" % "2.11.12"
 
 val sprayV = "1.3.4"
 

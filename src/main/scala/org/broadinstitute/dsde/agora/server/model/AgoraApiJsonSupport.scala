@@ -2,7 +2,6 @@
 package org.broadinstitute.dsde.agora.server.model
 
 import org.broadinstitute.dsde.agora.server.exceptions.AgoraException
-import org.broadinstitute.dsde.agora.server.webservice.util.AgoraOpenAMClient.UserInfoResponse
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraPermissions, EntityAccessControl}
 import org.bson.types.ObjectId
 import org.joda.time.DateTime
@@ -48,25 +47,6 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
 
     override def read(value: JsValue): AgoraEntityType.EntityType = value match {
       case JsString(name) => AgoraEntityType.withName(name)
-      case _ => throw new DeserializationException("only string supported")
-    }
-  }
-
-  implicit object UserInfoResponseFormat extends RootJsonFormat[UserInfoResponse] {
-    override def write(userInfo: UserInfoResponse) = {
-      JsObject("username" -> JsString(userInfo.username), "cn" -> userInfo.cn.toJson, "mail" -> userInfo.mail.toJson)
-    }
-
-    override def read(json: JsValue): UserInfoResponse = json match {
-      case x: JsObject =>
-        val username = x.fields("username").convertTo[String]
-        val cn = x.fields("cn").convertTo[Seq[String]]
-        val mailJson = x.fields.get("mail")
-        val mail = mailJson match {
-          case Some(emailJson) => emailJson.convertTo[Seq[String]]
-          case None => Seq.empty[String]
-        }
-        UserInfoResponse(username, cn, mail)
       case _ => throw new DeserializationException("only string supported")
     }
   }

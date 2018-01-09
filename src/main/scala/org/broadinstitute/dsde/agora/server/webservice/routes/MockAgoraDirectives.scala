@@ -1,7 +1,7 @@
 package org.broadinstitute.dsde.agora.server.webservice.routes
 
 import org.broadinstitute.dsde.agora.server.AgoraConfig
-import org.broadinstitute.dsde.vault.common.util.ImplicitMagnet
+import org.broadinstitute.dsde.agora.server.webservice.util.ImplicitMagnet
 import spray.routing.Directives._
 import spray.routing._
 

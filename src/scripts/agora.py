@@ -15,9 +15,9 @@
 # Supports the push, get-by-reference, and list methods
 # Supports both configurations and workflows
 #
-# Must find a way to programatically get an Oath token from the openAM server.
+# Must find a way to programmatically get an OAuth token from the OAuth server.
 #   Currently, assumes you just grabbed the token and are passing it in as an
-#   argument. Really hackish.
+#   argument.
 # 
 ################################################################################
 

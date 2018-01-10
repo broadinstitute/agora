@@ -2,7 +2,7 @@ package org.broadinstitute.dsde.agora.server.webservice.routes
 
 import spray.routing.Directives._
 import spray.routing._
-import org.broadinstitute.dsde.vault.common.util.ImplicitMagnet
+import org.broadinstitute.dsde.agora.server.webservice.util.ImplicitMagnet
 
 import scala.concurrent.ExecutionContext
 

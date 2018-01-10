@@ -1,16 +1,16 @@
 
 package org.broadinstitute.dsde.agora.server.webservice.routes
 
-import org.broadinstitute.dsde.vault.common.util.ImplicitMagnet
+import org.broadinstitute.dsde.agora.server.webservice.util.ImplicitMagnet
 import spray.routing._
 
 import scala.concurrent.ExecutionContext
 
 /**
  * AgoraDirectives trait allows us to specify directives that may be implemented either by specific implementation
- * classes such as the OpenAM directives class in vault common, the OpenIdConnect directives class, or the mock OpenAM
+ * classes such as the OpenIdConnect directives class, or the mock
  * directives in our test suite. Using the mock directives we can unit test without having to integration test with a
- * running OpenAM server.
+ * running server.
  */
 trait AgoraDirectives {
   def commonNameFromRequest(magnet: ImplicitMagnet[ExecutionContext]): Directive1[String]

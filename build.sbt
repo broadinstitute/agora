@@ -10,7 +10,7 @@ dependencyOverrides += "org.scala-lang" % "scala-compiler" % "2.11.12"
 
 val sprayV = "1.3.4"
 
-val cromwellVersion = "30-047d48f"
+val cromwellVersion = "30-4de204a"
 
 val artifactory = "https://broadinstitute.jfrog.io/broadinstitute/"
 

@@ -42,7 +42,6 @@ libraryDependencies ++= Seq(
   "io.spray" %% "spray-routing-shapeless23" % sprayV,
   "mysql" % "mysql-connector-java" % "5.1.42",
   "org.broadinstitute" %% "cromwell-wdl" % cromwellVersion,
-  "org.broadinstitute.dsde.vault" %% "vault-common" % "0.1-15-bf74315" excludeAll ExclusionRule(organization = "io.spray"),
   "org.broadinstitute.dsde" %% "rawls-model" % "0.1-8c63c48-SNAP"
     exclude("com.typesafe.scala-logging", "scala-logging_2.11"),
   "org.mongodb" %% "casbah" % "2.8.2",

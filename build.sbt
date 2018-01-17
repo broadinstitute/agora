@@ -10,7 +10,7 @@ dependencyOverrides += "org.scala-lang" % "scala-compiler" % "2.11.12"
 
 val sprayV = "1.3.4"
 
-val wdl4sV = "0.15-814d203"
+val cromwellVersion = "30-4de204a"
 
 val artifactory = "https://broadinstitute.jfrog.io/broadinstitute/"
 
@@ -33,7 +33,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % "2.3.4",
   "com.typesafe.akka" %% "akka-slf4j" % "2.3.11",
   "com.typesafe" % "config" % "1.2.1",
-  "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0",
+  "com.typesafe.scala-logging" %% "scala-logging" % "3.7.1",
   "com.typesafe.slick" %% "slick" % "3.2.0",
   "com.zaxxer" % "HikariCP" % "2.3.9",
   "io.spray" %% "spray-can" % sprayV,
@@ -41,7 +41,7 @@ libraryDependencies ++= Seq(
   "io.spray" %% "spray-json" % "1.3.3", // NB: Not at sprayV. 1.3.4 does not exist.
   "io.spray" %% "spray-routing-shapeless23" % sprayV,
   "mysql" % "mysql-connector-java" % "5.1.42",
-  "org.broadinstitute" %% "wdl4s" % wdl4sV,
+  "org.broadinstitute" %% "cromwell-wdl" % cromwellVersion,
   "org.broadinstitute.dsde" %% "rawls-model" % "0.1-8c63c48-SNAP"
     exclude("com.typesafe.scala-logging", "scala-logging_2.11"),
   "org.mongodb" %% "casbah" % "2.8.2",

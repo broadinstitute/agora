@@ -10,8 +10,9 @@ import slick.dbio.DBIO
 import spray.http.StatusCodes
 import spray.json._
 import wdl4s.parser.WdlParser.SyntaxError
-import wdl4s.wdl.{WdlNamespace, WdlNamespaceWithWorkflow}
-import wdl4s.wdl.WdlNamespace.httpResolver
+import wdl.{WdlNamespace, WdlNamespaceWithWorkflow}
+import wdl.WdlNamespace.httpResolver
+import wdl.WdlWorkflow
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
@@ -403,7 +404,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
   }
 
   // copied from org.broadinstitute.dsde.rawls.jobexec.MethodConfigResolver
-  def parseWDL(wdl: String): Try[wdl4s.wdl.WdlWorkflow] = {
+  def parseWDL(wdl: String): Try[WdlWorkflow] = {
     val parsed: Try[WdlNamespaceWithWorkflow] = WdlNamespaceWithWorkflow.load(wdl, Seq(httpResolver(_))).recoverWith { case t: SyntaxError =>
       Failure(AgoraException("Failed to parse WDL: " + t.getMessage))
     }

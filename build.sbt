@@ -25,7 +25,6 @@ libraryDependencies ++= Seq(
   "org.apache.commons" % "commons-compress" % "1.4.1",  // upgrading a transitive dependency to avoid security warnings
   "org.apache.httpcomponents" % "httpclient" % "4.5.3",  // upgrading a transitive dependency to avoid security warnings
   "ch.qos.logback" % "logback-classic" % "1.2.2",
-  "com.github.swagger-spray" %% "swagger-spray" % "0.8.0" excludeAll ExclusionRule(organization = "io.spray"),
   "com.github.simplyscala" %% "scalatest-embedmongo" % "0.2.2",
   "com.google.api-client" % "google-api-client" % "1.20.0" excludeAll ExclusionRule(organization = "com.google.guava"),
   "com.google.apis" % "google-api-services-admin-directory" % "directory_v1-rev53-1.20.0" excludeAll ExclusionRule(organization = "com.google.guava"),
@@ -46,7 +45,7 @@ libraryDependencies ++= Seq(
     exclude("com.typesafe.scala-logging", "scala-logging_2.11"),
   "org.mongodb" %% "casbah" % "2.8.2",
   "org.scalaz" %% "scalaz-core" % "7.1.3",
-  "org.webjars" % "swagger-ui"  % "2.2.5",
+  "org.webjars" % "swagger-ui"  % "2.2.10",
   //---------- Test libraries -------------------//
   "io.spray" %% "spray-testkit" % sprayV % Test,
   "org.scalatest" %% "scalatest" % "2.2.6" % Test,

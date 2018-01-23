@@ -45,7 +45,7 @@ libraryDependencies ++= Seq(
     exclude("com.typesafe.scala-logging", "scala-logging_2.11"),
   "org.mongodb" %% "casbah" % "2.8.2",
   "org.scalaz" %% "scalaz-core" % "7.1.3",
-  "org.webjars" % "swagger-ui"  % "2.2.10",
+  "org.webjars" % "swagger-ui"  % "2.2.10-1",
   //---------- Test libraries -------------------//
   "io.spray" %% "spray-testkit" % sprayV % Test,
   "org.scalatest" %% "scalatest" % "2.2.6" % Test,

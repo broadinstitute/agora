@@ -89,7 +89,7 @@ class ApiServiceActor(permissionsDataSource: PermissionsDataSource) extends Http
       case ValidationRejection(message, cause) :: _ => complete(BadRequest, AgoraException(message=message, cause, BadRequest))
   }
 
-  private val swaggerUiPath = "META-INF/resources/webjars/swagger-ui/2.2.10"
+  private val swaggerUiPath = "META-INF/resources/webjars/swagger-ui/2.2.10-1"
 
   val swaggerService = {
     path("") {

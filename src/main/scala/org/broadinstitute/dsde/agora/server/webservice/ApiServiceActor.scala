@@ -4,8 +4,6 @@ import java.security.Permissions
 
 import akka.actor.SupervisorStrategy.Restart
 import akka.actor.{OneForOneStrategy, Props}
-import com.github.swagger.spray.SwaggerHttpService
-import com.github.swagger.spray.model.{Contact, Info, License}
 import com.typesafe.scalalogging.LazyLogging
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AdminSweeper, PermissionsDataSource}
@@ -71,20 +69,7 @@ class ApiServiceActor(permissionsDataSource: PermissionsDataSource) extends Http
     innerRoute( FileUtils.readAllTextFromResource(path) )
 
   def possibleRoutes =  options{ complete(OK) } ~ ga4ghService.routes ~ methodsService.routes ~ configurationsService.routes ~
-    get {
-      pathSingleSlash {
-        withResourceFileContents("swagger/index.html") { indexHtml =>
-          complete {
-            HttpEntity(ContentType(MediaTypes.`text/html`),
-              indexHtml
-                .replace("your-client-id", AgoraConfig.SwaggerConfig.clientId)
-                .replace("your-realms", AgoraConfig.SwaggerConfig.realm)
-                .replace("your-app-name", AgoraConfig.SwaggerConfig.appName)
-            )
-          }
-        }
-      } ~ getFromResourceDirectory("swagger/") ~ getFromResourceDirectory("META-INF/resources/webjars/swagger-ui/2.2.5/")
-    }
+    swaggerService
 
   def receive = runRoute(possibleRoutes)
 
@@ -104,21 +89,60 @@ class ApiServiceActor(permissionsDataSource: PermissionsDataSource) extends Http
       case ValidationRejection(message, cause) :: _ => complete(BadRequest, AgoraException(message=message, cause, BadRequest))
   }
 
+  private val swaggerUiPath = "META-INF/resources/webjars/swagger-ui/2.2.10-1"
 
-
-  val swaggerService = new SwaggerHttpService {
-    override val apiTypes = Seq(typeOf[MethodsService], typeOf[ConfigurationsService])
-    override val basePath = AgoraConfig.SwaggerConfig.baseUrl
-    override val apiDocsPath = AgoraConfig.SwaggerConfig.apiDocs
-    override def actorRefFactory = context
-
-    override val info = Info(
-        AgoraConfig.SwaggerConfig.description,
-        AgoraConfig.SwaggerConfig.swaggerVersion,
-        AgoraConfig.SwaggerConfig.info,
-        AgoraConfig.SwaggerConfig.termsOfServiceUrl,
-        Some(Contact("", "",AgoraConfig.SwaggerConfig.contact)),
-        Some(License(AgoraConfig.SwaggerConfig.license, AgoraConfig.SwaggerConfig.licenseUrl))
-      )
+  val swaggerService = {
+    path("") {
+      get {
+        parameter("url") {urlparam =>
+          requestUri {uri =>
+            redirect(uri.withQuery(Map.empty[String,String]), MovedPermanently)
+          }
+        } ~
+          serveIndex()
+      }
+    } ~
+    path("agora.yaml") {
+      get {
+        withResourceFileContents("swagger/agora.yaml") { apiDocs =>
+          complete(apiDocs)
+        }
+      }
+    } ~
+    // We have to be explicit about the paths here since we're matching at the root URL and we don't
+    // want to catch all paths lest we circumvent Spray's not-found and method-not-allowed error
+    // messages.
+    (pathSuffixTest("o2c.html") | pathSuffixTest("swagger-ui.js")
+      | pathPrefixTest("css" /) | pathPrefixTest("fonts" /) | pathPrefixTest("images" /)
+      | pathPrefixTest("lang" /) | pathPrefixTest("lib" /)) {
+        get {
+          getFromResourceDirectory(swaggerUiPath)
+        }
+      }
   }
+
+  private def serveIndex(): Route = {
+    withResourceFileContents(swaggerUiPath + "/index.html") { indexHtml =>
+      complete {
+        val swaggerOptions =
+          """
+            |        validatorUrl: null,
+            |        apisSorter: "alpha",
+            |        operationsSorter: "alpha",
+          """.stripMargin
+
+        HttpEntity(ContentType(MediaTypes.`text/html`),
+          indexHtml
+            .replace("your-client-id", AgoraConfig.SwaggerConfig.clientId)
+            .replace("your-realms", AgoraConfig.SwaggerConfig.realm)
+            .replace("your-app-name", AgoraConfig.SwaggerConfig.appName)
+            .replace("scopeSeparator: \",\"", "scopeSeparator: \" \"")
+            .replace("jsonEditor: false,", "jsonEditor: false," + swaggerOptions)
+            .replace("url = \"http://petstore.swagger.io/v2/swagger.json\";",
+              "url = '/agora.yaml';")
+        )
+      }
+    }
+  }
+
 }

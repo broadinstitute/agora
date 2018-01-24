@@ -64,7 +64,9 @@ Generate Agora configurations using the configurations in FireCloud-Develop:
 
 ```
 APP_NAME=agora \ 
-    ENV=local \
+    ENV=dev \
+    RUN_CONTEXT=local \
+    INPUT_DIR=$PWD \
     OUTPUT_DIR=./config \
     ../firecloud-develop/configure.rb
 ```
@@ -74,4 +76,11 @@ Launch the generated docker compose file:
 ```
 docker-compose -p agora -f config/docker-compose.yaml up
 ```
-The docker compose configuration is set to point to https://local.broadinstitute.org:30443/
+
+or, use the config script:
+
+```
+./config/docker-rsync-local-agora.sh 
+```
+
+The docker compose configuration is set to point to https://local.broadinstitute.org:30443/ (where the endpoints can be viewed via Swagger).

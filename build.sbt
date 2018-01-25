@@ -25,12 +25,12 @@ libraryDependencies ++= Seq(
   "org.apache.commons" % "commons-compress" % "1.4.1",  // upgrading a transitive dependency to avoid security warnings
   "org.apache.httpcomponents" % "httpclient" % "4.5.3",  // upgrading a transitive dependency to avoid security warnings
   "ch.qos.logback" % "logback-classic" % "1.2.2",
-  "com.github.simplyscala" %% "scalatest-embedmongo" % "0.2.2",
+  "com.github.simplyscala" %% "scalatest-embedmongo" % "0.2.4",
   "com.google.api-client" % "google-api-client" % "1.20.0" excludeAll ExclusionRule(organization = "com.google.guava"),
   "com.google.apis" % "google-api-services-admin-directory" % "directory_v1-rev53-1.20.0" excludeAll ExclusionRule(organization = "com.google.guava"),
   "com.h2database" % "h2" % "1.3.175",
-  "com.typesafe.akka" %% "akka-actor" % "2.3.4",
-  "com.typesafe.akka" %% "akka-slf4j" % "2.3.11",
+  "com.typesafe.akka" %% "akka-actor" % "2.5.9",
+  "com.typesafe.akka" %% "akka-slf4j" % "2.5.9",
   "com.typesafe" % "config" % "1.2.1",
   "com.typesafe.scala-logging" %% "scala-logging" % "3.7.1",
   "com.typesafe.slick" %% "slick" % "3.2.0",
@@ -41,12 +41,12 @@ libraryDependencies ++= Seq(
   "io.spray" %% "spray-routing-shapeless23" % sprayV,
   "mysql" % "mysql-connector-java" % "5.1.42",
   "org.broadinstitute" %% "cromwell-wdl" % cromwellVersion,
-  "org.mongodb" %% "casbah" % "2.8.2",
-  "org.scalaz" %% "scalaz-core" % "7.1.3",
+  "org.mongodb" %% "casbah" % "3.1.1",
+  "org.scalaz" %% "scalaz-core" % "7.2.18",
   "org.webjars" % "swagger-ui"  % "2.2.10-1",
   //---------- Test libraries -------------------//
   "io.spray" %% "spray-testkit" % sprayV % Test,
-  "org.scalatest" %% "scalatest" % "2.2.6" % Test,
+  "org.scalatest" %% "scalatest" % "3.0.4" % Test,
   "org.mock-server" % "mockserver-netty" % "3.10.2" % "test"
 )
 

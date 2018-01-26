@@ -14,9 +14,10 @@ Agora is written in [Scala](http://www.scala-lang.org/), uses [Akka](http://akka
 To obtain and build the app, perform the following commands:
 
 ```
+$ brew install git-secrets # if not already installed
 $ git clone https://github.com/broadinstitute/agora.git
-$ cp -r hooks/ .git/hooks/ #this step can be skipped if you use the rsync script to spin up locally
-$ chmod 755 .git/hooks/apply-get-secrets.sh #this step as well
+$ cp -r hooks/ .git/hooks/ # this step can be skipped if you use the rsync script to spin up locally
+$ chmod 755 .git/hooks/apply-git-secrets.sh # this step as well
 $ cd agora
 $ sbt package
 ```
@@ -64,7 +65,9 @@ Generate Agora configurations using the configurations in FireCloud-Develop:
 
 ```
 APP_NAME=agora \ 
-    ENV=local \
+    ENV=dev \
+    RUN_CONTEXT=local \
+    INPUT_DIR=$PWD \
     OUTPUT_DIR=./config \
     ../firecloud-develop/configure.rb
 ```
@@ -74,4 +77,11 @@ Launch the generated docker compose file:
 ```
 docker-compose -p agora -f config/docker-compose.yaml up
 ```
-The docker compose configuration is set to point to https://local.broadinstitute.org:30443/
+
+or, use the config script:
+
+```
+./config/docker-rsync-local-agora.sh 
+```
+
+The docker compose configuration is set to point to https://local.broadinstitute.org:30443/ (where the endpoints can be viewed via Swagger).

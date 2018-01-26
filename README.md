@@ -14,9 +14,10 @@ Agora is written in [Scala](http://www.scala-lang.org/), uses [Akka](http://akka
 To obtain and build the app, perform the following commands:
 
 ```
+$ brew install git-secrets # if not already installed
 $ git clone https://github.com/broadinstitute/agora.git
-$ cp -r hooks/ .git/hooks/ #this step can be skipped if you use the rsync script to spin up locally
-$ chmod 755 .git/hooks/apply-git-secrets.sh #this step as well
+$ cp -r hooks/ .git/hooks/ # this step can be skipped if you use the rsync script to spin up locally
+$ chmod 755 .git/hooks/apply-git-secrets.sh # this step as well
 $ cd agora
 $ sbt package
 ```

@@ -1,9 +1,6 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
-import akka.actor.ActorSystem
 import org.broadinstitute.dsde.agora.server.AgoraTestFixture
-import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
 import org.broadinstitute.dsde.agora.server.exceptions.ValidationException
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.configurations.ConfigurationsService
@@ -38,15 +35,8 @@ class ApiServiceSpec extends AgoraTestFixture with Directives with Suite with Sc
     def actorRefFactory = system
   }
 
-
-  abstract class StatusService(pds: PermissionsDataSource) extends AgoraService(pds) {
-    override def path = "/status"
-    override def statusRoute = super.statusRoute
-  }
-
   val methodsService = new MethodsService(permsDataSource) with ActorRefFactoryContext
   val configurationsService = new ConfigurationsService(permsDataSource) with ActorRefFactoryContext
-  val apiStatusService = new StatusService(permsDataSource) with ActorRefFactoryContext
 
   def handleError[T](deserialized: Deserialized[T], assertions: (T) => Unit) = {
     if (status.isSuccess) {

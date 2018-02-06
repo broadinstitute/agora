@@ -3,7 +3,7 @@ package org.broadinstitute.dsde.agora.server.webservice
 import java.security.Permissions
 
 import akka.actor.SupervisorStrategy.Restart
-import akka.actor.{OneForOneStrategy, Props}
+import akka.actor.{ActorRef, ActorRefFactory, OneForOneStrategy, Props}
 import com.typesafe.scalalogging.LazyLogging
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AdminSweeper, PermissionsDataSource}
@@ -19,14 +19,17 @@ import spray.http.StatusCodes._
 import spray.routing._
 import spray.util.LoggingContext
 
+import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import scala.reflect.runtime.universe._
 
 object ApiServiceActor {
-  def props(permissionsDataSource: PermissionsDataSource): Props = Props(classOf[ApiServiceActor], permissionsDataSource)
+  def props(permissionsDataSource: PermissionsDataSource, healthMonitor: ActorRef): Props =
+    Props(classOf[ApiServiceActor], permissionsDataSource, healthMonitor)
 }
 
-class ApiServiceActor(permissionsDataSource: PermissionsDataSource) extends HttpServiceActor with LazyLogging {
+class ApiServiceActor(permissionsDataSource: PermissionsDataSource, healthMonitor: ActorRef)
+  extends HttpServiceActor with LazyLogging {
 
   override def actorRefFactory = context
 
@@ -46,7 +49,7 @@ class ApiServiceActor(permissionsDataSource: PermissionsDataSource) extends Http
     }
 
   /**
-   * Firecloud system maintains it's set of admins as a google group.
+   * Firecloud system maintains its set of admins as a google group.
    *
    * If such a group is specified in config, poll it at regular intervals
    *   to synchronize the admins defined in our users table
@@ -65,11 +68,13 @@ class ApiServiceActor(permissionsDataSource: PermissionsDataSource) extends Http
 
   val ga4ghService = new Ga4ghService(permissionsDataSource) with ActorRefFactoryContext
 
+  val statusService = new StatusService(permissionsDataSource, healthMonitor) with ActorRefFactoryContext
+
   def withResourceFileContents(path: String)(innerRoute: String => Route): Route =
     innerRoute( FileUtils.readAllTextFromResource(path) )
 
-  def possibleRoutes =  options{ complete(OK) } ~ ga4ghService.routes ~ methodsService.routes ~ configurationsService.routes ~
-    swaggerService
+  def possibleRoutes =  options{ complete(OK) } ~ statusService.routes ~ ga4ghService.routes ~
+    methodsService.routes ~ configurationsService.routes ~ swaggerService
 
   def receive = runRoute(possibleRoutes)
 

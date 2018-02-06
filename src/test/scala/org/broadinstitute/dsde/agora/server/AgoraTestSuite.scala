@@ -9,7 +9,8 @@ import org.broadinstitute.dsde.agora.server.webservice._
 import org.scalatest.{BeforeAndAfterAll, Suites}
 
 class AgoraTestSuite extends Suites(
-  new AgoraServiceStatusSpec,
+  new AgoraServiceUnhealthyStatusSpec,
+  new AgoraServiceHealthyStatusSpec,
   new AgoraMethodsSpec,
   new EntityCreationPermissionSpec,
   new EntityCopySpec,

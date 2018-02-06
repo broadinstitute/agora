@@ -1,15 +1,14 @@
 
 package org.broadinstitute.dsde.agora.server.webservice
 
-import akka.actor.Props
+import akka.actor.{ActorRef, Props}
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.AgoraConfig.authenticationDirectives
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, EntityAccessControl, PermissionsDataSource, entities}
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
-import org.broadinstitute.dsde.agora.server.webservice.handlers.{AddHandler, PermissionHandler, QueryHandler, StatusHandler}
+import org.broadinstitute.dsde.agora.server.webservice.handlers.{AddHandler, PermissionHandler, QueryHandler}
 import org.broadinstitute.dsde.agora.server.webservice.routes.RouteHelpers
-import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages.Status
 import spray.http.HttpMethods
 import spray.httpx.SprayJsonSupport._
 import spray.routing.{HttpService, MethodRejection, PathMatcher}
@@ -29,13 +28,11 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
 
   def routes = namespacePermissionsRoute ~ multiEntityPermissionsRoute ~ entityPermissionsRoute ~
     queryAssociatedConfigurationsRoute ~ queryCompatibleConfigurationsRoute ~ querySingleRoute ~
-    queryMethodDefinitionsRoute ~ queryRoute ~ postRoute ~ statusRoute
+    queryMethodDefinitionsRoute ~ queryRoute ~ postRoute
 
   def queryHandlerProps = Props(classOf[QueryHandler], permissionsDataSource, executionContext)
 
   def addHandlerProps = Props(classOf[AddHandler], permissionsDataSource, executionContext)
-
-  def statusHandlerProps = Props(classOf[StatusHandler], permissionsDataSource, executionContext)
 
   def permissionHandlerProps = Props(classOf[PermissionHandler], permissionsDataSource, executionContext)
 
@@ -181,11 +178,4 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
         }
       }
     }
-
-  // GET /status
-  def statusRoute = path("status") {
-    get { requestContext =>
-      perRequest(requestContext, statusHandlerProps, Status(requestContext))
-    }
-  }
 }

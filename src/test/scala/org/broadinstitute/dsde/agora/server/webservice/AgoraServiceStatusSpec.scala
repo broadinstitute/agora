@@ -6,7 +6,6 @@ import akka.testkit.{TestKit, TestKitBase}
 import akka.util.Timeout
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDBStatus
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
-import org.broadinstitute.dsde.agora.server.model.AgoraStatus
 import org.broadinstitute.dsde.workbench.util.health.HealthMonitor._
 import org.broadinstitute.dsde.workbench.util.health.{HealthMonitor, StatusCheckResponse, SubsystemStatus}
 import org.broadinstitute.dsde.workbench.util.health.StatusJsonSupport.StatusCheckResponseFormat

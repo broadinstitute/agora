@@ -1,7 +1,7 @@
 
 package org.broadinstitute.dsde.agora.server.webservice
 
-import akka.actor.{ActorRef, Props}
+import akka.actor.Props
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.AgoraConfig.authenticationDirectives
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, EntityAccessControl, PermissionsDataSource, entities}

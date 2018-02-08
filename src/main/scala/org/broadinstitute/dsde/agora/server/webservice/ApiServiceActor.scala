@@ -3,7 +3,7 @@ package org.broadinstitute.dsde.agora.server.webservice
 import java.security.Permissions
 
 import akka.actor.SupervisorStrategy.Restart
-import akka.actor.{ActorRef, ActorRefFactory, OneForOneStrategy, Props}
+import akka.actor.{ActorRef, OneForOneStrategy, Props}
 import com.typesafe.scalalogging.LazyLogging
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AdminSweeper, PermissionsDataSource}
@@ -19,7 +19,6 @@ import spray.http.StatusCodes._
 import spray.routing._
 import spray.util.LoggingContext
 
-import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import scala.reflect.runtime.universe._
 

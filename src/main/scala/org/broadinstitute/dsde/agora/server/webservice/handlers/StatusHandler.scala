@@ -1,36 +1,34 @@
 package org.broadinstitute.dsde.agora.server.webservice.handlers
 
-import akka.actor.Actor
+import akka.actor.{Actor, ActorRef}
 import akka.pattern._
-import org.broadinstitute.dsde.agora.server.AgoraConfig
-import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDBStatus
+import akka.util.Timeout
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
-import org.broadinstitute.dsde.agora.server.model.AgoraStatus
-import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.webservice.PerRequest.{PerRequestMessage, RequestComplete}
 import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages
-import spray.http.StatusCodes._
+import org.broadinstitute.dsde.workbench.util.health.HealthMonitor.GetCurrentStatus
+import org.broadinstitute.dsde.workbench.util.health.StatusCheckResponse
+import org.broadinstitute.dsde.workbench.util.health.StatusJsonSupport.StatusCheckResponseFormat
+import spray.http.StatusCodes
 import spray.httpx.SprayJsonSupport._
 import spray.routing.RequestContext
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration._
 
 class StatusHandler(dataSource: PermissionsDataSource, implicit val ec: ExecutionContext) extends Actor {
   implicit val system = context.system
-
-  val agoraStatus = new AgoraDBStatus(dataSource)(ec)
-  val loggingEnabled = AgoraConfig.supervisorLogging
+  implicit val timeout = Timeout(1.minute) // timeout for the ask to healthMonitor for GetCurrentStatus
 
   def receive = {
-    case ServiceMessages.Status(requestContext: RequestContext) =>
-      getStatus(requestContext) pipeTo context.parent
+    case ServiceMessages.Status(healthMonitor: ActorRef) =>
+      collectStatusInfo(healthMonitor) pipeTo context.parent
   }
 
-  private def getStatus(requestContext: RequestContext): Future[PerRequestMessage] = {
-    val status = agoraStatus.status()
-    status map {
-      case AgoraStatus(true, messages) => RequestComplete(OK, status)
-      case AgoraStatus(false, messages) => RequestComplete(InternalServerError, status)
+  private def collectStatusInfo(healthMonitor: ActorRef): Future[PerRequestMessage] = {
+    (healthMonitor ? GetCurrentStatus).mapTo[StatusCheckResponse].map { statusCheckResponse =>
+      val httpStatus = if (statusCheckResponse.ok) StatusCodes.OK else StatusCodes.InternalServerError
+      RequestComplete(httpStatus, statusCheckResponse)
     }
   }
 }

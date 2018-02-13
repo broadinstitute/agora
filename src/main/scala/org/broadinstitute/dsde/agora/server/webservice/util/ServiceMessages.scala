@@ -1,5 +1,6 @@
 package org.broadinstitute.dsde.agora.server.webservice.util
 
+import akka.actor.ActorRef
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, EntityAccessControl}
 import org.broadinstitute.dsde.agora.server.ga4gh.Models.ToolDescriptorType.DescriptorType
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection, AgoraEntityType}
@@ -112,6 +113,6 @@ object ServiceMessages {
                  agoraAddRequest: AgoraEntity,
                  username: String)
 
-  case class Status(requestContext: RequestContext)
+  case class Status(healthMonitor: ActorRef)
 
 }

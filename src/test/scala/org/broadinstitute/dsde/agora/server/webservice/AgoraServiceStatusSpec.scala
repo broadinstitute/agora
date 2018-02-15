@@ -2,7 +2,7 @@ package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.actor.ActorSystem
 import akka.pattern._
-import akka.testkit.{TestKit, TestKitBase}
+import akka.testkit.TestKitBase
 import akka.util.Timeout
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDBStatus
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource

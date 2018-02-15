@@ -9,6 +9,7 @@ scalaVersion := "2.11.12"
 dependencyOverrides += "org.scala-lang" % "scala-compiler" % "2.11.12"
 
 val sprayV = "1.3.4"
+lazy val akkaHttpV = "10.0.11"
 
 val cromwellVersion = "30-4de204a"
 
@@ -30,14 +31,20 @@ libraryDependencies ++= Seq(
   "com.google.apis" % "google-api-services-admin-directory" % "directory_v1-rev53-1.20.0" excludeAll ExclusionRule(organization = "com.google.guava"),
   "com.h2database" % "h2" % "1.3.175",
   "com.typesafe.akka" %% "akka-actor" % "2.5.9",
+  "com.typesafe.akka" %% "akka-http" % akkaHttpV,
+  "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpV,
   "com.typesafe.akka" %% "akka-slf4j" % "2.5.9",
   "com.typesafe" % "config" % "1.2.1",
   "com.typesafe.scala-logging" %% "scala-logging" % "3.7.1",
   "com.typesafe.slick" %% "slick" % "3.2.0",
   "com.zaxxer" % "HikariCP" % "2.3.9",
+  // TODO remove
   "io.spray" %% "spray-can" % sprayV,
+  // TODO remove
   "io.spray" %% "spray-client" % sprayV,
+  // TODO remove
   "io.spray" %% "spray-json" % "1.3.3", // NB: Not at sprayV. 1.3.4 does not exist.
+  // TODO remove
   "io.spray" %% "spray-routing-shapeless23" % sprayV,
   "mysql" % "mysql-connector-java" % "5.1.42",
   "org.broadinstitute" %% "cromwell-wdl" % cromwellVersion,
@@ -46,6 +53,8 @@ libraryDependencies ++= Seq(
   "org.scalaz" %% "scalaz-core" % "7.2.18",
   "org.webjars" % "swagger-ui"  % "2.2.10-1",
   //---------- Test libraries -------------------//
+  "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpV % Test,
+  // TODO remove
   "io.spray" %% "spray-testkit" % sprayV % Test,
   "org.scalatest" %% "scalatest" % "3.0.4" % Test,
   "org.mock-server" % "mockserver-netty" % "3.10.2" % "test"

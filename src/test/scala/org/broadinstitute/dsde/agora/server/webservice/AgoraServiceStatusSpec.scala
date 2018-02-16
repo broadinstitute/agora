@@ -1,13 +1,8 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.coding.{Decoder, Gzip}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.headers.{HttpEncodings, `Accept-Encoding`}
-import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
-import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.pattern._
 import akka.testkit.TestKitBase
 import akka.util.Timeout
@@ -25,7 +20,7 @@ import scala.util.{Failure, Success}
 
 
 @DoNotDiscover
-class AgoraServiceUnhealthyStatusSpec extends ApiServiceSpec with TestKitBase with FlatSpecLike {
+class AgoraServiceUnhealthyStatusSpec extends ApiServiceSpec2 with TestKitBase with FlatSpecLike with akka.http.scaladsl.testkit.RouteTest {
   implicit val unitTestActorSystem = ActorSystem("AgoraServiceUnhealthyStatusSpec")
   // this health monitor uses the same SQL check as our runtime mysql, which calls VERSION() in the db.
   // H2 does not support VERSION(), so we expect this health monitor to show as unhealthy.
@@ -53,10 +48,11 @@ class AgoraServiceUnhealthyStatusSpec extends ApiServiceSpec with TestKitBase wi
 
   // our test sql db is H2, which doesn't allow us to check for version
   it should "not actually be able to test the sql db" in {
-    akka.http.scaladsl.client.RequestBuilding.Get(s"/status") ~> apiStatusService.statusRoute ~>
+    Get(s"/status") ~>
+      apiStatusService.statusRoute ~>
       check {
         assertResult(StatusCodes.InternalServerError) { status }
-        val statusResponse = responseAs[StatusCheckResponse] // will throw error and fail test if can't deserialize
+        val statusResponse: StatusCheckResponse = responseAs[StatusCheckResponse] // will throw error and fail test if can't deserialize
         assert( !statusResponse.ok )
         assertResult(Set(Mongo,Database)) { statusResponse.systems.keySet }
 
@@ -72,7 +68,7 @@ class AgoraServiceUnhealthyStatusSpec extends ApiServiceSpec with TestKitBase wi
 }
 
 @DoNotDiscover
-class AgoraServiceHealthyStatusSpec extends ApiServiceSpec with TestKitBase with FlatSpecLike {
+class AgoraServiceHealthyStatusSpec extends ApiServiceSpec2 with TestKitBase with FlatSpecLike {
   implicit val unitTestActorSystem = ActorSystem("AgoraServiceHealthyStatusSpec")
   // this health monitor uses the unit-test-only UnitTestAgoraDBStatus, which should work in H2.
   // therefore, we expect this health monitor to show as healthy.
@@ -98,7 +94,7 @@ class AgoraServiceHealthyStatusSpec extends ApiServiceSpec with TestKitBase with
   }
 
   it should "run and connect to DBs" in {
-    akka.http.scaladsl.client.RequestBuilding.Get(s"/status") ~> apiStatusService.statusRoute ~>
+    Get(s"/status") ~> apiStatusService.statusRoute ~>
       check {
         assertResult(StatusCodes.OK) { status }
         val statusResponse = responseAs[StatusCheckResponse] // will throw error and fail test if can't deserialize

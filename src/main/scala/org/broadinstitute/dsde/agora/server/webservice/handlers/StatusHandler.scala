@@ -1,17 +1,14 @@
 package org.broadinstitute.dsde.agora.server.webservice.handlers
 
 import akka.actor.{Actor, ActorRef}
+import akka.http.scaladsl.model.StatusCodes
 import akka.pattern._
 import akka.util.Timeout
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
-import org.broadinstitute.dsde.agora.server.webservice.PerRequest.{PerRequestMessage, RequestComplete}
+import org.broadinstitute.dsde.agora.server.webservice.PerRequest2.{PerRequestMessage, RequestComplete}
 import org.broadinstitute.dsde.agora.server.webservice.util.ServiceMessages
 import org.broadinstitute.dsde.workbench.util.health.HealthMonitor.GetCurrentStatus
 import org.broadinstitute.dsde.workbench.util.health.StatusCheckResponse
-import org.broadinstitute.dsde.workbench.util.health.StatusJsonSupport.StatusCheckResponseFormat
-import spray.http.StatusCodes
-import spray.httpx.SprayJsonSupport._
-import spray.routing.RequestContext
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
@@ -28,7 +25,7 @@ class StatusHandler(dataSource: PermissionsDataSource, implicit val ec: Executio
   private def collectStatusInfo(healthMonitor: ActorRef): Future[PerRequestMessage] = {
     (healthMonitor ? GetCurrentStatus).mapTo[StatusCheckResponse].map { statusCheckResponse =>
       val httpStatus = if (statusCheckResponse.ok) StatusCodes.OK else StatusCodes.InternalServerError
-      RequestComplete(httpStatus, statusCheckResponse)
+      RequestComplete(httpStatus)
     }
   }
 }

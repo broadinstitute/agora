@@ -1,6 +1,13 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.actor.ActorSystem
+import akka.http.scaladsl.coding.{Decoder, Gzip}
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.headers.{HttpEncodings, `Accept-Encoding`}
+import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
+import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.pattern._
 import akka.testkit.TestKitBase
 import akka.util.Timeout
@@ -10,8 +17,6 @@ import org.broadinstitute.dsde.workbench.util.health.HealthMonitor._
 import org.broadinstitute.dsde.workbench.util.health.{HealthMonitor, StatusCheckResponse, SubsystemStatus}
 import org.broadinstitute.dsde.workbench.util.health.StatusJsonSupport.StatusCheckResponseFormat
 import org.broadinstitute.dsde.workbench.util.health.Subsystems.{Database, Mongo}
-import spray.http.StatusCodes
-import spray.httpx.SprayJsonSupport._
 import org.scalatest.{DoNotDiscover, FlatSpecLike}
 
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -48,7 +53,7 @@ class AgoraServiceUnhealthyStatusSpec extends ApiServiceSpec with TestKitBase wi
 
   // our test sql db is H2, which doesn't allow us to check for version
   it should "not actually be able to test the sql db" in {
-    Get(s"/status") ~> apiStatusService.statusRoute ~>
+    akka.http.scaladsl.client.RequestBuilding.Get(s"/status") ~> apiStatusService.statusRoute ~>
       check {
         assertResult(StatusCodes.InternalServerError) { status }
         val statusResponse = responseAs[StatusCheckResponse] // will throw error and fail test if can't deserialize
@@ -93,7 +98,7 @@ class AgoraServiceHealthyStatusSpec extends ApiServiceSpec with TestKitBase with
   }
 
   it should "run and connect to DBs" in {
-    Get(s"/status") ~> apiStatusService.statusRoute ~>
+    akka.http.scaladsl.client.RequestBuilding.Get(s"/status") ~> apiStatusService.statusRoute ~>
       check {
         assertResult(StatusCodes.OK) { status }
         val statusResponse = responseAs[StatusCheckResponse] // will throw error and fail test if can't deserialize

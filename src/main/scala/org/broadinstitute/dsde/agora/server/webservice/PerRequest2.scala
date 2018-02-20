@@ -2,21 +2,20 @@ package org.broadinstitute.dsde.agora.server.webservice
 
 import scala.language.postfixOps
 import akka.http.scaladsl.marshalling.{Marshaller, ToResponseMarshaller}
-import akka.http.scaladsl.model.{HttpHeader, StatusCodes}
+import akka.http.scaladsl.model.HttpHeader
 
 import scala.concurrent.ExecutionContext
 
 object PerRequest2 {
-  implicit val requestCompleteMarshaller: ToResponseMarshaller[PerRequestMessage] = Marshaller {
-    import scala.concurrent.ExecutionContext.Implicits.global
-        
-    executionContext: ExecutionContext => {
-      case requestComplete: RequestComplete[_] =>
-        requestComplete.marshaller(requestComplete.response)
-      case requestComplete: RequestCompleteWithHeaders[_] =>
-        requestComplete.marshaller(requestComplete.response).map(_.map(_.map(_.mapHeaders(_ ++ requestComplete.headers))))
+  implicit def requestCompleteMarshaller(implicit ec: ExecutionContext): ToResponseMarshaller[PerRequestMessage] =
+    Marshaller {
+      _: ExecutionContext => {
+        case requestComplete: RequestComplete[_] =>
+          requestComplete.marshaller(requestComplete.response)
+        case requestComplete: RequestCompleteWithHeaders[_] =>
+          requestComplete.marshaller(requestComplete.response).map(_.map(_.map(_.mapHeaders(_ ++ requestComplete.headers))))
+      }
     }
-  }
 
   sealed trait PerRequestMessage
   /**

@@ -28,11 +28,13 @@ abstract class StatusService(permissionsDataSource: PermissionsDataSource, healt
   implicit val duration = ConfigFactory.load().as[FiniteDuration]("akka.http.server.request-timeout")
   implicit val timeout: Timeout = duration
 
+
   private def collectStatusInfo(healthMonitor: ActorRef): Future[PerRequestMessage] = {
+    import org.broadinstitute.dsde.workbench.util.health.StatusJsonSupport._
+
     (healthMonitor ? GetCurrentStatus).mapTo[StatusCheckResponse].map { statusCheckResponse =>
       val httpStatus = if (statusCheckResponse.ok) StatusCodes.OK else StatusCodes.InternalServerError
-      // TODO Add back statusCheckResponse to the request completion
-      RequestComplete(httpStatus)
+      RequestComplete(httpStatus, statusCheckResponse)
     }
   }
 

@@ -1,6 +1,6 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
-import akka.http.scaladsl.testkit.RouteTestTimeout
+import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
 import org.broadinstitute.dsde.agora.server.AgoraTestFixture
 import org.broadinstitute.dsde.agora.server.exceptions.ValidationException
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
@@ -14,7 +14,7 @@ import spray.routing.{Directives, ExceptionHandler, MalformedRequestContentRejec
 import scala.concurrent.duration._
 
 @DoNotDiscover
-class ApiServiceSpec2 extends AgoraTestFixture with Directives with Suite with akka.http.scaladsl.testkit.ScalatestRouteTest {
+class ApiServiceSpec2 extends AgoraTestFixture with Directives with Suite with ScalatestRouteTest {
 
   // ScalatestRouteTest requires that it be mixed in to a thing that is of type Suite. So mix that in as well.
   // But both have run() methods, so we have to pick the right one. In other places, mixing in *Spec accomplishes this.

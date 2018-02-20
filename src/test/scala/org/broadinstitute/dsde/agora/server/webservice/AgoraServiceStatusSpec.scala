@@ -49,7 +49,7 @@ class AgoraServiceUnhealthyStatusSpec extends ApiServiceSpec2 with TestKitBase w
   // our test sql db is H2, which doesn't allow us to check for version
   it should "not actually be able to test the sql db" in {
     Get(s"/status") ~>
-      apiStatusService.statusRoute ~>
+      apiStatusService.route ~>
       check {
         assertResult(StatusCodes.InternalServerError) { status }
         val statusResponse: StatusCheckResponse = responseAs[StatusCheckResponse] // will throw error and fail test if can't deserialize
@@ -94,7 +94,7 @@ class AgoraServiceHealthyStatusSpec extends ApiServiceSpec2 with TestKitBase wit
   }
 
   it should "run and connect to DBs" in {
-    Get(s"/status") ~> apiStatusService.statusRoute ~>
+    Get(s"/status") ~> apiStatusService.route ~>
       check {
         assertResult(StatusCodes.OK) { status }
         val statusResponse = responseAs[StatusCheckResponse] // will throw error and fail test if can't deserialize

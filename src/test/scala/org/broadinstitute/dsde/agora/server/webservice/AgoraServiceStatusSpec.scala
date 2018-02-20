@@ -3,6 +3,7 @@ package org.broadinstitute.dsde.agora.server.webservice
 import akka.actor.ActorSystem
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model._
+import akka.http.scaladsl.testkit.RouteTest
 import akka.pattern._
 import akka.testkit.TestKitBase
 import akka.util.Timeout
@@ -20,7 +21,7 @@ import scala.util.{Failure, Success}
 
 
 @DoNotDiscover
-class AgoraServiceUnhealthyStatusSpec extends ApiServiceSpec2 with TestKitBase with FlatSpecLike with akka.http.scaladsl.testkit.RouteTest {
+class AgoraServiceUnhealthyStatusSpec extends ApiServiceSpec2 with TestKitBase with FlatSpecLike with RouteTest {
   implicit val unitTestActorSystem = ActorSystem("AgoraServiceUnhealthyStatusSpec")
   // this health monitor uses the same SQL check as our runtime mysql, which calls VERSION() in the db.
   // H2 does not support VERSION(), so we expect this health monitor to show as unhealthy.
@@ -48,11 +49,10 @@ class AgoraServiceUnhealthyStatusSpec extends ApiServiceSpec2 with TestKitBase w
 
   // our test sql db is H2, which doesn't allow us to check for version
   it should "not actually be able to test the sql db" in {
-    Get(s"/status") ~>
-      apiStatusService.route ~>
+    Get(s"/status") ~> apiStatusService.statusRoute ~>
       check {
         assertResult(StatusCodes.InternalServerError) { status }
-        val statusResponse: StatusCheckResponse = responseAs[StatusCheckResponse] // will throw error and fail test if can't deserialize
+        val statusResponse = responseAs[StatusCheckResponse] // will throw error and fail test if can't deserialize
         assert( !statusResponse.ok )
         assertResult(Set(Mongo,Database)) { statusResponse.systems.keySet }
 
@@ -94,7 +94,7 @@ class AgoraServiceHealthyStatusSpec extends ApiServiceSpec2 with TestKitBase wit
   }
 
   it should "run and connect to DBs" in {
-    Get(s"/status") ~> apiStatusService.route ~>
+    Get(s"/status") ~> apiStatusService.statusRoute ~>
       check {
         assertResult(StatusCodes.OK) { status }
         val statusResponse = responseAs[StatusCheckResponse] // will throw error and fail test if can't deserialize

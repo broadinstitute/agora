@@ -35,7 +35,7 @@ abstract class StatusService(permissionsDataSource: PermissionsDataSource, healt
   }
 
   // GET /status
-  def route: Route = path("status") {
+  def statusRoute: Route = path("status") {
     get {
       complete { collectStatusInfo(healthMonitor) }
     }

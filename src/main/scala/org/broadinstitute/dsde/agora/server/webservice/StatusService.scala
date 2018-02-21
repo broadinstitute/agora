@@ -1,6 +1,8 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.actor.ActorRef
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.marshalling.ToResponseMarshallable
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
@@ -14,7 +16,7 @@ import org.broadinstitute.dsde.workbench.util.health.StatusCheckResponse
 import org.broadinstitute.dsde.workbench.util.health.StatusJsonSupport._
 
 import scala.concurrent.duration.FiniteDuration
-import scala.util.Success
+import scala.util.{Failure, Success}
 
 abstract class StatusService(permissionsDataSource: PermissionsDataSource, healthMonitor: ActorRef) {
   implicit val executionContext = scala.concurrent.ExecutionContext.Implicits.global
@@ -23,27 +25,17 @@ abstract class StatusService(permissionsDataSource: PermissionsDataSource, healt
   implicit val duration = ConfigFactory.load().as[FiniteDuration]("akka.http.server.request-timeout")
   implicit val timeout: Timeout = duration
 
-  private val failedStatusAttempt = StatusCheckResponse(ok = false, systems = Map.empty)
-
   // GET /status
   def statusRoute: Route = path("status") {
-    def completeWith(statusCode: StatusCode, statusResponse: StatusCheckResponse) =
-      complete {
-        HttpResponse.apply(
-          statusCode,
-          List[HttpHeader](),
-          HttpEntity.apply(
-            ContentTypes.`application/json`,
-            StatusCheckResponseFormat.write(statusResponse).toString()),
-          HttpProtocols.`HTTP/1.1`)
-      }
-
     get {
       val statusAttempt = (healthMonitor ? GetCurrentStatus).mapTo[StatusCheckResponse]
 
       onComplete(statusAttempt) {
-        case Success(status) if status.ok => completeWith(StatusCodes.OK, status)
-        case status => completeWith(StatusCodes.InternalServerError, status.getOrElse(failedStatusAttempt))
+        case Success(status) =>
+          val httpCode = if (status.ok) StatusCodes.OK else StatusCodes.InternalServerError
+          complete(ToResponseMarshallable((httpCode, status)))
+        case Failure(_) =>
+          complete(StatusCodes.InternalServerError, "Unable to gather engine status")
       }
     }
   }

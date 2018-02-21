@@ -1,7 +1,6 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
-import akka.actor.{ActorRef, ActorRefFactory}
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.actor.ActorRef
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
@@ -10,35 +9,42 @@ import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import net.ceedubs.ficus.Ficus._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
-import org.broadinstitute.dsde.agora.server.webservice.PerRequest2.{PerRequestMessage, RequestComplete}
 import org.broadinstitute.dsde.workbench.util.health.HealthMonitor.GetCurrentStatus
 import org.broadinstitute.dsde.workbench.util.health.StatusCheckResponse
-import PerRequest2.requestCompleteMarshaller
-import scala.concurrent.Future
+import org.broadinstitute.dsde.workbench.util.health.StatusJsonSupport._
+
 import scala.concurrent.duration.FiniteDuration
+import scala.util.Success
 
 abstract class StatusService(permissionsDataSource: PermissionsDataSource, healthMonitor: ActorRef) {
-  implicit def actorRefFactory: ActorRefFactory
   implicit val executionContext = scala.concurrent.ExecutionContext.Implicits.global
-  
+
   // Derive timeouts (implicit and not) from akka http's request timeout since there's no point in being higher than that
   implicit val duration = ConfigFactory.load().as[FiniteDuration]("akka.http.server.request-timeout")
   implicit val timeout: Timeout = duration
 
-  private def collectStatusInfo(healthMonitor: ActorRef): Future[PerRequestMessage] = {
-    import org.broadinstitute.dsde.workbench.util.health.StatusJsonSupport._
-
-    (healthMonitor ? GetCurrentStatus).mapTo[StatusCheckResponse].map { statusCheckResponse =>
-      val httpStatus = if (statusCheckResponse.ok) StatusCodes.OK else StatusCodes.InternalServerError
-      RequestComplete(httpStatus, statusCheckResponse)
-    }
-  }
+  private val failedStatusAttempt = StatusCheckResponse(ok = false, systems = Map.empty)
 
   // GET /status
   def statusRoute: Route = path("status") {
+    def completeWith(statusCode: StatusCode, statusResponse: StatusCheckResponse) =
+      complete {
+        HttpResponse.apply(
+          statusCode,
+          List[HttpHeader](),
+          HttpEntity.apply(
+            ContentTypes.`application/json`,
+            StatusCheckResponseFormat.write(statusResponse).toString()),
+          HttpProtocols.`HTTP/1.1`)
+      }
+
     get {
-      complete { collectStatusInfo(healthMonitor) }
+      val statusAttempt = (healthMonitor ? GetCurrentStatus).mapTo[StatusCheckResponse]
+
+      onComplete(statusAttempt) {
+        case Success(status) if status.ok => completeWith(StatusCodes.OK, status)
+        case status => completeWith(StatusCodes.InternalServerError, status.getOrElse(failedStatusAttempt))
+      }
     }
   }
-
 }

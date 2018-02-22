@@ -2,7 +2,6 @@ package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.actor.ActorRef
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import akka.http.scaladsl.marshalling.ToResponseMarshallable
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
@@ -33,7 +32,7 @@ abstract class StatusService(permissionsDataSource: PermissionsDataSource, healt
       onComplete(statusAttempt) {
         case Success(status) =>
           val httpCode = if (status.ok) StatusCodes.OK else StatusCodes.InternalServerError
-          complete(ToResponseMarshallable((httpCode, status)))
+          complete(httpCode, status)
         case Failure(_) =>
           complete(StatusCodes.InternalServerError, "Unable to gather engine status")
       }

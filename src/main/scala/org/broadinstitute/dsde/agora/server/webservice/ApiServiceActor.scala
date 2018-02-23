@@ -76,6 +76,8 @@ class ApiServiceActor(permissionsDataSource: PermissionsDataSource, healthMonito
   def possibleRoutes =  options{ complete(OK) } ~ ga4ghService.routes ~
     methodsService.routes ~ configurationsService.routes ~ swaggerService
 
+  def akkaRoutes = statusService.statusRoute
+
   def receive = runRoute(possibleRoutes)
 
   implicit def routeExceptionHandler(implicit log: LoggingContext) =

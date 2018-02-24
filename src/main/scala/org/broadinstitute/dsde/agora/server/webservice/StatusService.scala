@@ -17,7 +17,7 @@ import org.broadinstitute.dsde.workbench.util.health.StatusJsonSupport._
 import scala.concurrent.duration.FiniteDuration
 import scala.util.{Failure, Success}
 
-abstract class StatusService(permissionsDataSource: PermissionsDataSource, healthMonitor: ActorRef) {
+class StatusService(permissionsDataSource: PermissionsDataSource, healthMonitor: ActorRef) {
   implicit val executionContext = scala.concurrent.ExecutionContext.Implicits.global
 
   // Derive timeouts (implicit and not) from akka http's request timeout since there's no point in being higher than that

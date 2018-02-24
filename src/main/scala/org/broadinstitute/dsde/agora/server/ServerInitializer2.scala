@@ -8,7 +8,7 @@ import com.typesafe.scalalogging.LazyLogging
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDBStatus
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.EmbeddedMongo
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
-import org.broadinstitute.dsde.agora.server.webservice.ApiServiceActor
+import org.broadinstitute.dsde.agora.server.webservice.ApiService
 import org.broadinstitute.dsde.workbench.util.health.HealthMonitor
 import org.broadinstitute.dsde.workbench.util.health.Subsystems.{Database, Mongo}
 
@@ -53,9 +53,10 @@ class ServerInitializer2 extends LazyLogging {
   private def startWebServiceActors() = {
     implicit val bindTimeout: Timeout = 120.seconds
 
-    val apiServiceActor = new ApiServiceActor(permsDataSource, healthMonitor)
+    val apiService = new ApiService(permsDataSource, healthMonitor)
 
-    Http().bindAndHandle(apiServiceActor.akkaRoutes, "0.0.0.0", 8080)
+    // TODO Verify that the port is 8000 and not 8080
+    Http().bindAndHandle(apiService.route, "0.0.0.0", 8000)
       .recover {
         case t: Throwable =>
           logger.error(s"Unable to bind to port ${AgoraConfig.port} on interface ${AgoraConfig.webserviceInterface}")

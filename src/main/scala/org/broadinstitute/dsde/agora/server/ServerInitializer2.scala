@@ -43,6 +43,12 @@ class ServerInitializer2 extends LazyLogging {
       EmbeddedMongo.stopMongo()
 
     println("Closing connection to sql db.")
+
+    // TODO Address the error below upon exiting the app
+    // app Closing connection to sql db.
+    // Exception in thread "Thread-3" java.io.IOException: Stream closed
+    //   at java.io.BufferedInputStream.getBufIfOpen(BufferedInputStream.java:170)
+    //   at java.io.BufferedInputStream.read1(BufferedInputStream.java:283)
     permsDataSource.close()
 
     healthMonitorSchedule.cancel() // stop the health monitor
@@ -55,7 +61,6 @@ class ServerInitializer2 extends LazyLogging {
 
     val apiService = new ApiService(permsDataSource, healthMonitor)
 
-    // TODO Verify that the port is 8000 and not 8080
     Http().bindAndHandle(apiService.route, "0.0.0.0", 8000)
       .recover {
         case t: Throwable =>

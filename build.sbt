@@ -9,6 +9,7 @@ scalaVersion := "2.11.12"
 dependencyOverrides += "org.scala-lang" % "scala-compiler" % "2.11.12"
 
 val sprayV = "1.3.4"
+lazy val akkaV = "2.5.9"
 lazy val akkaHttpV = "10.0.11"
 
 val cromwellVersion = "30-4de204a"
@@ -30,7 +31,8 @@ libraryDependencies ++= Seq(
   "com.google.api-client" % "google-api-client" % "1.20.0" excludeAll ExclusionRule(organization = "com.google.guava"),
   "com.google.apis" % "google-api-services-admin-directory" % "directory_v1-rev53-1.20.0" excludeAll ExclusionRule(organization = "com.google.guava"),
   "com.h2database" % "h2" % "1.3.175",
-  "com.typesafe.akka" %% "akka-actor" % "2.5.9",
+  "com.typesafe.akka" %% "akka-actor" % akkaV,
+  "com.typesafe.akka" %% "akka-stream" % akkaV,
   "com.typesafe.akka" %% "akka-http" % akkaHttpV,
   "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpV,
   "com.typesafe.akka" %% "akka-slf4j" % "2.5.9",

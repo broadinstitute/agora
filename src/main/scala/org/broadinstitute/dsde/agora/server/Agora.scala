@@ -7,7 +7,7 @@ object ProductionAgora extends Agora {
 }
 
 class Agora() extends LazyLogging with App {
-  lazy val server: ServerInitializer = new ServerInitializer()
+  lazy val server = new ServerInitializer2()
 
   sys addShutdownHook stop()
 

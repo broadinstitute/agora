@@ -41,22 +41,6 @@ class ApiService(permissionsDataSource: PermissionsDataSource, healthMonitor: Ac
     options { complete(OK) } ~ statusService.statusRoute ~ swaggerRoutes
   }
 
-  /**
-   * Firecloud system maintains its set of admins as a google group.
-   *
-   * If such a group is specified in config, poll it at regular intervals
-   *   to synchronize the admins defined in our users table
-   */
-    // TODO Make below work (do we still need it?)
-//  AgoraConfig.adminGoogleGroup match {
-//    case Some(group) =>
-//      import system.dispatcher
-//      val adminSweeper = actorRefFactory.actorOf(AdminSweeper.props(AdminSweeper.adminsGoogleGroupPoller, permissionsDataSource))
-//      val adminScheduler =
-//        context.system.scheduler.schedule(5 seconds, AgoraConfig.adminSweepInterval minutes, adminSweeper, Sweep)
-//    case None =>
-//  }
-
   private val myExceptionHandler = {
     ExceptionHandler {
       // TODO Add Agora-specific exceptions if necessary

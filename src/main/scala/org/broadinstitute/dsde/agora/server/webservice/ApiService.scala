@@ -31,14 +31,14 @@ class ApiService(permissionsDataSource: PermissionsDataSource, healthMonitor: Ac
   extends LazyLogging with SwaggerRoutes {
 
   val statusService = new StatusService(permissionsDataSource, healthMonitor)
+  val ga4ghService = new Ga4ghService(permissionsDataSource)
   // TODO Instantiate the remaining services once they are converted
-//  val methodsService = new MethodsService(permissionsDataSource)
-//  val configurationsService = new ConfigurationsService(permissionsDataSource)
-//  val ga4ghService = new Ga4ghService(permissionsDataSource)
+  //  val methodsService = new MethodsService(permissionsDataSource)
+  //  val configurationsService = new ConfigurationsService(permissionsDataSource)
 
   // TODO Add the remaining routes once they are converted
   def route: Route = (logRequestResult & handleExceptions(myExceptionHandler)) {
-    options { complete(OK) } ~ statusService.statusRoute ~ swaggerRoutes
+    options { complete(OK) } ~ statusService.statusRoute ~ swaggerRoutes ~ ga4ghService.routes
   }
 
   /**

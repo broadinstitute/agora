@@ -10,7 +10,6 @@ import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AdminSweeper
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AdminSweeper
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AdminSweeper.Sweep
 import org.broadinstitute.dsde.agora.server.exceptions.{AgoraException, ValidationException}
-import org.broadinstitute.dsde.agora.server.ga4gh.Ga4ghService
 import org.broadinstitute.dsde.agora.server.webservice.configurations.ConfigurationsService
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
 import org.parboiled.common.FileUtils
@@ -64,16 +63,13 @@ class ApiServiceActor(permissionsDataSource: PermissionsDataSource, healthMonito
 
   val methodsService = new MethodsService(permissionsDataSource) with ActorRefFactoryContext
   val configurationsService = new ConfigurationsService(permissionsDataSource) with ActorRefFactoryContext
-
-  val ga4ghService = new Ga4ghService(permissionsDataSource) with ActorRefFactoryContext
-
   val statusService = new StatusService(permissionsDataSource, healthMonitor) with ActorRefFactoryContext
 
   def withResourceFileContents(path: String)(innerRoute: String => Route): Route =
     innerRoute( FileUtils.readAllTextFromResource(path) )
 
   // TODO Add statusService.routes back in
-  def possibleRoutes =  options{ complete(OK) } ~ ga4ghService.routes ~
+  def possibleRoutes =  options{ complete(OK) } ~
     methodsService.routes ~ configurationsService.routes ~ swaggerService
 
   def akkaRoutes = statusService.statusRoute

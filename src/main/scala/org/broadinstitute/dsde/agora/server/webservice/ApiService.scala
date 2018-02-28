@@ -37,16 +37,16 @@ object ApiService {
       case workbenchException: WorkbenchException =>
         val report = ErrorReport(Option(workbenchException.getMessage).getOrElse(""), Some(StatusCodes.InternalServerError), Seq(), Seq(), Some(workbenchException.getClass))
         complete(StatusCodes.InternalServerError, report)
-      case e: IllegalArgumentException => complete(BadRequest, e.getMessage)
+      case e: IllegalArgumentException => complete(BadRequest, ErrorReport(e))
       case e: AgoraEntityAuthorizationException => complete(Forbidden, ErrorReport(e))
       case e: NamespaceAuthorizationException => complete(Forbidden, ErrorReport(e))
       case e: AgoraEntityNotFoundException => complete(NotFound, ErrorReport(e))
       case e: DockerImageNotFoundException => complete(BadRequest, ErrorReport(e))
       case e: PermissionNotFoundException => complete(BadRequest, ErrorReport(e))
       case e: ValidationException => complete(BadRequest, ErrorReport(e))
+      case e: wdl.exception.ValidationException => complete(BadRequest, ErrorReport(e))
       case e: PermissionModificationException => complete(BadRequest, ErrorReport(e))
       case e: AgoraException => complete(StatusCodes.getForKey(e.statusCode.intValue).getOrElse(StatusCodes.InternalServerError), ErrorReport(e))
-      case e: wdl.exception.ValidationException => complete(BadRequest, ErrorReport(e))
       case e: Throwable => complete(StatusCodes.InternalServerError, ErrorReport(e))
     }
   }

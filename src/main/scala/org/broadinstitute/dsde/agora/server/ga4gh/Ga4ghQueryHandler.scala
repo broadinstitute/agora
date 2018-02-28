@@ -6,7 +6,6 @@ import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessContro
 import org.broadinstitute.dsde.agora.server.exceptions.ValidationException
 import org.broadinstitute.dsde.agora.server.ga4gh.Models._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection, AgoraEntityType}
-import spray.json._
 
 import scala.concurrent.{ExecutionContext, Future}
 

@@ -1,20 +1,18 @@
 
 package org.broadinstitute.dsde.agora.server.webservice
 
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.model.StatusCodes._
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.server.ValidationRejection
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
 import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpecLike}
-import spray.http.MediaTypes._
-import spray.http.StatusCodes._
-import spray.http.{ContentType, HttpEntity}
-import spray.httpx.SprayJsonSupport._
-import spray.httpx.unmarshalling._
-import spray.routing.ValidationRejection
 
 @DoNotDiscover
-class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
+class AgoraMethodsSpec extends ApiServiceSpec2 with FlatSpecLike {
 
   var testEntity1WithId: AgoraEntity = _
   var testEntity2WithId: AgoraEntity = _
@@ -107,7 +105,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
   "Agora" should "create a method and return with a status of 201" in {
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity) ~>
       methodsService.postRoute ~> check {
-      handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => {
+      handleError(entity(as[AgoraEntity]), (entity: AgoraEntity) => {
         assert(entity.namespace == namespace3)
         assert(entity.name == name1)
         assert(entity.synopsis == synopsis1)
@@ -226,7 +224,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
     val testSynopsis = Some(fillerText.take(80))
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(synopsis = testSynopsis)) ~>
       methodsService.postRoute ~> check {
-      handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => {
+      handleError(entity(as[AgoraEntity]), (entity: AgoraEntity) => {
         assert(entity.synopsis == testSynopsis)
       })
       assert(status == Created)
@@ -237,7 +235,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
     val testSynopsis = Some(fillerText.take(79))
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(synopsis = testSynopsis)) ~>
       methodsService.postRoute ~> check {
-      handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => {
+      handleError(entity(as[AgoraEntity]), (entity: AgoraEntity) => {
         assert(entity.synopsis == testSynopsis)
       })
       assert(status == Created)
@@ -248,7 +246,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
     val testSynopsis = Some(fillerText.take(74))
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(synopsis = testSynopsis)) ~>
       methodsService.postRoute ~> check {
-      handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => {
+      handleError(entity(as[AgoraEntity]), (entity: AgoraEntity) => {
         assert(entity.synopsis == testSynopsis)
       })
       assert(status == Created)
@@ -277,7 +275,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
                         |}""".stripMargin
 
     val entity = HttpEntity(
-      contentType = ContentType(`application/json`),
+      contentType = ContentTypes.`application/json`,
       string = entityJSON)
 
     Post(ApiUtil.Methods.withLeadingVersion, entity) ~>

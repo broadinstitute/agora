@@ -72,11 +72,7 @@ class ApiServiceActor(permissionsDataSource: PermissionsDataSource, healthMonito
   def withResourceFileContents(path: String)(innerRoute: String => Route): Route =
     innerRoute( FileUtils.readAllTextFromResource(path) )
 
-  // TODO Add statusService.routes back in
-  def possibleRoutes =  options{ complete(OK) } ~ ga4ghService.routes ~
-    methodsService.routes ~ configurationsService.routes ~ swaggerService
-
-  def akkaRoutes = statusService.statusRoute
+  def possibleRoutes =  options{ complete(OK) } ~ ga4ghService.routes
 
   def receive = runRoute(possibleRoutes)
 

@@ -2,6 +2,8 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.actor.Props
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.model.StatusCodes
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.AgoraConfig.authenticationDirectives
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, EntityAccessControl, PermissionsDataSource, entities}
@@ -9,20 +11,16 @@ import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.handlers.{AddHandler, PermissionHandler, QueryHandler}
 import org.broadinstitute.dsde.agora.server.webservice.routes.RouteHelpers
-import spray.http.HttpMethods
-import spray.httpx.SprayJsonSupport._
-import spray.routing.{HttpService, MethodRejection, PathMatcher}
 
-import scalaz.{Failure, Success}
-
+import scala.util.{Failure, Success}
 
 /**
  * AgoraService defines routes for ApiServiceActor.
  *
  * Concrete implementations are MethodsService and ConfigurationsService.
  */
-abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extends HttpService with RouteHelpers {
-  override implicit val executionContext = scala.concurrent.ExecutionContext.Implicits.global
+abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extends RouteHelpers {
+  implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
 
   def path: String
 
@@ -32,11 +30,11 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
 
   def routes = postRoute
 
-  def queryHandlerProps = Props(classOf[QueryHandler], permissionsDataSource, executionContext)
+  def queryHandlerProps = Props(classOf[QueryHandler], permissionsDataSource, ec)
 
-  def addHandlerProps = Props(classOf[AddHandler], permissionsDataSource, executionContext)
+  def addHandlerProps = Props(classOf[AddHandler], permissionsDataSource, ec)
 
-  def permissionHandlerProps = Props(classOf[PermissionHandler], permissionsDataSource, executionContext)
+  def permissionHandlerProps = Props(classOf[PermissionHandler], permissionsDataSource, ec)
 
 //  def namespacePermissionsRoute =
 //    matchNamespacePermissionsRoute(path) { (namespace, username) =>
@@ -173,10 +171,15 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
   // POST http://root.com/methods
   // POST http://root.com/configurations
   def postRoute =
-    postPath(path) { (username) =>
+    postPath(path)(ec) { username =>
       entity(as[AgoraEntity]) { agoraEntity =>
         validatePostRoute(agoraEntity, path) {
-          requestContext => completeWithPerRequest(requestContext, agoraEntity, username, path, addHandlerProps)
+          val addHandler = new AddHandler(permissionsDataSource)
+          val addAttempt = addHandler.add(agoraEntity, username, path)
+          onComplete(addAttempt) {
+            case Success(entity) => complete(StatusCodes.Created, entity)
+            case Failure(t) => throw t
+          }
         }
       }
     }

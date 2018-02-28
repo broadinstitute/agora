@@ -41,68 +41,68 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
     clearDatabases()
   }
 
-  "Agora" should "return information about a method, including metadata " in {
-    Get(ApiUtil.Methods.withLeadingVersion + "/" + namespace1.get + "/" + name1.get + "/"
-      + testEntity1WithId.snapshotId.get) ~> methodsService.querySingleRoute ~> check {
-      handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => assert(entity == testEntity1WithId))
-      assert(status == OK)
-    }
-  }
-
-  "Agora" should "return only payload in plain/text when parameter is set " in {
-    Get(ApiUtil.Methods.withLeadingVersion + "/" + namespace1.get + "/" + name1.get + "/"
-      + testEntity1WithId.snapshotId.get + "?onlyPayload=true") ~> methodsService.querySingleRoute ~>
-      check {
-        assert(status == OK)
-        assert(mediaType == `text/plain`)
-      }
-  }
-
-  "Agora" should "return status 404, mediaType json when nothing matches query by namespace, name, snapshotId" in {
-    Get(ApiUtil.Methods.withLeadingVersion + "/foofoofoofoo/foofoofoo/99999"
-    ) ~> methodsService.querySingleRoute ~> check {
-      assert(status == NotFound)
-    }
-  }
-
-  "Agora" should "return methods matching query by namespace and name" in {
-    Get(ApiUtil.Methods.withLeadingVersion + "?namespace=" + namespace1.get + "&name=" + name2.get) ~>
-      methodsService.queryRoute ~> check {
-      handleError(
-        entity.as[Seq[AgoraEntity]],
-        (entities: Seq[AgoraEntity]) =>
-          assert(entities.toSet == brief(Seq(testEntity3WithId, testEntity4WithId, testEntity5WithId, testEntity6WithId, testEntity7WithId)).toSet)
-      )
-      assert(status == OK)
-    }
-  }
-
-  "Agora" should "return methods matching query by synopsis and documentation" in {
-    Get(ApiUtil.Methods.withLeadingVersion + "?synopsis=" + uriEncode(synopsis1.get) + "&documentation=" +
-      uriEncode(documentation1.get)) ~>
-      methodsService.queryRoute ~>
-      check {
-        handleError(
-          entity.as[Seq[AgoraEntity]],
-          (entities: Seq[AgoraEntity]) =>
-            assert(entities.toSet == brief(Seq(testEntity1WithId, testEntity2WithId, testEntity3WithId, testEntity6WithId, testEntity7WithId)).toSet)
-        )
-        assert(status == OK)
-      }
-  }
-
-
-  "Agora" should "return methods matching query by owner and payload" in {
-    Get(ApiUtil.Methods.withLeadingVersion + "?owner=" + owner1.get + "&payload=" + uriEncode(payload1.get)) ~>
-      methodsService.queryRoute ~>
-      check {
-        handleError(
-          entity.as[Seq[AgoraEntity]],
-          (entities: Seq[AgoraEntity]) =>
-            assert(entities.toSet == brief(Seq(testEntity1WithId, testEntity3WithId, testEntity4WithId, testEntity5WithId)).toSet)
-        )
-      }
-  }
+//  "Agora" should "return information about a method, including metadata " in {
+//    Get(ApiUtil.Methods.withLeadingVersion + "/" + namespace1.get + "/" + name1.get + "/"
+//      + testEntity1WithId.snapshotId.get) ~> methodsService.querySingleRoute ~> check {
+//      handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => assert(entity == testEntity1WithId))
+//      assert(status == OK)
+//    }
+//  }
+//
+//  "Agora" should "return only payload in plain/text when parameter is set " in {
+//    Get(ApiUtil.Methods.withLeadingVersion + "/" + namespace1.get + "/" + name1.get + "/"
+//      + testEntity1WithId.snapshotId.get + "?onlyPayload=true") ~> methodsService.querySingleRoute ~>
+//      check {
+//        assert(status == OK)
+//        assert(mediaType == `text/plain`)
+//      }
+//  }
+//
+//  "Agora" should "return status 404, mediaType json when nothing matches query by namespace, name, snapshotId" in {
+//    Get(ApiUtil.Methods.withLeadingVersion + "/foofoofoofoo/foofoofoo/99999"
+//    ) ~> methodsService.querySingleRoute ~> check {
+//      assert(status == NotFound)
+//    }
+//  }
+//
+//  "Agora" should "return methods matching query by namespace and name" in {
+//    Get(ApiUtil.Methods.withLeadingVersion + "?namespace=" + namespace1.get + "&name=" + name2.get) ~>
+//      methodsService.queryRoute ~> check {
+//      handleError(
+//        entity.as[Seq[AgoraEntity]],
+//        (entities: Seq[AgoraEntity]) =>
+//          assert(entities.toSet == brief(Seq(testEntity3WithId, testEntity4WithId, testEntity5WithId, testEntity6WithId, testEntity7WithId)).toSet)
+//      )
+//      assert(status == OK)
+//    }
+//  }
+//
+//  "Agora" should "return methods matching query by synopsis and documentation" in {
+//    Get(ApiUtil.Methods.withLeadingVersion + "?synopsis=" + uriEncode(synopsis1.get) + "&documentation=" +
+//      uriEncode(documentation1.get)) ~>
+//      methodsService.queryRoute ~>
+//      check {
+//        handleError(
+//          entity.as[Seq[AgoraEntity]],
+//          (entities: Seq[AgoraEntity]) =>
+//            assert(entities.toSet == brief(Seq(testEntity1WithId, testEntity2WithId, testEntity3WithId, testEntity6WithId, testEntity7WithId)).toSet)
+//        )
+//        assert(status == OK)
+//      }
+//  }
+//
+//
+//  "Agora" should "return methods matching query by owner and payload" in {
+//    Get(ApiUtil.Methods.withLeadingVersion + "?owner=" + owner1.get + "&payload=" + uriEncode(payload1.get)) ~>
+//      methodsService.queryRoute ~>
+//      check {
+//        handleError(
+//          entity.as[Seq[AgoraEntity]],
+//          (entities: Seq[AgoraEntity]) =>
+//            assert(entities.toSet == brief(Seq(testEntity1WithId, testEntity3WithId, testEntity4WithId, testEntity5WithId)).toSet)
+//        )
+//      }
+//  }
 
   "Agora" should "create a method and return with a status of 201" in {
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity) ~>
@@ -295,30 +295,30 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
     }
   }
 
-  "Agora" should "allow method redaction" in {
-    Delete(ApiUtil.Methods.withLeadingVersion + "/" + testEntityToBeRedactedWithId.namespace.get + "/" +
-      testEntityToBeRedactedWithId.name.get + "/" + testEntityToBeRedactedWithId.snapshotId.get) ~>
-    methodsService.querySingleRoute ~> check {
-      assert(body.asString == "1")
-    }
-  }
-
-  "Agora" should "not allow redacted methods to be queried" in {
-    Get(ApiUtil.Methods.withLeadingVersion + "/" + testEntityToBeRedactedWithId.namespace.get + "/" +
-      testEntityToBeRedactedWithId.name.get + "/" + testEntityToBeRedactedWithId.snapshotId.get) ~>
-      methodsService.querySingleRoute ~> check {
-      assert(body.asString contains "not found")
-    }
-  }
-
-  "Agora" should "not let you specify a deserialized payload on the methods route" in {
-    Get(ApiUtil.Methods.withLeadingVersion + "/" + testMethodWithSnapshot1.namespace.get + "/" +
-      testMethodWithSnapshot1.name.get + "/" + testMethodWithSnapshot1.snapshotId.get + "?payloadAsObject=true") ~>
-      methodsService.querySingleRoute ~> check {
-        assert(body.asString contains "does not support payload deserialization")
-        assert(status == InternalServerError)
-    }
-  }
+//  "Agora" should "allow method redaction" in {
+//    Delete(ApiUtil.Methods.withLeadingVersion + "/" + testEntityToBeRedactedWithId.namespace.get + "/" +
+//      testEntityToBeRedactedWithId.name.get + "/" + testEntityToBeRedactedWithId.snapshotId.get) ~>
+//    methodsService.querySingleRoute ~> check {
+//      assert(body.asString == "1")
+//    }
+//  }
+//
+//  "Agora" should "not allow redacted methods to be queried" in {
+//    Get(ApiUtil.Methods.withLeadingVersion + "/" + testEntityToBeRedactedWithId.namespace.get + "/" +
+//      testEntityToBeRedactedWithId.name.get + "/" + testEntityToBeRedactedWithId.snapshotId.get) ~>
+//      methodsService.querySingleRoute ~> check {
+//      assert(body.asString contains "not found")
+//    }
+//  }
+//
+//  "Agora" should "not let you specify a deserialized payload on the methods route" in {
+//    Get(ApiUtil.Methods.withLeadingVersion + "/" + testMethodWithSnapshot1.namespace.get + "/" +
+//      testMethodWithSnapshot1.name.get + "/" + testMethodWithSnapshot1.snapshotId.get + "?payloadAsObject=true") ~>
+//      methodsService.querySingleRoute ~> check {
+//        assert(body.asString contains "does not support payload deserialization")
+//        assert(status == InternalServerError)
+//    }
+//  }
 
   "Agora" should "accept and record a snapshot comment when creating the initial snapshot of a method" in {
     Post(ApiUtil.Methods.withLeadingVersion, testMethodWithSnapshotComment1.copy(snapshotId = None)) ~>

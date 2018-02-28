@@ -96,53 +96,53 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
     }
   }
 
-  "Agora" should "populate method references when returning configurations" in {
-    Get(ApiUtil.Configurations.withLeadingVersion) ~>
-      configurationsService.queryRoute ~> check {
-
-      handleError(entity.as[Seq[AgoraEntity]], (configs: Seq[AgoraEntity]) => {
-        val method1 = AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(namespace1.get, name1.get, snapshotId1.get)
-        val method2 = AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(namespace2.get, name1.get, snapshotId1.get)
-        val method3 = AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(namespace1.get, name1.get, snapshotId1.get)
-
-        val config1 = AgoraDao.createAgoraDao(Seq(AgoraEntityType.Configuration)).findSingle(
-          testAgoraConfigurationEntity.namespace.get, testAgoraConfigurationEntity.name.get, 2)
-        val config2 = AgoraDao.createAgoraDao(Seq(AgoraEntityType.Configuration)).findSingle(
-          testAgoraConfigurationEntity2.namespace.get, testAgoraConfigurationEntity2.name.get, 1)
-        val config3 = AgoraDao.createAgoraDao(Seq(AgoraEntityType.Configuration)).findSingle(
-          testAgoraConfigurationEntity3.namespace.get, testAgoraConfigurationEntity3.name.get, 2)
-
-        val foundConfig1 = configs.find(config => namespaceNameIdMatch(config, config1)).get
-        val foundConfig2 = configs.find(config => namespaceNameIdMatch(config, config2)).get
-        val foundConfig3 = configs.find(config => namespaceNameIdMatch(config, config3)).get
-        
-        val methodRef1 = foundConfig1.method.get
-        val methodRef2 = foundConfig2.method.get
-        val methodRef3 = foundConfig3.method.get
-
-        assert(methodRef1.namespace.isDefined)
-        assert(methodRef1.name.isDefined)
-        assert(methodRef1.snapshotId.isDefined)
-        assert(methodRef2.namespace.isDefined)
-        assert(methodRef2.name.isDefined)
-        assert(methodRef2.snapshotId.isDefined)
-        assert(methodRef3.namespace.isDefined)
-        assert(methodRef3.name.isDefined)
-        assert(methodRef3.snapshotId.isDefined)
-
-        assert(methodRef1.namespace == method1.namespace)
-        assert(methodRef1.name == method1.name)
-        assert(methodRef1.snapshotId == method1.snapshotId)
-        assert(methodRef2.namespace == method2.namespace)
-        assert(methodRef2.name == method2.name)
-        assert(methodRef2.snapshotId == method2.snapshotId)
-        assert(methodRef3.namespace == method3.namespace)
-        assert(methodRef3.name == method3.name)
-        assert(methodRef3.snapshotId == method3.snapshotId)
-      })
-
-    }
-  }
+//  "Agora" should "populate method references when returning configurations" in {
+//    Get(ApiUtil.Configurations.withLeadingVersion) ~>
+//      configurationsService.queryRoute ~> check {
+//
+//      handleError(entity.as[Seq[AgoraEntity]], (configs: Seq[AgoraEntity]) => {
+//        val method1 = AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(namespace1.get, name1.get, snapshotId1.get)
+//        val method2 = AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(namespace2.get, name1.get, snapshotId1.get)
+//        val method3 = AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(namespace1.get, name1.get, snapshotId1.get)
+//
+//        val config1 = AgoraDao.createAgoraDao(Seq(AgoraEntityType.Configuration)).findSingle(
+//          testAgoraConfigurationEntity.namespace.get, testAgoraConfigurationEntity.name.get, 2)
+//        val config2 = AgoraDao.createAgoraDao(Seq(AgoraEntityType.Configuration)).findSingle(
+//          testAgoraConfigurationEntity2.namespace.get, testAgoraConfigurationEntity2.name.get, 1)
+//        val config3 = AgoraDao.createAgoraDao(Seq(AgoraEntityType.Configuration)).findSingle(
+//          testAgoraConfigurationEntity3.namespace.get, testAgoraConfigurationEntity3.name.get, 2)
+//
+//        val foundConfig1 = configs.find(config => namespaceNameIdMatch(config, config1)).get
+//        val foundConfig2 = configs.find(config => namespaceNameIdMatch(config, config2)).get
+//        val foundConfig3 = configs.find(config => namespaceNameIdMatch(config, config3)).get
+//
+//        val methodRef1 = foundConfig1.method.get
+//        val methodRef2 = foundConfig2.method.get
+//        val methodRef3 = foundConfig3.method.get
+//
+//        assert(methodRef1.namespace.isDefined)
+//        assert(methodRef1.name.isDefined)
+//        assert(methodRef1.snapshotId.isDefined)
+//        assert(methodRef2.namespace.isDefined)
+//        assert(methodRef2.name.isDefined)
+//        assert(methodRef2.snapshotId.isDefined)
+//        assert(methodRef3.namespace.isDefined)
+//        assert(methodRef3.name.isDefined)
+//        assert(methodRef3.snapshotId.isDefined)
+//
+//        assert(methodRef1.namespace == method1.namespace)
+//        assert(methodRef1.name == method1.name)
+//        assert(methodRef1.snapshotId == method1.snapshotId)
+//        assert(methodRef2.namespace == method2.namespace)
+//        assert(methodRef2.name == method2.name)
+//        assert(methodRef2.snapshotId == method2.snapshotId)
+//        assert(methodRef3.namespace == method3.namespace)
+//        assert(methodRef3.name == method3.name)
+//        assert(methodRef3.snapshotId == method3.snapshotId)
+//      })
+//
+//    }
+//  }
 
   "Agora" should "not allow you to post a new configuration if you don't have permission to read the method that it references" in {
     val noPermission = new AccessControl(AgoraConfig.mockAuthenticatedUserEmail, AgoraPermissions(AgoraPermissions.Nothing))
@@ -168,103 +168,103 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
     }
   }
 
-  "Agora" should "redact methods when it has at least 1 associated configuration" in {
-    Delete(ApiUtil.Methods.withLeadingVersion + "/" +
-      testEntityToBeRedacted2WithId.namespace.get + "/" +
-      testEntityToBeRedacted2WithId.name.get + "/" +
-      testEntityToBeRedacted2WithId.snapshotId.get) ~>
-    methodsService.querySingleRoute ~>
-    check {
-      assert(body.asString == "1")
-    }
-  }
-
-  "Agora" should "redact associated configurations when the referenced method is redacted" in {
-    Get(ApiUtil.Configurations.withLeadingVersion + "/" +
-      testAgoraConfigurationToBeRedactedWithId.namespace.get + "/" +
-      testAgoraConfigurationToBeRedactedWithId.name.get + "/" +
-      testAgoraConfigurationToBeRedactedWithId.snapshotId.get) ~>
-    configurationsService.querySingleRoute ~>
-    check {
-      assert(body.asString contains "not found")
-    }
-  }
-
+//  "Agora" should "redact methods when it has at least 1 associated configuration" in {
+//    Delete(ApiUtil.Methods.withLeadingVersion + "/" +
+//      testEntityToBeRedacted2WithId.namespace.get + "/" +
+//      testEntityToBeRedacted2WithId.name.get + "/" +
+//      testEntityToBeRedacted2WithId.snapshotId.get) ~>
+//    methodsService.querySingleRoute ~>
+//    check {
+//      assert(body.asString == "1")
+//    }
+//  }
+//
+//  "Agora" should "redact associated configurations when the referenced method is redacted" in {
+//    Get(ApiUtil.Configurations.withLeadingVersion + "/" +
+//      testAgoraConfigurationToBeRedactedWithId.namespace.get + "/" +
+//      testAgoraConfigurationToBeRedactedWithId.name.get + "/" +
+//      testAgoraConfigurationToBeRedactedWithId.snapshotId.get) ~>
+//    configurationsService.querySingleRoute ~>
+//    check {
+//      assert(body.asString contains "not found")
+//    }
+//  }
+//
   {
-    val baseURL = ApiUtil.Configurations.withLeadingVersion + "/" +
-      testConfigWithSnapshot1.namespace.get + "/" +
-      testConfigWithSnapshot1.name.get + "/" +
-      testConfigWithSnapshot1.snapshotId.get
-
-    "Agora" should "return the payload as an object if you ask it to" in {
-      Get(baseURL + "?payloadAsObject=true") ~>
-      configurationsService.querySingleRoute ~>
-      check {
-        assert(status == OK)
-
-        val entity = responseAs[AgoraEntity]
-
-        val payloadObject = entity.payloadObject.get
-        assert(payloadObject.isInstanceOf[MethodConfiguration])
-        assert(payloadObject.namespace == namespace1.get)
-        assert(payloadObject.name == name5.get)
-        assert(entity.payload.isEmpty)
-      }
-    }
-
-    "Agora" should "return the payload as a string by default" in {
-      Get(baseURL) ~>
-      configurationsService.querySingleRoute ~>
-      check {
-        assert(status == OK)
-
-        val entity = responseAs[AgoraEntity]
-        assert(entity.payloadObject.isEmpty)
-        assert(entity.payload.get contains testConfigWithSnapshot1.payload.get)
-      }
-    }
-
-    "Agora" should "not let you use payloadAsObject and onlyPayload at the same time" in {
-      Get(baseURL + "?payloadAsObject=true&onlyPayload=true") ~>
-        configurationsService.querySingleRoute ~> check {
-        assert(body.asString contains "onlyPayload, payloadAsObject cannot be used together")
-        assert(status == BadRequest)
-      }
-    }
-
-    "Agora" should "throw an error if you try to use an illegal value for both parameters" in {
-      Get(baseURL + "?payloadAsObject=fire&onlyPayload=cloud") ~>
-        wrapWithRejectionHandler {
-          configurationsService.querySingleRoute
-        } ~> check {
-        rejection.isInstanceOf[MalformedQueryParamRejection]
-      }
-    }
-
-    "Agora" should "throw an error if you try to use an illegal value for one parameter" in {
-      Get(baseURL + "?payloadAsObject=fire&onlyPayload=false") ~>
-        wrapWithRejectionHandler {
-          configurationsService.querySingleRoute
-        } ~> check {
-        rejection.isInstanceOf[MalformedQueryParamRejection]
-      }
-    }
-
-    "Agora" should "supply a default methodConfigVersion of 1 if it's missing" in {
-
-      val url = testConfigWithSnapshotMissingConfigVersion.namespace.get + "/" +
-        testConfigWithSnapshotMissingConfigVersion.name.get + "/" +
-        testConfigWithSnapshotMissingConfigVersion.snapshotId.get
-
-      Get(baseURL + "?payloadAsObject=true") ~>
-      configurationsService.querySingleRoute ~> check {
-        assert(status == OK)
-
-        val entity = responseAs[AgoraEntity]
-
-        assert(entity.payloadObject.get.methodConfigVersion == 1)
-      }
-    }
+//    val baseURL = ApiUtil.Configurations.withLeadingVersion + "/" +
+//      testConfigWithSnapshot1.namespace.get + "/" +
+//      testConfigWithSnapshot1.name.get + "/" +
+//      testConfigWithSnapshot1.snapshotId.get
+//
+//    "Agora" should "return the payload as an object if you ask it to" in {
+//      Get(baseURL + "?payloadAsObject=true") ~>
+//      configurationsService.querySingleRoute ~>
+//      check {
+//        assert(status == OK)
+//
+//        val entity = responseAs[AgoraEntity]
+//
+//        val payloadObject = entity.payloadObject.get
+//        assert(payloadObject.isInstanceOf[MethodConfiguration])
+//        assert(payloadObject.namespace == namespace1.get)
+//        assert(payloadObject.name == name5.get)
+//        assert(entity.payload.isEmpty)
+//      }
+//    }
+//
+//    "Agora" should "return the payload as a string by default" in {
+//      Get(baseURL) ~>
+//      configurationsService.querySingleRoute ~>
+//      check {
+//        assert(status == OK)
+//
+//        val entity = responseAs[AgoraEntity]
+//        assert(entity.payloadObject.isEmpty)
+//        assert(entity.payload.get contains testConfigWithSnapshot1.payload.get)
+//      }
+//    }
+//
+//    "Agora" should "not let you use payloadAsObject and onlyPayload at the same time" in {
+//      Get(baseURL + "?payloadAsObject=true&onlyPayload=true") ~>
+//        configurationsService.querySingleRoute ~> check {
+//        assert(body.asString contains "onlyPayload, payloadAsObject cannot be used together")
+//        assert(status == BadRequest)
+//      }
+//    }
+//
+//    "Agora" should "throw an error if you try to use an illegal value for both parameters" in {
+//      Get(baseURL + "?payloadAsObject=fire&onlyPayload=cloud") ~>
+//        wrapWithRejectionHandler {
+//          configurationsService.querySingleRoute
+//        } ~> check {
+//        rejection.isInstanceOf[MalformedQueryParamRejection]
+//      }
+//    }
+//
+//    "Agora" should "throw an error if you try to use an illegal value for one parameter" in {
+//      Get(baseURL + "?payloadAsObject=fire&onlyPayload=false") ~>
+//        wrapWithRejectionHandler {
+//          configurationsService.querySingleRoute
+//        } ~> check {
+//        rejection.isInstanceOf[MalformedQueryParamRejection]
+//      }
+//    }
+//
+//    "Agora" should "supply a default methodConfigVersion of 1 if it's missing" in {
+//
+//      val url = testConfigWithSnapshotMissingConfigVersion.namespace.get + "/" +
+//        testConfigWithSnapshotMissingConfigVersion.name.get + "/" +
+//        testConfigWithSnapshotMissingConfigVersion.snapshotId.get
+//
+//      Get(baseURL + "?payloadAsObject=true") ~>
+//      configurationsService.querySingleRoute ~> check {
+//        assert(status == OK)
+//
+//        val entity = responseAs[AgoraEntity]
+//
+//        assert(entity.payloadObject.get.methodConfigVersion == 1)
+//      }
+//    }
 
     "Agora" should "throw DeserializationError if missing keys" in {
       import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport.MethodConfigurationFormat

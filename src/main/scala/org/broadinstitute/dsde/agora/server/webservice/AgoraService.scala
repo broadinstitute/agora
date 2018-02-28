@@ -26,9 +26,11 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
 
   def path: String
 
-  def routes = namespacePermissionsRoute ~ multiEntityPermissionsRoute ~ entityPermissionsRoute ~
-    queryAssociatedConfigurationsRoute ~ queryCompatibleConfigurationsRoute ~ querySingleRoute ~
-    queryMethodDefinitionsRoute ~ queryRoute ~ postRoute
+//  def routes = namespacePermissionsRoute ~ multiEntityPermissionsRoute ~ entityPermissionsRoute ~
+//    queryAssociatedConfigurationsRoute ~ queryCompatibleConfigurationsRoute ~ querySingleRoute ~
+//    queryMethodDefinitionsRoute ~ queryRoute ~ postRoute
+
+  def routes = postRoute
 
   def queryHandlerProps = Props(classOf[QueryHandler], permissionsDataSource, executionContext)
 
@@ -36,137 +38,137 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
 
   def permissionHandlerProps = Props(classOf[PermissionHandler], permissionsDataSource, executionContext)
 
-  def namespacePermissionsRoute =
-    matchNamespacePermissionsRoute(path) { (namespace, username) =>
-      parameterMap { (params) =>
-        val agoraEntity = AgoraEntity(Option(namespace))
-
-        // Accept batch POST // TODO: move to transactional support
-        entity(as[List[AccessControl]]) { (listOfAccessControl) =>
-          post { requestContext =>
-            completeBatchNamespacePermissionsPost(requestContext, agoraEntity, listOfAccessControl, username, permissionHandlerProps)
-          }
-        } ~
-        get { requestContext =>
-          completeNamespacePermissionsGet(requestContext, agoraEntity, username, permissionHandlerProps)
-        } ~
-        post { requestContext =>
-          completeNamespacePermissionsPost(requestContext, agoraEntity, params, username, permissionHandlerProps)
-        } ~
-        put { requestContext =>
-          completeNamespacePermissionsPut(requestContext, agoraEntity, params, username, permissionHandlerProps)
-        } ~
-        delete { requestContext =>
-          completeNamespacePermissionsDelete(requestContext, agoraEntity, params, username, permissionHandlerProps)
-        }
-
-      }
-    }
-
-  def entityPermissionsRoute =
-    matchEntityPermissionsRoute(path) { (namespace, name, snapshotId, username) =>
-      parameterMap { (params) =>
-        val agoraEntity = AgoraEntity(Option(namespace), Option(name), Option(snapshotId))
-
-        // Accept batch POST // TODO: move to transactional support
-        entity(as[List[AccessControl]]) { (listOfAccessControl) =>
-          post { requestContext =>
-            completeBatchEntityPermissionsPost(requestContext, agoraEntity, listOfAccessControl, username, permissionHandlerProps)
-          }
-        } ~
-        get { requestContext =>
-          completeEntityPermissionsGet(requestContext, agoraEntity, username, permissionHandlerProps)
-        } ~
-        post { requestContext =>
-          completeEntityPermissionsPost(requestContext, agoraEntity, params, username, permissionHandlerProps)
-        } ~
-        put { requestContext =>
-          completeEntityPermissionsPut(requestContext, agoraEntity, params, username, permissionHandlerProps)
-        } ~
-        delete { requestContext =>
-          completeEntityPermissionsDelete(requestContext, agoraEntity, params, username, permissionHandlerProps)
-        }
-
-      }
-    }
-
-  def multiEntityPermissionsRoute =
-    matchMultiEntityPermissionsRoute(path) { (username) =>
-      post {
-        entity(as[List[AgoraEntity]]) { entities => requestContext =>
-          completeMultiEntityPermissionsReport(requestContext, entities, username, permissionHandlerProps)
-        }
-      } ~
-      put {
-        entity(as[List[EntityAccessControl]]) { aclPairs => requestContext =>
-          completeMultiEntityPermissionsPut(requestContext, aclPairs, username, permissionHandlerProps)
-        }
-      }
-    }
-
-  // GET http://root.com/methods/<namespace>/<name>/<snapshotId>?onlyPayload=true
-  // GET http://root.com/configurations/<namespace>/<name>/<snapshotId>
-  def querySingleRoute =
-    matchQuerySingleRoute(path) { (namespace, name, snapshotId, username) =>
-      parameters( "onlyPayload".as[Boolean] ? false, "payloadAsObject".as[Boolean] ? false ) { (onlyPayload, payloadAsObject) =>
-        val targetEntity = AgoraEntity(Option(namespace), Option(name), Option(snapshotId))
-
-        get { requestContext =>
-          completeWithPerRequest(requestContext, targetEntity, username, onlyPayload, payloadAsObject, path, queryHandlerProps)
-        } ~
-        delete { requestContext =>
-          completeEntityDelete(requestContext, targetEntity, username, path, queryHandlerProps)
-        } ~
-        post {
-          // only allow copying (post) for methods
-          if (path != AgoraConfig.methodsRoute) {
-            reject(MethodRejection(HttpMethods.GET), MethodRejection(HttpMethods.DELETE))
-          } else {
-            entity(as[AgoraEntity]) { newEntity =>
-              AgoraEntity.validate(newEntity) match {
-                case Success(_) => //noop
-                case Failure(errors) => throw new IllegalArgumentException(s"Method is invalid: Errors: $errors")
-              }
-              parameters("redact".as[Boolean] ? false) { redact =>
-                requestContext => completeEntityCopy(requestContext, targetEntity, newEntity, redact, username, path, queryHandlerProps)
-              }
-            }
-          }
-        }
-      }
-    }
-
-  def queryMethodDefinitionsRoute =
-    (versionedPath(PathMatcher("methods" / "definitions")) & get &
-      authenticationDirectives.usernameFromRequest()) { (username) =>
-        requestContext => definitionsWithPerRequest(requestContext, username, queryHandlerProps)
-      }
-
-  // all configurations that reference any snapshot of the supplied method
-  def queryAssociatedConfigurationsRoute =
-    (versionedPath(PathMatcher("methods" / Segment / Segment / "configurations")) & get &
-      authenticationDirectives.usernameFromRequest()) { (namespace, name, username) =>
-      requestContext => associatedConfigurationsWithPerRequest(requestContext, namespace, name, username, queryHandlerProps)
-    }
-
-  // all configurations that have the same inputs and outputs of the supplied method snapshot,
-  // as well as referencing any snapshot of the supplied method
-  def queryCompatibleConfigurationsRoute =
-    (versionedPath(PathMatcher("methods" / Segment / Segment / IntNumber / "configurations")) & get &
-      authenticationDirectives.usernameFromRequest()) { (namespace, name, snapshotId, username) =>
-      requestContext => compatibleConfigurationsWithPerRequest(requestContext, namespace, name, snapshotId, username, queryHandlerProps)
-    }
-
-  // GET http://root.com/methods?
-  // GET http://root.com/configurations?
-  def queryRoute =
-    matchQueryRoute(path) { (username) =>
-      parameterMultiMap { params =>
-        validateEntityType(params, path) {
-          requestContext => completeWithPerRequest(requestContext, params, username, path, queryHandlerProps)
-        }
-      }
-    }
+//  def namespacePermissionsRoute =
+//    matchNamespacePermissionsRoute(path) { (namespace, username) =>
+//      parameterMap { (params) =>
+//        val agoraEntity = AgoraEntity(Option(namespace))
+//
+//        // Accept batch POST // TODO: move to transactional support
+//        entity(as[List[AccessControl]]) { (listOfAccessControl) =>
+//          post { requestContext =>
+//            completeBatchNamespacePermissionsPost(requestContext, agoraEntity, listOfAccessControl, username, permissionHandlerProps)
+//          }
+//        } ~
+//        get { requestContext =>
+//          completeNamespacePermissionsGet(requestContext, agoraEntity, username, permissionHandlerProps)
+//        } ~
+//        post { requestContext =>
+//          completeNamespacePermissionsPost(requestContext, agoraEntity, params, username, permissionHandlerProps)
+//        } ~
+//        put { requestContext =>
+//          completeNamespacePermissionsPut(requestContext, agoraEntity, params, username, permissionHandlerProps)
+//        } ~
+//        delete { requestContext =>
+//          completeNamespacePermissionsDelete(requestContext, agoraEntity, params, username, permissionHandlerProps)
+//        }
+//
+//      }
+//    }
+//
+//  def entityPermissionsRoute =
+//    matchEntityPermissionsRoute(path) { (namespace, name, snapshotId, username) =>
+//      parameterMap { (params) =>
+//        val agoraEntity = AgoraEntity(Option(namespace), Option(name), Option(snapshotId))
+//
+//        // Accept batch POST // TODO: move to transactional support
+//        entity(as[List[AccessControl]]) { (listOfAccessControl) =>
+//          post { requestContext =>
+//            completeBatchEntityPermissionsPost(requestContext, agoraEntity, listOfAccessControl, username, permissionHandlerProps)
+//          }
+//        } ~
+//        get { requestContext =>
+//          completeEntityPermissionsGet(requestContext, agoraEntity, username, permissionHandlerProps)
+//        } ~
+//        post { requestContext =>
+//          completeEntityPermissionsPost(requestContext, agoraEntity, params, username, permissionHandlerProps)
+//        } ~
+//        put { requestContext =>
+//          completeEntityPermissionsPut(requestContext, agoraEntity, params, username, permissionHandlerProps)
+//        } ~
+//        delete { requestContext =>
+//          completeEntityPermissionsDelete(requestContext, agoraEntity, params, username, permissionHandlerProps)
+//        }
+//
+//      }
+//    }
+//
+//  def multiEntityPermissionsRoute =
+//    matchMultiEntityPermissionsRoute(path) { (username) =>
+//      post {
+//        entity(as[List[AgoraEntity]]) { entities => requestContext =>
+//          completeMultiEntityPermissionsReport(requestContext, entities, username, permissionHandlerProps)
+//        }
+//      } ~
+//      put {
+//        entity(as[List[EntityAccessControl]]) { aclPairs => requestContext =>
+//          completeMultiEntityPermissionsPut(requestContext, aclPairs, username, permissionHandlerProps)
+//        }
+//      }
+//    }
+//
+//  // GET http://root.com/methods/<namespace>/<name>/<snapshotId>?onlyPayload=true
+//  // GET http://root.com/configurations/<namespace>/<name>/<snapshotId>
+//  def querySingleRoute =
+//    matchQuerySingleRoute(path) { (namespace, name, snapshotId, username) =>
+//      parameters( "onlyPayload".as[Boolean] ? false, "payloadAsObject".as[Boolean] ? false ) { (onlyPayload, payloadAsObject) =>
+//        val targetEntity = AgoraEntity(Option(namespace), Option(name), Option(snapshotId))
+//
+//        get { requestContext =>
+//          completeWithPerRequest(requestContext, targetEntity, username, onlyPayload, payloadAsObject, path, queryHandlerProps)
+//        } ~
+//        delete { requestContext =>
+//          completeEntityDelete(requestContext, targetEntity, username, path, queryHandlerProps)
+//        } ~
+//        post {
+//          // only allow copying (post) for methods
+//          if (path != AgoraConfig.methodsRoute) {
+//            reject(MethodRejection(HttpMethods.GET), MethodRejection(HttpMethods.DELETE))
+//          } else {
+//            entity(as[AgoraEntity]) { newEntity =>
+//              AgoraEntity.validate(newEntity) match {
+//                case Success(_) => //noop
+//                case Failure(errors) => throw new IllegalArgumentException(s"Method is invalid: Errors: $errors")
+//              }
+//              parameters("redact".as[Boolean] ? false) { redact =>
+//                requestContext => completeEntityCopy(requestContext, targetEntity, newEntity, redact, username, path, queryHandlerProps)
+//              }
+//            }
+//          }
+//        }
+//      }
+//    }
+//
+//  def queryMethodDefinitionsRoute =
+//    (versionedPath(PathMatcher("methods" / "definitions")) & get &
+//      authenticationDirectives.usernameFromRequest()) { (username) =>
+//        requestContext => definitionsWithPerRequest(requestContext, username, queryHandlerProps)
+//      }
+//
+//  // all configurations that reference any snapshot of the supplied method
+//  def queryAssociatedConfigurationsRoute =
+//    (versionedPath(PathMatcher("methods" / Segment / Segment / "configurations")) & get &
+//      authenticationDirectives.usernameFromRequest()) { (namespace, name, username) =>
+//      requestContext => associatedConfigurationsWithPerRequest(requestContext, namespace, name, username, queryHandlerProps)
+//    }
+//
+//  // all configurations that have the same inputs and outputs of the supplied method snapshot,
+//  // as well as referencing any snapshot of the supplied method
+//  def queryCompatibleConfigurationsRoute =
+//    (versionedPath(PathMatcher("methods" / Segment / Segment / IntNumber / "configurations")) & get &
+//      authenticationDirectives.usernameFromRequest()) { (namespace, name, snapshotId, username) =>
+//      requestContext => compatibleConfigurationsWithPerRequest(requestContext, namespace, name, snapshotId, username, queryHandlerProps)
+//    }
+//
+//  // GET http://root.com/methods?
+//  // GET http://root.com/configurations?
+//  def queryRoute =
+//    matchQueryRoute(path) { (username) =>
+//      parameterMultiMap { params =>
+//        validateEntityType(params, path) {
+//          requestContext => completeWithPerRequest(requestContext, params, username, path, queryHandlerProps)
+//        }
+//      }
+//    }
 
   // POST http://root.com/methods
   // POST http://root.com/configurations

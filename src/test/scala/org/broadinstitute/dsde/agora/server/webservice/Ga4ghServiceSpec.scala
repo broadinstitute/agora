@@ -13,10 +13,12 @@ import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model.HttpMethods
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.server.Directives
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import DefaultJsonProtocol._
 import akka.http.scaladsl.server.directives.ExecutionDirectives
 
-@DoNotDiscover
+//@DoNotDiscover
 class Ga4ghServiceSpec extends FreeSpecLike with ScalatestRouteTest with BeforeAndAfterAll with AgoraTestFixture with ExecutionDirectives {
 
   trait ActorRefFactoryContext {
@@ -280,7 +282,7 @@ class Ga4ghServiceSpec extends FreeSpecLike with ScalatestRouteTest with BeforeA
             assert(td.descriptor == testIntegrationEntity2.payload.get)
           }
         }
-        "should return WDL only when asked for plain-WDL of a public snapshot" ignore {
+        "should return WDL only when asked for plain-WDL of a public snapshot" in {
           Get(fromTemplate(endpointTemplate, descriptorType = "plain-WDL")) ~> testRoutes ~> check {
             assert(status == OK)
             val td = responseAs[String]

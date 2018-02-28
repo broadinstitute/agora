@@ -7,10 +7,12 @@ import akka.http.scaladsl.server.Route
 import com.typesafe.scalalogging.LazyLogging
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
 import org.broadinstitute.dsde.agora.server.ga4gh.Models._
-import org.broadinstitute.dsde.agora.server.model.AgoraEntityType
+import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
 import spray.json._
 
-import scala.concurrent.ExecutionContextExecutor
+import scala.util.Failure
+import scala.util.Success
+import scala.concurrent.{ExecutionContextExecutor, Future}
 
 class Ga4ghService(permissionsDataSource: PermissionsDataSource) extends Ga4ghQueryHandler with Ga4ghServiceSupport with SprayJsonSupport with DefaultJsonProtocol with LazyLogging {
 
@@ -45,7 +47,18 @@ class Ga4ghService(permissionsDataSource: PermissionsDataSource) extends Ga4ghQu
           complete(StatusCodes.NotImplemented)
         } ~
         path("tools" / Segment / "versions" / Segment / Segment / "descriptor") { (id, versionId, descriptorType) =>
-          complete(queryPublicSinglePayload(entityFromArguments(id, versionId), parseDescriptorType(descriptorType)))
+          val agoraEntity: Future[AgoraEntity] = queryPublicSingleEntity(entityFromArguments(id, versionId))
+          val descriptor = parseDescriptorType(descriptorType)
+          onComplete(agoraEntity) {
+            case Success(ae) =>
+              descriptor match {
+                case ToolDescriptorType.WDL => complete(ToolDescriptor(ae))
+                case ToolDescriptorType.PLAIN_WDL =>
+                  val payload: String = ae.payload.getOrElse("")
+                  complete(payload)
+              }
+            case Failure(ex) => failWith(ex)
+          }
         } ~
         path("tools" / Segment / "versions" / Segment / Segment / "descriptor" / Segment) { (id, versionId, descriptorType, relativePath) =>
           complete(StatusCodes.NotImplemented)

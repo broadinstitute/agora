@@ -26,19 +26,9 @@ trait Ga4ghQueryHandler extends LazyLogging {
     }
   }
 
-  def queryPublicSinglePayload(entity: AgoraEntity, descriptorType: ToolDescriptorType.DescriptorType): Future[JsValue] = {
+  def queryPublicSingleEntity(entity: AgoraEntity): Future[AgoraEntity] = {
     val entityTypes = Seq(entity.entityType.getOrElse(throw ValidationException("need an entity type")))
-    agoraBusiness.findSingle(entity, entityTypes, AccessControl.publicUser) map { foundEntity =>
-      descriptorType match {
-        case ToolDescriptorType.WDL =>
-          // the url we return here is known to be incorrect in FireCloud (GAWB-1741).
-          // we return it anyway because it still provides some information, even if it
-          // requires manual user intervention to work.
-          ToolDescriptor(foundEntity).toJson
-        case ToolDescriptorType.PLAIN_WDL =>
-          JsString(foundEntity.payload.getOrElse(""))
-      }
-    }
+    agoraBusiness.findSingle(entity, entityTypes, AccessControl.publicUser)
   }
 
   def queryPublic(agoraSearch: AgoraEntity): Future[Seq[ToolVersion]] = {

@@ -12,13 +12,10 @@ import akka.http.scaladsl.server.directives.{DebuggingDirectives, LogEntry, Logg
 import akka.stream.Materializer
 import akka.stream.scaladsl.Sink
 import com.typesafe.scalalogging.LazyLogging
-import org.broadinstitute.dsde.agora.server.{AgoraConfig, SwaggerRoutes}
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AdminSweeper.Sweep
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AdminSweeper, PermissionsDataSource}
+import org.broadinstitute.dsde.agora.server.SwaggerRoutes
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
 import org.broadinstitute.dsde.agora.server.exceptions._
 import org.broadinstitute.dsde.agora.server.ga4gh.Ga4ghService
-import org.broadinstitute.dsde.agora.server.webservice.configurations.ConfigurationsService
-import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
 import org.broadinstitute.dsde.workbench.model.{ErrorReport, WorkbenchException, WorkbenchExceptionWithErrorReport}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -66,23 +63,6 @@ class ApiService(permissionsDataSource: PermissionsDataSource, healthMonitor: Ac
   def route: Route = (logRequestResult & handleExceptions(ApiService.exceptionHandler)) {
     options { complete(OK) } ~ statusService.statusRoute ~ swaggerRoutes ~ ga4ghService.routes
   }
-
-  /**
-   * Firecloud system maintains its set of admins as a google group.
-   *
-   * If such a group is specified in config, poll it at regular intervals
-   *   to synchronize the admins defined in our users table
-   */
-    // TODO Make below work (do we still need it?)
-//  AgoraConfig.adminGoogleGroup match {
-//    case Some(group) =>
-//      import system.dispatcher
-//      val adminSweeper = actorRefFactory.actorOf(AdminSweeper.props(AdminSweeper.adminsGoogleGroupPoller, permissionsDataSource))
-//      val adminScheduler =
-//        context.system.scheduler.schedule(5 seconds, AgoraConfig.adminSweepInterval minutes, adminSweeper, Sweep)
-//    case None =>
-//  }
-
 
   // basis for logRequestResult lifted from http://stackoverflow.com/questions/32475471/how-does-one-log-akka-http-client-requests
   private def logRequestResult: Directive0 = {

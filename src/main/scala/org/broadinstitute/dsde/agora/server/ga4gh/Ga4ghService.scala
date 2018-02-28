@@ -30,7 +30,7 @@ class Ga4ghService(permissionsDataSource: PermissionsDataSource) extends Ga4ghQu
         } ~
         path("tools") {
           // TODO: query params and response headers
-          completeOrRecoverWith(queryPublicTools()) { failure => failWith(failure) }
+          complete(queryPublicTools())
         } ~
         path("tools" / Segment) { id =>
           complete(queryPublicTool(entityFromArguments(id)))

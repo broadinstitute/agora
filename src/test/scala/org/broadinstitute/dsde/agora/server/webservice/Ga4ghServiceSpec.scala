@@ -15,9 +15,6 @@ import akka.http.scaladsl.model.HttpMethods
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import DefaultJsonProtocol._
 import akka.http.scaladsl.server.directives.ExecutionDirectives
-import akka.http.scaladsl.server.ExceptionHandler
-import org.broadinstitute.dsde.agora.server.exceptions.{AgoraEntityNotFoundException, ValidationException}
-import akka.http.scaladsl.server.Directives._
 
 @DoNotDiscover
 class Ga4ghServiceSpec extends FreeSpecLike with ScalatestRouteTest with BeforeAndAfterAll with AgoraTestFixture with ExecutionDirectives {
@@ -283,7 +280,7 @@ class Ga4ghServiceSpec extends FreeSpecLike with ScalatestRouteTest with BeforeA
             assert(td.descriptor == testIntegrationEntity2.payload.get)
           }
         }
-        "should return WDL only when asked for plain-WDL of a public snapshot" in {
+        "should return WDL only when asked for plain-WDL of a public snapshot" ignore {
           Get(fromTemplate(endpointTemplate, descriptorType = "plain-WDL")) ~> testRoutes ~> check {
             assert(status == OK)
             val td = responseAs[String]

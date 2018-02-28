@@ -1,7 +1,7 @@
 package org.broadinstitute.dsde.agora.server.ga4gh
 
 import com.typesafe.scalalogging.LazyLogging
-import org.broadinstitute.dsde.agora.server.business.{AgoraBusiness, PermissionBusiness}
+import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, PermissionsDataSource}
 import org.broadinstitute.dsde.agora.server.exceptions.ValidationException
 import org.broadinstitute.dsde.agora.server.ga4gh.Models._
@@ -14,8 +14,7 @@ trait Ga4ghQueryHandler extends LazyLogging {
 
   implicit val dataSource: PermissionsDataSource
   implicit val ec: ExecutionContext
-  val permissionBusiness = new PermissionBusiness(dataSource)(ec)
-  val agoraBusiness = new AgoraBusiness(dataSource)(ec)
+  def agoraBusiness = new AgoraBusiness(dataSource)(ec)
 
   // Include entity payloads in returned results
   val DefaultProjection = Some(AgoraEntityProjection(Seq[String]("payload", "synopsis"), Seq.empty[String]))

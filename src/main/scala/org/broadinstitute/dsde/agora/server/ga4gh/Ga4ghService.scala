@@ -52,7 +52,11 @@ class Ga4ghService(permissionsDataSource: PermissionsDataSource) extends Ga4ghQu
           onComplete(agoraEntity) {
             case Success(ae) =>
               descriptor match {
-                case ToolDescriptorType.WDL => complete(ToolDescriptor(ae))
+                case ToolDescriptorType.WDL =>
+                  // the url we return here is known to be incorrect in FireCloud (GAWB-1741).
+                  // we return it anyway because it still provides some information, even if it
+                  // requires manual user intervention to work.
+                  complete(ToolDescriptor(ae))
                 case ToolDescriptorType.PLAIN_WDL =>
                   val payload: String = ae.payload.getOrElse("")
                   complete(payload)

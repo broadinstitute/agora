@@ -23,7 +23,7 @@ class Ga4ghServiceSpec extends FreeSpecLike with ScalatestRouteTest with BeforeA
     def actorRefFactory: ActorSystem = system
   }
 
-  private val ga4ghService = new Ga4ghService(permsDataSource) with ActorRefFactoryContext
+  private val ga4ghService = new Ga4ghService(permsDataSource)
 
   // these routes depend on the exception handler defined in ApiService, so
   // we have to add the exception handler back here.

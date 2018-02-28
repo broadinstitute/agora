@@ -28,14 +28,9 @@ class Ga4ghServiceSpec extends FreeSpecLike with ScalatestRouteTest with BeforeA
 
   private val ga4ghService = new Ga4ghService(permsDataSource) with ActorRefFactoryContext
 
-  private val wrapWithExceptionHandler = handleExceptions(ExceptionHandler {
-    case e: IllegalArgumentException => complete(BadRequest, e.getMessage)
-    case ve: ValidationException => complete(BadRequest, ve.getMessage)
-  })
-
-  // these routes depend on the exception handler defined in ApiServiceActor, so
+  // these routes depend on the exception handler defined in ApiService, so
   // we have to add the exception handler back here.
-  private val testRoutes = wrapWithExceptionHandler {
+  private val testRoutes = handleExceptions(ApiService.exceptionHandler) {
     ga4ghService.routes
   }
 

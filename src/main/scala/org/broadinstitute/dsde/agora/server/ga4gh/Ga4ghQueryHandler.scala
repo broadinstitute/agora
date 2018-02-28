@@ -1,38 +1,24 @@
 package org.broadinstitute.dsde.agora.server.ga4gh
 
-import akka.pattern.pipe
+import com.typesafe.scalalogging.LazyLogging
+import org.broadinstitute.dsde.agora.server.business.{AgoraBusiness, PermissionBusiness}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, PermissionsDataSource}
 import org.broadinstitute.dsde.agora.server.exceptions.ValidationException
-import org.broadinstitute.dsde.agora.server.ga4gh.Ga4ghServiceMessages._
 import org.broadinstitute.dsde.agora.server.ga4gh.Models._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection, AgoraEntityType}
-import org.broadinstitute.dsde.agora.server.webservice.handlers.QueryHandler
-import scala.concurrent.{ExecutionContext, Future}
 import spray.json._
 
-class Ga4ghQueryHandler(dataSource: PermissionsDataSource, override implicit val ec: ExecutionContext)
-  extends QueryHandler(dataSource, ec) {
+import scala.concurrent.{ExecutionContext, Future}
+
+trait Ga4ghQueryHandler extends LazyLogging {
+
+  implicit val dataSource: PermissionsDataSource
+  implicit val ec: ExecutionContext
+  val permissionBusiness = new PermissionBusiness(dataSource)(ec)
+  val agoraBusiness = new AgoraBusiness(dataSource)(ec)
 
   // Include entity payloads in returned results
   val DefaultProjection = Some(AgoraEntityProjection(Seq[String]("payload", "synopsis"), Seq.empty[String]))
-
-  override def receive: akka.actor.Actor.Receive = {
-    case QueryPublicSingle(entity: AgoraEntity) =>
-      queryPublicSingle(entity) pipeTo sender
-
-    case QueryPublicSinglePayload(entity: AgoraEntity, descriptorType: ToolDescriptorType.DescriptorType) =>
-      queryPublicSinglePayload(entity, descriptorType) pipeTo sender
-
-    case QueryPublic(agoraSearch: AgoraEntity) =>
-      queryPublic(agoraSearch) pipeTo sender
-
-    case QueryPublicTool(agoraSearch: AgoraEntity) =>
-      queryPublicTool(agoraSearch) pipeTo sender
-
-    case QueryPublicTools() =>
-      queryPublicTools() pipeTo sender
-
-  }
 
   def queryPublicSingle(entity: AgoraEntity): Future[ToolVersion] = {
     val entityTypes = Seq(entity.entityType.getOrElse(throw ValidationException("need an entity type")))

@@ -8,7 +8,7 @@ import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.AgoraConfig.authenticationDirectives
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, EntityAccessControl, PermissionsDataSource, entities}
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
-import org.broadinstitute.dsde.agora.server.model.AgoraEntity
+import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
 import org.broadinstitute.dsde.agora.server.webservice.handlers.{AddHandler, PermissionHandler, QueryHandler}
 import org.broadinstitute.dsde.agora.server.webservice.routes.RouteHelpers
 
@@ -28,7 +28,7 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
 //    queryAssociatedConfigurationsRoute ~ queryCompatibleConfigurationsRoute ~ querySingleRoute ~
 //    queryMethodDefinitionsRoute ~ queryRoute ~ postRoute
 
-  def routes = postRoute
+  def routes = queryRoute ~ postRoute
 
   def queryHandlerProps = Props(classOf[QueryHandler], permissionsDataSource, ec)
 
@@ -157,16 +157,26 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
 //      requestContext => compatibleConfigurationsWithPerRequest(requestContext, namespace, name, snapshotId, username, queryHandlerProps)
 //    }
 //
-//  // GET http://root.com/methods?
-//  // GET http://root.com/configurations?
-//  def queryRoute =
-//    matchQueryRoute(path) { (username) =>
-//      parameterMultiMap { params =>
-//        validateEntityType(params, path) {
-//          requestContext => completeWithPerRequest(requestContext, params, username, path, queryHandlerProps)
-//        }
-//      }
-//    }
+  // GET http://root.com/methods?
+  // GET http://root.com/configurations?
+  def queryRoute =
+    matchQueryRoute(path)(ec) { username =>
+      parameterMultiMap { params =>
+        validateEntityType(params, path) {
+          val entity = entityFromParams(params)
+          val projection = projectionFromParams(params)
+          val entityTypes = AgoraEntityType.byPath(path)
+
+          val queryHandler = new QueryHandler(permissionsDataSource)
+          val queryAttempt = queryHandler.agoraBusiness.find(entity, projection, entityTypes, username)
+
+          onComplete(queryAttempt) {
+            case Success(entities) => complete(entities)
+            case Failure(error) => failWith(error)
+          }
+        }
+      }
+    }
 
   // POST http://root.com/methods
   // POST http://root.com/configurations
@@ -178,7 +188,7 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
           val addAttempt = addHandler.add(agoraEntity, username, path)
           onComplete(addAttempt) {
             case Success(entity) => complete(StatusCodes.Created, entity)
-            case Failure(t) => throw t
+            case Failure(error) => failWith(error)
           }
         }
       }

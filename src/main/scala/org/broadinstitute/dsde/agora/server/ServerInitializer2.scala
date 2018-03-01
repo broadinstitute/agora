@@ -42,21 +42,13 @@ class ServerInitializer2 extends LazyLogging {
   }
 
   def stopAllServices() {
+    logger.info("Closing all connections")
+    Http().shutdownAllConnectionPools()
     if (AgoraConfig.usesEmbeddedMongo)
       EmbeddedMongo.stopMongo()
-
-    println("Closing connection to sql db.")
-
-    // TODO Address the error below upon exiting the app
-    // app Closing connection to sql db.
-    // Exception in thread "Thread-3" java.io.IOException: Stream closed
-    //   at java.io.BufferedInputStream.getBufIfOpen(BufferedInputStream.java:170)
-    //   at java.io.BufferedInputStream.read1(BufferedInputStream.java:283)
     permsDataSource.close()
     healthMonitorSchedule.cancel() // stop the health monitor
     stopAdminGroupPoller() // stop the admin google group poller
-
-    // TODO Do we need to do any clean up after startWebService()?
   }
 
   private def startWebService() = {

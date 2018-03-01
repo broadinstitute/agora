@@ -2,31 +2,32 @@ package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.actor.ActorSystem
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
-import org.broadinstitute.dsde.agora.server.{AgoraConfig, AgoraTestFixture}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraPermissions}
-import org.broadinstitute.dsde.agora.server.ga4gh.{Ga4ghService, ModelSupport}
 import org.broadinstitute.dsde.agora.server.ga4gh.Models._
+import org.broadinstitute.dsde.agora.server.ga4gh.{Ga4ghService, ModelSupport}
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
+import org.broadinstitute.dsde.agora.server.{AgoraConfig, AgoraTestFixture}
 import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FreeSpecLike}
-import spray.http.HttpMethods
-import spray.http.StatusCodes._
-import spray.httpx.SprayJsonSupport._
 import spray.json._
-import spray.json.DefaultJsonProtocol._
-import spray.testkit.{RouteTest, ScalatestRouteTest}
+import akka.http.scaladsl.testkit.ScalatestRouteTest
+import akka.http.scaladsl.model.StatusCodes._
+import akka.http.scaladsl.model.HttpMethods
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import DefaultJsonProtocol._
+import akka.http.scaladsl.server.directives.ExecutionDirectives
 
 @DoNotDiscover
-class Ga4ghServiceSpec extends ApiServiceSpec with FreeSpecLike with RouteTest with ScalatestRouteTest with BeforeAndAfterAll with AgoraTestFixture {
+class Ga4ghServiceSpec extends FreeSpecLike with ScalatestRouteTest with BeforeAndAfterAll with AgoraTestFixture with ExecutionDirectives {
 
   trait ActorRefFactoryContext {
     def actorRefFactory: ActorSystem = system
   }
 
-  private val ga4ghService = new Ga4ghService(permsDataSource) with ActorRefFactoryContext
+  private val ga4ghService = new Ga4ghService(permsDataSource)
 
-  // these routes depend on the exception handler defined in ApiServiceActor, so
+  // these routes depend on the exception handler defined in ApiService, so
   // we have to add the exception handler back here.
-  private val testRoutes = wrapWithExceptionHandler {
+  private val testRoutes = handleExceptions(ApiService.exceptionHandler) {
     ga4ghService.routes
   }
 

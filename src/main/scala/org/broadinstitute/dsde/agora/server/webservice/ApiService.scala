@@ -3,7 +3,6 @@ package org.broadinstitute.dsde.agora.server.webservice
 import akka.actor.{ActorRef, ActorSystem}
 import akka.event.{Logging, LoggingAdapter}
 import akka.event.Logging.LogLevel
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
@@ -13,63 +12,60 @@ import akka.http.scaladsl.server.directives.{DebuggingDirectives, LogEntry, Logg
 import akka.stream.Materializer
 import akka.stream.scaladsl.Sink
 import com.typesafe.scalalogging.LazyLogging
-import org.broadinstitute.dsde.agora.server.{AgoraConfig, SwaggerRoutes}
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AdminSweeper.Sweep
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AdminSweeper, PermissionsDataSource}
-import org.broadinstitute.dsde.agora.server.errorReportSource
-import org.broadinstitute.dsde.agora.server.exceptions.{AgoraException, ValidationException}
+import org.broadinstitute.dsde.agora.server.SwaggerRoutes
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
+import org.broadinstitute.dsde.agora.server.exceptions._
 import org.broadinstitute.dsde.agora.server.ga4gh.Ga4ghService
 import org.broadinstitute.dsde.agora.server.webservice.configurations.ConfigurationsService
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
-import org.broadinstitute.dsde.workbench.model.ErrorReportJsonSupport._
 import org.broadinstitute.dsde.workbench.model.{ErrorReport, WorkbenchException, WorkbenchExceptionWithErrorReport}
 
 import scala.concurrent.{ExecutionContext, Future}
+
+object ApiService {
+
+  // Required for marshalling
+  import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+  import org.broadinstitute.dsde.workbench.model.ErrorReportJsonSupport._
+  import org.broadinstitute.dsde.agora.server.errorReportSource
+
+  val exceptionHandler: ExceptionHandler = {
+    ExceptionHandler {
+      case withErrorReport: WorkbenchExceptionWithErrorReport =>
+        complete(withErrorReport.errorReport.statusCode.getOrElse(StatusCodes.InternalServerError), withErrorReport.errorReport)
+      case workbenchException: WorkbenchException =>
+        val report = ErrorReport(Option(workbenchException.getMessage).getOrElse(""), Some(StatusCodes.InternalServerError), Seq(), Seq(), Some(workbenchException.getClass))
+        complete(StatusCodes.InternalServerError, report)
+      case e: IllegalArgumentException => complete(BadRequest, ErrorReport(e))
+      case e: AgoraEntityAuthorizationException => complete(Forbidden, ErrorReport(e))
+      case e: NamespaceAuthorizationException => complete(Forbidden, ErrorReport(e))
+      case e: AgoraEntityNotFoundException => complete(NotFound, ErrorReport(e))
+      case e: DockerImageNotFoundException => complete(BadRequest, ErrorReport(e))
+      case e: PermissionNotFoundException => complete(BadRequest, ErrorReport(e))
+      case e: ValidationException => complete(BadRequest, ErrorReport(e))
+      case e: wdl.exception.ValidationException => complete(BadRequest, ErrorReport(e))
+      case e: PermissionModificationException => complete(BadRequest, ErrorReport(e))
+      case e: AgoraException => complete(StatusCodes.getForKey(e.statusCode.intValue).getOrElse(StatusCodes.InternalServerError), ErrorReport(e))
+      case e: Throwable => complete(StatusCodes.InternalServerError, ErrorReport(e))
+    }
+  }
+}
 
 class ApiService(permissionsDataSource: PermissionsDataSource, healthMonitor: ActorRef)
                 (implicit val system: ActorSystem, val ec: ExecutionContext, val materializer: Materializer)
   extends LazyLogging with SwaggerRoutes {
 
   val statusService = new StatusService(permissionsDataSource, healthMonitor)
+  val ga4ghService = new Ga4ghService(permissionsDataSource)
   // TODO Instantiate the remaining services once they are converted
   val methodsService = new MethodsService(permissionsDataSource)
   val configurationsService = new ConfigurationsService(permissionsDataSource)
 //  val ga4ghService = new Ga4ghService(permissionsDataSource)
 
   // TODO Add the remaining routes once they are converted
-  def route: Route = (logRequestResult & handleExceptions(myExceptionHandler)) {
-    options { complete(OK) } ~ statusService.statusRoute ~ methodsService.routes ~
-      configurationsService.routes ~ swaggerRoutes
-  }
-
-  /**
-   * Firecloud system maintains its set of admins as a google group.
-   *
-   * If such a group is specified in config, poll it at regular intervals
-   *   to synchronize the admins defined in our users table
-   */
-    // TODO Make below work (do we still need it?)
-//  AgoraConfig.adminGoogleGroup match {
-//    case Some(group) =>
-//      import system.dispatcher
-//      val adminSweeper = actorRefFactory.actorOf(AdminSweeper.props(AdminSweeper.adminsGoogleGroupPoller, permissionsDataSource))
-//      val adminScheduler =
-//        context.system.scheduler.schedule(5 seconds, AgoraConfig.adminSweepInterval minutes, adminSweeper, Sweep)
-//    case None =>
-//  }
-
-  private val myExceptionHandler = {
-    ExceptionHandler {
-      // TODO Add Agora-specific exceptions if necessary
-      case withErrorReport: WorkbenchExceptionWithErrorReport =>
-        complete(withErrorReport.errorReport.statusCode.getOrElse(StatusCodes.InternalServerError), withErrorReport.errorReport)
-      case workbenchException: WorkbenchException =>
-        val report = ErrorReport(Option(workbenchException.getMessage).getOrElse(""), Some(StatusCodes.InternalServerError), Seq(), Seq(), Some(workbenchException.getClass))
-        complete(StatusCodes.InternalServerError, report)
-      case e: Throwable =>
-        //NOTE: this needs SprayJsonSupport._, ErrorReportJsonSupport._, and errorReportSource all imported to work
-        complete(StatusCodes.InternalServerError, ErrorReport(e))
-    }
+  def route: Route = (logRequestResult & handleExceptions(ApiService.exceptionHandler)) {
+    options { complete(OK) } ~ statusService.statusRoute ~ swaggerRoutes ~ ga4ghService.routes ~ methodsService.routes ~
+      configurationsService.routes
   }
 
   // basis for logRequestResult lifted from http://stackoverflow.com/questions/32475471/how-does-one-log-akka-http-client-requests

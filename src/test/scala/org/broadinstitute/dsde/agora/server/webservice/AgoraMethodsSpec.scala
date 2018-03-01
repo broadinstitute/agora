@@ -5,6 +5,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.ValidationRejection
+import akka.http.scaladsl.unmarshalling.Unmarshaller
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
@@ -105,7 +106,7 @@ class AgoraMethodsSpec extends ApiServiceSpec2 with FlatSpecLike {
   "Agora" should "create a method and return with a status of 201" in {
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity) ~>
       methodsService.postRoute ~> check {
-      handleError(entity(as[AgoraEntity]), (entity: AgoraEntity) => {
+        val entity = responseAs[AgoraEntity]
         assert(entity.namespace == namespace3)
         assert(entity.name == name1)
         assert(entity.synopsis == synopsis1)
@@ -114,9 +115,9 @@ class AgoraMethodsSpec extends ApiServiceSpec2 with FlatSpecLike {
         assert(entity.payload == payload1)
         assert(entity.snapshotId.isDefined)
         assert(entity.createDate.isDefined)
-      })
-      assert(status == Created)
-    }
+
+        assert(status == Created)
+      }
   }
 
   "Agora" should "return a 400 bad request when posting a malformed payload" in {
@@ -220,36 +221,14 @@ class AgoraMethodsSpec extends ApiServiceSpec2 with FlatSpecLike {
     }
   }
 
-  "Agora" should "return a Created success code when posting with a synopsis of 80 characters" in {
-    val testSynopsis = Some(fillerText.take(80))
-    Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(synopsis = testSynopsis)) ~>
-      methodsService.postRoute ~> check {
-      handleError(entity(as[AgoraEntity]), (entity: AgoraEntity) => {
-        assert(entity.synopsis == testSynopsis)
-      })
-      assert(status == Created)
-    }
-  }
-
-  "Agora" should "return a Created success code when posting with a synopsis of 79 characters" in {
-    val testSynopsis = Some(fillerText.take(79))
-    Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(synopsis = testSynopsis)) ~>
-      methodsService.postRoute ~> check {
-      handleError(entity(as[AgoraEntity]), (entity: AgoraEntity) => {
-        assert(entity.synopsis == testSynopsis)
-      })
-      assert(status == Created)
-    }
-  }
-
-  "Agora" should "return a Created success code when posting with a synopsis of 74 characters" in {
-    val testSynopsis = Some(fillerText.take(74))
-    Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(synopsis = testSynopsis)) ~>
-      methodsService.postRoute ~> check {
-      handleError(entity(as[AgoraEntity]), (entity: AgoraEntity) => {
-        assert(entity.synopsis == testSynopsis)
-      })
-      assert(status == Created)
+  Seq(80, 79, 74) foreach { n =>
+    "Agora" should s"return a Created success code when posting with a synopsis of $n characters" in {
+      val testSynopsis = Some(fillerText.take(80))
+      Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(synopsis = testSynopsis)) ~>
+        methodsService.postRoute ~> check {
+        assert(responseAs[AgoraEntity].synopsis == testSynopsis)
+        assert(status == Created)
+      }
     }
   }
 

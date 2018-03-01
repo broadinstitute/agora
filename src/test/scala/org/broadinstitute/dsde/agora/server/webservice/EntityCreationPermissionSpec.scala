@@ -3,6 +3,10 @@ package org.broadinstitute.dsde.agora.server.webservice
 
 import java.util.UUID
 
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.model.StatusCode
+import akka.http.scaladsl.model.StatusCodes._
+
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions.All
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraPermissions}
@@ -10,14 +14,11 @@ import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
 import org.broadinstitute.dsde.agora.server.webservice.routes.MockAgoraDirectives
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
+
 import org.scalatest.{DoNotDiscover, FlatSpecLike}
-import spray.http.StatusCodes._
-import spray.http.StatusCode
-import spray.httpx.SprayJsonSupport._
-import spray.httpx.unmarshalling._
 
 @DoNotDiscover
-class EntityCreationPermissionSpec extends ApiServiceSpec with FlatSpecLike {
+class EntityCreationPermissionSpec extends ApiServiceSpec2 with FlatSpecLike {
 
   var testEntity1WithId: AgoraEntity = _
   var testEntity2WithId: AgoraEntity = _
@@ -27,6 +28,10 @@ class EntityCreationPermissionSpec extends ApiServiceSpec with FlatSpecLike {
   var testEntity6WithId: AgoraEntity = _
   var testEntity7WithId: AgoraEntity = _
   var testEntityToBeRedactedWithId: AgoraEntity = _
+
+  val routes = handleExceptions(ApiService.exceptionHandler) {
+    methodsService.postRoute
+  }
 
   override def beforeAll() = {
     ensureDatabasesAreRunning()
@@ -178,22 +183,21 @@ class EntityCreationPermissionSpec extends ApiServiceSpec with FlatSpecLike {
 
     Post(ApiUtil.Methods.withLeadingVersion, randomEntity) ~>
       addHeader(MockAgoraDirectives.mockAuthenticatedUserEmailHeader, asUser) ~>
-      methodsService.postRoute ~> check {
-        assert(status == expectedStatus, response.message)
+      routes ~> check {
+        assert(status == expectedStatus, response.toString)
         if (expectedStatus == Created) {
-          handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => {
-            assert(entity.namespace == randomEntity.namespace)
-            assert(entity.name == randomEntity.name)
-            assert(entity.synopsis == randomEntity.synopsis)
-            assert(entity.documentation == randomEntity.documentation)
-            assert(entity.owner == randomEntity.owner)
-            assert(entity.payload == randomEntity.payload)
-            assert(entity.entityType == randomEntity.entityType)
-            assert(entity.snapshotId.isDefined)
-            assert(entity.createDate.isDefined)
-          })
+          val entity = responseAs[AgoraEntity]
+          assert(entity.namespace == randomEntity.namespace)
+          assert(entity.name == randomEntity.name)
+          assert(entity.synopsis == randomEntity.synopsis)
+          assert(entity.documentation == randomEntity.documentation)
+          assert(entity.owner == randomEntity.owner)
+          assert(entity.payload == randomEntity.payload)
+          assert(entity.entityType == randomEntity.entityType)
+          assert(entity.snapshotId.isDefined)
+          assert(entity.createDate.isDefined)
         }
-    }
+      }
   }
 
   private def redact(namespace:String, name:String, snapshotId: Int, caller: String) = {

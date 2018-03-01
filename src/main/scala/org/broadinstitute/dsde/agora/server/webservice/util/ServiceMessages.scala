@@ -109,10 +109,6 @@ object ServiceMessages {
                                            snapshotId: Int,
                                            username: String)
 
-  case class Add(requestContext: RequestContext,
-                 agoraAddRequest: AgoraEntity,
-                 username: String)
-
   case class Status(healthMonitor: ActorRef)
 
 }

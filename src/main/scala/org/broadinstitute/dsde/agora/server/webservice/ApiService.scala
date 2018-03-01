@@ -16,6 +16,8 @@ import org.broadinstitute.dsde.agora.server.SwaggerRoutes
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
 import org.broadinstitute.dsde.agora.server.exceptions._
 import org.broadinstitute.dsde.agora.server.ga4gh.Ga4ghService
+import org.broadinstitute.dsde.agora.server.webservice.configurations.ConfigurationsService
+import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
 import org.broadinstitute.dsde.workbench.model.{ErrorReport, WorkbenchException, WorkbenchExceptionWithErrorReport}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -56,12 +58,14 @@ class ApiService(permissionsDataSource: PermissionsDataSource, healthMonitor: Ac
   val statusService = new StatusService(permissionsDataSource, healthMonitor)
   val ga4ghService = new Ga4ghService(permissionsDataSource)
   // TODO Instantiate the remaining services once they are converted
-  //  val methodsService = new MethodsService(permissionsDataSource)
-  //  val configurationsService = new ConfigurationsService(permissionsDataSource)
+  val methodsService = new MethodsService(permissionsDataSource)
+  val configurationsService = new ConfigurationsService(permissionsDataSource)
+//  val ga4ghService = new Ga4ghService(permissionsDataSource)
 
   // TODO Add the remaining routes once they are converted
   def route: Route = (logRequestResult & handleExceptions(ApiService.exceptionHandler)) {
-    options { complete(OK) } ~ statusService.statusRoute ~ swaggerRoutes ~ ga4ghService.routes
+    options { complete(OK) } ~ statusService.statusRoute ~ swaggerRoutes ~ ga4ghService.routes ~ methodsService.routes ~
+      configurationsService.routes
   }
 
   // basis for logRequestResult lifted from http://stackoverflow.com/questions/32475471/how-does-one-log-akka-http-client-requests

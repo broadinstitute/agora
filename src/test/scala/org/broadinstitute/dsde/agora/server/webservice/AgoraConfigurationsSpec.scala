@@ -1,6 +1,11 @@
 
 package org.broadinstitute.dsde.agora.server.webservice
 
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.model.StatusCodes._
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.server._
+
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraPermissions}
@@ -10,16 +15,13 @@ import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
 import org.scalatest.{DoNotDiscover, FlatSpecLike}
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.rawls.model.MethodConfiguration
-import spray.http.StatusCodes._
-import spray.httpx.SprayJsonSupport._
-import spray.httpx.unmarshalling._
+
 import spray.json.{DeserializationException, JsObject}
-import spray.routing.{MalformedQueryParamRejection, ValidationRejection}
 
 import scala.concurrent.Future
 
 @DoNotDiscover
-class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
+class AgoraConfigurationsSpec extends ApiServiceSpec2 with FlatSpecLike {
 
   var method1: AgoraEntity = _
   var testEntityToBeRedacted2WithId: AgoraEntity = _
@@ -72,10 +74,9 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
   "Agora" should "be able to store a task configuration" in {
     Post(ApiUtil.Configurations.withLeadingVersion, testAgoraConfigurationEntity3) ~>
       configurationsService.postRoute ~> check {
+        val referencedMethod = AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(namespace1.get, name1.get, snapshotId1.get)
 
-      val referencedMethod = AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(namespace1.get, name1.get, snapshotId1.get)
-
-      handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => {
+        val entity = responseAs[AgoraEntity]
         assert(entity.namespace == namespace2)
         assert(entity.name == name1)
         assert(entity.synopsis == synopsis3)
@@ -92,8 +93,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
         assert(foundMethod.name == name1)
         assert(foundMethod.snapshotId == snapshotId1)
         assert(foundMethod.url.isDefined)
-      })
-    }
+      }
   }
 
 //  "Agora" should "populate method references when returning configurations" in {

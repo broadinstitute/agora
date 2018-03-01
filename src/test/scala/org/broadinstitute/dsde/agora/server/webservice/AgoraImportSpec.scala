@@ -1,23 +1,23 @@
 
 package org.broadinstitute.dsde.agora.server.webservice
 
-import org.broadinstitute.dsde.agora.server.AgoraConfig
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.model.StatusCodes._
+
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
-import org.broadinstitute.dsde.agora.server.exceptions.AgoraEntityNotFoundException
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
+
 import org.scalatest.{DoNotDiscover, FlatSpecLike}
 import org.scalatest.Matchers._
-import spray.http.StatusCodes._
-import spray.httpx.SprayJsonSupport._
-import spray.httpx.unmarshalling._
+
 import org.mockserver.integration.ClientAndServer
 import org.mockserver.integration.ClientAndServer._
 import org.mockserver.model.HttpRequest.request
 
 @DoNotDiscover
-class AgoraImportSpec extends ApiServiceSpec with FlatSpecLike{
+class AgoraImportSpec extends ApiServiceSpec2 with FlatSpecLike{
   var testAgoraEntityWithId: AgoraEntity = _
 
   var mockServer: ClientAndServer = _
@@ -52,7 +52,7 @@ class AgoraImportSpec extends ApiServiceSpec with FlatSpecLike{
     Post(ApiUtil.Methods.withLeadingVersion, testBadAgoraEntityInvalidWdlImportFormat) ~>
       methodsService.postRoute ~> check {
       assert(status == BadRequest)
-      assert(body.asString contains "Failed to import workflow invalid_syntax_for_tool.:")
+      assert(responseAs[String] contains "Failed to import workflow invalid_syntax_for_tool.:")
     }
   }
 
@@ -60,7 +60,7 @@ class AgoraImportSpec extends ApiServiceSpec with FlatSpecLike{
     Post(ApiUtil.Methods.withLeadingVersion, testBadAgoraEntityNonExistentWdlImportFormat) ~>
       methodsService.postRoute ~> check {
       assert(status == BadRequest)
-      assert(body.asString contains "Failed to import workflow broad.non_existent_grep.1.:")
+      assert(responseAs[String] contains "Failed to import workflow broad.non_existent_grep.1.:")
     }
   }
 
@@ -68,8 +68,8 @@ class AgoraImportSpec extends ApiServiceSpec with FlatSpecLike{
     Post(ApiUtil.Methods.withLeadingVersion, testEntityWorkflowWithExistentWdlImport) ~>
       methodsService.postRoute ~> check {
       assert(status == Created)
-      assert(body.asString contains "\"name\": \"testMethod1\"")
-      assert(body.asString contains "\"createDate\"")
+      assert(responseAs[String] contains "\"name\": \"testMethod1\"")
+      assert(responseAs[String] contains "\"createDate\"")
     }
   }
 

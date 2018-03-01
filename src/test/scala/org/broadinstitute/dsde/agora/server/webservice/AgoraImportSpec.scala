@@ -22,6 +22,10 @@ class AgoraImportSpec extends ApiServiceSpec2 with FlatSpecLike{
 
   var mockServer: ClientAndServer = _
 
+  val routes = handleExceptions(ApiService.exceptionHandler) {
+    methodsService.postRoute
+  }
+
   override def beforeAll() = {
     ensureDatabasesAreRunning()
     testAgoraEntityWithId = patiently(agoraBusiness.insert(testAgoraEntity, mockAuthenticatedOwner.get))
@@ -43,14 +47,14 @@ class AgoraImportSpec extends ApiServiceSpec2 with FlatSpecLike{
   // tests for creating new methods
   "MethodsService" should "return 400 when posting a gibberish WDL" in {
     Post(ApiUtil.Methods.withLeadingVersion, copyPayload(Some("this isn't valid WDL!"))) ~>
-      methodsService.postRoute ~> check {
+      routes ~> check {
       assert(status == BadRequest)
     }
   }
 
   "MethodsService" should "return a 400 when posting a WDL with an invalid import statement" in {
     Post(ApiUtil.Methods.withLeadingVersion, testBadAgoraEntityInvalidWdlImportFormat) ~>
-      methodsService.postRoute ~> check {
+      routes ~> check {
       assert(status == BadRequest)
       assert(responseAs[String] contains "Failed to import workflow invalid_syntax_for_tool.:")
     }
@@ -58,7 +62,7 @@ class AgoraImportSpec extends ApiServiceSpec2 with FlatSpecLike{
 
   "MethodsService" should "return a 400 when posting a WDL with an import statement that references a non-existent method" in {
     Post(ApiUtil.Methods.withLeadingVersion, testBadAgoraEntityNonExistentWdlImportFormat) ~>
-      methodsService.postRoute ~> check {
+      routes ~> check {
       assert(status == BadRequest)
       assert(responseAs[String] contains "Failed to import workflow broad.non_existent_grep.1.:")
     }
@@ -66,9 +70,9 @@ class AgoraImportSpec extends ApiServiceSpec2 with FlatSpecLike{
 
   "MethodsService" should "return 201 when posting a valid WDL that contains an import" in {
     Post(ApiUtil.Methods.withLeadingVersion, testEntityWorkflowWithExistentWdlImport) ~>
-      methodsService.postRoute ~> check {
+      routes ~> check {
       assert(status == Created)
-      assert(responseAs[String] contains "\"name\": \"testMethod1\"")
+      assert(responseAs[String] contains "\"name\":\"testMethod1\"")
       assert(responseAs[String] contains "\"createDate\"")
     }
   }

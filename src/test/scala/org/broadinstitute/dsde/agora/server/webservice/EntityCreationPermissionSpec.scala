@@ -29,6 +29,10 @@ class EntityCreationPermissionSpec extends ApiServiceSpec2 with FlatSpecLike {
   var testEntity7WithId: AgoraEntity = _
   var testEntityToBeRedactedWithId: AgoraEntity = _
 
+  val routes = handleExceptions(ApiService.exceptionHandler) {
+    methodsService.postRoute
+  }
+
   override def beforeAll() = {
     ensureDatabasesAreRunning()
     // create namespace1, owned by owner1; namespace creation is a side effect of entity creation
@@ -179,7 +183,7 @@ class EntityCreationPermissionSpec extends ApiServiceSpec2 with FlatSpecLike {
 
     Post(ApiUtil.Methods.withLeadingVersion, randomEntity) ~>
       addHeader(MockAgoraDirectives.mockAuthenticatedUserEmailHeader, asUser) ~>
-      methodsService.postRoute ~> check {
+      routes ~> check {
         assert(status == expectedStatus, response.toString)
         if (expectedStatus == Created) {
           val entity = responseAs[AgoraEntity]

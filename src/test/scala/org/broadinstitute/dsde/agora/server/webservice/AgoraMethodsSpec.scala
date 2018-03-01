@@ -23,6 +23,10 @@ class AgoraMethodsSpec extends ApiServiceSpec2 with FlatSpecLike {
   var testEntity7WithId: AgoraEntity = _
   var testEntityToBeRedactedWithId: AgoraEntity = _
 
+  val routes = handleExceptions(ApiService.exceptionHandler) {
+    methodsService.postRoute
+  }
+
   override def beforeAll() = {
     ensureDatabasesAreRunning()
     testEntity1WithId = patiently(agoraBusiness.insert(testEntity1, mockAuthenticatedOwner.get))
@@ -104,7 +108,7 @@ class AgoraMethodsSpec extends ApiServiceSpec2 with FlatSpecLike {
 
   "Agora" should "create a method and return with a status of 201" in {
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity) ~>
-      methodsService.postRoute ~> check {
+      routes ~> check {
         val entity = responseAs[AgoraEntity]
         assert(entity.namespace == namespace3)
         assert(entity.name == name1)
@@ -121,7 +125,7 @@ class AgoraMethodsSpec extends ApiServiceSpec2 with FlatSpecLike {
 
   "Agora" should "return a 400 bad request when posting a malformed payload" in {
     Post(ApiUtil.Methods.withLeadingVersion, testBadAgoraEntity) ~>
-      methodsService.postRoute ~> check {
+      routes ~> check {
       assert(status === BadRequest)
       assert(responseAs[String] != null)
     }
@@ -224,7 +228,7 @@ class AgoraMethodsSpec extends ApiServiceSpec2 with FlatSpecLike {
     "Agora" should s"return a Created success code when posting with a synopsis of $n characters" in {
       val testSynopsis = Some(fillerText.take(80))
       Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(synopsis = testSynopsis)) ~>
-        methodsService.postRoute ~> check {
+        routes ~> check {
         assert(responseAs[AgoraEntity].synopsis == testSynopsis)
         assert(status == Created)
       }
@@ -266,7 +270,7 @@ class AgoraMethodsSpec extends ApiServiceSpec2 with FlatSpecLike {
 
   "Agora" should "not allow you to post a new configuration to the methods route" in {
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraConfigurationEntity) ~>
-      methodsService.postRoute ~> check {
+      routes ~> check {
       rejection.isInstanceOf[ValidationRejection]
     }
   }
@@ -298,7 +302,7 @@ class AgoraMethodsSpec extends ApiServiceSpec2 with FlatSpecLike {
 
   "Agora" should "accept and record a snapshot comment when creating the initial snapshot of a method" in {
     Post(ApiUtil.Methods.withLeadingVersion, testMethodWithSnapshotComment1.copy(snapshotId = None)) ~>
-      methodsService.postRoute ~> check {
+      routes ~> check {
       assert(status == Created)
       assert(responseAs[AgoraEntity].snapshotComment == snapshotComment1)
       assert(responseAs[AgoraEntity].snapshotId.contains(1))
@@ -307,7 +311,7 @@ class AgoraMethodsSpec extends ApiServiceSpec2 with FlatSpecLike {
 
   "Agora" should "apply a new snapshot comment when creating a new method snapshot" in {
     Post(ApiUtil.Methods.withLeadingVersion, testMethodWithSnapshotComment1.copy(snapshotId = None, snapshotComment = snapshotComment2)) ~>
-      methodsService.postRoute ~> check {
+      routes ~> check {
       assert(status == Created)
       assert(responseAs[AgoraEntity].snapshotComment == snapshotComment2)
       assert(responseAs[AgoraEntity].snapshotId.contains(2))
@@ -316,7 +320,7 @@ class AgoraMethodsSpec extends ApiServiceSpec2 with FlatSpecLike {
 
   "Agora" should "record no snapshot comment for a new method snapshot if none is provided" in {
     Post(ApiUtil.Methods.withLeadingVersion, testMethodWithSnapshotComment1.copy(snapshotId = None, snapshotComment = None)) ~>
-      methodsService.postRoute ~> check {
+      routes ~> check {
       assert(status == Created)
       assert(responseAs[AgoraEntity].snapshotComment.isEmpty)
       assert(responseAs[AgoraEntity].snapshotId.contains(3))

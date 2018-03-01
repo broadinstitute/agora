@@ -72,7 +72,7 @@ class ApiServiceActor(permissionsDataSource: PermissionsDataSource, healthMonito
   def withResourceFileContents(path: String)(innerRoute: String => Route): Route =
     innerRoute( FileUtils.readAllTextFromResource(path) )
 
-  def possibleRoutes =  options{ complete(OK) } ~ ga4ghService.routes
+  def possibleRoutes =  options{ complete(OK) }// ~ ga4ghService.routes
 
   def receive = runRoute(possibleRoutes)
 

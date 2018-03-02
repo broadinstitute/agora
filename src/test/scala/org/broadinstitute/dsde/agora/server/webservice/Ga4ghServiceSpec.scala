@@ -1,6 +1,5 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
-import akka.actor.ActorSystem
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraPermissions}
 import org.broadinstitute.dsde.agora.server.ga4gh.Models._
@@ -18,10 +17,6 @@ import akka.http.scaladsl.server.directives.ExecutionDirectives
 
 @DoNotDiscover
 class Ga4ghServiceSpec extends FreeSpecLike with ScalatestRouteTest with BeforeAndAfterAll with AgoraTestFixture with ExecutionDirectives {
-
-  trait ActorRefFactoryContext {
-    def actorRefFactory: ActorSystem = system
-  }
 
   private val ga4ghService = new Ga4ghService(permsDataSource)
 

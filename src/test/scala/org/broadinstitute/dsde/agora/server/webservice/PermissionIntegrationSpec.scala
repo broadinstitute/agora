@@ -1,259 +1,254 @@
-//package org.broadinstitute.dsde.agora.server.webservice
-//
-//import akka.actor.ActorSystem
-//import org.broadinstitute.dsde.agora.server.AgoraTestFixture
-//import org.broadinstitute.dsde.agora.server.AgoraTestData._
-//import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraPermissions, EntityAccessControl}
-//import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
-//import org.broadinstitute.dsde.agora.server.model.AgoraEntity
-//import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
-//import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpec}
-//import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
-//import spray.testkit.{RouteTest, ScalatestRouteTest}
-//import spray.http.StatusCodes._
-//import spray.httpx.SprayJsonSupport._
-//import spray.json.{DefaultJsonProtocol, JsArray, JsObject, JsValue, RootJsonFormat}
-//
-//import scala.concurrent.duration._
-//
-//@DoNotDiscover
-//class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRouteTest with BeforeAndAfterAll with AgoraTestFixture {
-//
-//  implicit val routeTestTimeout = RouteTestTimeout(20.seconds)
-//
-//  trait ActorRefFactoryContext {
-//    def actorRefFactory: ActorSystem = system
-//  }
-//
-//  val methodsService = new MethodsService(permsDataSource) with ActorRefFactoryContext
-//
-//  var agoraEntity1: AgoraEntity = _
-//  var agoraEntity2: AgoraEntity = _
-//  var agoraEntity3: AgoraEntity = _
-//  var redactedEntity: AgoraEntity = _
-//
-//  override def beforeAll(): Unit = {
-//    ensureDatabasesAreRunning()
-//    agoraEntity1 = patiently(agoraBusiness.insert(testIntegrationEntity, mockAuthenticatedOwner.get))
-//    agoraEntity2 = patiently(agoraBusiness.insert(testIntegrationEntity2, owner2.get))
-//    agoraEntity3 = patiently(agoraBusiness.insert(testIntegrationEntity3, mockAuthenticatedOwner.get))
-//    redactedEntity = patiently(agoraBusiness.insert(testEntityToBeRedacted2, mockAuthenticatedOwner.get))
-//    patiently(agoraBusiness.delete(redactedEntity, Seq(redactedEntity.entityType.get), mockAuthenticatedOwner.get))
-//  }
-//
-//  override def afterAll(): Unit = {
-//    clearDatabases()
-//  }
-//
-//  "Agora" should "return namespace permissions. list for authorized users" in {
-//
-//    Get(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + "permissions") ~>
-//      methodsService.namespacePermissionsRoute ~>
-//      check {
-//        assert(status == OK)
-//        assert(body.asString contains "Manage")
-//    }
-//  }
-//
-//  "Agora" should "not return namespace permissions. list for unauthorized users" in {
-//
-//    Get(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity2.namespace.get + "/" + "permissions") ~>
-//      methodsService.namespacePermissionsRoute ~>
-//      check {
-//        assert(status == Forbidden)
-//      }
-//    }
-//
-//  "Agora" should "allow authorized users to insert multiple roles in a single namespace permissions." in {
-//
-//    Post(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + "permissions" +
-//      s"?user=$owner2&roles=Read,Create,Manage") ~>
-//      methodsService.namespacePermissionsRoute ~>
-//      check {
-//        assert(status == OK)
-//        assert(body.asString contains "Create")
-//      }
-//  }
-//
-//  "Agora" should "not allow authorized users to POST over their own namespace permissions." in {
-//
-//    Post(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + "permissions" +
-//      s"?user=${mockAuthenticatedOwner.get}&roles=Read") ~>
-//      methodsService.namespacePermissionsRoute ~>
-//      check {
-//        assert(status == BadRequest)
-//      }
-//  }
-//
-//
-//
-//  "Agora" should "not allow unauthorized users to insert a namespace permissions." in {
-//
-//    Post(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity2.namespace.get + "/" + "permissions" +
-//      s"?user=$owner2&roles=All") ~>
-//      methodsService.namespacePermissionsRoute ~>
-//      check {
-//        assert(status == Forbidden)
-//      }
-//  }
-//
-//  "Agora" should "only allow authorized users to overwrite existing permissions." in {
-//
-//    Put(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + "permissions" +
-//      s"?user=$owner2&roles=Read") ~>
-//      methodsService.namespacePermissionsRoute ~>
-//      check {
-//        assert(status == OK)
-//        assert(body.asString contains "Read")
-//      }
-//  }
-//
-//  "Agora" should "not allow authorized users to overwrite their own namespace permissions." in {
-//
-//    Put(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + "permissions" +
-//      s"?user=${mockAuthenticatedOwner.get}&roles=Read") ~>
-//      methodsService.namespacePermissionsRoute ~>
-//      check {
-//        assert(status == BadRequest)
-//      }
-//  }
-//
-//  "Agora" should "allow authorized users to delete an existing namespace permissions." in {
-//
-//    Delete(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + "permissions" +
-//      s"?user=$owner2&roles=Read") ~>
-//      methodsService.namespacePermissionsRoute ~>
-//      check {
-//        assert(status == OK)
-//        assert(body.asString contains "[]")
-//      }
-//  }
-//
-//  "Agora" should "not allow authorized users to delete their own namespace permissions." in {
-//
-//    Delete(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + "permissions" +
-//      s"?user=${mockAuthenticatedOwner.get}&roles=Read") ~>
-//      methodsService.namespacePermissionsRoute ~>
-//      check {
-//        assert(status == BadRequest)
-//      }
-//  }
-//
-//  "Agora" should "not allow unauthorized users to delete an existing namespace permissions." in {
-//
-//    Delete(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity2.namespace.get + "/" + "permissions" +
-//      s"?user=$owner2&roles=All") ~>
-//      methodsService.namespacePermissionsRoute ~>
-//      check {
-//        assert(status == Forbidden)
-//      }
-//  }
-//
-//
-//  "Agora" should "return entity permissions. list for authorized users" in {
-//
-//    Get(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
-//        "/" + agoraEntity1.snapshotId.get + "/" + "permissions") ~>
-//      methodsService.entityPermissionsRoute ~>
-//      check {
-//        assert(status == OK)
-//        assert(body.asString contains "Manage")
-//      }
-//  }
-//
-//  "Agora" should "not return entity permissions. list for unauthorized users" in {
-//
-//    Get(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity2.namespace.get + "/" + agoraEntity2.name.get +
-//      "/" + agoraEntity2.snapshotId.get + "/" + "permissions") ~>
-//      methodsService.entityPermissionsRoute ~>
-//      check {
-//        assert(status == Forbidden)
-//      }
-//  }
-//
-//  "Agora" should "allow authorized users to insert a entity permissions." in {
-//
-//    Post(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
-//      "/" + agoraEntity1.snapshotId.get + "/" + "permissions" + s"?user=$owner2&roles=All") ~>
-//      methodsService.entityPermissionsRoute ~>
-//      check {
-//        assert(status == OK)
-//        assert(body.asString contains "Manage")
-//      }
-//  }
-//
-//  "Agora" should "not allow authorized users to POST over their own entity permissions." in {
-//
-//    Post(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
-//      "/" + agoraEntity1.snapshotId.get + "/" + "permissions" + s"?user=${mockAuthenticatedOwner.get}&roles=Read") ~>
-//      methodsService.entityPermissionsRoute ~>
-//      check {
-//        assert(status == BadRequest)
-//      }
-//  }
-//
-//  "Agora" should "not allow unauthorized users to insert a entity permissions." in {
-//
-//    Post(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity2.namespace.get + "/" + agoraEntity2.name.get +
-//      "/" + agoraEntity2.snapshotId.get + "/" + "permissions" + s"?user=$agoraTestOwner&roles=All") ~>
-//      methodsService.entityPermissionsRoute ~>
-//      check {
-//        assert(status == Forbidden)
-//      }
-//  }
-//
-//  "Agora" should "allow authorized users to edit an existing entity permissions." in {
-//
-//    Put(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
-//      "/" + agoraEntity1.snapshotId.get + "/" + "permissions" + s"?user=$owner2&roles=Read") ~>
-//      methodsService.entityPermissionsRoute ~>
-//      check {
-//        assert(status == OK)
-//        assert(body.asString contains "Read")
-//      }
-//  }
-//
-//  "Agora" should "not allow authorized users to edit their own entity permissions." in {
-//
-//    Put(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
-//      "/" + agoraEntity1.snapshotId.get + "/" + "permissions" + s"?user=${mockAuthenticatedOwner.get}&roles=Read") ~>
-//      methodsService.entityPermissionsRoute ~>
-//      check {
-//        assert(status == BadRequest)
-//      }
-//  }
-//
-//  "Agora" should "allow authorized users to delete an existing entity permissions." in {
-//
-//    Delete(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
-//      "/" + agoraEntity1.snapshotId.get + "/" + "permissions" + s"?user=$owner2&roles=All") ~>
-//      methodsService.entityPermissionsRoute ~>
-//      check {
-//        assert(status == OK)
-//        assert(body.asString contains "[]")
-//      }
-//  }
-//
-//  "Agora" should "not allow authorized users to delete their own entity permissions." in {
-//
-//    Delete(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
-//      "/" + agoraEntity1.snapshotId.get + "/" + "permissions" + s"?user=${mockAuthenticatedOwner.get}&roles=All") ~>
-//      methodsService.entityPermissionsRoute ~>
-//      check {
-//        assert(status == BadRequest)
-//      }
-//  }
-//
-//  "Agora" should "not allow unauthorized users to delete an existing entity permissions." in {
-//
-//    Delete(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity2.namespace.get + "/" + agoraEntity2.name.get +
-//      "/" + agoraEntity2.snapshotId.get + "/" + "permissions" + s"?user=$owner2&roles=All") ~>
-//      methodsService.entityPermissionsRoute ~>
-//      check {
-//        assert(status == Forbidden)
-//      }
-//  }
-//
+package org.broadinstitute.dsde.agora.server.webservice
+
+import akka.http.scaladsl.server.directives.ExecutionDirectives
+import akka.http.scaladsl.testkit.{RouteTest, RouteTestTimeout, ScalatestRouteTest}
+import org.broadinstitute.dsde.agora.server.AgoraTestFixture
+import org.broadinstitute.dsde.agora.server.AgoraTestData._
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraPermissions, EntityAccessControl}
+import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
+import org.broadinstitute.dsde.agora.server.model.AgoraEntity
+import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
+import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpec}
+import org.broadinstitute.dsde.agora.server.webservice.permissions.{EntityPermissionsService, NamespacePermissionsService}
+import spray.json.{DefaultJsonProtocol, JsArray, JsObject, JsValue, RootJsonFormat}
+import akka.http.scaladsl.model.StatusCodes._
+import akka.http.scaladsl.server.Directives._
+
+@DoNotDiscover
+class PermissionIntegrationSpec extends FlatSpec with ScalatestRouteTest with BeforeAndAfterAll with AgoraTestFixture with ExecutionDirectives {
+
+  val namespacePermissionsService = new NamespacePermissionsService(permsDataSource)
+  val entityPermissionsService = new EntityPermissionsService(permsDataSource)
+  
+  val routes = handleExceptions(ApiService.exceptionHandler) {
+    namespacePermissionsService.routes ~ entityPermissionsService.routes
+  }
+
+  var agoraEntity1: AgoraEntity = _
+  var agoraEntity2: AgoraEntity = _
+  var agoraEntity3: AgoraEntity = _
+  var redactedEntity: AgoraEntity = _
+
+  override def beforeAll(): Unit = {
+    ensureDatabasesAreRunning()
+    agoraEntity1 = patiently(agoraBusiness.insert(testIntegrationEntity, mockAuthenticatedOwner.get))
+    agoraEntity2 = patiently(agoraBusiness.insert(testIntegrationEntity2, owner2.get))
+    agoraEntity3 = patiently(agoraBusiness.insert(testIntegrationEntity3, mockAuthenticatedOwner.get))
+    redactedEntity = patiently(agoraBusiness.insert(testEntityToBeRedacted2, mockAuthenticatedOwner.get))
+    patiently(agoraBusiness.delete(redactedEntity, Seq(redactedEntity.entityType.get), mockAuthenticatedOwner.get))
+  }
+
+  override def afterAll(): Unit = {
+    clearDatabases()
+  }
+
+  "Agora" should "return namespace permissions. list for authorized users" in {
+
+    Get(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + "permissions") ~>
+      routes ~>
+      check {
+        assert(status == OK)
+        assert(responseAs[String] contains "Manage")
+    }
+  }
+
+  "Agora" should "not return namespace permissions. list for unauthorized users" in {
+
+    Get(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity2.namespace.get + "/" + "permissions") ~>
+      routes ~>
+      check {
+        assert(status == Forbidden)
+      }
+    }
+
+  "Agora" should "allow authorized users to insert multiple roles in a single namespace permissions." in {
+
+    Post(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + "permissions" +
+      s"?user=$owner2&roles=Read,Create,Manage") ~>
+      routes ~>
+      check {
+        assert(status == OK)
+        assert(responseAs[String] contains "Create")
+      }
+  }
+
+  "Agora" should "not allow authorized users to POST over their own namespace permissions." in {
+
+    Post(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + "permissions" +
+      s"?user=${mockAuthenticatedOwner.get}&roles=Read") ~>
+      routes ~>
+      check {
+        assert(status == BadRequest)
+      }
+  }
+
+  "Agora" should "not allow unauthorized users to insert a namespace permissions." in {
+
+    Post(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity2.namespace.get + "/" + "permissions" +
+      s"?user=$owner2&roles=All") ~>
+      routes ~>
+      check {
+        assert(status == Forbidden)
+      }
+  }
+
+  "Agora" should "only allow authorized users to overwrite existing permissions." in {
+
+    Put(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + "permissions" +
+      s"?user=$owner2&roles=Read") ~>
+      routes ~>
+      check {
+        assert(status == OK)
+        assert(responseAs[String] contains "Read")
+      }
+  }
+
+  "Agora" should "not allow authorized users to overwrite their own namespace permissions." in {
+
+    Put(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + "permissions" +
+      s"?user=${mockAuthenticatedOwner.get}&roles=Read") ~>
+      routes ~>
+      check {
+        assert(status == BadRequest)
+      }
+  }
+
+  "Agora" should "allow authorized users to delete an existing namespace permissions." in {
+
+    Delete(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + "permissions" +
+      s"?user=$owner2&roles=Read") ~>
+      routes ~>
+      check {
+        assert(status == OK)
+        assert(responseAs[String] contains "[]")
+      }
+  }
+
+  "Agora" should "not allow authorized users to delete their own namespace permissions." in {
+
+    Delete(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + "permissions" +
+      s"?user=${mockAuthenticatedOwner.get}&roles=Read") ~>
+      routes ~>
+      check {
+        assert(status == BadRequest)
+      }
+  }
+
+  "Agora" should "not allow unauthorized users to delete an existing namespace permissions." in {
+
+    Delete(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity2.namespace.get + "/" + "permissions" +
+      s"?user=$owner2&roles=All") ~>
+      routes ~>
+      check {
+        assert(status == Forbidden)
+      }
+  }
+
+
+  "Agora" should "return entity permissions. list for authorized users" in {
+
+    Get(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
+        "/" + agoraEntity1.snapshotId.get + "/" + "permissions") ~>
+      routes ~>
+      check {
+        assert(status == OK)
+        assert(responseAs[String] contains "Manage")
+      }
+  }
+
+  "Agora" should "not return entity permissions. list for unauthorized users" in {
+
+    Get(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity2.namespace.get + "/" + agoraEntity2.name.get +
+      "/" + agoraEntity2.snapshotId.get + "/" + "permissions") ~>
+      routes ~>
+      check {
+        assert(status == Forbidden)
+      }
+  }
+
+  "Agora" should "allow authorized users to insert a entity permissions." in {
+
+    Post(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
+      "/" + agoraEntity1.snapshotId.get + "/" + "permissions" + s"?user=$owner2&roles=All") ~>
+      routes ~>
+      check {
+        assert(status == OK)
+        assert(responseAs[String] contains "Manage")
+      }
+  }
+
+  "Agora" should "not allow authorized users to POST over their own entity permissions." in {
+
+    Post(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
+      "/" + agoraEntity1.snapshotId.get + "/" + "permissions" + s"?user=${mockAuthenticatedOwner.get}&roles=Read") ~>
+      routes ~>
+      check {
+        assert(status == BadRequest)
+      }
+  }
+
+  "Agora" should "not allow unauthorized users to insert a entity permissions." in {
+
+    Post(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity2.namespace.get + "/" + agoraEntity2.name.get +
+      "/" + agoraEntity2.snapshotId.get + "/" + "permissions" + s"?user=$agoraTestOwner&roles=All") ~>
+      routes ~>
+      check {
+        assert(status == Forbidden)
+      }
+  }
+
+  "Agora" should "allow authorized users to edit an existing entity permissions." in {
+
+    Put(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
+      "/" + agoraEntity1.snapshotId.get + "/" + "permissions" + s"?user=$owner2&roles=Read") ~>
+      routes ~>
+      check {
+        assert(status == OK)
+        assert(responseAs[String] contains "Read")
+      }
+  }
+
+  "Agora" should "not allow authorized users to edit their own entity permissions." in {
+
+    Put(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
+      "/" + agoraEntity1.snapshotId.get + "/" + "permissions" + s"?user=${mockAuthenticatedOwner.get}&roles=Read") ~>
+      routes ~>
+      check {
+        assert(status == BadRequest)
+      }
+  }
+
+  "Agora" should "allow authorized users to delete an existing entity permissions." in {
+
+    Delete(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
+      "/" + agoraEntity1.snapshotId.get + "/" + "permissions" + s"?user=$owner2&roles=All") ~>
+      routes ~>
+      check {
+        assert(status == OK)
+        assert(responseAs[String] contains "[]")
+      }
+  }
+
+  "Agora" should "not allow authorized users to delete their own entity permissions." in {
+
+    Delete(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
+      "/" + agoraEntity1.snapshotId.get + "/" + "permissions" + s"?user=${mockAuthenticatedOwner.get}&roles=All") ~>
+      routes ~>
+      check {
+        assert(status == BadRequest)
+      }
+  }
+
+  "Agora" should "not allow unauthorized users to delete an existing entity permissions." in {
+
+    Delete(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity2.namespace.get + "/" + agoraEntity2.name.get +
+      "/" + agoraEntity2.snapshotId.get + "/" + "permissions" + s"?user=$owner2&roles=All") ~>
+      routes ~>
+      check {
+        assert(status == Forbidden)
+      }
+  }
+
 //  "Agora" should "successfully list permissions for multiple methods simultaneously" in {
 //
 //    val payload:Seq[AgoraEntity] = Seq(
@@ -524,36 +519,36 @@
 //      assert(entity.public.contains(false))
 //    }
 //  }
-//
-//  private def getUserPermissions(entity: AgoraEntity, userToCheck: String)(requester: String): Option[AgoraPermissions] = {
-//    val allAcls = patiently(permissionBusiness.listEntityPermissions(entity, requester) recover {
-//      case e:Exception => Seq.empty[AccessControl] })
-//    allAcls.find(_.user == userToCheck).map(_.roles)
-//  }
-//
-//  private def getResponseMessage(resp: Seq[EntityAccessControl], criteria:EntityAccessControl): Option[String] = {
-//    // val foundEntity = resp.find(x => x.entity.toShortString == criteria.entity.toShortString && x.acls == criteria.acls)
-//    val foundEntity = resp.find(x =>
-//      x.entity.toShortString == criteria.entity.toShortString &&
-//      x.acls.head.user == criteria.acls.head.user)
-//    val returnMessage = foundEntity.flatMap(_.message)
-//    returnMessage
-//  }
-//
-//}
-//
-//object AgoraApiJsonSupportWithManagerAndPublicRead extends DefaultJsonProtocol {
-//
-//  implicit object AgoraEntityFormatWithManagerAndPublicRead extends RootJsonFormat[AgoraEntity] {
-//    override def write(entity: AgoraEntity) = AgoraEntityFormat.write(entity)
-//
-//    override def read(json: JsValue): AgoraEntity = {
-//      val entityWithoutManagers = AgoraEntityFormat.read(json)
-//      val jsObject = json.asJsObject
-//      val managers = if (jsObject.getFields("managers").nonEmpty) jsObject.fields("managers").convertTo[Seq[String]] else Seq.empty[String]
-//      val isPublic = if (jsObject.getFields("public").nonEmpty) jsObject.fields("public").convertTo[Option[Boolean]] else None
-//      entityWithoutManagers.addManagers(managers).copy(public=isPublic)
-//    }
-//  }
-//
-//}
+
+  private def getUserPermissions(entity: AgoraEntity, userToCheck: String)(requester: String): Option[AgoraPermissions] = {
+    val allAcls = patiently(permissionBusiness.listEntityPermissions(entity, requester) recover {
+      case e:Exception => Seq.empty[AccessControl] })
+    allAcls.find(_.user == userToCheck).map(_.roles)
+  }
+
+  private def getResponseMessage(resp: Seq[EntityAccessControl], criteria:EntityAccessControl): Option[String] = {
+    // val foundEntity = resp.find(x => x.entity.toShortString == criteria.entity.toShortString && x.acls == criteria.acls)
+    val foundEntity = resp.find(x =>
+      x.entity.toShortString == criteria.entity.toShortString &&
+      x.acls.head.user == criteria.acls.head.user)
+    val returnMessage = foundEntity.flatMap(_.message)
+    returnMessage
+  }
+
+}
+
+object AgoraApiJsonSupportWithManagerAndPublicRead extends DefaultJsonProtocol {
+
+  implicit object AgoraEntityFormatWithManagerAndPublicRead extends RootJsonFormat[AgoraEntity] {
+    override def write(entity: AgoraEntity) = AgoraEntityFormat.write(entity)
+
+    override def read(json: JsValue): AgoraEntity = {
+      val entityWithoutManagers = AgoraEntityFormat.read(json)
+      val jsObject = json.asJsObject
+      val managers = if (jsObject.getFields("managers").nonEmpty) jsObject.fields("managers").convertTo[Seq[String]] else Seq.empty[String]
+      val isPublic = if (jsObject.getFields("public").nonEmpty) jsObject.fields("public").convertTo[Option[Boolean]] else None
+      entityWithoutManagers.addManagers(managers).copy(public=isPublic)
+    }
+  }
+
+}

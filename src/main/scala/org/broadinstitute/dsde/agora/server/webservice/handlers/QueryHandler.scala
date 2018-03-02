@@ -19,60 +19,58 @@ import scala.concurrent.{ExecutionContext, Future}
  * It then handles the returns from the business layer and completes the request. It is responsible for querying the
  * methods repository for methods and method configurations.
  */
-class QueryHandler(dataSource: PermissionsDataSource)(implicit ec: ExecutionContext) extends Actor {
-  implicit val system = context.system
-
+class QueryHandler(dataSource: PermissionsDataSource)(implicit ec: ExecutionContext) {
   val agoraBusiness = new AgoraBusiness(dataSource)(ec)
   val permissionBusiness = new PermissionBusiness(dataSource)(ec)
 
-  def receive = {
-    case QuerySingle(requestContext: RequestContext,
-                     entity: AgoraEntity,
-                     entityTypes: Seq[AgoraEntityType.EntityType],
-                     username: String,
-                     onlyPayload: Boolean,
-                     payloadAsObject: Boolean) =>
-      query(requestContext, entity, entityTypes, username, onlyPayload, payloadAsObject) pipeTo context.parent
-
+//  def receive = {
+//    case QuerySingle(requestContext: RequestContext,
+//                     entity: AgoraEntity,
+//                     entityTypes: Seq[AgoraEntityType.EntityType],
+//                     username: String,
+//                     onlyPayload: Boolean,
+//                     payloadAsObject: Boolean) =>
+//      query(requestContext, entity, entityTypes, username, onlyPayload, payloadAsObject) pipeTo context.parent
+//
 //    case Query(requestContext: RequestContext,
 //               agoraSearch: AgoraEntity,
 //               agoraProjection: Option[AgoraEntityProjection],
 //               entityTypes: Seq[AgoraEntityType.EntityType],
 //               username: String) =>
 //      query(requestContext, agoraSearch, agoraProjection, entityTypes, username) pipeTo context.parent
-
-    case QueryDefinitions(requestContext: RequestContext,
-                          username: String) =>
-      queryDefinitions(requestContext, username) pipeTo context.parent
-
-    case QueryAssociatedConfigurations(requestContext: RequestContext,
-                                       namespace: String,
-                                       name: String,
-                                       username: String) =>
-      queryAssociatedConfigurations(requestContext, namespace, name, username) pipeTo context.parent
-
-    case QueryCompatibleConfigurations(requestContext: RequestContext,
-                                       namespace: String,
-                                       name: String,
-                                       snapshotId: Int,
-                                       username: String) =>
-      queryCompatibleConfigurations(requestContext, namespace, name, snapshotId, username) pipeTo context.parent
-
-
-    case Delete(requestContext: RequestContext,
-                entity: AgoraEntity,
-                entityTypes: Seq[AgoraEntityType.EntityType],
-                username: String) =>
-      delete(requestContext, entity, entityTypes, username) pipeTo context.parent
-
-    case Copy(requestContext: RequestContext,
-              oldEntity: AgoraEntity,
-              newEntity: AgoraEntity,
-              redact: Boolean,
-              entityTypes: Seq[AgoraEntityType.EntityType],
-              username: String) =>
-      copy(requestContext, oldEntity, newEntity, redact, entityTypes, username) pipeTo context.parent
-  }
+//
+//    case QueryDefinitions(requestContext: RequestContext,
+//                          username: String) =>
+//      queryDefinitions(requestContext, username) pipeTo context.parent
+//
+//    case QueryAssociatedConfigurations(requestContext: RequestContext,
+//                                       namespace: String,
+//                                       name: String,
+//                                       username: String) =>
+//      queryAssociatedConfigurations(requestContext, namespace, name, username) pipeTo context.parent
+//
+//    case QueryCompatibleConfigurations(requestContext: RequestContext,
+//                                       namespace: String,
+//                                       name: String,
+//                                       snapshotId: Int,
+//                                       username: String) =>
+//      queryCompatibleConfigurations(requestContext, namespace, name, snapshotId, username) pipeTo context.parent
+//
+//
+//    case Delete(requestContext: RequestContext,
+//                entity: AgoraEntity,
+//                entityTypes: Seq[AgoraEntityType.EntityType],
+//                username: String) =>
+//      delete(requestContext, entity, entityTypes, username) pipeTo context.parent
+//
+//    case Copy(requestContext: RequestContext,
+//              oldEntity: AgoraEntity,
+//              newEntity: AgoraEntity,
+//              redact: Boolean,
+//              entityTypes: Seq[AgoraEntityType.EntityType],
+//              username: String) =>
+//      copy(requestContext, oldEntity, newEntity, redact, entityTypes, username) pipeTo context.parent
+//  }
 
   def query(requestContext: RequestContext,
             entity: AgoraEntity,

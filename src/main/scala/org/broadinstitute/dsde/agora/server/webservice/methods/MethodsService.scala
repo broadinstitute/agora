@@ -16,7 +16,7 @@ class MethodsService(permissionsDataSource: PermissionsDataSource) extends Agora
 
 //  override def querySingleRoute = super.querySingleRoute
 //
-//  override def queryRoute = super.queryRoute
+  override def queryRoute = super.queryRoute
 
   override def postRoute = super.postRoute
 }

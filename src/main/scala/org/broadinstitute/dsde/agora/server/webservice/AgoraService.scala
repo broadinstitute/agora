@@ -4,8 +4,10 @@ package org.broadinstitute.dsde.agora.server.webservice
 import akka.actor.Props
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server.PathMatcher
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.AgoraConfig.authenticationDirectives
+import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, EntityAccessControl, PermissionsDataSource, entities}
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
@@ -22,13 +24,16 @@ import scala.util.{Failure, Success}
 abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extends RouteHelpers {
   implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
 
+  private val agoraBusiness = new AgoraBusiness(permissionsDataSource)
+
   def path: String
 
 //  def routes = namespacePermissionsRoute ~ multiEntityPermissionsRoute ~ entityPermissionsRoute ~
 //    queryAssociatedConfigurationsRoute ~ queryCompatibleConfigurationsRoute ~ querySingleRoute ~
 //    queryMethodDefinitionsRoute ~ queryRoute ~ postRoute
 
-  def routes = queryRoute ~ postRoute
+  def routes = queryMethodDefinitionsRoute ~ queryAssociatedConfigurationsRoute ~
+    queryCompatibleConfigurationsRoute ~ queryRoute ~ postRoute
 
   def queryHandlerProps = Props(classOf[QueryHandler], permissionsDataSource, ec)
 
@@ -135,28 +140,43 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
 //        }
 //      }
 //    }
-//
-//  def queryMethodDefinitionsRoute =
-//    (versionedPath(PathMatcher("methods" / "definitions")) & get &
-//      authenticationDirectives.usernameFromRequest()) { (username) =>
-//        requestContext => definitionsWithPerRequest(requestContext, username, queryHandlerProps)
-//      }
-//
-//  // all configurations that reference any snapshot of the supplied method
-//  def queryAssociatedConfigurationsRoute =
-//    (versionedPath(PathMatcher("methods" / Segment / Segment / "configurations")) & get &
-//      authenticationDirectives.usernameFromRequest()) { (namespace, name, username) =>
-//      requestContext => associatedConfigurationsWithPerRequest(requestContext, namespace, name, username, queryHandlerProps)
-//    }
-//
-//  // all configurations that have the same inputs and outputs of the supplied method snapshot,
-//  // as well as referencing any snapshot of the supplied method
-//  def queryCompatibleConfigurationsRoute =
-//    (versionedPath(PathMatcher("methods" / Segment / Segment / IntNumber / "configurations")) & get &
-//      authenticationDirectives.usernameFromRequest()) { (namespace, name, snapshotId, username) =>
-//      requestContext => compatibleConfigurationsWithPerRequest(requestContext, namespace, name, snapshotId, username, queryHandlerProps)
-//    }
-//
+
+  def queryMethodDefinitionsRoute =
+    (versionedPath(PathMatcher("methods" / "definitions")) & get &
+      authenticationDirectives.usernameFromRequest()) { (username) =>
+        val listingAttempt = agoraBusiness.listDefinitions(username)
+
+        onComplete(listingAttempt) {
+          case Success(definitions) => complete(definitions)
+          case Failure(error) => failWith(error)
+        }
+    }
+
+  // all configurations that reference any snapshot of the supplied method
+  def queryAssociatedConfigurationsRoute =
+    (versionedPath(PathMatcher("methods" / Segment / Segment / "configurations")) & get &
+      authenticationDirectives.usernameFromRequest()) { (namespace, name, username) =>
+        val listingAttempt = agoraBusiness.listAssociatedConfigurations(namespace, name, username)
+
+        onComplete(listingAttempt) {
+          case Success(configs) => complete(configs)
+          case Failure(error) => failWith(error)
+        }
+    }
+
+  // all configurations that have the same inputs and outputs of the supplied method snapshot,
+  // as well as referencing any snapshot of the supplied method
+  def queryCompatibleConfigurationsRoute =
+    (versionedPath(PathMatcher("methods" / Segment / Segment / IntNumber / "configurations")) & get &
+      authenticationDirectives.usernameFromRequest()) { (namespace, name, snapshotId, username) =>
+        val listingAttempt = agoraBusiness.listCompatibleConfigurations(namespace, name, snapshotId, username)
+
+        onComplete(listingAttempt) {
+          case Success(configs) => complete(configs)
+          case Failure(error) => failWith(error)
+        }
+    }
+
   // GET http://root.com/methods?
   // GET http://root.com/configurations?
   def queryRoute =
@@ -167,8 +187,7 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
           val projection = projectionFromParams(params)
           val entityTypes = AgoraEntityType.byPath(path)
 
-          val queryHandler = new QueryHandler(permissionsDataSource)
-          val queryAttempt = queryHandler.agoraBusiness.find(entity, projection, entityTypes, username)
+          val queryAttempt = agoraBusiness.find(entity, projection, entityTypes, username)
 
           onComplete(queryAttempt) {
             case Success(entities) => complete(entities)

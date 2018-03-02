@@ -89,11 +89,11 @@ object ServiceMessages {
                     entityTypes: Seq[AgoraEntityType.EntityType],
                     username: String)
 
-  case class Query(requestContext: RequestContext,
-                   agoraSearch: AgoraEntity,
-                   agoraProjection: Option[AgoraEntityProjection],
-                   entityTypes: Seq[AgoraEntityType.EntityType],
-                   username: String)
+//  case class Query(requestContext: RequestContext,
+//                   agoraSearch: AgoraEntity,
+//                   agoraProjection: Option[AgoraEntityProjection],
+//                   entityTypes: Seq[AgoraEntityType.EntityType],
+//                   username: String)
 
   case class QueryDefinitions(requestContext: RequestContext,
                    username: String)

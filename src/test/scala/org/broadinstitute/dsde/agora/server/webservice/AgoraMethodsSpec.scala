@@ -67,44 +67,32 @@ class AgoraMethodsSpec extends ApiServiceSpec2 with FlatSpecLike {
 //    }
 //  }
 //
-//  "Agora" should "return methods matching query by namespace and name" in {
-//    Get(ApiUtil.Methods.withLeadingVersion + "?namespace=" + namespace1.get + "&name=" + name2.get) ~>
-//      methodsService.queryRoute ~> check {
-//      handleError(
-//        entity.as[Seq[AgoraEntity]],
-//        (entities: Seq[AgoraEntity]) =>
-//          assert(entities.toSet == brief(Seq(testEntity3WithId, testEntity4WithId, testEntity5WithId, testEntity6WithId, testEntity7WithId)).toSet)
-//      )
-//      assert(status == OK)
-//    }
-//  }
-//
-//  "Agora" should "return methods matching query by synopsis and documentation" in {
-//    Get(ApiUtil.Methods.withLeadingVersion + "?synopsis=" + uriEncode(synopsis1.get) + "&documentation=" +
-//      uriEncode(documentation1.get)) ~>
-//      methodsService.queryRoute ~>
-//      check {
-//        handleError(
-//          entity.as[Seq[AgoraEntity]],
-//          (entities: Seq[AgoraEntity]) =>
-//            assert(entities.toSet == brief(Seq(testEntity1WithId, testEntity2WithId, testEntity3WithId, testEntity6WithId, testEntity7WithId)).toSet)
-//        )
-//        assert(status == OK)
-//      }
-//  }
-//
-//
-//  "Agora" should "return methods matching query by owner and payload" in {
-//    Get(ApiUtil.Methods.withLeadingVersion + "?owner=" + owner1.get + "&payload=" + uriEncode(payload1.get)) ~>
-//      methodsService.queryRoute ~>
-//      check {
-//        handleError(
-//          entity.as[Seq[AgoraEntity]],
-//          (entities: Seq[AgoraEntity]) =>
-//            assert(entities.toSet == brief(Seq(testEntity1WithId, testEntity3WithId, testEntity4WithId, testEntity5WithId)).toSet)
-//        )
-//      }
-//  }
+  "Agora" should "return methods matching query by namespace and name" in {
+    Get(ApiUtil.Methods.withLeadingVersion + "?namespace=" + namespace1.get + "&name=" + name2.get) ~>
+      methodsService.queryRoute ~> check {
+        val entities = responseAs[Seq[AgoraEntity]]
+        assert(entities.toSet == brief(Seq(testEntity3WithId, testEntity4WithId, testEntity5WithId, testEntity6WithId, testEntity7WithId)).toSet)
+        assert(status == OK)
+      }
+  }
+
+  "Agora" should "return methods matching query by synopsis and documentation" in {
+    Get(ApiUtil.Methods.withLeadingVersion + "?synopsis=" + uriEncode(synopsis1.get) + "&documentation=" +
+      uriEncode(documentation1.get)) ~>
+      methodsService.queryRoute ~> check {
+        val entities = responseAs[Seq[AgoraEntity]]
+        assert(entities.toSet == brief(Seq(testEntity1WithId, testEntity2WithId, testEntity3WithId, testEntity6WithId, testEntity7WithId)).toSet)
+        assert(status == OK)
+      }
+  }
+
+  "Agora" should "return methods matching query by owner and payload" in {
+    Get(ApiUtil.Methods.withLeadingVersion + "?owner=" + owner1.get + "&payload=" + uriEncode(payload1.get)) ~>
+      methodsService.queryRoute ~> check {
+      val entities = responseAs[Seq[AgoraEntity]]
+      assert(entities.toSet == brief(Seq(testEntity1WithId, testEntity3WithId, testEntity4WithId, testEntity5WithId)).toSet)
+    }
+  }
 
   "Agora" should "create a method and return with a status of 201" in {
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity) ~>

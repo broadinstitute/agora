@@ -22,7 +22,7 @@ import scala.util.Try
 //  with EntityPermissionsRouteHelper
 //  with NamespacePermissionsRouteHelper
 
-trait RouteHelpers extends AddRouteHelper
+trait RouteHelpers extends AddRouteHelper with QueryRouteHelper
 
 trait BaseRoute extends RouteUtil  {
   def getUserFromParams(params: Map[String, String]): String = {
@@ -167,41 +167,39 @@ trait BaseRoute extends RouteUtil  {
 //
 //}
 //
-//trait QueryRouteHelper extends BaseRoute {
-//
-//  def matchQueryRoute(_path: String) =
-//    get &
-//    versionedPath(_path) &
-//    authenticationDirectives.usernameFromRequest()
-//
-//  def entityFromParams(params: Map[String, List[String]]): AgoraEntity = AgoraEntity(
-//    namespace       = params.getOrElse("namespace", Nil).headOption,
-//    name            = params.getOrElse("name", Nil).headOption,
-//    snapshotId      = params.getOrElse("snapshotId", Nil).headOption.toIntOption,
-//    snapshotComment = params.getOrElse("snapshotComment", Nil).headOption,
-//    synopsis        = params.getOrElse("synopsis", Nil).headOption,
-//    documentation   = params.getOrElse("documentation", Nil).headOption,
-//    owner           = params.getOrElse("owner", Nil).headOption,
-//    payload         = params.getOrElse("payload", Nil).headOption,
-//    url             = params.getOrElse("url", Nil).headOption,
-//    entityType      = params.getOrElse("entityType", Nil).headOption.toAgoraEntityOption
-//  )
-//
-//  def validateEntityType(params: Map[String, List[String]], path: String): Directive0 = {
-//    val _type = params.getOrElse("entityType", Nil).headOption.toAgoraEntityOption
-//    validateEntityType(_type, path)
-//  }
-//
-//  def projectionFromParams(params: Map[String, List[String]]): Option[AgoraEntityProjection] = {
-//    val includeFields = params.getOrElse("includedField", Seq.empty[String])
-//    val excludeFields = params.getOrElse("excludedField", Seq.empty[String])
-//    val agoraProjection = AgoraEntityProjection(includeFields, excludeFields)
-//    agoraProjection.totalFields match {
-//      case 0 => None
-//      case _ => Some(agoraProjection)
-//    }
-//  }
-//
+trait QueryRouteHelper extends BaseRoute {
+
+  def matchQueryRoute(_path: String)(implicit ec: ExecutionContext) =
+    get & versionedPath(_path) & authenticationDirectives.usernameFromRequest()
+
+  def entityFromParams(params: Map[String, List[String]]): AgoraEntity = AgoraEntity(
+    namespace       = params.getOrElse("namespace", Nil).headOption,
+    name            = params.getOrElse("name", Nil).headOption,
+    snapshotId      = params.getOrElse("snapshotId", Nil).headOption.toIntOption,
+    snapshotComment = params.getOrElse("snapshotComment", Nil).headOption,
+    synopsis        = params.getOrElse("synopsis", Nil).headOption,
+    documentation   = params.getOrElse("documentation", Nil).headOption,
+    owner           = params.getOrElse("owner", Nil).headOption,
+    payload         = params.getOrElse("payload", Nil).headOption,
+    url             = params.getOrElse("url", Nil).headOption,
+    entityType      = params.getOrElse("entityType", Nil).headOption.toAgoraEntityOption
+  )
+
+  def validateEntityType(params: Map[String, List[String]], path: String): Directive0 = {
+    val _type = params.getOrElse("entityType", Nil).headOption.toAgoraEntityOption
+    validateEntityType(_type, path)
+  }
+
+  def projectionFromParams(params: Map[String, List[String]]): Option[AgoraEntityProjection] = {
+    val includeFields = params.getOrElse("includedField", Seq.empty[String])
+    val excludeFields = params.getOrElse("excludedField", Seq.empty[String])
+    val agoraProjection = AgoraEntityProjection(includeFields, excludeFields)
+    agoraProjection.totalFields match {
+      case 0 => None
+      case _ => Some(agoraProjection)
+    }
+  }
+
 //  def completeWithPerRequest(context: RequestContext,
 //                             params: Map[String, List[String]],
 //                             username: String,
@@ -239,11 +237,11 @@ trait BaseRoute extends RouteUtil  {
 //    val message = QueryCompatibleConfigurations(context, namespace, name, snapshotId, username)
 //    perRequest(context, queryHandler, message)
 //  }
-//}
+}
 
 trait AddRouteHelper extends BaseRoute {
   def postPath(_path: String)(implicit ec: ExecutionContext) = {
-    post & versionedPath(_path) & authenticationDirectives.usernameFromRequest(())
+    post & versionedPath(_path) & authenticationDirectives.usernameFromRequest()
   }
 
   def validatePostRoute(entity: AgoraEntity, path: String): Directive0 = {

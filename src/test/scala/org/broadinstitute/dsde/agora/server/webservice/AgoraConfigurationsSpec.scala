@@ -100,53 +100,51 @@ class AgoraConfigurationsSpec extends ApiServiceSpec2 with FlatSpecLike {
       }
   }
 
-//  "Agora" should "populate method references when returning configurations" in {
-//    Get(ApiUtil.Configurations.withLeadingVersion) ~>
-//      configurationsService.queryRoute ~> check {
-//
-//      handleError(entity.as[Seq[AgoraEntity]], (configs: Seq[AgoraEntity]) => {
-//        val method1 = AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(namespace1.get, name1.get, snapshotId1.get)
-//        val method2 = AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(namespace2.get, name1.get, snapshotId1.get)
-//        val method3 = AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(namespace1.get, name1.get, snapshotId1.get)
-//
-//        val config1 = AgoraDao.createAgoraDao(Seq(AgoraEntityType.Configuration)).findSingle(
-//          testAgoraConfigurationEntity.namespace.get, testAgoraConfigurationEntity.name.get, 2)
-//        val config2 = AgoraDao.createAgoraDao(Seq(AgoraEntityType.Configuration)).findSingle(
-//          testAgoraConfigurationEntity2.namespace.get, testAgoraConfigurationEntity2.name.get, 1)
-//        val config3 = AgoraDao.createAgoraDao(Seq(AgoraEntityType.Configuration)).findSingle(
-//          testAgoraConfigurationEntity3.namespace.get, testAgoraConfigurationEntity3.name.get, 2)
-//
-//        val foundConfig1 = configs.find(config => namespaceNameIdMatch(config, config1)).get
-//        val foundConfig2 = configs.find(config => namespaceNameIdMatch(config, config2)).get
-//        val foundConfig3 = configs.find(config => namespaceNameIdMatch(config, config3)).get
-//
-//        val methodRef1 = foundConfig1.method.get
-//        val methodRef2 = foundConfig2.method.get
-//        val methodRef3 = foundConfig3.method.get
-//
-//        assert(methodRef1.namespace.isDefined)
-//        assert(methodRef1.name.isDefined)
-//        assert(methodRef1.snapshotId.isDefined)
-//        assert(methodRef2.namespace.isDefined)
-//        assert(methodRef2.name.isDefined)
-//        assert(methodRef2.snapshotId.isDefined)
-//        assert(methodRef3.namespace.isDefined)
-//        assert(methodRef3.name.isDefined)
-//        assert(methodRef3.snapshotId.isDefined)
-//
-//        assert(methodRef1.namespace == method1.namespace)
-//        assert(methodRef1.name == method1.name)
-//        assert(methodRef1.snapshotId == method1.snapshotId)
-//        assert(methodRef2.namespace == method2.namespace)
-//        assert(methodRef2.name == method2.name)
-//        assert(methodRef2.snapshotId == method2.snapshotId)
-//        assert(methodRef3.namespace == method3.namespace)
-//        assert(methodRef3.name == method3.name)
-//        assert(methodRef3.snapshotId == method3.snapshotId)
-//      })
-//
-//    }
-//  }
+  "Agora" should "populate method references when returning configurations" in {
+    Get(ApiUtil.Configurations.withLeadingVersion) ~>
+      configurationsService.queryRoute ~> check {
+        val configs = responseAs[Seq[AgoraEntity]]
+
+        val method1 = AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(namespace1.get, name1.get, snapshotId1.get)
+        val method2 = AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(namespace2.get, name1.get, snapshotId1.get)
+        val method3 = AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(namespace1.get, name1.get, snapshotId1.get)
+
+        val config1 = AgoraDao.createAgoraDao(Seq(AgoraEntityType.Configuration)).findSingle(
+          testAgoraConfigurationEntity.namespace.get, testAgoraConfigurationEntity.name.get, 2)
+        val config2 = AgoraDao.createAgoraDao(Seq(AgoraEntityType.Configuration)).findSingle(
+          testAgoraConfigurationEntity2.namespace.get, testAgoraConfigurationEntity2.name.get, 1)
+        val config3 = AgoraDao.createAgoraDao(Seq(AgoraEntityType.Configuration)).findSingle(
+          testAgoraConfigurationEntity3.namespace.get, testAgoraConfigurationEntity3.name.get, 2)
+
+        val foundConfig1 = configs.find(config => namespaceNameIdMatch(config, config1)).get
+        val foundConfig2 = configs.find(config => namespaceNameIdMatch(config, config2)).get
+        val foundConfig3 = configs.find(config => namespaceNameIdMatch(config, config3)).get
+
+        val methodRef1 = foundConfig1.method.get
+        val methodRef2 = foundConfig2.method.get
+        val methodRef3 = foundConfig3.method.get
+
+        assert(methodRef1.namespace.isDefined)
+        assert(methodRef1.name.isDefined)
+        assert(methodRef1.snapshotId.isDefined)
+        assert(methodRef2.namespace.isDefined)
+        assert(methodRef2.name.isDefined)
+        assert(methodRef2.snapshotId.isDefined)
+        assert(methodRef3.namespace.isDefined)
+        assert(methodRef3.name.isDefined)
+        assert(methodRef3.snapshotId.isDefined)
+
+        assert(methodRef1.namespace == method1.namespace)
+        assert(methodRef1.name == method1.name)
+        assert(methodRef1.snapshotId == method1.snapshotId)
+        assert(methodRef2.namespace == method2.namespace)
+        assert(methodRef2.name == method2.name)
+        assert(methodRef2.snapshotId == method2.snapshotId)
+        assert(methodRef3.namespace == method3.namespace)
+        assert(methodRef3.name == method3.name)
+        assert(methodRef3.snapshotId == method3.snapshotId)
+    }
+  }
 
   "Agora" should "not allow you to post a new configuration if you don't have permission to read the method that it references" in {
     val noPermission = new AccessControl(AgoraConfig.mockAuthenticatedUserEmail, AgoraPermissions(AgoraPermissions.Nothing))

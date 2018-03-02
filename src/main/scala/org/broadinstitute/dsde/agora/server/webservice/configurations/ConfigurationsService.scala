@@ -17,7 +17,7 @@ class ConfigurationsService(permissionsDataSource: PermissionsDataSource) extend
 
 //  override def querySingleRoute = super.querySingleRoute
 //
-//  override def queryRoute = super.queryRoute
+  override def queryRoute = super.queryRoute
 
   override def postRoute = super.postRoute
 }

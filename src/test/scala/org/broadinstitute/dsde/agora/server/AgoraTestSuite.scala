@@ -27,8 +27,8 @@ class AgoraTestSuite extends Suites(
   new AgoraImportIntegrationSpec,
 //  new PermissionIntegrationSpec,
   new MethodDefinitionIntegrationSpec,
-//  new AssociatedConfigurationIntegrationSpec,
-//  new CompatibleConfigurationIntegrationSpec,
+  new AssociatedConfigurationIntegrationSpec,
+  new CompatibleConfigurationIntegrationSpec,
   new Ga4ghServiceSpec,
   new Ga4ghModelTest,
   new AdminSweeperSpec(ActorSystem("test"))) with BeforeAndAfterAll with AgoraTestFixture {

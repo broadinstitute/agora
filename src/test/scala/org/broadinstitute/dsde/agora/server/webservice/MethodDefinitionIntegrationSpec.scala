@@ -1,17 +1,18 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.actor.ActorSystem
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.model.StatusCodes._
+import akka.http.scaladsl.testkit.{RouteTest, RouteTestTimeout, ScalatestRouteTest}
+
 import org.broadinstitute.dsde.agora.server.AgoraTestFixture
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraPermissions, EntityAccessControl}
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraPermissions}
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType, MethodDefinition}
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
 import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpec}
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
-import spray.testkit.{RouteTest, ScalatestRouteTest}
-import spray.http.StatusCodes._
-import spray.httpx.SprayJsonSupport._
 
 import scala.concurrent.duration._
 
@@ -107,156 +108,156 @@ class MethodDefinitionIntegrationSpec extends FlatSpec with RouteTest with Scala
 
   behavior of "Agora method definitions listing"
 
-//  it should "return OK" in {
-//    Get(ApiUtil.Methods.withLeadingVersion + "/definitions") ~>
-//      methodsService.queryMethodDefinitionsRoute ~>
-//      check {
-//        assert(status == OK)
-//    }
-//  }
-//
-//  it should "count method snapshots" in {
-//    Get(ApiUtil.Methods.withLeadingVersion + "/definitions") ~>
-//      methodsService.queryMethodDefinitionsRoute ~>
-//      check {
-//        assert(status == OK)
-//        val defs = responseAs[Seq[MethodDefinition]]
-//        val one = findDefinition("one", defs)
-//        assert(one.isDefined)
-//        assertResult(1) {one.get.numSnapshots}
-//        val two = findDefinition("two", defs)
-//        assert(two.isDefined)
-//        assertResult(2) {two.get.numSnapshots}
-//        val three = findDefinition("three", defs)
-//        assert(three.isDefined)
-//        assertResult(3) {three.get.numSnapshots}
-//      }
-//  }
-//
-//  it should "respect permissions on methods" in {
-//    Get(ApiUtil.Methods.withLeadingVersion + "/definitions") ~>
-//      methodsService.queryMethodDefinitionsRoute ~>
-//      check {
-//        assert(status == OK)
-//        val defs = responseAs[Seq[MethodDefinition]]
-//        val redacts = findDefinition("redacts", defs)
-//        assert(redacts.isDefined)
-//        assertResult(3) {redacts.get.numSnapshots}
-//        val otherowner = findDefinition("otherowner", defs)
-//        assert(otherowner.isDefined)
-//        assertResult(4) {otherowner.get.numSnapshots}
-//      }
-//  }
-//
-//  it should "count associated configurations" in {
-//    Get(ApiUtil.Methods.withLeadingVersion + "/definitions") ~>
-//      methodsService.queryMethodDefinitionsRoute ~>
-//      check {
-//        assert(status == OK)
-//        val defs = responseAs[Seq[MethodDefinition]]
-//        val one = findDefinition("one", defs)
-//        assert(one.isDefined)
-//        assertResult(1) {one.get.numConfigurations}
-//        val two = findDefinition("two", defs)
-//        assert(two.isDefined)
-//        assertResult(2) {two.get.numConfigurations}
-//        val three = findDefinition("three", defs)
-//        assert(three.isDefined)
-//        assertResult(2) {three.get.numConfigurations}
-//      }
-//  }
-//
-//  it should "respect permissions on configurations" in {
-//    Get(ApiUtil.Methods.withLeadingVersion + "/definitions") ~>
-//      methodsService.queryMethodDefinitionsRoute ~>
-//      check {
-//        assert(status == OK)
-//        val defs = responseAs[Seq[MethodDefinition]]
-//        val redacts = findDefinition("redacts", defs)
-//        assert(redacts.isDefined)
-//        // has 4 configs, one of which points at the redacted snapshot
-//        // and one of which is itself redacted
-//        assertResult(2) {redacts.get.numConfigurations}
-//        val otherowner = findDefinition("otherowner", defs)
-//        assert(otherowner.isDefined)
-//        // has 5 configs, one of which points at the snapshot owned
-//        // by somebody else, and one which is itself owned by somebody else
-//        assertResult(3) {otherowner.get.numConfigurations}
-//      }
-//  }
-//
-//  it should "return the appropriate synopsis" in {
-//    // synopsis is pulled from most recent snapshot
-//    Get(ApiUtil.Methods.withLeadingVersion + "/definitions") ~>
-//      methodsService.queryMethodDefinitionsRoute ~>
-//      check {
-//        assert(status == OK)
-//        val defs = responseAs[Seq[MethodDefinition]]
-//        val one = findDefinition("one", defs)
-//        assert(one.isDefined)
-//        assert(one.get.synopsis.contains("synopsis-1"))
-//        val two = findDefinition("two", defs)
-//        assert(two.isDefined)
-//        assert(two.get.synopsis.contains("synopsis-2"))
-//        val three = findDefinition("three", defs)
-//        assert(three.isDefined)
-//        assert(three.get.synopsis.contains("synopsis-3"))
-//        val redacts = findDefinition("redacts", defs)
-//        assert(redacts.isDefined)
-//        assert(redacts.get.synopsis.contains("synopsis-4"))
-//        val otherowner = findDefinition("otherowner", defs)
-//        assert(otherowner.isDefined)
-//        assert(otherowner.get.synopsis.contains("synopsis-5"))
-//      }
-//  }
-//
-//  it should "return the appropriate public status" in {
-//    Get(ApiUtil.Methods.withLeadingVersion + "/definitions") ~>
-//      methodsService.queryMethodDefinitionsRoute ~>
-//      check {
-//        assert(status == OK)
-//        val defs = responseAs[Seq[MethodDefinition]]
-//        val one = findDefinition("one", defs)
-//        assert(one.isDefined)
-//        assert(one.get.public.contains(false))
-//        val two = findDefinition("two", defs)
-//        assert(two.isDefined)
-//        assert(two.get.public.contains(true))
-//        val three = findDefinition("three", defs)
-//        assert(three.isDefined)
-//        assert(three.get.public.contains(false))
-//        val redacts = findDefinition("redacts", defs)
-//        assert(redacts.isDefined)
-//        assert(redacts.get.public.contains(true))
-//        val otherowner = findDefinition("otherowner", defs)
-//        assert(otherowner.isDefined)
-//        assert(otherowner.get.public.contains(false))
-//      }
-//  }
-//
-//  it should "return the appropriate managers" in {
-//    Get(ApiUtil.Methods.withLeadingVersion + "/definitions") ~>
-//      methodsService.queryMethodDefinitionsRoute ~>
-//      check {
-//        assert(status == OK)
-//        val defs = responseAs[Seq[MethodDefinition]]
-//        val one = findDefinition("one", defs)
-//        assert(one.isDefined)
-//        assertResult(Set(mockAuthenticatedOwner.get)) {one.get.managers.toSet}
-//        val two = findDefinition("two", defs)
-//        assert(two.isDefined)
-//        assertResult(Set(mockAuthenticatedOwner.get)) {two.get.managers.toSet}
-//        val three = findDefinition("three", defs)
-//        assert(three.isDefined)
-//        assertResult(Set(mockAuthenticatedOwner.get)) {three.get.managers.toSet}
-//        val redacts = findDefinition("redacts", defs)
-//        assert(redacts.isDefined)
-//        assertResult(Set(mockAuthenticatedOwner.get)) {redacts.get.managers.toSet}
-//        val otherowner = findDefinition("otherowner", defs)
-//        assert(otherowner.isDefined)
-//        assertResult(Set(mockAuthenticatedOwner.get, owner1.get, owner3.get)) {otherowner.get.managers.toSet}
-//      }
-//  }
+  it should "return OK" in {
+    Get(ApiUtil.Methods.withLeadingVersion + "/definitions") ~>
+      methodsService.queryMethodDefinitionsRoute ~>
+      check {
+        assert(status == OK)
+    }
+  }
+
+  it should "count method snapshots" in {
+    Get(ApiUtil.Methods.withLeadingVersion + "/definitions") ~>
+      methodsService.queryMethodDefinitionsRoute ~>
+      check {
+        assert(status == OK)
+        val defs = responseAs[Seq[MethodDefinition]]
+        val one = findDefinition("one", defs)
+        assert(one.isDefined)
+        assertResult(1) {one.get.numSnapshots}
+        val two = findDefinition("two", defs)
+        assert(two.isDefined)
+        assertResult(2) {two.get.numSnapshots}
+        val three = findDefinition("three", defs)
+        assert(three.isDefined)
+        assertResult(3) {three.get.numSnapshots}
+      }
+  }
+
+  it should "respect permissions on methods" in {
+    Get(ApiUtil.Methods.withLeadingVersion + "/definitions") ~>
+      methodsService.queryMethodDefinitionsRoute ~>
+      check {
+        assert(status == OK)
+        val defs = responseAs[Seq[MethodDefinition]]
+        val redacts = findDefinition("redacts", defs)
+        assert(redacts.isDefined)
+        assertResult(3) {redacts.get.numSnapshots}
+        val otherowner = findDefinition("otherowner", defs)
+        assert(otherowner.isDefined)
+        assertResult(4) {otherowner.get.numSnapshots}
+      }
+  }
+
+  it should "count associated configurations" in {
+    Get(ApiUtil.Methods.withLeadingVersion + "/definitions") ~>
+      methodsService.queryMethodDefinitionsRoute ~>
+      check {
+        assert(status == OK)
+        val defs = responseAs[Seq[MethodDefinition]]
+        val one = findDefinition("one", defs)
+        assert(one.isDefined)
+        assertResult(1) {one.get.numConfigurations}
+        val two = findDefinition("two", defs)
+        assert(two.isDefined)
+        assertResult(2) {two.get.numConfigurations}
+        val three = findDefinition("three", defs)
+        assert(three.isDefined)
+        assertResult(2) {three.get.numConfigurations}
+      }
+  }
+
+  it should "respect permissions on configurations" in {
+    Get(ApiUtil.Methods.withLeadingVersion + "/definitions") ~>
+      methodsService.queryMethodDefinitionsRoute ~>
+      check {
+        assert(status == OK)
+        val defs = responseAs[Seq[MethodDefinition]]
+        val redacts = findDefinition("redacts", defs)
+        assert(redacts.isDefined)
+        // has 4 configs, one of which points at the redacted snapshot
+        // and one of which is itself redacted
+        assertResult(2) {redacts.get.numConfigurations}
+        val otherowner = findDefinition("otherowner", defs)
+        assert(otherowner.isDefined)
+        // has 5 configs, one of which points at the snapshot owned
+        // by somebody else, and one which is itself owned by somebody else
+        assertResult(3) {otherowner.get.numConfigurations}
+      }
+  }
+
+  it should "return the appropriate synopsis" in {
+    // synopsis is pulled from most recent snapshot
+    Get(ApiUtil.Methods.withLeadingVersion + "/definitions") ~>
+      methodsService.queryMethodDefinitionsRoute ~>
+      check {
+        assert(status == OK)
+        val defs = responseAs[Seq[MethodDefinition]]
+        val one = findDefinition("one", defs)
+        assert(one.isDefined)
+        assert(one.get.synopsis.contains("synopsis-1"))
+        val two = findDefinition("two", defs)
+        assert(two.isDefined)
+        assert(two.get.synopsis.contains("synopsis-2"))
+        val three = findDefinition("three", defs)
+        assert(three.isDefined)
+        assert(three.get.synopsis.contains("synopsis-3"))
+        val redacts = findDefinition("redacts", defs)
+        assert(redacts.isDefined)
+        assert(redacts.get.synopsis.contains("synopsis-4"))
+        val otherowner = findDefinition("otherowner", defs)
+        assert(otherowner.isDefined)
+        assert(otherowner.get.synopsis.contains("synopsis-5"))
+      }
+  }
+
+  it should "return the appropriate public status" in {
+    Get(ApiUtil.Methods.withLeadingVersion + "/definitions") ~>
+      methodsService.queryMethodDefinitionsRoute ~>
+      check {
+        assert(status == OK)
+        val defs = responseAs[Seq[MethodDefinition]]
+        val one = findDefinition("one", defs)
+        assert(one.isDefined)
+        assert(one.get.public.contains(false))
+        val two = findDefinition("two", defs)
+        assert(two.isDefined)
+        assert(two.get.public.contains(true))
+        val three = findDefinition("three", defs)
+        assert(three.isDefined)
+        assert(three.get.public.contains(false))
+        val redacts = findDefinition("redacts", defs)
+        assert(redacts.isDefined)
+        assert(redacts.get.public.contains(true))
+        val otherowner = findDefinition("otherowner", defs)
+        assert(otherowner.isDefined)
+        assert(otherowner.get.public.contains(false))
+      }
+  }
+
+  it should "return the appropriate managers" in {
+    Get(ApiUtil.Methods.withLeadingVersion + "/definitions") ~>
+      methodsService.queryMethodDefinitionsRoute ~>
+      check {
+        assert(status == OK)
+        val defs = responseAs[Seq[MethodDefinition]]
+        val one = findDefinition("one", defs)
+        assert(one.isDefined)
+        assertResult(Set(mockAuthenticatedOwner.get)) {one.get.managers.toSet}
+        val two = findDefinition("two", defs)
+        assert(two.isDefined)
+        assertResult(Set(mockAuthenticatedOwner.get)) {two.get.managers.toSet}
+        val three = findDefinition("three", defs)
+        assert(three.isDefined)
+        assertResult(Set(mockAuthenticatedOwner.get)) {three.get.managers.toSet}
+        val redacts = findDefinition("redacts", defs)
+        assert(redacts.isDefined)
+        assertResult(Set(mockAuthenticatedOwner.get)) {redacts.get.managers.toSet}
+        val otherowner = findDefinition("otherowner", defs)
+        assert(otherowner.isDefined)
+        assertResult(Set(mockAuthenticatedOwner.get, owner1.get, owner3.get)) {otherowner.get.managers.toSet}
+      }
+  }
 
   // =========================================================
   // =================== helper methods

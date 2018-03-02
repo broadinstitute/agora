@@ -6,6 +6,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.AgoraConfig.authenticationDirectives
+import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, EntityAccessControl, PermissionsDataSource, entities}
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
@@ -21,6 +22,8 @@ import scala.util.{Failure, Success}
  */
 abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extends RouteHelpers {
   implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
+
+  private val agoraBusiness = new AgoraBusiness(permissionsDataSource)
 
   def path: String
 
@@ -167,8 +170,7 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
           val projection = projectionFromParams(params)
           val entityTypes = AgoraEntityType.byPath(path)
 
-          val queryHandler = new QueryHandler(permissionsDataSource)
-          val queryAttempt = queryHandler.agoraBusiness.find(entity, projection, entityTypes, username)
+          val queryAttempt = agoraBusiness.find(entity, projection, entityTypes, username)
 
           onComplete(queryAttempt) {
             case Success(entities) => complete(entities)

@@ -15,6 +15,7 @@ import spray.json.{DefaultJsonProtocol, JsArray, JsObject, JsValue, RootJsonForm
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
+import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
 
 @DoNotDiscover
 class PermissionIntegrationSpec extends FlatSpec with ScalatestRouteTest with BeforeAndAfterAll
@@ -23,9 +24,11 @@ class PermissionIntegrationSpec extends FlatSpec with ScalatestRouteTest with Be
   val namespacePermissionsService = new NamespacePermissionsService(permsDataSource)
   val entityPermissionsService = new EntityPermissionsService(permsDataSource)
   val multiEntityPermissionsService = new MultiEntityPermissionsService(permsDataSource)
+  val methodsService = new MethodsService(permsDataSource)
 
   val routes: Route = handleExceptions(ApiService.exceptionHandler) {
-    namespacePermissionsService.routes ~ entityPermissionsService.routes ~ multiEntityPermissionsService.routes
+    namespacePermissionsService.routes ~ entityPermissionsService.routes ~ multiEntityPermissionsService.routes ~
+    methodsService.querySingleRoute
   }
 
   var agoraEntity1: AgoraEntity = _
@@ -493,36 +496,32 @@ class PermissionIntegrationSpec extends FlatSpec with ScalatestRouteTest with Be
       }
   }
 
-//  "Agora" should "set the `public` field to true for a public entity" in {
-//
-//    patiently(permissionBusiness.insertEntityPermission(agoraEntity2, owner2.get,
-//      AccessControl(AccessControl.publicUser, AgoraPermissions(AgoraPermissions.Read))))
-//
-//    Get(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity2.namespace.get + "/" +
-//      agoraEntity2.name.get + "/" + agoraEntity2.snapshotId.get) ~>
-//      methodsService.querySingleRoute ~> check {
-//
-//      val rawJs = responseAs[JsObject]
-//      val entity = AgoraApiJsonSupportWithManagerAndPublicRead.AgoraEntityFormatWithManagerAndPublicRead.read(rawJs)
-//
-//      assert(status == OK)
-//      assert(entity.public.contains(true))
-//    }
-//  }
-//
-//  "Agora" should "set the `public` field to false for a non-public entity" in {
-//
-//    Get(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" +
-//      agoraEntity1.name.get + "/" + agoraEntity1.snapshotId.get) ~>
-//      methodsService.querySingleRoute ~> check {
-//
-//      val rawJs = responseAs[JsObject]
-//      val entity = AgoraApiJsonSupportWithManagerAndPublicRead.AgoraEntityFormatWithManagerAndPublicRead.read(rawJs)
-//
-//      assert(status == OK)
-//      assert(entity.public.contains(false))
-//    }
-//  }
+  "Agora" should "set the `public` field to true for a public entity" in {
+
+    patiently(permissionBusiness.insertEntityPermission(agoraEntity2, owner2.get,
+      AccessControl(AccessControl.publicUser, AgoraPermissions(AgoraPermissions.Read))))
+
+    Get(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity2.namespace.get + "/" +
+      agoraEntity2.name.get + "/" + agoraEntity2.snapshotId.get) ~> routes ~> check {
+        val rawJs = responseAs[JsObject]
+        val entity = AgoraApiJsonSupportWithManagerAndPublicRead.AgoraEntityFormatWithManagerAndPublicRead.read(rawJs)
+
+        assert(status == OK)
+        assert(entity.public.contains(true))
+      }
+  }
+
+  "Agora" should "set the `public` field to false for a non-public entity" in {
+
+    Get(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" +
+      agoraEntity1.name.get + "/" + agoraEntity1.snapshotId.get) ~> routes ~> check {
+        val rawJs = responseAs[JsObject]
+        val entity = AgoraApiJsonSupportWithManagerAndPublicRead.AgoraEntityFormatWithManagerAndPublicRead.read(rawJs)
+
+        assert(status == OK)
+        assert(entity.public.contains(false))
+      }
+  }
 
   private def getUserPermissions(entity: AgoraEntity, userToCheck: String)(requester: String): Option[AgoraPermissions] = {
     val allAcls = patiently(permissionBusiness.listEntityPermissions(entity, requester) recover {

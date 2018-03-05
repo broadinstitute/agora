@@ -12,7 +12,7 @@ import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
 import org.scalatest.{DoNotDiscover, FlatSpecLike}
 
 @DoNotDiscover
-class AgoraMethodsSpec extends ApiServiceSpec2 with FlatSpecLike {
+class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
 
   var testEntity1WithId: AgoraEntity = _
   var testEntity2WithId: AgoraEntity = _

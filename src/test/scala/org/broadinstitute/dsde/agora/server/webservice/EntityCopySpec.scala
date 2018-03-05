@@ -19,7 +19,7 @@ import org.scalatest.{DoNotDiscover, FlatSpecLike}
 import scala.concurrent.Future
 
 @DoNotDiscover
-class EntityCopySpec extends ApiServiceSpec2 with FlatSpecLike {
+class EntityCopySpec extends ApiServiceSpec with FlatSpecLike {
 
   var testEntity1WithId: AgoraEntity = _
   var testEntityWithSnapshotComment: AgoraEntity = _

@@ -21,7 +21,7 @@ import spray.json.{DeserializationException, JsObject}
 import scala.concurrent.Future
 
 @DoNotDiscover
-class AgoraConfigurationsSpec extends ApiServiceSpec2 with FlatSpecLike {
+class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
 
   var method1: AgoraEntity = _
   var testEntityToBeRedacted2WithId: AgoraEntity = _

@@ -17,7 +17,7 @@ import org.mockserver.integration.ClientAndServer._
 import org.mockserver.model.HttpRequest.request
 
 @DoNotDiscover
-class AgoraImportSpec extends ApiServiceSpec2 with FlatSpecLike{
+class AgoraImportSpec extends ApiServiceSpec with FlatSpecLike{
   var testAgoraEntityWithId: AgoraEntity = _
 
   var mockServer: ClientAndServer = _

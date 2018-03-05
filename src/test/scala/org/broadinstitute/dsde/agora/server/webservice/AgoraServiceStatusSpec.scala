@@ -21,7 +21,7 @@ import scala.util.{Failure, Success}
 
 
 @DoNotDiscover
-class AgoraServiceUnhealthyStatusSpec extends ApiServiceSpec2 with TestKitBase with FlatSpecLike with RouteTest {
+class AgoraServiceUnhealthyStatusSpec extends ApiServiceSpec with TestKitBase with FlatSpecLike with RouteTest {
   implicit val unitTestActorSystem = ActorSystem("AgoraServiceUnhealthyStatusSpec")
   // this health monitor uses the same SQL check as our runtime mysql, which calls VERSION() in the db.
   // H2 does not support VERSION(), so we expect this health monitor to show as unhealthy.
@@ -68,7 +68,7 @@ class AgoraServiceUnhealthyStatusSpec extends ApiServiceSpec2 with TestKitBase w
 }
 
 @DoNotDiscover
-class AgoraServiceHealthyStatusSpec extends ApiServiceSpec2 with TestKitBase with FlatSpecLike {
+class AgoraServiceHealthyStatusSpec extends ApiServiceSpec with TestKitBase with FlatSpecLike {
   implicit val unitTestActorSystem = ActorSystem("AgoraServiceHealthyStatusSpec")
   // this health monitor uses the unit-test-only UnitTestAgoraDBStatus, which should work in H2.
   // therefore, we expect this health monitor to show as healthy.

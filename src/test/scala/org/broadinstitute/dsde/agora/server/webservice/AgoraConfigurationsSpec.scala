@@ -28,7 +28,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec2 with FlatSpecLike {
   var testAgoraConfigurationToBeRedactedWithId: AgoraEntity = _
 
   val routes = handleExceptions(ApiService.exceptionHandler) {
-    configurationsService.postRoute
+    configurationsService.querySingleRoute ~ configurationsService.postRoute
   }
 
   override def beforeAll() = {
@@ -193,47 +193,44 @@ class AgoraConfigurationsSpec extends ApiServiceSpec2 with FlatSpecLike {
 //  }
 //
   {
-//    val baseURL = ApiUtil.Configurations.withLeadingVersion + "/" +
-//      testConfigWithSnapshot1.namespace.get + "/" +
-//      testConfigWithSnapshot1.name.get + "/" +
-//      testConfigWithSnapshot1.snapshotId.get
-//
-//    "Agora" should "return the payload as an object if you ask it to" in {
-//      Get(baseURL + "?payloadAsObject=true") ~>
-//      configurationsService.querySingleRoute ~>
-//      check {
-//        assert(status == OK)
-//
-//        val entity = responseAs[AgoraEntity]
-//
-//        val payloadObject = entity.payloadObject.get
-//        assert(payloadObject.isInstanceOf[MethodConfiguration])
-//        assert(payloadObject.namespace == namespace1.get)
-//        assert(payloadObject.name == name5.get)
-//        assert(entity.payload.isEmpty)
-//      }
-//    }
-//
-//    "Agora" should "return the payload as a string by default" in {
-//      Get(baseURL) ~>
-//      configurationsService.querySingleRoute ~>
-//      check {
-//        assert(status == OK)
-//
-//        val entity = responseAs[AgoraEntity]
-//        assert(entity.payloadObject.isEmpty)
-//        assert(entity.payload.get contains testConfigWithSnapshot1.payload.get)
-//      }
-//    }
-//
-//    "Agora" should "not let you use payloadAsObject and onlyPayload at the same time" in {
-//      Get(baseURL + "?payloadAsObject=true&onlyPayload=true") ~>
-//        configurationsService.querySingleRoute ~> check {
-//        assert(body.asString contains "onlyPayload, payloadAsObject cannot be used together")
-//        assert(status == BadRequest)
-//      }
-//    }
-//
+    val baseURL = ApiUtil.Configurations.withLeadingVersion + "/" +
+      testConfigWithSnapshot1.namespace.get + "/" +
+      testConfigWithSnapshot1.name.get + "/" +
+      testConfigWithSnapshot1.snapshotId.get
+
+    "Agora" should "return the payload as an object if you ask it to" in {
+      Get(baseURL + "?payloadAsObject=true") ~>
+      routes ~> check {
+        assert(status == OK)
+
+        val entity = responseAs[AgoraEntity]
+
+        val payloadObject = entity.payloadObject.get
+        assert(payloadObject.isInstanceOf[MethodConfiguration])
+        assert(payloadObject.namespace == namespace1.get)
+        assert(payloadObject.name == name5.get)
+        assert(entity.payload.isEmpty)
+      }
+    }
+
+    "Agora" should "return the payload as a string by default" in {
+      Get(baseURL) ~> routes ~> check {
+        assert(status == OK)
+
+        val entity = responseAs[AgoraEntity]
+        assert(entity.payloadObject.isEmpty)
+        assert(entity.payload.get contains testConfigWithSnapshot1.payload.get)
+      }
+    }
+
+    "Agora" should "not let you use payloadAsObject and onlyPayload at the same time" in {
+      Get(baseURL + "?payloadAsObject=true&onlyPayload=true") ~> routes ~> check {
+        assert(responseAs[String] contains "onlyPayload, payloadAsObject cannot be used together")
+        assert(status == BadRequest)
+      }
+    }
+
+    // TODO[GAWB-3052] Figure out why querySingleRoute tests commented out below fail
 //    "Agora" should "throw an error if you try to use an illegal value for both parameters" in {
 //      Get(baseURL + "?payloadAsObject=fire&onlyPayload=cloud") ~>
 //        wrapWithRejectionHandler {

@@ -9,7 +9,7 @@ import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
-import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpecLike}
+import org.scalatest.{DoNotDiscover, FlatSpecLike}
 
 @DoNotDiscover
 class AgoraMethodsSpec extends ApiServiceSpec2 with FlatSpecLike {
@@ -43,6 +43,7 @@ class AgoraMethodsSpec extends ApiServiceSpec2 with FlatSpecLike {
     clearDatabases()
   }
 
+  // TODO[GAWB-3052] Figure out why querySingleRoute tests commented out below fail
 //  "Agora" should "return information about a method, including metadata " in {
 //    Get(ApiUtil.Methods.withLeadingVersion + "/" + namespace1.get + "/" + name1.get + "/"
 //      + testEntity1WithId.snapshotId.get) ~> methodsService.querySingleRoute ~> check {

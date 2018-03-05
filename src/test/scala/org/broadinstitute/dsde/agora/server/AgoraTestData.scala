@@ -1,9 +1,7 @@
 package org.broadinstitute.dsde.agora.server
 
-import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
 
-import scala.concurrent.Future
 import scala.io.Source
 
 object AgoraTestData {

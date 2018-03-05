@@ -12,7 +12,7 @@ import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
-import org.broadinstitute.dsde.agora.server.webservice.handlers.{AddHandler, PermissionHandler, QueryHandler}
+import org.broadinstitute.dsde.agora.server.webservice.handlers.AddHandler
 import org.broadinstitute.dsde.agora.server.webservice.routes.RouteHelpers
 
 import scala.util.{Failure, Success}
@@ -32,12 +32,6 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
 
   def routes = queryAssociatedConfigurationsRoute ~ queryCompatibleConfigurationsRoute ~ querySingleRoute ~
     queryMethodDefinitionsRoute ~ queryRoute ~ postRoute
-
-  def queryHandlerProps = Props(classOf[QueryHandler], permissionsDataSource, ec)
-
-  def addHandlerProps = Props(classOf[AddHandler], permissionsDataSource, ec)
-
-  def permissionHandlerProps = Props(classOf[PermissionHandler], permissionsDataSource, ec)
 
   // GET http://root.com/methods/<namespace>/<name>/<snapshotId>?onlyPayload=true
   // GET http://root.com/configurations/<namespace>/<name>/<snapshotId>

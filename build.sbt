@@ -45,7 +45,7 @@ libraryDependencies ++= Seq(
   "io.spray" %% "spray-can" % sprayV,
   // TODO[GAWB-3052] remove
   "io.spray" %% "spray-client" % sprayV,
-  // TODO[GAWB-3052] remove
+  // TODO[GAWB-3052] remove if possible -- this may not be possible or desirable
   "io.spray" %% "spray-json" % "1.3.3", // NB: Not at sprayV. 1.3.4 does not exist.
   // TODO[GAWB-3052] remove
   "io.spray" %% "spray-routing-shapeless23" % sprayV,

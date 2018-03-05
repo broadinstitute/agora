@@ -2,9 +2,7 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.actor.Props
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import akka.http.scaladsl.marshalling.ToResponseMarshallable
 import akka.http.scaladsl.model.StatusCodes.{BadRequest, Created}
 import akka.http.scaladsl.model.HttpMethods.{DELETE, GET}
 import akka.http.scaladsl.server.{MethodRejection, PathMatcher}
@@ -19,7 +17,6 @@ import org.broadinstitute.dsde.agora.server.webservice.routes.RouteHelpers
 
 import scala.util.{Failure, Success}
 import scalaz.{Failure => FailureZ, Success => SuccessZ}
-import spray.json._
 
 /**
  * AgoraService defines routes for ApiServiceActor.
@@ -33,86 +30,14 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
 
   def path: String
 
-//  def routes = namespacePermissionsRoute ~ multiEntityPermissionsRoute ~ entityPermissionsRoute ~
-//    queryAssociatedConfigurationsRoute ~ queryCompatibleConfigurationsRoute ~ querySingleRoute ~
-//    queryMethodDefinitionsRoute ~ queryRoute ~ postRoute
-
-  def routes = queryMethodDefinitionsRoute ~ queryAssociatedConfigurationsRoute ~
-    queryCompatibleConfigurationsRoute ~ queryRoute ~ postRoute
+  def routes = queryAssociatedConfigurationsRoute ~ queryCompatibleConfigurationsRoute ~ querySingleRoute ~
+    queryMethodDefinitionsRoute ~ queryRoute ~ postRoute
 
   def queryHandlerProps = Props(classOf[QueryHandler], permissionsDataSource, ec)
 
   def addHandlerProps = Props(classOf[AddHandler], permissionsDataSource, ec)
 
   def permissionHandlerProps = Props(classOf[PermissionHandler], permissionsDataSource, ec)
-
-//  def namespacePermissionsRoute =
-//    matchNamespacePermissionsRoute(path) { (namespace, username) =>
-//      parameterMap { (params) =>
-//        val agoraEntity = AgoraEntity(Option(namespace))
-//
-//        // Accept batch POST // TODO: move to transactional support
-//        entity(as[List[AccessControl]]) { (listOfAccessControl) =>
-//          post { requestContext =>
-//            completeBatchNamespacePermissionsPost(requestContext, agoraEntity, listOfAccessControl, username, permissionHandlerProps)
-//          }
-//        } ~
-//        get { requestContext =>
-//          completeNamespacePermissionsGet(requestContext, agoraEntity, username, permissionHandlerProps)
-//        } ~
-//        post { requestContext =>
-//          completeNamespacePermissionsPost(requestContext, agoraEntity, params, username, permissionHandlerProps)
-//        } ~
-//        put { requestContext =>
-//          completeNamespacePermissionsPut(requestContext, agoraEntity, params, username, permissionHandlerProps)
-//        } ~
-//        delete { requestContext =>
-//          completeNamespacePermissionsDelete(requestContext, agoraEntity, params, username, permissionHandlerProps)
-//        }
-//
-//      }
-//    }
-//
-//  def entityPermissionsRoute =
-//    matchEntityPermissionsRoute(path) { (namespace, name, snapshotId, username) =>
-//      parameterMap { (params) =>
-//        val agoraEntity = AgoraEntity(Option(namespace), Option(name), Option(snapshotId))
-//
-//        // Accept batch POST // TODO: move to transactional support
-//        entity(as[List[AccessControl]]) { (listOfAccessControl) =>
-//          post { requestContext =>
-//            completeBatchEntityPermissionsPost(requestContext, agoraEntity, listOfAccessControl, username, permissionHandlerProps)
-//          }
-//        } ~
-//        get { requestContext =>
-//          completeEntityPermissionsGet(requestContext, agoraEntity, username, permissionHandlerProps)
-//        } ~
-//        post { requestContext =>
-//          completeEntityPermissionsPost(requestContext, agoraEntity, params, username, permissionHandlerProps)
-//        } ~
-//        put { requestContext =>
-//          completeEntityPermissionsPut(requestContext, agoraEntity, params, username, permissionHandlerProps)
-//        } ~
-//        delete { requestContext =>
-//          completeEntityPermissionsDelete(requestContext, agoraEntity, params, username, permissionHandlerProps)
-//        }
-//
-//      }
-//    }
-//
-//  def multiEntityPermissionsRoute =
-//    matchMultiEntityPermissionsRoute(path) { (username) =>
-//      post {
-//        entity(as[List[AgoraEntity]]) { entities => requestContext =>
-//          completeMultiEntityPermissionsReport(requestContext, entities, username, permissionHandlerProps)
-//        }
-//      } ~
-//      put {
-//        entity(as[List[EntityAccessControl]]) { aclPairs => requestContext =>
-//          completeMultiEntityPermissionsPut(requestContext, aclPairs, username, permissionHandlerProps)
-//        }
-//      }
-//    }
 
   // GET http://root.com/methods/<namespace>/<name>/<snapshotId>?onlyPayload=true
   // GET http://root.com/configurations/<namespace>/<name>/<snapshotId>

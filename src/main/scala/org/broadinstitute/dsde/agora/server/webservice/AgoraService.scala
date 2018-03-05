@@ -2,19 +2,24 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.actor.Props
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.PathMatcher
+import akka.http.scaladsl.marshalling.ToResponseMarshallable
+import akka.http.scaladsl.model.StatusCodes.{BadRequest, Created}
+import akka.http.scaladsl.model.HttpMethods.{DELETE, GET}
+import akka.http.scaladsl.server.{MethodRejection, PathMatcher}
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.AgoraConfig.authenticationDirectives
 import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, EntityAccessControl, PermissionsDataSource, entities}
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
 import org.broadinstitute.dsde.agora.server.webservice.handlers.{AddHandler, PermissionHandler, QueryHandler}
 import org.broadinstitute.dsde.agora.server.webservice.routes.RouteHelpers
 
 import scala.util.{Failure, Success}
+import scalaz.{Failure => FailureZ, Success => SuccessZ}
+import spray.json._
 
 /**
  * AgoraService defines routes for ApiServiceActor.
@@ -108,42 +113,68 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
 //        }
 //      }
 //    }
-//
-//  // GET http://root.com/methods/<namespace>/<name>/<snapshotId>?onlyPayload=true
-//  // GET http://root.com/configurations/<namespace>/<name>/<snapshotId>
-//  def querySingleRoute =
-//    matchQuerySingleRoute(path) { (namespace, name, snapshotId, username) =>
-//      parameters( "onlyPayload".as[Boolean] ? false, "payloadAsObject".as[Boolean] ? false ) { (onlyPayload, payloadAsObject) =>
-//        val targetEntity = AgoraEntity(Option(namespace), Option(name), Option(snapshotId))
-//
-//        get { requestContext =>
-//          completeWithPerRequest(requestContext, targetEntity, username, onlyPayload, payloadAsObject, path, queryHandlerProps)
-//        } ~
-//        delete { requestContext =>
-//          completeEntityDelete(requestContext, targetEntity, username, path, queryHandlerProps)
-//        } ~
-//        post {
-//          // only allow copying (post) for methods
-//          if (path != AgoraConfig.methodsRoute) {
-//            reject(MethodRejection(HttpMethods.GET), MethodRejection(HttpMethods.DELETE))
-//          } else {
-//            entity(as[AgoraEntity]) { newEntity =>
-//              AgoraEntity.validate(newEntity) match {
-//                case Success(_) => //noop
-//                case Failure(errors) => throw new IllegalArgumentException(s"Method is invalid: Errors: $errors")
-//              }
-//              parameters("redact".as[Boolean] ? false) { redact =>
-//                requestContext => completeEntityCopy(requestContext, targetEntity, newEntity, redact, username, path, queryHandlerProps)
-//              }
-//            }
-//          }
-//        }
-//      }
-//    }
+
+  // GET http://root.com/methods/<namespace>/<name>/<snapshotId>?onlyPayload=true
+  // GET http://root.com/configurations/<namespace>/<name>/<snapshotId>
+  def querySingleRoute =
+    matchQuerySingleRoute(path)(ec) {
+      (namespace, name, snapshotId, username) =>
+        parameters( "onlyPayload".as[Boolean] ? false, "payloadAsObject".as[Boolean] ? false ) {
+          (onlyPayload, payloadAsObject) =>
+            val targetEntity = AgoraEntity(Option(namespace), Option(name), Option(snapshotId))
+            val entityTypes = AgoraEntityType.byPath(path)
+
+            get {
+              val queryAttempt = agoraBusiness.findSingle(targetEntity, entityTypes, username)
+
+              onComplete(queryAttempt) {
+                case Success(foundEntity) =>
+                  (onlyPayload, payloadAsObject) match {
+                    case (true, true) => complete(BadRequest, "onlyPayload, payloadAsObject cannot be used together")
+                    case (true, false) => complete(foundEntity.payload)
+                    case (false, true) => complete(foundEntity.withDeserializedPayload)
+                    case _ => complete(foundEntity)
+                  }
+                case Failure(error) => failWith(error)
+              }
+            } ~
+            delete {
+              val deletionAttempt = agoraBusiness.delete(targetEntity, entityTypes, username)
+
+              onComplete(deletionAttempt) {
+                case Success(rowsDeleted) => complete("FIX ME")
+                // TODO[GAWB-3052] The line above should be the line below; figure out what implicit may be missing
+                // case Success(rowsDeleted) => complete(rowsDeleted)
+                case Failure(error) => failWith(error)
+              }
+            } ~
+            post {
+              // only allow copying (post) for methods
+              if (path != AgoraConfig.methodsRoute) {
+                reject(MethodRejection(GET), MethodRejection(DELETE))
+              } else {
+                entity(as[AgoraEntity]) { newEntity =>
+                  AgoraEntity.validate(newEntity) match {
+                    case SuccessZ(_) => //noop
+                    case FailureZ(errors) => throw new IllegalArgumentException(s"Method is invalid: Errors: $errors")
+                  }
+                  parameters("redact".as[Boolean] ? false) { redact =>
+                    val copyingAttempt = agoraBusiness.copy(targetEntity, newEntity, redact, entityTypes, username)
+
+                    onComplete(copyingAttempt) {
+                      case Success(entities) => complete(entities)
+                      case Failure(error) => failWith(error)
+                    }
+                  }
+                }
+              }
+            }
+        }
+    }
 
   def queryMethodDefinitionsRoute =
     (versionedPath(PathMatcher("methods" / "definitions")) & get &
-      authenticationDirectives.usernameFromRequest()) { (username) =>
+      authenticationDirectives.usernameFromRequest()) { username =>
         val listingAttempt = agoraBusiness.listDefinitions(username)
 
         onComplete(listingAttempt) {
@@ -206,7 +237,7 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
           val addHandler = new AddHandler(permissionsDataSource)
           val addAttempt = addHandler.add(agoraEntity, username, path)
           onComplete(addAttempt) {
-            case Success(entity) => complete(StatusCodes.Created, entity)
+            case Success(entity) => complete(Created, entity)
             case Failure(error) => failWith(error)
           }
         }

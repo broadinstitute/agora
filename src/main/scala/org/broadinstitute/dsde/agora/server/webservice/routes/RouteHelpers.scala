@@ -22,7 +22,7 @@ import scala.util.Try
 //  with EntityPermissionsRouteHelper
 //  with NamespacePermissionsRouteHelper
 
-trait RouteHelpers extends AddRouteHelper with QueryRouteHelper
+trait RouteHelpers extends AddRouteHelper with QueryRouteHelper with QuerySingleHelper
 
 trait BaseRoute extends RouteUtil  {
   def getUserFromParams(params: Map[String, String]): String = {
@@ -33,7 +33,7 @@ trait BaseRoute extends RouteUtil  {
       throw new IllegalArgumentException("Missing params: user and/or role.")
   }
 
-  // TODO L used to be a subtype of HList. Akka-Http dropped shapeless.
+  // TODO[GAWB-3052] L used to be a subtype of HList. Akka-Http dropped shapeless.
   // Does L have to be a subtype of something else (e.g. Product) now?
   def versionedPath[L](pm: PathMatcher[L]): Directive[L] = path("api" / version / pm)
 }
@@ -121,13 +121,12 @@ trait BaseRoute extends RouteUtil  {
 //    perRequest(context, permissionsHandler, message)
 //  }
 //}
-//
-//trait QuerySingleHelper extends BaseRoute {
-//
-//  def matchQuerySingleRoute(_path: String) =
-//    versionedPath(_path / Segment / Segment / IntNumber) &
-//    authenticationDirectives.usernameFromRequest()
-//
+
+trait QuerySingleHelper extends BaseRoute {
+
+  def matchQuerySingleRoute(_path: String)(implicit ec: ExecutionContext) =
+    versionedPath(_path / Segment / Segment / IntNumber) & authenticationDirectives.usernameFromRequest()
+
 //  def completeWithPerRequest(context: RequestContext,
 //                             entity: AgoraEntity,
 //                             username: String,
@@ -164,9 +163,9 @@ trait BaseRoute extends RouteUtil  {
 //
 //    perRequest(context, queryHandler, message)
 //  }
-//
-//}
-//
+
+}
+
 trait QueryRouteHelper extends BaseRoute {
 
   def matchQueryRoute(_path: String)(implicit ec: ExecutionContext) =

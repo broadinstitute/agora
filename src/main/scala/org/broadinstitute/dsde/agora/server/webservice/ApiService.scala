@@ -63,9 +63,9 @@ class ApiService(permissionsDataSource: PermissionsDataSource, healthMonitor: Ac
   val namespacePermissionsService = new NamespacePermissionsService(permissionsDataSource)
   val entityPermissionsService = new EntityPermissionsService(permissionsDataSource)
   val multiEntityPermissionsService = new MultiEntityPermissionsService(permissionsDataSource)
-  // TODO Instantiate the remaining services once they are converted
+  // TODO[GAWB-3052] Instantiate the remaining services once they are converted
 
-  // TODO Add the remaining routes once they are converted
+  // TODO[GAWB-3052] Add the remaining routes once they are converted
   def route: Route = (logRequestResult & handleExceptions(ApiService.exceptionHandler)) {
     options { complete(OK) } ~ statusService.statusRoute ~ swaggerRoutes ~ ga4ghService.routes ~ methodsService.routes ~
       configurationsService.routes ~ namespacePermissionsService.routes ~ entityPermissionsService.routes ~

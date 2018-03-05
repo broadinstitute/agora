@@ -41,13 +41,13 @@ libraryDependencies ++= Seq(
   "com.typesafe.scala-logging" %% "scala-logging" % "3.7.1",
   "com.typesafe.slick" %% "slick" % "3.2.0",
   "com.zaxxer" % "HikariCP" % "2.3.9",
-  // TODO remove
+  // TODO[GAWB-3052] remove
   "io.spray" %% "spray-can" % sprayV,
-  // TODO remove
+  // TODO[GAWB-3052] remove
   "io.spray" %% "spray-client" % sprayV,
-  // TODO remove
+  // TODO[GAWB-3052] remove
   "io.spray" %% "spray-json" % "1.3.3", // NB: Not at sprayV. 1.3.4 does not exist.
-  // TODO remove
+  // TODO[GAWB-3052] remove
   "io.spray" %% "spray-routing-shapeless23" % sprayV,
   "mysql" % "mysql-connector-java" % "5.1.42",
   "org.broadinstitute" %% "cromwell-wdl" % cromwellVersion,
@@ -57,7 +57,7 @@ libraryDependencies ++= Seq(
   "org.webjars" % "swagger-ui"  % "2.2.10-1",
   //---------- Test libraries -------------------//
   "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpV % Test,
-  // TODO remove
+  // TODO[GAWB-3052] remove
   "io.spray" %% "spray-testkit" % sprayV % Test,
   "org.scalatest" %% "scalatest" % "3.0.4" % Test,
   "org.mock-server" % "mockserver-netty" % "3.10.2" % "test"

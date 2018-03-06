@@ -12,6 +12,7 @@ class AgoraTestSuite extends Suites(
   new AgoraServiceUnhealthyStatusSpec,
   new AgoraServiceHealthyStatusSpec,
   new AgoraMethodsSpec,
+  new DockerHubClientSpec,
   new EntityCreationPermissionSpec,
   new EntityCopySpec,
   new AgoraProjectionsSpec,

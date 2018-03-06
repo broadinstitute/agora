@@ -1,7 +1,8 @@
 package org.broadinstitute.dsde.agora.server.exceptions
 
 import com.typesafe.scalalogging.LazyLogging
-import spray.http.{StatusCode, StatusCodes}
+import akka.http.scaladsl.model.StatusCode
+import akka.http.scaladsl.model.StatusCodes
 
 case class AgoraException(message: String = null,
                           cause: Throwable = null,

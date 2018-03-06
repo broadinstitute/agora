@@ -8,7 +8,6 @@ organization := "org.broadinstitute"
 scalaVersion := "2.11.12"
 dependencyOverrides += "org.scala-lang" % "scala-compiler" % "2.11.12"
 
-val sprayV = "1.3.4"
 lazy val akkaV = "2.5.9"
 lazy val akkaHttpV = "10.0.11"
 
@@ -41,14 +40,6 @@ libraryDependencies ++= Seq(
   "com.typesafe.scala-logging" %% "scala-logging" % "3.7.1",
   "com.typesafe.slick" %% "slick" % "3.2.0",
   "com.zaxxer" % "HikariCP" % "2.3.9",
-  // TODO[GAWB-3052] remove
-  "io.spray" %% "spray-can" % sprayV,
-  // TODO[GAWB-3052] remove
-  "io.spray" %% "spray-client" % sprayV,
-  // TODO[GAWB-3052] remove if possible -- this may not be possible or desirable
-  "io.spray" %% "spray-json" % "1.3.3", // NB: Not at sprayV. 1.3.4 does not exist.
-  // TODO[GAWB-3052] remove
-  "io.spray" %% "spray-routing-shapeless23" % sprayV,
   "mysql" % "mysql-connector-java" % "5.1.42",
   "org.broadinstitute" %% "cromwell-wdl" % cromwellVersion,
   "org.broadinstitute.dsde.workbench" %% "workbench-util" % "0.3-f3ce961",
@@ -57,8 +48,6 @@ libraryDependencies ++= Seq(
   "org.webjars" % "swagger-ui"  % "2.2.10-1",
   //---------- Test libraries -------------------//
   "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpV % Test,
-  // TODO[GAWB-3052] remove
-  "io.spray" %% "spray-testkit" % sprayV % Test,
   "org.scalatest" %% "scalatest" % "3.0.4" % Test,
   "org.mock-server" % "mockserver-netty" % "3.10.2" % "test"
 )

@@ -1,10 +1,9 @@
 package org.broadinstitute.dsde.agora.server.webservice.util
 
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.unmarshalling.Unmarshaller
+import akka.http.scaladsl.unmarshalling.Unmarshal
 import org.broadinstitute.dsde.agora.server.exceptions.DockerImageNotFoundException
 import org.broadinstitute.dsde.agora.server.webservice.util.DockerHubJsonSupport._
-import spray.json._
 
 import scala.concurrent.Future
 
@@ -21,7 +20,7 @@ trait DockerHubClient extends HttpClient {
 
     dockerImageInfo flatMap { response: HttpResponse => //on success
         response.status match {
-          case StatusCodes.OK => unmarshal(response) map { l => l.nonEmpty }
+          case StatusCodes.OK => Unmarshal(response.entity).to[List[DockerTagInfo]] map (_.nonEmpty)
           case StatusCodes.NotFound => throw DockerImageNotFoundException(dockerImage)
           case _ => throw DockerImageNotFoundException(dockerImage)
         }
@@ -38,14 +37,6 @@ trait DockerHubClient extends HttpClient {
     }
     url += dockerImage.repo + "/tags/" + dockerImage.tag
     url
-  }
-
-  private def unmarshal(response: HttpResponse): Future[List[DockerTagInfo]] = {
-    Unmarshaller.
-      stringUnmarshaller.
-      forContentTypes(ContentTypes.`application/json`).
-      map(_.parseJson.convertTo[List[DockerTagInfo]]).
-      apply(response.entity)
   }
 
 }

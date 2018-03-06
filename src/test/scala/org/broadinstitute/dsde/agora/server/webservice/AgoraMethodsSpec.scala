@@ -60,14 +60,14 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
 //        assert(mediaType == `text/plain`)
 //      }
 //  }
-//
-//  "Agora" should "return status 404, mediaType json when nothing matches query by namespace, name, snapshotId" in {
-//    Get(ApiUtil.Methods.withLeadingVersion + "/foofoofoofoo/foofoofoo/99999"
-//    ) ~> methodsService.querySingleRoute ~> check {
-//      assert(status == NotFound)
-//    }
-//  }
-//
+
+  "Agora" should "return status 404, mediaType json when nothing matches query by namespace, name, snapshotId" in {
+    Get(ApiUtil.Methods.withLeadingVersion + "/foofoofoofoo/foofoofoo/99999"
+    ) ~> methodsService.querySingleRoute ~> check {
+      assert(status == NotFound)
+    }
+  }
+
   "Agora" should "return methods matching query by namespace and name" in {
     Get(ApiUtil.Methods.withLeadingVersion + "?namespace=" + namespace1.get + "&name=" + name2.get) ~>
       methodsService.queryRoute ~> check {

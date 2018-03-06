@@ -8,14 +8,14 @@ import org.broadinstitute.dsde.agora.server.webservice.util.{DockerHubClient, Do
 import org.mockserver.integration.ClientAndServer
 import org.mockserver.integration.ClientAndServer.startClientAndServer
 import org.mockserver.model.HttpRequest.request
-import org.scalatest.{AsyncFlatSpec, BeforeAndAfterAll, Matchers}
+import org.scalatest._
 import org.broadinstitute.dsde.agora.server.webservice.util.DockerHubJsonSupport._
 import spray.json._
 
 import scala.concurrent.ExecutionContextExecutor
 
-
-class DockerHubClientSpec extends AsyncFlatSpec with Matchers with BeforeAndAfterAll with DockerHubClient {
+@DoNotDiscover
+class DockerHubClientSpec extends AsyncFreeSpec with Matchers with BeforeAndAfterAll with DockerHubClient {
 
   override implicit val executionContext: ExecutionContextExecutor = scala.concurrent.ExecutionContext.Implicits.global
 
@@ -75,31 +75,34 @@ class DockerHubClientSpec extends AsyncFlatSpec with Matchers with BeforeAndAfte
   // We need to point all docker requests to local
   override def dockerImageRepositoryBaseUrl = s"http://localhost:$mockServerPort/"
 
-  "DockerHubClient" should "return that valid docker image references exists" in {
-    val dockerImage = DockerImageReference(user = None, repo = "repo", tag = "tag")
-    doesDockerImageExist(dockerImage).map { exists =>
-      exists shouldBe true
-    }
-  }
+  "DockerHubClientSpec" - {
 
-  "DockerHubClient" should "return that no docker image references exist" in {
-    val dockerImage = DockerImageReference(user = None, repo = "none", tag = "none")
-    doesDockerImageExist(dockerImage).map { exists =>
-      exists shouldBe false
+    "should return that valid docker image references exists" in {
+      val dockerImage = DockerImageReference(user = None, repo = "repo", tag = "tag")
+      doesDockerImageExist(dockerImage).map { exists =>
+        exists shouldBe true
+      }
     }
-  }
 
-  "DockerHubClient" should "throw an exception for Not Found" in {
-    val dockerImage = DockerImageReference(user = None, repo = "not", tag = "found")
-    recoverToSucceededIf[DockerImageNotFoundException] {
-      doesDockerImageExist(dockerImage)
+    "should return that no docker image references exist" in {
+      val dockerImage = DockerImageReference(user = None, repo = "none", tag = "none")
+      doesDockerImageExist(dockerImage).map { exists =>
+        exists shouldBe false
+      }
     }
-  }
 
-  "DockerHubClient" should "throw an exception for Internal Server Error" in {
-    val dockerImage = DockerImageReference(user = None, repo = "exception", tag = "exception")
-    recoverToSucceededIf[DockerImageNotFoundException] {
-      doesDockerImageExist(dockerImage)
+    "should throw an exception for Not Found" in {
+      val dockerImage = DockerImageReference(user = None, repo = "not", tag = "found")
+      recoverToSucceededIf[DockerImageNotFoundException] {
+        doesDockerImageExist(dockerImage)
+      }
+    }
+
+    "should throw an exception for Internal Server Error" in {
+      val dockerImage = DockerImageReference(user = None, repo = "exception", tag = "exception")
+      recoverToSucceededIf[DockerImageNotFoundException] {
+        doesDockerImageExist(dockerImage)
+      }
     }
   }
 

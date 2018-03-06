@@ -18,7 +18,7 @@ class MultiEntityPermissionsService(dataSource: PermissionsDataSource) extends R
   with Directives with SprayJsonSupport with DefaultJsonProtocol with LazyLogging {
 
   // ec Required for PermissionBusiness
-  implicit val ec: ExecutionContextExecutor = scala.concurrent.ExecutionContext.Implicits.global
+  implicit val ec: ExecutionContextExecutor = scala.concurrent.ExecutionContext.global
   lazy val permissionBusiness = new PermissionBusiness(dataSource)(ec)
 
   def routes: Route =

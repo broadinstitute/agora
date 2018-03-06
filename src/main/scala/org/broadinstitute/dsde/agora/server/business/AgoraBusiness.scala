@@ -1,5 +1,6 @@
 package org.broadinstitute.dsde.agora.server.business
 
+import akka.http.scaladsl.model.StatusCodes
 import org.broadinstitute.dsde.agora.server.exceptions._
 import org.broadinstitute.dsde.agora.server.dataaccess.{AgoraDao, ReadWriteAction}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
@@ -7,7 +8,6 @@ import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissi
 import org.broadinstitute.dsde.agora.server.model._
 import org.bson.types.ObjectId
 import slick.dbio.DBIO
-import spray.http.StatusCodes
 import spray.json._
 import wdl4s.parser.WdlParser.SyntaxError
 import wdl.{WdlNamespace, WdlNamespaceWithWorkflow}

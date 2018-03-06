@@ -75,7 +75,7 @@ class DockerHubClientSpec extends AsyncFreeSpec with Matchers with BeforeAndAfte
   // We need to point all docker requests to local
   override def dockerImageRepositoryBaseUrl = s"http://localhost:$mockServerPort/"
 
-  "DockerHubClientSpec" - {
+  "DockerHubClient" - {
 
     "should return that valid docker image references exists" in {
       val dockerImage = DockerImageReference(user = None, repo = "repo", tag = "tag")

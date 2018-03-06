@@ -43,23 +43,22 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
     clearDatabases()
   }
 
-  // TODO[GAWB-3052] Figure out why querySingleRoute tests commented out below fail
-//  "Agora" should "return information about a method, including metadata " in {
-//    Get(ApiUtil.Methods.withLeadingVersion + "/" + namespace1.get + "/" + name1.get + "/"
-//      + testEntity1WithId.snapshotId.get) ~> methodsService.querySingleRoute ~> check {
-//      handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => assert(entity == testEntity1WithId))
-//      assert(status == OK)
-//    }
-//  }
-//
-//  "Agora" should "return only payload in plain/text when parameter is set " in {
-//    Get(ApiUtil.Methods.withLeadingVersion + "/" + namespace1.get + "/" + name1.get + "/"
-//      + testEntity1WithId.snapshotId.get + "?onlyPayload=true") ~> methodsService.querySingleRoute ~>
-//      check {
-//        assert(status == OK)
-//        assert(mediaType == `text/plain`)
-//      }
-//  }
+  "Agora" should "return information about a method, including metadata " in {
+    Get(ApiUtil.Methods.withLeadingVersion + "/" + namespace1.get + "/" + name1.get + "/"
+      + testEntity1WithId.snapshotId.get) ~> methodsService.querySingleRoute ~> check {
+      assert(responseAs[AgoraEntity] == testEntity1WithId)
+      assert(status == OK)
+    }
+  }
+
+  "Agora" should "return only payload in plain/text when parameter is set " in {
+    Get(ApiUtil.Methods.withLeadingVersion + "/" + namespace1.get + "/" + name1.get + "/"
+      + testEntity1WithId.snapshotId.get + "?onlyPayload=true") ~> methodsService.querySingleRoute ~>
+      check {
+        assert(status == OK)
+        assert(mediaType == MediaTypes.`text/plain`)
+      }
+  }
 
   "Agora" should "return status 404, mediaType json when nothing matches query by namespace, name, snapshotId" in {
     Get(ApiUtil.Methods.withLeadingVersion + "/foofoofoofoo/foofoofoo/99999"

@@ -230,7 +230,6 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
       }
     }
 
-    // TODO[GAWB-3052] Figure out why querySingleRoute tests commented out below fail
     "Agora" should "throw an error if you try to use an illegal value for both parameters" in {
       Get(baseURL + "?payloadAsObject=fire&onlyPayload=cloud") ~>
         wrapWithRejectionHandler {

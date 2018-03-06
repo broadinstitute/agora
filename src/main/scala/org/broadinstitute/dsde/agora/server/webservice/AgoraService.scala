@@ -1,7 +1,6 @@
 
 package org.broadinstitute.dsde.agora.server.webservice
 
-import akka.actor.Props
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes.{BadRequest, Created}
 import akka.http.scaladsl.model.HttpMethods.{DELETE, GET}
@@ -12,7 +11,6 @@ import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
-import org.broadinstitute.dsde.agora.server.webservice.handlers.AddHandler
 import org.broadinstitute.dsde.agora.server.webservice.routes.RouteHelpers
 
 import scala.util.{Failure, Success}
@@ -153,8 +151,12 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
     postPath(path)(ec) { username =>
       entity(as[AgoraEntity]) { agoraEntity =>
         validatePostRoute(agoraEntity, path) {
-          val addHandler = new AddHandler(permissionsDataSource)
-          val addAttempt = addHandler.add(agoraEntity, username, path)
+          val entityWithType = AgoraEntityType.byPath(path) match {
+            case AgoraEntityType.Configuration => agoraEntity.addEntityType(Option(AgoraEntityType.Configuration))
+            case _ => agoraEntity
+          }
+
+          val addAttempt = agoraBusiness.insert(entityWithType, username)
           onComplete(addAttempt) {
             case Success(entity) => complete(Created, entity)
             case Failure(error) => failWith(error)

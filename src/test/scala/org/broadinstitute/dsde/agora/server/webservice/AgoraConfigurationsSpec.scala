@@ -230,40 +230,39 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
       }
     }
 
-    // TODO[GAWB-3052] Figure out why querySingleRoute tests commented out below fail
-//    "Agora" should "throw an error if you try to use an illegal value for both parameters" in {
-//      Get(baseURL + "?payloadAsObject=fire&onlyPayload=cloud") ~>
-//        wrapWithRejectionHandler {
-//          configurationsService.querySingleRoute
-//        } ~> check {
-//        rejection.isInstanceOf[MalformedQueryParamRejection]
-//      }
-//    }
-//
-//    "Agora" should "throw an error if you try to use an illegal value for one parameter" in {
-//      Get(baseURL + "?payloadAsObject=fire&onlyPayload=false") ~>
-//        wrapWithRejectionHandler {
-//          configurationsService.querySingleRoute
-//        } ~> check {
-//        rejection.isInstanceOf[MalformedQueryParamRejection]
-//      }
-//    }
-//
-//    "Agora" should "supply a default methodConfigVersion of 1 if it's missing" in {
-//
-//      val url = testConfigWithSnapshotMissingConfigVersion.namespace.get + "/" +
-//        testConfigWithSnapshotMissingConfigVersion.name.get + "/" +
-//        testConfigWithSnapshotMissingConfigVersion.snapshotId.get
-//
-//      Get(baseURL + "?payloadAsObject=true") ~>
-//      configurationsService.querySingleRoute ~> check {
-//        assert(status == OK)
-//
-//        val entity = responseAs[AgoraEntity]
-//
-//        assert(entity.payloadObject.get.methodConfigVersion == 1)
-//      }
-//    }
+    "Agora" should "throw an error if you try to use an illegal value for both parameters" in {
+      Get(baseURL + "?payloadAsObject=fire&onlyPayload=cloud") ~>
+        wrapWithRejectionHandler {
+          configurationsService.querySingleRoute
+        } ~> check {
+        rejection.isInstanceOf[MalformedQueryParamRejection]
+      }
+    }
+
+    "Agora" should "throw an error if you try to use an illegal value for one parameter" in {
+      Get(baseURL + "?payloadAsObject=fire&onlyPayload=false") ~>
+        wrapWithRejectionHandler {
+          configurationsService.querySingleRoute
+        } ~> check {
+        rejection.isInstanceOf[MalformedQueryParamRejection]
+      }
+    }
+
+    "Agora" should "supply a default methodConfigVersion of 1 if it's missing" in {
+
+      val url = testConfigWithSnapshotMissingConfigVersion.namespace.get + "/" +
+        testConfigWithSnapshotMissingConfigVersion.name.get + "/" +
+        testConfigWithSnapshotMissingConfigVersion.snapshotId.get
+
+      Get(baseURL + "?payloadAsObject=true") ~>
+      configurationsService.querySingleRoute ~> check {
+        assert(status == OK)
+
+        val entity = responseAs[AgoraEntity]
+
+        assert(entity.payloadObject.get.methodConfigVersion == 1)
+      }
+    }
 
     "Agora" should "throw DeserializationError if missing keys" in {
       import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport.MethodConfigurationFormat

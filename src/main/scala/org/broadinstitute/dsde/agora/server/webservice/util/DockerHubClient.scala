@@ -7,15 +7,12 @@ import org.broadinstitute.dsde.agora.server.webservice.util.DockerHubJsonSupport
 import spray.json._
 
 import scala.concurrent.Future
-import scala.concurrent.duration._
 
 case class DockerImageReference(user: Option[String], repo: String, tag: String)
 
 case class DockerTagInfo(pk: Int, id: String)
 
 trait DockerHubClient extends HttpClient {
-
-  val timeout = 20.seconds
 
   def dcGET(url: String): Future[HttpResponse] = get(Uri(url))
 
@@ -33,7 +30,7 @@ trait DockerHubClient extends HttpClient {
       }
   }
 
-  val dockerImageRepositoryBaseUrl = "https://index.docker.io/v1/repositories/"
+  def dockerImageRepositoryBaseUrl = "https://index.docker.io/v1/repositories/"
   def dockerImageTagUrl(dockerImage: DockerImageReference) = {
     var url = dockerImageRepositoryBaseUrl
     if (dockerImage.user.isDefined) {

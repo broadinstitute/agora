@@ -2,18 +2,19 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import akka.http.scaladsl.model.StatusCodes.{BadRequest, Created}
+import akka.http.scaladsl.model.StatusCodes.{BadRequest, Created, NotFound}
 import akka.http.scaladsl.model.HttpMethods.{DELETE, GET}
 import akka.http.scaladsl.server.{MethodRejection, PathMatcher}
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.AgoraConfig.authenticationDirectives
 import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
+import org.broadinstitute.dsde.agora.server.exceptions.AgoraEntityNotFoundException
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
 import org.broadinstitute.dsde.agora.server.webservice.routes.RouteHelpers
 
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 import scalaz.{Failure => FailureZ, Success => SuccessZ}
 
 /**
@@ -42,17 +43,21 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
             val entityTypes = AgoraEntityType.byPath(path)
 
             get {
-              val queryAttempt = agoraBusiness.findSingle(targetEntity, entityTypes, username)
-
-              onComplete(queryAttempt) {
-                case Success(foundEntity) =>
-                  (onlyPayload, payloadAsObject) match {
-                    case (true, true) => complete(BadRequest, "onlyPayload, payloadAsObject cannot be used together")
-                    case (true, false) => complete(foundEntity.payload)
-                    case (false, true) => complete(foundEntity.withDeserializedPayload)
-                    case _ => complete(foundEntity)
+              Try(agoraBusiness.findSingle(targetEntity, entityTypes, username)) match {
+                case Success(queryAttempt) =>
+                  onComplete(queryAttempt) {
+                    case Success(foundEntity) =>
+                      (onlyPayload, payloadAsObject) match {
+                        case (true, true) => complete(BadRequest, "onlyPayload, payloadAsObject cannot be used together")
+                        case (true, false) => complete(foundEntity.payload)
+                        case (false, true) => complete(foundEntity.withDeserializedPayload)
+                        case _ => complete(foundEntity)
+                      }
+                    case Failure(error) => failWith(error)
                   }
-                case Failure(error) => failWith(error)
+                case Failure(_:AgoraEntityNotFoundException) => complete(NotFound) // expected not-found exception
+                case Failure(ex) => failWith(ex) // unexpected exception thrown when querying for entity
+
               }
             } ~
             delete {

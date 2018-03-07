@@ -18,7 +18,7 @@ class Ga4ghService(permissionsDataSource: PermissionsDataSource) extends Ga4ghQu
 
   // dataSource and ec Required for Ga4ghQueryHandler
   implicit val dataSource: PermissionsDataSource = permissionsDataSource
-  implicit val ec: ExecutionContextExecutor = scala.concurrent.ExecutionContext.Implicits.global
+  implicit val ec: ExecutionContextExecutor = scala.concurrent.ExecutionContext.global
 
   def routes: Route =
     pathPrefix("ga4gh" / "v1") {

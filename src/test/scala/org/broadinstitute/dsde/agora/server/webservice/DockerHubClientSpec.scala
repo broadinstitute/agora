@@ -17,7 +17,7 @@ import scala.concurrent.ExecutionContextExecutor
 @DoNotDiscover
 class DockerHubClientSpec extends AsyncFreeSpec with Matchers with BeforeAndAfterAll with DockerHubClient {
 
-  override implicit val executionContext: ExecutionContextExecutor = scala.concurrent.ExecutionContext.Implicits.global
+  override implicit val executionContext: ExecutionContextExecutor = scala.concurrent.ExecutionContext.global
 
   var mockServer: ClientAndServer = _
   val validPath = "/repo/tags/tag"

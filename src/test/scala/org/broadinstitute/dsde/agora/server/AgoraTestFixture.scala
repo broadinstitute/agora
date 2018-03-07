@@ -9,12 +9,12 @@ import org.broadinstitute.dsde.agora.server.dataaccess.ReadWriteAction
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.{AgoraMongoClient, EmbeddedMongo}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
 import slick.dbio.DBIOAction
-import slick.dbio.Effect.Read
-import slick.driver.MySQLDriver.api._
+import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.meta.MTable
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+import scala.language.postfixOps
 
 trait AgoraTestFixture {
   import scala.concurrent.ExecutionContext.Implicits.global

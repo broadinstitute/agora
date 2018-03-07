@@ -24,7 +24,7 @@ class NamespacePermissionsService(dataSource: PermissionsDataSource) extends Rou
   lazy val permissionBusiness = new PermissionBusiness(dataSource)(ec)
 
   def routes: Route =
-    authenticationDirectives.usernameFromRequest() { username: String =>
+    authenticationDirectives.usernameFromRequest(()) { username: String =>
       path("api" / AgoraConfig.version / ("configurations" | "methods") / Segment / "permissions") { namespace: String =>
         parameterMap { (params) =>
           val agoraEntity = AgoraEntity(Option(namespace))

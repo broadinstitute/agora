@@ -94,7 +94,7 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
 
   def queryMethodDefinitionsRoute =
     (versionedPath(PathMatcher("methods" / "definitions")) & get &
-      authenticationDirectives.usernameFromRequest()) { username =>
+      authenticationDirectives.usernameFromRequest(())) { username =>
         val listingAttempt = agoraBusiness.listDefinitions(username)
 
         onComplete(listingAttempt) {
@@ -106,7 +106,7 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
   // all configurations that reference any snapshot of the supplied method
   def queryAssociatedConfigurationsRoute =
     (versionedPath(PathMatcher("methods" / Segment / Segment / "configurations")) & get &
-      authenticationDirectives.usernameFromRequest()) { (namespace, name, username) =>
+      authenticationDirectives.usernameFromRequest(())) { (namespace, name, username) =>
         val listingAttempt = agoraBusiness.listAssociatedConfigurations(namespace, name, username)
 
         onComplete(listingAttempt) {
@@ -119,7 +119,7 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
   // as well as referencing any snapshot of the supplied method
   def queryCompatibleConfigurationsRoute =
     (versionedPath(PathMatcher("methods" / Segment / Segment / IntNumber / "configurations")) & get &
-      authenticationDirectives.usernameFromRequest()) { (namespace, name, snapshotId, username) =>
+      authenticationDirectives.usernameFromRequest(())) { (namespace, name, snapshotId, username) =>
         val listingAttempt = agoraBusiness.listCompatibleConfigurations(namespace, name, snapshotId, username)
 
         onComplete(listingAttempt) {

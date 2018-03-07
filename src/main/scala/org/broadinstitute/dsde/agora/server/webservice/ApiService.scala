@@ -35,10 +35,10 @@ object ApiService extends LazyLogging with SprayJsonSupport with DefaultJsonProt
   val exceptionHandler: ExceptionHandler = {
     ExceptionHandler {
       case withErrorReport: WorkbenchExceptionWithErrorReport =>
-        complete(withErrorReport.errorReport.statusCode.getOrElse(StatusCodes.InternalServerError), withErrorReport.errorReport)
+        complete(withErrorReport.errorReport.statusCode.getOrElse(InternalServerError), withErrorReport.errorReport)
       case workbenchException: WorkbenchException =>
-        val report = ErrorReport(Option(workbenchException.getMessage).getOrElse(""), Some(StatusCodes.InternalServerError), Seq(), Seq(), Some(workbenchException.getClass))
-        complete(StatusCodes.InternalServerError, report)
+        val report = ErrorReport(Option(workbenchException.getMessage).getOrElse(""), Some(InternalServerError), Seq(), Seq(), Some(workbenchException.getClass))
+        complete(InternalServerError, report)
       case e: IllegalArgumentException => complete(BadRequest, e)
       case e: AgoraEntityAuthorizationException => complete(Forbidden, AgoraException(e.getMessage, e.getCause, Forbidden))
       case e: NamespaceAuthorizationException => complete(Forbidden, AgoraException(e.getMessage, e.getCause, Forbidden))
@@ -47,11 +47,11 @@ object ApiService extends LazyLogging with SprayJsonSupport with DefaultJsonProt
       case e: PermissionNotFoundException => complete(BadRequest, AgoraException(e.getMessage, e.getCause, BadRequest))
       case e: ValidationException => complete(BadRequest, AgoraException(e.getMessage, e.getCause, BadRequest))
       case e: PermissionModificationException => complete(BadRequest, AgoraException(e.getMessage, e.getCause, BadRequest))
-      case e: AgoraException => complete(e.statusCode, e.getMessage)
-      case e: wdl.exception.ValidationException => complete(BadRequest, e.getMessage)
+      case e: AgoraException => complete(e.statusCode, e)
+      case e: wdl.exception.ValidationException => complete(BadRequest, AgoraException(e.getMessage, e.getCause, BadRequest))
       case e: Throwable =>
         logger.error("Exception caught by ExceptionHandler: ", e)
-        complete(StatusCodes.InternalServerError, e.getMessage)
+        complete(InternalServerError, AgoraException(e.getMessage, e.getCause, InternalServerError))
     }
   }
 }

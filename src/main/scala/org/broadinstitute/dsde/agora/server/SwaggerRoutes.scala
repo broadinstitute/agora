@@ -6,6 +6,8 @@ import akka.http.scaladsl.server.Directives._
 import akka.stream.scaladsl.Flow
 import akka.util.ByteString
 
+import scala.language.postfixOps
+
 trait SwaggerRoutes {
   private val swaggerUiPath = "META-INF/resources/webjars/swagger-ui/2.2.10-1"
 

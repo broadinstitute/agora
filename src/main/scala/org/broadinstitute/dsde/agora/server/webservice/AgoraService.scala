@@ -64,9 +64,7 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
               val deletionAttempt = agoraBusiness.delete(targetEntity, entityTypes, username)
 
               onComplete(deletionAttempt) {
-                case Success(rowsDeleted) => complete("FIX ME")
-                // TODO[GAWB-3052] The line above should be the line below; figure out what implicit may be missing
-                // case Success(rowsDeleted) => complete(rowsDeleted)
+                case Success(rowsDeleted) => complete(rowsDeleted.toString)
                 case Failure(error) => failWith(error)
               }
             } ~

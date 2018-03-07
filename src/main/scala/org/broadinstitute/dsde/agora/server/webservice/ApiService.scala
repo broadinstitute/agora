@@ -3,6 +3,7 @@ package org.broadinstitute.dsde.agora.server.webservice
 import akka.actor.{ActorRef, ActorSystem}
 import akka.event.{Logging, LoggingAdapter}
 import akka.event.Logging.LogLevel
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
@@ -20,34 +21,37 @@ import org.broadinstitute.dsde.agora.server.webservice.configurations.Configurat
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
 import org.broadinstitute.dsde.agora.server.webservice.permissions.{EntityPermissionsService, MultiEntityPermissionsService, NamespacePermissionsService}
 import org.broadinstitute.dsde.workbench.model.{ErrorReport, WorkbenchException, WorkbenchExceptionWithErrorReport}
+import org.broadinstitute.dsde.agora.server.errorReportSource
+import spray.json.DefaultJsonProtocol
 
 import scala.concurrent.{ExecutionContext, Future}
 
-object ApiService {
+object ApiService extends LazyLogging with SprayJsonSupport with DefaultJsonProtocol {
 
-  // Required for marshalling
-  import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+  // Required for marshalling errors:
+  import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
   import org.broadinstitute.dsde.workbench.model.ErrorReportJsonSupport._
-  import org.broadinstitute.dsde.agora.server.errorReportSource
 
   val exceptionHandler: ExceptionHandler = {
     ExceptionHandler {
       case withErrorReport: WorkbenchExceptionWithErrorReport =>
-        complete(withErrorReport.errorReport.statusCode.getOrElse(StatusCodes.InternalServerError), withErrorReport.errorReport)
+        complete(withErrorReport.errorReport.statusCode.getOrElse(InternalServerError), withErrorReport.errorReport)
       case workbenchException: WorkbenchException =>
-        val report = ErrorReport(Option(workbenchException.getMessage).getOrElse(""), Some(StatusCodes.InternalServerError), Seq(), Seq(), Some(workbenchException.getClass))
-        complete(StatusCodes.InternalServerError, report)
-      case e: IllegalArgumentException => complete(BadRequest, ErrorReport(e))
-      case e: AgoraEntityAuthorizationException => complete(Forbidden, ErrorReport(e))
-      case e: NamespaceAuthorizationException => complete(Forbidden, ErrorReport(e))
-      case e: AgoraEntityNotFoundException => complete(NotFound, ErrorReport(e))
-      case e: DockerImageNotFoundException => complete(BadRequest, ErrorReport(e))
-      case e: PermissionNotFoundException => complete(BadRequest, ErrorReport(e))
-      case e: ValidationException => complete(BadRequest, ErrorReport(e))
-      case e: wdl.exception.ValidationException => complete(BadRequest, ErrorReport(e))
-      case e: PermissionModificationException => complete(BadRequest, ErrorReport(e))
-      case e: AgoraException => complete(StatusCodes.getForKey(e.statusCode.intValue).getOrElse(StatusCodes.InternalServerError), ErrorReport(e))
-      case e: Throwable => complete(StatusCodes.InternalServerError, ErrorReport(e))
+        val report = ErrorReport(Option(workbenchException.getMessage).getOrElse(""), Some(InternalServerError), Seq(), Seq(), Some(workbenchException.getClass))
+        complete(InternalServerError, report)
+      case e: IllegalArgumentException => complete(BadRequest, e)
+      case e: AgoraEntityAuthorizationException => complete(Forbidden, AgoraException(e.getMessage, e.getCause, Forbidden))
+      case e: NamespaceAuthorizationException => complete(Forbidden, AgoraException(e.getMessage, e.getCause, Forbidden))
+      case e: AgoraEntityNotFoundException => complete(NotFound, AgoraException(e.getMessage, e.getCause, NotFound))
+      case e: DockerImageNotFoundException => complete(BadRequest, AgoraException(e.getMessage, e.getCause, BadRequest))
+      case e: PermissionNotFoundException => complete(BadRequest, AgoraException(e.getMessage, e.getCause, BadRequest))
+      case e: ValidationException => complete(BadRequest, AgoraException(e.getMessage, e.getCause, BadRequest))
+      case e: PermissionModificationException => complete(BadRequest, AgoraException(e.getMessage, e.getCause, BadRequest))
+      case e: AgoraException => complete(e.statusCode, e)
+      case e: wdl.exception.ValidationException => complete(BadRequest, AgoraException(e.getMessage, e.getCause, BadRequest))
+      case e: Throwable =>
+        logger.error("Exception caught by ExceptionHandler: ", e)
+        complete(InternalServerError, AgoraException(e.getMessage, e.getCause, InternalServerError))
     }
   }
 }
@@ -63,9 +67,7 @@ class ApiService(permissionsDataSource: PermissionsDataSource, healthMonitor: Ac
   val namespacePermissionsService = new NamespacePermissionsService(permissionsDataSource)
   val entityPermissionsService = new EntityPermissionsService(permissionsDataSource)
   val multiEntityPermissionsService = new MultiEntityPermissionsService(permissionsDataSource)
-  // TODO[GAWB-3052] Instantiate the remaining services once they are converted
 
-  // TODO[GAWB-3052] Add the remaining routes once they are converted
   def route: Route = (logRequestResult & handleExceptions(ApiService.exceptionHandler)) {
     options { complete(OK) } ~ statusService.statusRoute ~ swaggerRoutes ~ ga4ghService.routes ~ methodsService.routes ~
       configurationsService.routes ~ namespacePermissionsService.routes ~ entityPermissionsService.routes ~

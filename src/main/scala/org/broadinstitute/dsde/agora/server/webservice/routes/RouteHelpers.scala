@@ -18,8 +18,6 @@ trait BaseRoute extends RouteUtil  {
       throw new IllegalArgumentException("Missing params: user and/or role.")
   }
 
-  // TODO[GAWB-3052] L used to be a subtype of HList. Akka-Http dropped shapeless.
-  // Does L have to be a subtype of something else (e.g. Product) now?
   def versionedPath[L](pm: PathMatcher[L]): Directive[L] = path("api" / version / pm)
 }
 

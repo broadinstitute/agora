@@ -47,7 +47,7 @@ object ApiService extends LazyLogging with SprayJsonSupport with DefaultJsonProt
       case e: PermissionNotFoundException => complete(BadRequest, AgoraException(e.getMessage, e.getCause, BadRequest))
       case e: ValidationException => complete(BadRequest, AgoraException(e.getMessage, e.getCause, BadRequest))
       case e: PermissionModificationException => complete(BadRequest, AgoraException(e.getMessage, e.getCause, BadRequest))
-      case e: AgoraException => complete(StatusCodes.getForKey(e.statusCode.intValue).getOrElse(StatusCodes.InternalServerError), e.getMessage)
+      case e: AgoraException => complete(e.statusCode, e.getMessage)
       case e: wdl.exception.ValidationException => complete(BadRequest, e.getMessage)
       case e: Throwable =>
         logger.error("Exception caught by ExceptionHandler: ", e)

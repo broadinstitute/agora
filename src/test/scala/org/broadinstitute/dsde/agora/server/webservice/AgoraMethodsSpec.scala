@@ -24,7 +24,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
   var testEntityToBeRedactedWithId: AgoraEntity = _
 
   val routes = handleExceptions(ApiService.exceptionHandler) {
-    methodsService.postRoute
+    methodsService.postRoute ~ methodsService.querySingleRoute
   }
 
   override def beforeAll() = {
@@ -263,30 +263,30 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
     }
   }
 
-//  "Agora" should "allow method redaction" in {
-//    Delete(ApiUtil.Methods.withLeadingVersion + "/" + testEntityToBeRedactedWithId.namespace.get + "/" +
-//      testEntityToBeRedactedWithId.name.get + "/" + testEntityToBeRedactedWithId.snapshotId.get) ~>
-//    methodsService.querySingleRoute ~> check {
-//      assert(body.asString == "1")
-//    }
-//  }
-//
-//  "Agora" should "not allow redacted methods to be queried" in {
-//    Get(ApiUtil.Methods.withLeadingVersion + "/" + testEntityToBeRedactedWithId.namespace.get + "/" +
-//      testEntityToBeRedactedWithId.name.get + "/" + testEntityToBeRedactedWithId.snapshotId.get) ~>
-//      methodsService.querySingleRoute ~> check {
-//      assert(body.asString contains "not found")
-//    }
-//  }
-//
-//  "Agora" should "not let you specify a deserialized payload on the methods route" in {
-//    Get(ApiUtil.Methods.withLeadingVersion + "/" + testMethodWithSnapshot1.namespace.get + "/" +
-//      testMethodWithSnapshot1.name.get + "/" + testMethodWithSnapshot1.snapshotId.get + "?payloadAsObject=true") ~>
-//      methodsService.querySingleRoute ~> check {
-//        assert(body.asString contains "does not support payload deserialization")
-//        assert(status == InternalServerError)
-//    }
-//  }
+  "Agora" should "allow method redaction" in {
+    Delete(ApiUtil.Methods.withLeadingVersion + "/" + testEntityToBeRedactedWithId.namespace.get + "/" +
+      testEntityToBeRedactedWithId.name.get + "/" + testEntityToBeRedactedWithId.snapshotId.get) ~>
+      routes ~> check {
+      assert(responseAs[String] == "1")
+    }
+  }
+
+  "Agora" should "not allow redacted methods to be queried" in {
+    Get(ApiUtil.Methods.withLeadingVersion + "/" + testEntityToBeRedactedWithId.namespace.get + "/" +
+      testEntityToBeRedactedWithId.name.get + "/" + testEntityToBeRedactedWithId.snapshotId.get) ~>
+      routes ~> check {
+      assert(responseAs[String] contains "not found")
+    }
+  }
+
+  "Agora" should "not let you specify a deserialized payload on the methods route" in {
+    Get(ApiUtil.Methods.withLeadingVersion + "/" + testMethodWithSnapshot1.namespace.get + "/" +
+      testMethodWithSnapshot1.name.get + "/" + testMethodWithSnapshot1.snapshotId.get + "?payloadAsObject=true") ~>
+      routes ~> check {
+        assert(responseAs[String] contains "does not support payload deserialization")
+        assert(status == InternalServerError)
+    }
+  }
 
   "Agora" should "accept and record a snapshot comment when creating the initial snapshot of a method" in {
     Post(ApiUtil.Methods.withLeadingVersion, testMethodWithSnapshotComment1.copy(snapshotId = None)) ~>

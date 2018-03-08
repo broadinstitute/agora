@@ -11,7 +11,7 @@ object EmbeddedMongo extends MongoEmbedDatabase {
   def startMongo() = {
     println(s"Starting embedded mongo db instance.")
     if (mongodProps == null || !mongodProps.mongodProcess.isProcessRunning) {
-      mongodProps = mongoStart(port = 27017, version = Version.V3_4_1)
+      mongodProps = mongoStart(port = 27017, version = Version.V3_0_6)
     }
   }
 

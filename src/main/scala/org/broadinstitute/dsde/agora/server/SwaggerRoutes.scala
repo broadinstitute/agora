@@ -6,8 +6,6 @@ import akka.http.scaladsl.server.Directives._
 import akka.stream.scaladsl.Flow
 import akka.util.ByteString
 
-import scala.language.postfixOps
-
 trait SwaggerRoutes {
   private val swaggerUiPath = "META-INF/resources/webjars/swagger-ui/2.2.10-1"
 
@@ -31,8 +29,8 @@ trait SwaggerRoutes {
       // want to catch all paths lest we circumvent Spray's not-found and method-not-allowed error
       // messages.
       (pathSuffixTest("o2c.html") | pathSuffixTest("swagger-ui.js")
-        | pathPrefixTest("css" /) | pathPrefixTest("fonts" /) | pathPrefixTest("images" /)
-        | pathPrefixTest("lang" /) | pathPrefixTest("lib" /)) {
+        | pathPrefixTest("css") | pathPrefixTest("fonts") | pathPrefixTest("images")
+        | pathPrefixTest("lang") | pathPrefixTest("lib")) {
         get {
           getFromResourceDirectory(swaggerUiPath)
         }

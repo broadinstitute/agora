@@ -7,6 +7,8 @@ import org.broadinstitute.dsde.agora.server.{AgoraTestData, AgoraTestFixture}
 import org.scalatest.{DoNotDiscover, WordSpecLike, Matchers, BeforeAndAfterAll}
 import scala.concurrent.duration._
 
+import scala.language.postfixOps
+
 object AdminSweeperSpec {
   def getMockAdminsList:() =>  List[String] = { () =>
     List("fake@broadinstitute.org", AgoraTestData.owner1.get, AgoraTestData.owner2.get)

@@ -1,6 +1,6 @@
 package org.broadinstitute.dsde.agora.server.dataaccess.permissions
 
-import slick.driver.MySQLDriver.api._
+import slick.jdbc.MySQLProfile.api._
 
 // Users
 case class UserDao(email: String, isAdmin: Boolean = false, id: Option[Int] = None)

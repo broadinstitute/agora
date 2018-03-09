@@ -29,8 +29,8 @@ trait SwaggerRoutes {
       // want to catch all paths lest we circumvent Spray's not-found and method-not-allowed error
       // messages.
       (pathSuffixTest("o2c.html") | pathSuffixTest("swagger-ui.js")
-        | pathPrefixTest("css" /) | pathPrefixTest("fonts" /) | pathPrefixTest("images" /)
-        | pathPrefixTest("lang" /) | pathPrefixTest("lib" /)) {
+        | pathPrefixTest("css") | pathPrefixTest("fonts") | pathPrefixTest("images")
+        | pathPrefixTest("lang") | pathPrefixTest("lib")) {
         get {
           getFromResourceDirectory(swaggerUiPath)
         }

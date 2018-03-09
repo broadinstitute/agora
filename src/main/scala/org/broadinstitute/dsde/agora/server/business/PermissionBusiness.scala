@@ -32,7 +32,7 @@ class PermissionBusiness(permissionsDataSource: PermissionsDataSource)(implicit 
   def batchNamespacePermission(entity: AgoraEntity, requester: String, accessObjectList: List[AccessControl]): Future[Int] = {
     def authOne(db: DataAccess, accessObject: AccessControl) = {
       authNamespaceRequester(db, entity, requester, accessObject) {
-        DBIOAction.successful()
+        DBIOAction.successful(())
       }
     }
 
@@ -147,7 +147,7 @@ class PermissionBusiness(permissionsDataSource: PermissionsDataSource)(implicit 
   def batchEntityPermission(entity: AgoraEntity, requester: String, accessObjectList: List[AccessControl]): Future[Int] = {
     def authOne(db: DataAccess, accessObject: AccessControl) = {
       authEntityRequester(db, entity, requester, accessObject) {
-        DBIOAction.successful()
+        DBIOAction.successful(())
       }
     }
     permissionsDataSource.inTransaction { db =>

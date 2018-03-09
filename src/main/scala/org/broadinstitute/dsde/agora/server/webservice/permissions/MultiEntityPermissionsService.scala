@@ -22,7 +22,7 @@ class MultiEntityPermissionsService(dataSource: PermissionsDataSource) extends R
   lazy val permissionBusiness = new PermissionBusiness(dataSource)(ec)
 
   def routes: Route =
-    authenticationDirectives.usernameFromRequest() { username: String =>
+    authenticationDirectives.usernameFromRequest(()) { username: String =>
       path("api" / AgoraConfig.version / ("configurations" | "methods") / "permissions") {
         post {
           entity(as[List[AgoraEntity]]) { entities =>

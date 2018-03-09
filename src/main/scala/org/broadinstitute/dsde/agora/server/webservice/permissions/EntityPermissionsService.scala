@@ -24,7 +24,7 @@ class EntityPermissionsService(dataSource: PermissionsDataSource) extends RouteH
   lazy val permissionBusiness = new PermissionBusiness(dataSource)(ec)
 
   def routes: Route =
-    authenticationDirectives.usernameFromRequest() { username: String =>
+    authenticationDirectives.usernameFromRequest(()) { username: String =>
       path("api" / AgoraConfig.version / ("configurations" | "methods") / Segment / Segment / IntNumber / "permissions") {
         (namespace: String, name: String, snapshotId: Int) =>
         parameterMap { (params) =>

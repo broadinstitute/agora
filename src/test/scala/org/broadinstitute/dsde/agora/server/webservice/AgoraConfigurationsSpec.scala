@@ -28,7 +28,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
   var testAgoraConfigurationToBeRedactedWithId: AgoraEntity = _
 
   val routes = handleExceptions(ApiService.exceptionHandler) {
-    configurationsService.querySingleRoute ~ configurationsService.postRoute
+    configurationsService.querySingleRoute ~ configurationsService.postRoute ~ methodsService.querySingleRoute
   }
 
   override def beforeAll() = {
@@ -170,28 +170,28 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
     }
   }
 
-//  "Agora" should "redact methods when it has at least 1 associated configuration" in {
-//    Delete(ApiUtil.Methods.withLeadingVersion + "/" +
-//      testEntityToBeRedacted2WithId.namespace.get + "/" +
-//      testEntityToBeRedacted2WithId.name.get + "/" +
-//      testEntityToBeRedacted2WithId.snapshotId.get) ~>
-//    methodsService.querySingleRoute ~>
-//    check {
-//      assert(body.asString == "1")
-//    }
-//  }
-//
-//  "Agora" should "redact associated configurations when the referenced method is redacted" in {
-//    Get(ApiUtil.Configurations.withLeadingVersion + "/" +
-//      testAgoraConfigurationToBeRedactedWithId.namespace.get + "/" +
-//      testAgoraConfigurationToBeRedactedWithId.name.get + "/" +
-//      testAgoraConfigurationToBeRedactedWithId.snapshotId.get) ~>
-//    configurationsService.querySingleRoute ~>
-//    check {
-//      assert(body.asString contains "not found")
-//    }
-//  }
-//
+  "Agora" should "redact methods when it has at least 1 associated configuration" in {
+    Delete(ApiUtil.Methods.withLeadingVersion + "/" +
+      testEntityToBeRedacted2WithId.namespace.get + "/" +
+      testEntityToBeRedacted2WithId.name.get + "/" +
+      testEntityToBeRedacted2WithId.snapshotId.get) ~>
+    routes ~>
+    check {
+      assert(responseAs[String] == "1")
+    }
+  }
+
+  "Agora" should "redact associated configurations when the referenced method is redacted" in {
+    Get(ApiUtil.Configurations.withLeadingVersion + "/" +
+      testAgoraConfigurationToBeRedactedWithId.namespace.get + "/" +
+      testAgoraConfigurationToBeRedactedWithId.name.get + "/" +
+      testAgoraConfigurationToBeRedactedWithId.snapshotId.get) ~>
+    routes ~>
+    check {
+      assert(responseAs[String] contains "not found")
+    }
+  }
+
   {
     val baseURL = ApiUtil.Configurations.withLeadingVersion + "/" +
       testConfigWithSnapshot1.namespace.get + "/" +

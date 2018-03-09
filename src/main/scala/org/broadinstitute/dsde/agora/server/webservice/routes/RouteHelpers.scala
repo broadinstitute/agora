@@ -23,10 +23,10 @@ trait BaseRoute extends RouteUtil  {
 
 trait QueryRouteHelper extends BaseRoute {
   def matchQuerySingleRoute(_path: String)(implicit ec: ExecutionContext) =
-    versionedPath(_path / Segment / Segment / IntNumber) & authenticationDirectives.usernameFromRequest()
+    versionedPath(_path / Segment / Segment / IntNumber) & authenticationDirectives.usernameFromRequest(())
   
   def matchQueryRoute(_path: String)(implicit ec: ExecutionContext) =
-    get & versionedPath(_path) & authenticationDirectives.usernameFromRequest()
+    get & versionedPath(_path) & authenticationDirectives.usernameFromRequest(())
 
   def entityFromParams(params: Map[String, List[String]]): AgoraEntity = AgoraEntity(
     namespace       = params.getOrElse("namespace", Nil).headOption,
@@ -59,7 +59,7 @@ trait QueryRouteHelper extends BaseRoute {
 
 trait AddRouteHelper extends BaseRoute {
   def postPath(_path: String)(implicit ec: ExecutionContext) = {
-    post & versionedPath(_path) & authenticationDirectives.usernameFromRequest()
+    post & versionedPath(_path) & authenticationDirectives.usernameFromRequest(())
   }
 
   def validatePostRoute(entity: AgoraEntity, path: String): Directive0 = {

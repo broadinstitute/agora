@@ -14,6 +14,7 @@ import org.broadinstitute.dsde.workbench.util.health.HealthMonitor
 import org.broadinstitute.dsde.workbench.util.health.Subsystems.{Database, Mongo}
 
 import scala.concurrent.duration._
+import scala.language.postfixOps
 import scala.util.Try
 
 class ServerInitializer extends LazyLogging {

@@ -3,11 +3,10 @@ package org.broadinstitute.dsde.agora.server.dataaccess.permissions
 import akka.actor.{Actor, Props}
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.webservice.util.GoogleApiUtils
-import slick.dbio.Effect.{Read, Write}
-import slick.dbio.{DBIOAction, NoStream}
+import slick.dbio.DBIOAction
 
-import scala.collection.JavaConversions._
-import scala.concurrent.{ExecutionContext, Future}
+import scala.collection.JavaConverters._
+import scala.concurrent.Future
 
 object AdminSweeper {
   def props(pollFunction: () => List[String], permissionsDataSource: PermissionsDataSource): Props = Props(classOf[AdminSweeper], pollFunction, permissionsDataSource)
@@ -24,8 +23,9 @@ object AdminSweeper {
       .list(AgoraConfig.adminGoogleGroup.get)
       .execute
       .getMembers
-      .toList
+      .asScala
       .map(_.getEmail)
+      .toList
   }
 }
 

@@ -8,7 +8,7 @@ organization := "org.broadinstitute"
 scalaVersion := "2.12.4"
 
 // uncomment to see compile warnings
-// scalacOptions := Seq("-unchecked", "-deprecation", "-feature")
+scalacOptions := Seq("-unchecked", "-deprecation", "-feature")
 
 lazy val akkaV = "2.5.9"
 lazy val akkaHttpV = "10.0.11"

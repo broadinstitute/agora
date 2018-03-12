@@ -7,7 +7,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.{Directive0, ExceptionHandler, Route}
+import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.RouteResult.Complete
 import akka.http.scaladsl.server.directives.{DebuggingDirectives, LogEntry, LoggingMagnet}
 import akka.stream.Materializer
@@ -54,6 +54,15 @@ object ApiService extends LazyLogging with SprayJsonSupport with DefaultJsonProt
         complete(InternalServerError, AgoraException(e.getMessage, e.getCause, InternalServerError))
     }
   }
+
+  val rejectionHandler: RejectionHandler =
+    RejectionHandler.newBuilder().handle {
+      case MalformedRequestContentRejection(message, cause) => complete(BadRequest, message)
+    }.handle {
+      case UnacceptedResponseContentTypeRejection(supported) => complete(NotAcceptable,
+        "Resource representation is only available with these Content-Types:\n" + supported.map(_.format).mkString("\n"))
+    }.result()
+
 }
 
 class ApiService(permissionsDataSource: PermissionsDataSource, healthMonitor: ActorRef)
@@ -68,7 +77,7 @@ class ApiService(permissionsDataSource: PermissionsDataSource, healthMonitor: Ac
   val entityPermissionsService = new EntityPermissionsService(permissionsDataSource)
   val multiEntityPermissionsService = new MultiEntityPermissionsService(permissionsDataSource)
 
-  def route: Route = (logRequestResult & handleExceptions(ApiService.exceptionHandler)) {
+  def route: Route = (logRequestResult & handleExceptions(ApiService.exceptionHandler) & handleRejections(ApiService.rejectionHandler)) {
     options { complete(OK) } ~ statusService.statusRoute ~ swaggerRoutes ~ ga4ghService.routes ~ methodsService.routes ~
       configurationsService.routes ~ namespacePermissionsService.routes ~ entityPermissionsService.routes ~
       multiEntityPermissionsService.routes

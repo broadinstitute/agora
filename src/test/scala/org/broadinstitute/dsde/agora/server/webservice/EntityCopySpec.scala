@@ -61,7 +61,7 @@ class EntityCopySpec extends ApiServiceSpec with FlatSpecLike {
     val targetUri = ApiUtil.Configurations.withLeadingVersion + "/nosupportfor/configs/1"
     Post(targetUri, AgoraEntity()) ~>
       addHeader(MockAgoraDirectives.mockAuthenticatedUserEmailHeader, owner1.get) ~>
-      handleExceptions(ApiService.exceptionHandler) { configurationsService.querySingleRoute } ~> check {
+      (handleExceptions(ApiService.exceptionHandler) & handleRejections(ApiService.rejectionHandler)) { configurationsService.querySingleRoute } ~> check {
         assert(!handled)
     }
   }
@@ -123,7 +123,7 @@ class EntityCopySpec extends ApiServiceSpec with FlatSpecLike {
 
     Post(postUri, AgoraEntity()) ~>
       addHeader(MockAgoraDirectives.mockAuthenticatedUserEmailHeader, asUser) ~>
-      handleExceptions(ApiService.exceptionHandler) { methodsService.querySingleRoute } ~> check {
+      (handleExceptions(ApiService.exceptionHandler) & handleRejections(ApiService.rejectionHandler)) { methodsService.querySingleRoute } ~> check {
         assert(status == expectedStatus, response.toString)
         if (expectedStatus == Created) {
           val entity = responseAs[AgoraEntity]
@@ -157,7 +157,7 @@ class EntityCopySpec extends ApiServiceSpec with FlatSpecLike {
     if (assertRedact) {
       Get(getUri) ~>
         addHeader(MockAgoraDirectives.mockAuthenticatedUserEmailHeader, asUser) ~>
-        handleExceptions(ApiService.exceptionHandler) { methodsService.querySingleRoute } ~> check {
+        (handleExceptions(ApiService.exceptionHandler) & handleRejections(ApiService.rejectionHandler)) { methodsService.querySingleRoute } ~> check {
           if (redact) {
             assert(status == NotFound, response.toString)
           } else {

@@ -4,8 +4,8 @@ package org.broadinstitute.dsde.agora.server.webservice
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model._
+import akka.http.scaladsl.server.Directives.{handleExceptions, handleRejections}
 import akka.http.scaladsl.server._
-
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraPermissions}
@@ -15,7 +15,6 @@ import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
 import org.scalatest.{DoNotDiscover, FlatSpecLike}
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.rawls.model.MethodConfiguration
-
 import spray.json.{DeserializationException, JsObject}
 
 import scala.concurrent.Future
@@ -27,7 +26,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
   var testEntityToBeRedacted2WithId: AgoraEntity = _
   var testAgoraConfigurationToBeRedactedWithId: AgoraEntity = _
 
-  val routes = handleExceptions(ApiService.exceptionHandler) {
+  val routes = (handleExceptions(ApiService.exceptionHandler) & handleRejections(ApiService.rejectionHandler)) {
     configurationsService.querySingleRoute ~ configurationsService.postRoute ~ methodsService.querySingleRoute
   }
 

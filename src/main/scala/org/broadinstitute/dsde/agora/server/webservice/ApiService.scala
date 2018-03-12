@@ -57,8 +57,7 @@ object ApiService extends LazyLogging with SprayJsonSupport with DefaultJsonProt
 
   val rejectionHandler: RejectionHandler =
     RejectionHandler.newBuilder().handle {
-      case MalformedRequestContentRejection(message, cause) => complete(BadRequest, message)
-    }.handle {
+      case MalformedRequestContentRejection(message, cause) => complete(BadRequest, AgoraException(message = message, cause, BadRequest))
       case UnacceptedResponseContentTypeRejection(supported) => complete(NotAcceptable,
         "Resource representation is only available with these Content-Types:\n" + supported.map(_.format).mkString("\n"))
     }.result()

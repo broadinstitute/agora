@@ -3,9 +3,7 @@ package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes._
-import akka.http.scaladsl.model._
 import akka.http.scaladsl.server._
-
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraPermissions}
@@ -15,10 +13,7 @@ import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
 import org.scalatest.{DoNotDiscover, FlatSpecLike}
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.rawls.model.MethodConfiguration
-
 import spray.json.{DeserializationException, JsObject}
-
-import scala.concurrent.Future
 
 @DoNotDiscover
 class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
@@ -27,7 +22,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
   var testEntityToBeRedacted2WithId: AgoraEntity = _
   var testAgoraConfigurationToBeRedactedWithId: AgoraEntity = _
 
-  val routes = handleExceptions(ApiService.exceptionHandler) {
+  val routes = ApiService.handleExceptionsAndRejections {
     configurationsService.querySingleRoute ~ configurationsService.postRoute ~ methodsService.querySingleRoute
   }
 
@@ -232,7 +227,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
 
     "Agora" should "throw an error if you try to use an illegal value for both parameters" in {
       Get(baseURL + "?payloadAsObject=fire&onlyPayload=cloud") ~>
-        wrapWithRejectionHandler {
+        ApiService.handleExceptionsAndRejections {
           configurationsService.querySingleRoute
         } ~> check {
         rejection.isInstanceOf[MalformedQueryParamRejection]
@@ -241,7 +236,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
 
     "Agora" should "throw an error if you try to use an illegal value for one parameter" in {
       Get(baseURL + "?payloadAsObject=fire&onlyPayload=false") ~>
-        wrapWithRejectionHandler {
+        ApiService.handleExceptionsAndRejections {
           configurationsService.querySingleRoute
         } ~> check {
         rejection.isInstanceOf[MalformedQueryParamRejection]

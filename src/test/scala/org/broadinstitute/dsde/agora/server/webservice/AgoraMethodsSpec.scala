@@ -23,7 +23,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
   var testEntity7WithId: AgoraEntity = _
   var testEntityToBeRedactedWithId: AgoraEntity = _
 
-  val routes = handleExceptions(ApiService.exceptionHandler) {
+  val routes = ApiService.handleExceptionsAndRejections {
     methodsService.postRoute ~ methodsService.querySingleRoute
   }
 
@@ -123,7 +123,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
     val entity = new AgoraEntity(namespace= Option(" "), name= Option(" ") , synopsis= Option(" "), payload= Option(" "), entityType= Option(AgoraEntityType.Task))
 
     Post(ApiUtil.Methods.withLeadingVersion, entity) ~>
-      wrapWithRejectionHandler {
+      ApiService.handleExceptionsAndRejections {
         methodsService.postRoute
       } ~> check {
       assert(!handled)
@@ -133,7 +133,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
 
   "Agora" should "reject the request when posting with a payload of None" in {
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(payload = None)) ~>
-      wrapWithRejectionHandler {
+      ApiService.handleExceptionsAndRejections {
         methodsService.postRoute
       } ~> check {
       assert(!handled)
@@ -143,7 +143,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
 
   "Agora" should "reject the request when posting with a payload of whitespace only" in {
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(payload = Some(" "))) ~>
-      wrapWithRejectionHandler {
+      ApiService.handleExceptionsAndRejections {
         methodsService.postRoute
       } ~> check {
       assert(!handled)
@@ -153,7 +153,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
 
   "Agora" should "reject the request when posting with a snapshotId" in {
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(snapshotId = Some(123))) ~>
-      wrapWithRejectionHandler {
+      ApiService.handleExceptionsAndRejections {
         methodsService.postRoute
       } ~> check {
       assert(!handled)
@@ -163,7 +163,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
 
   "Agora" should "reject the request when posting with a namespace of None" in {
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(namespace = None)) ~>
-      wrapWithRejectionHandler {
+      ApiService.handleExceptionsAndRejections {
         methodsService.postRoute
       } ~> check {
       assert(!handled)
@@ -173,7 +173,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
 
   "Agora" should "reject the request when posting with a namespace of whitespace only" in {
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(namespace = Some(" "))) ~>
-      wrapWithRejectionHandler {
+      ApiService.handleExceptionsAndRejections {
         methodsService.postRoute
       } ~> check {
       assert(!handled)
@@ -183,7 +183,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
 
   "Agora" should "reject the request when posting with a name of None" in {
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(name = None)) ~>
-      wrapWithRejectionHandler {
+      ApiService.handleExceptionsAndRejections {
         methodsService.postRoute
       } ~> check {
       assert(!handled)
@@ -193,7 +193,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
 
   "Agora" should "reject the request when posting with a name of whitespace only" in {
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(name = Some(" "))) ~>
-      wrapWithRejectionHandler {
+      ApiService.handleExceptionsAndRejections {
         methodsService.postRoute
       } ~> check {
       assert(!handled)
@@ -204,7 +204,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
   "Agora" should "reject the request when posting with a synopsis of 81 characters" in {
     val testSynopsis = Some(fillerText.take(81))
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(synopsis = testSynopsis)) ~>
-      wrapWithRejectionHandler {
+      ApiService.handleExceptionsAndRejections {
         methodsService.postRoute
       } ~> check {
       assert(!handled)
@@ -226,7 +226,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
   "Agora" should "reject the request when posting with a documentation of 10001 chars" in {
     val testDocumentation = Some("x" * 10001)
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(documentation = testDocumentation)) ~>
-      wrapWithRejectionHandler {
+      ApiService.handleExceptionsAndRejections {
         methodsService.postRoute
       } ~> check {
       assert(!handled)
@@ -249,7 +249,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
       string = entityJSON)
 
     Post(ApiUtil.Methods.withLeadingVersion, entity) ~>
-      wrapWithRejectionHandler {
+      ApiService.handleExceptionsAndRejections {
         methodsService.postRoute
       } ~> check {
       assert(status == BadRequest)

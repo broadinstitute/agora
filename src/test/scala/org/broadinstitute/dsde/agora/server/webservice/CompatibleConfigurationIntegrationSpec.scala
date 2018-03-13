@@ -28,7 +28,7 @@ class CompatibleConfigurationIntegrationSpec extends FreeSpec with ExecutionDire
   }
 
   val methodsService = new MethodsService(permsDataSource) with ActorRefFactoryContext
-  val testRoutes = (handleExceptions(ApiService.exceptionHandler) & handleRejections(ApiService.rejectionHandler))(methodsService.queryCompatibleConfigurationsRoute)
+  val testRoutes = ApiService.handleExceptionsAndRejections (methodsService.queryCompatibleConfigurationsRoute)
 
   override def beforeAll(): Unit = {
     ensureDatabasesAreRunning()

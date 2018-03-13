@@ -32,6 +32,8 @@ object ApiService extends LazyLogging with SprayJsonSupport with DefaultJsonProt
   import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
   import org.broadinstitute.dsde.workbench.model.ErrorReportJsonSupport._
 
+  def handleExceptionsAndRejections: Directive[Unit] = handleExceptions(exceptionHandler) & handleRejections(rejectionHandler)
+
   val exceptionHandler: ExceptionHandler = {
     ExceptionHandler {
       case withErrorReport: WorkbenchExceptionWithErrorReport =>
@@ -39,7 +41,9 @@ object ApiService extends LazyLogging with SprayJsonSupport with DefaultJsonProt
       case workbenchException: WorkbenchException =>
         val report = ErrorReport(Option(workbenchException.getMessage).getOrElse(""), Some(InternalServerError), Seq(), Seq(), Some(workbenchException.getClass))
         complete(InternalServerError, report)
-      case e: IllegalArgumentException => complete(BadRequest, e)
+      case e: IllegalArgumentException =>
+        logger.info("ApiService: IllegalArgumentException")
+        complete(BadRequest, e)
       case e: AgoraEntityAuthorizationException => complete(Forbidden, AgoraException(e.getMessage, e.getCause, Forbidden))
       case e: NamespaceAuthorizationException => complete(Forbidden, AgoraException(e.getMessage, e.getCause, Forbidden))
       case e: AgoraEntityNotFoundException => complete(NotFound, AgoraException(e.getMessage, e.getCause, NotFound))
@@ -76,7 +80,7 @@ class ApiService(permissionsDataSource: PermissionsDataSource, healthMonitor: Ac
   val entityPermissionsService = new EntityPermissionsService(permissionsDataSource)
   val multiEntityPermissionsService = new MultiEntityPermissionsService(permissionsDataSource)
 
-  def route: Route = (logRequestResult & handleExceptions(ApiService.exceptionHandler) & handleRejections(ApiService.rejectionHandler)) {
+  def route: Route = (logRequestResult & ApiService.handleExceptionsAndRejections) {
     options { complete(OK) } ~ statusService.statusRoute ~ swaggerRoutes ~ ga4ghService.routes ~ methodsService.routes ~
       configurationsService.routes ~ namespacePermissionsService.routes ~ entityPermissionsService.routes ~
       multiEntityPermissionsService.routes

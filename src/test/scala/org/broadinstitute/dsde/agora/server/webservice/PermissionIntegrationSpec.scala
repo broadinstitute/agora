@@ -26,7 +26,7 @@ class PermissionIntegrationSpec extends FlatSpec with ScalatestRouteTest with Be
   val multiEntityPermissionsService = new MultiEntityPermissionsService(permsDataSource)
   val methodsService = new MethodsService(permsDataSource)
 
-  val routes: Route = (handleExceptions(ApiService.exceptionHandler) & handleRejections(ApiService.rejectionHandler)) {
+  val routes: Route = ApiService.handleExceptionsAndRejections {
     namespacePermissionsService.routes ~ entityPermissionsService.routes ~ multiEntityPermissionsService.routes ~
     methodsService.querySingleRoute
   }

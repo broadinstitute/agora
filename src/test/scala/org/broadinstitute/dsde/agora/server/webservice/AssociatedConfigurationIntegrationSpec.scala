@@ -3,9 +3,8 @@ package org.broadinstitute.dsde.agora.server.webservice
 import akka.actor.ActorSystem
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes._
-import akka.http.scaladsl.server.Directives.{handleExceptions, handleRejections}
 import akka.http.scaladsl.server.directives.ExecutionDirectives
-import akka.http.scaladsl.testkit.{RouteTest, RouteTestTimeout, ScalatestRouteTest}
+import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.AgoraTestFixture
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraPermissions}
@@ -28,7 +27,7 @@ class AssociatedConfigurationIntegrationSpec extends FlatSpec with ExecutionDire
   }
 
   val methodsService = new MethodsService(permsDataSource) with ActorRefFactoryContext
-  val testRoutes = (handleExceptions(ApiService.exceptionHandler) & handleRejections(ApiService.rejectionHandler))(methodsService.queryAssociatedConfigurationsRoute)
+  val testRoutes = ApiService.handleExceptionsAndRejections (methodsService.queryAssociatedConfigurationsRoute)
 
   override def beforeAll(): Unit = {
     ensureDatabasesAreRunning()

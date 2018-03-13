@@ -29,7 +29,7 @@ class EntityCreationPermissionSpec extends ApiServiceSpec with FlatSpecLike {
   var testEntity7WithId: AgoraEntity = _
   var testEntityToBeRedactedWithId: AgoraEntity = _
 
-  val routes = (handleExceptions(ApiService.exceptionHandler) & handleRejections(ApiService.rejectionHandler)) {
+  val routes = ApiService.handleExceptionsAndRejections {
     methodsService.postRoute
   }
 

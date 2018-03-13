@@ -22,7 +22,7 @@ class AgoraImportSpec extends ApiServiceSpec with FlatSpecLike{
 
   var mockServer: ClientAndServer = _
 
-  val routes = (handleExceptions(ApiService.exceptionHandler) & handleRejections(ApiService.rejectionHandler)) {
+  val routes = ApiService.handleExceptionsAndRejections {
     methodsService.querySingleRoute ~ methodsService.postRoute
   }
 

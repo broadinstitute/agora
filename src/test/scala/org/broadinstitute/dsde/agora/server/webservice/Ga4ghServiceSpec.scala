@@ -22,7 +22,7 @@ class Ga4ghServiceSpec extends FreeSpecLike with ScalatestRouteTest with BeforeA
 
   // these routes depend on the exception handler defined in ApiService, so
   // we have to add the exception handler back here.
-  private val testRoutes = (handleExceptions(ApiService.exceptionHandler) & handleRejections(ApiService.rejectionHandler)) {
+  private val testRoutes = ApiService.handleExceptionsAndRejections {
     ga4ghService.routes
   }
 

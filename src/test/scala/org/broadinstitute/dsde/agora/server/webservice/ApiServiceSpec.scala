@@ -2,7 +2,7 @@ package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes._
-import akka.http.scaladsl.server.{Directives, ExceptionHandler, MalformedRequestContentRejection, RejectionHandler}
+import akka.http.scaladsl.server.{Directives, ExceptionHandler}
 import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
 
 import org.broadinstitute.dsde.agora.server.AgoraTestFixture
@@ -24,19 +24,11 @@ class ApiServiceSpec extends AgoraTestFixture with Directives with Suite with Sc
 
   implicit val routeTestTimeout = RouteTestTimeout(5.seconds)
 
+  // TODO: AgoraProjectionsSpec uses this but should not have to. Running those tests through ApiService exception handler fails the test for some reason.
   val wrapWithExceptionHandler = handleExceptions(ExceptionHandler {
     case e: IllegalArgumentException => complete(BadRequest, e.getMessage)
     case ve: ValidationException => complete(BadRequest, ve.getMessage)
   })
-
-  val wrapWithRejectionHandler = handleRejections {
-    RejectionHandler
-      .newBuilder()
-      .handle {
-        case MalformedRequestContentRejection(message, _) => complete(BadRequest, message)
-      }
-      .result()
-  }
 
   trait ActorRefFactoryContext {
     def actorRefFactory = system

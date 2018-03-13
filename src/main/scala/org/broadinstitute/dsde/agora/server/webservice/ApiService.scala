@@ -41,9 +41,7 @@ object ApiService extends LazyLogging with SprayJsonSupport with DefaultJsonProt
       case workbenchException: WorkbenchException =>
         val report = ErrorReport(Option(workbenchException.getMessage).getOrElse(""), Some(InternalServerError), Seq(), Seq(), Some(workbenchException.getClass))
         complete(InternalServerError, report)
-      case e: IllegalArgumentException =>
-        logger.info("ApiService: IllegalArgumentException")
-        complete(BadRequest, e)
+      case e: IllegalArgumentException => complete(BadRequest, e)
       case e: AgoraEntityAuthorizationException => complete(Forbidden, AgoraException(e.getMessage, e.getCause, Forbidden))
       case e: NamespaceAuthorizationException => complete(Forbidden, AgoraException(e.getMessage, e.getCause, Forbidden))
       case e: AgoraEntityNotFoundException => complete(NotFound, AgoraException(e.getMessage, e.getCause, NotFound))

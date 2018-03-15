@@ -61,12 +61,7 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
               }
             } ~
             delete {
-              val deletionAttempt = agoraBusiness.delete(targetEntity, entityTypes, username)
-
-              onComplete(deletionAttempt) {
-                case Success(rowsDeleted) => complete(rowsDeleted.toString)
-                case Failure(error) => failWith(error)
-              }
+              complete(agoraBusiness.delete(targetEntity, entityTypes, username).map(_.toString))
             } ~
             post {
               // only allow copying (post) for methods
@@ -79,12 +74,7 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
                     case FailureZ(errors) => throw new IllegalArgumentException(s"Method is invalid: Errors: $errors")
                   }
                   parameters("redact".as[Boolean] ? false) { redact =>
-                    val copyingAttempt = agoraBusiness.copy(targetEntity, newEntity, redact, entityTypes, username)
-
-                    onComplete(copyingAttempt) {
-                      case Success(entities) => complete(entities)
-                      case Failure(error) => failWith(error)
-                    }
+                    complete(agoraBusiness.copy(targetEntity, newEntity, redact, entityTypes, username))
                   }
                 }
               }
@@ -95,24 +85,14 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
   def queryMethodDefinitionsRoute =
     (versionedPath(PathMatcher("methods" / "definitions")) & get &
       authenticationDirectives.usernameFromRequest(())) { username =>
-        val listingAttempt = agoraBusiness.listDefinitions(username)
-
-        onComplete(listingAttempt) {
-          case Success(definitions) => complete(definitions)
-          case Failure(error) => failWith(error)
-        }
+        complete(agoraBusiness.listDefinitions(username))
     }
 
   // all configurations that reference any snapshot of the supplied method
   def queryAssociatedConfigurationsRoute =
     (versionedPath(PathMatcher("methods" / Segment / Segment / "configurations")) & get &
       authenticationDirectives.usernameFromRequest(())) { (namespace, name, username) =>
-        val listingAttempt = agoraBusiness.listAssociatedConfigurations(namespace, name, username)
-
-        onComplete(listingAttempt) {
-          case Success(configs) => complete(configs)
-          case Failure(error) => failWith(error)
-        }
+        complete(agoraBusiness.listAssociatedConfigurations(namespace, name, username))
     }
 
   // all configurations that have the same inputs and outputs of the supplied method snapshot,
@@ -120,12 +100,7 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
   def queryCompatibleConfigurationsRoute =
     (versionedPath(PathMatcher("methods" / Segment / Segment / IntNumber / "configurations")) & get &
       authenticationDirectives.usernameFromRequest(())) { (namespace, name, snapshotId, username) =>
-        val listingAttempt = agoraBusiness.listCompatibleConfigurations(namespace, name, snapshotId, username)
-
-        onComplete(listingAttempt) {
-          case Success(configs) => complete(configs)
-          case Failure(error) => failWith(error)
-        }
+        complete(agoraBusiness.listCompatibleConfigurations(namespace, name, snapshotId, username))
     }
 
   // GET http://root.com/methods?
@@ -138,12 +113,7 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
           val projection = projectionFromParams(params)
           val entityTypes = AgoraEntityType.byPath(path)
 
-          val queryAttempt = agoraBusiness.find(entity, projection, entityTypes, username)
-
-          onComplete(queryAttempt) {
-            case Success(entities) => complete(entities)
-            case Failure(error) => failWith(error)
-          }
+          complete(agoraBusiness.find(entity, projection, entityTypes, username))
         }
       }
     }
@@ -159,11 +129,7 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
             case _ => agoraEntity
           }
 
-          val addAttempt = agoraBusiness.insert(entityWithType, username)
-          onComplete(addAttempt) {
-            case Success(entity) => complete(Created, entity)
-            case Failure(error) => failWith(error)
-          }
+          complete(Created, agoraBusiness.insert(entityWithType, username))
         }
       }
     }

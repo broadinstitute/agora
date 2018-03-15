@@ -47,7 +47,8 @@ class EntityPermissionsService(dataSource: PermissionsDataSource) extends RouteH
           } ~
           delete {
             val userToRemove = getUserFromParams(params)
-            complete(permissionBusiness.deleteEntityPermission(agoraEntity, username, userToRemove).map(_ => AccessControl(userToRemove, AgoraPermissions(Nothing))))
+            val accessControl = AccessControl(userToRemove, AgoraPermissions(Nothing))
+            complete(permissionBusiness.deleteEntityPermission(agoraEntity, username, userToRemove).map(_ => accessControl))
           }
         }
       }

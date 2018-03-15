@@ -1,10 +1,11 @@
 package org.broadinstitute.dsde.agora.server.webservice.routes
 
+import akka.http.scaladsl.marshalling.ToResponseMarshallable
 import akka.http.scaladsl.server._
 import org.broadinstitute.dsde.agora.server.AgoraConfig.{authenticationDirectives, version}
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection, AgoraEntityType}
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
 trait RouteHelpers extends AddRouteHelper with QueryRouteHelper
@@ -19,6 +20,11 @@ trait BaseRoute extends RouteUtil  {
   }
 
   def versionedPath[L](pm: PathMatcher[L]): Directive[L] = path("api" / version / pm)
+
+  def completeWith[A](m: => ToResponseMarshallable)
+                     (f: => Future[A])
+                     (implicit ec: ExecutionContext): StandardRoute =
+    complete(f.map(_ => m))
 }
 
 trait QueryRouteHelper extends BaseRoute {

@@ -31,7 +31,7 @@ class EntityPermissionsService(dataSource: PermissionsDataSource) extends RouteH
 
           entity(as[List[AccessControl]]) { acl =>
             post {
-              complete(permissionBusiness.batchEntityPermission(agoraEntity, username, acl).map(_ => acl))
+              completeWith(acl)(permissionBusiness.batchEntityPermission(agoraEntity, username, acl))
             }
           } ~
           get {
@@ -39,16 +39,16 @@ class EntityPermissionsService(dataSource: PermissionsDataSource) extends RouteH
           } ~
           post {
             val accessObject = AccessControl.fromParams(params)
-            complete(permissionBusiness.insertEntityPermission(agoraEntity, username, accessObject).map(_ => accessObject))
+            completeWith(accessObject)(permissionBusiness.insertEntityPermission(agoraEntity, username, accessObject))
           } ~
           put {
             val accessObject = AccessControl.fromParams(params)
-            complete(permissionBusiness.editEntityPermission(agoraEntity, username, accessObject).map(_ => accessObject))
+            completeWith(accessObject)(permissionBusiness.editEntityPermission(agoraEntity, username, accessObject))
           } ~
           delete {
             val userToRemove = getUserFromParams(params)
             val accessControl = AccessControl(userToRemove, AgoraPermissions(Nothing))
-            complete(permissionBusiness.deleteEntityPermission(agoraEntity, username, userToRemove).map(_ => accessControl))
+            completeWith(accessControl)(permissionBusiness.deleteEntityPermission(agoraEntity, username, userToRemove))
           }
         }
       }

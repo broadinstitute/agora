@@ -29,7 +29,7 @@ class NamespacePermissionsService(dataSource: PermissionsDataSource) extends Rou
           val agoraEntity = AgoraEntity(Option(namespace))
           entity(as[List[AccessControl]]) { accessObjects =>
             post {
-              completeWith(accessObjects)(permissionBusiness.batchNamespacePermission(agoraEntity, username, accessObjects))
+              completeVia(accessObjects)(permissionBusiness.batchNamespacePermission(agoraEntity, username, accessObjects))
             }
           } ~
           get {
@@ -37,16 +37,16 @@ class NamespacePermissionsService(dataSource: PermissionsDataSource) extends Rou
           } ~
           post {
             val accessObject = AccessControl.fromParams(params)
-            completeWith(accessObject)(permissionBusiness.insertNamespacePermission(agoraEntity, username, accessObject))
+            completeVia(accessObject)(permissionBusiness.insertNamespacePermission(agoraEntity, username, accessObject))
           } ~
           put {
             val accessObject = AccessControl.fromParams(params)
-            completeWith(accessObject)(permissionBusiness.editNamespacePermission(agoraEntity, username, accessObject))
+            completeVia(accessObject)(permissionBusiness.editNamespacePermission(agoraEntity, username, accessObject))
           } ~
           delete {
             val userToRemove = getUserFromParams(params)
             val accessControl = AccessControl(userToRemove, AgoraPermissions(Nothing))
-            completeWith(accessControl)(permissionBusiness.deleteNamespacePermission(agoraEntity, username, userToRemove))
+            completeVia(accessControl)(permissionBusiness.deleteNamespacePermission(agoraEntity, username, userToRemove))
           }
         }
       }

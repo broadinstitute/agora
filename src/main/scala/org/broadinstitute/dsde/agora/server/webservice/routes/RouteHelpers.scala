@@ -21,9 +21,9 @@ trait BaseRoute extends RouteUtil  {
 
   def versionedPath[L](pm: PathMatcher[L]): Directive[L] = path("api" / version / pm)
 
-  def completeWith[A](m: => ToResponseMarshallable)
-                     (f: => Future[A])
-                     (implicit ec: ExecutionContext): StandardRoute =
+  def completeVia[A](m: => ToResponseMarshallable)
+                    (f: => Future[A])
+                    (implicit ec: ExecutionContext): StandardRoute =
     complete(f.map(_ => m))
 }
 

@@ -57,7 +57,7 @@ class ServerInitializer extends LazyLogging {
 
     val apiService = new ApiService(permsDataSource, healthMonitor)
 
-    Http().bindAndHandle(apiService.route, "0.0.0.0", 8000)
+    Http().bindAndHandle(apiService.route, AgoraConfig.webserviceInterface, AgoraConfig.port)
       .recover {
         case t: Throwable =>
           logger.error(s"Unable to bind to port ${AgoraConfig.port} on interface ${AgoraConfig.webserviceInterface}")
@@ -83,8 +83,8 @@ class ServerInitializer extends LazyLogging {
 
   private def stopAdminGroupPoller() = {
     Try(adminGroupPollerSchedule.cancel()) recover {
-      case e: NullPointerException => // Nothing to do; no scheduler was created at the first place
-      case t: Throwable => throw t
+      case _: NullPointerException => // Nothing to do; no scheduler was created at the first place
+      case t: Throwable => logger.warn(s"Unable to stop the admin group poller because '${t.getMessage}'")
     }
   }
 

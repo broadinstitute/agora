@@ -13,8 +13,7 @@ import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.routes.{BaseRoute, RouteHelpers}
 import spray.json.DefaultJsonProtocol
 
-import scala.concurrent.{ExecutionContextExecutor, Future}
-import scala.util.{Failure, Success}
+import scala.concurrent.ExecutionContextExecutor
 
 class EntityPermissionsService(dataSource: PermissionsDataSource) extends RouteHelpers with BaseRoute
   with Directives with SprayJsonSupport with DefaultJsonProtocol with LazyLogging {
@@ -30,42 +29,26 @@ class EntityPermissionsService(dataSource: PermissionsDataSource) extends RouteH
         parameterMap { (params) =>
           val agoraEntity = AgoraEntity(Option(namespace), Option(name), Option(snapshotId))
 
-          entity(as[List[AccessControl]]) { (listOfAccessControl) =>
+          entity(as[List[AccessControl]]) { acl =>
             post {
-              val message: Future[Int] = permissionBusiness.batchEntityPermission(agoraEntity, username, listOfAccessControl)
-              onComplete(message) {
-                case Success(m) => complete(listOfAccessControl)
-                case Failure(ex) => failWith(ex)
-              }
+              completeVia(acl)(permissionBusiness.batchEntityPermission(agoraEntity, username, acl))
             }
           } ~
           get {
-            val message: Future[Seq[AccessControl]] = permissionBusiness.listEntityPermissions(agoraEntity, username)
-            complete(message)
+            complete(permissionBusiness.listEntityPermissions(agoraEntity, username))
           } ~
           post {
             val accessObject = AccessControl.fromParams(params)
-            val message: Future[Int] = permissionBusiness.insertEntityPermission(agoraEntity, username, accessObject)
-            onComplete(message) {
-              case Success(m) => complete(accessObject)
-              case Failure(ex) => failWith(ex)
-            }
+            completeVia(accessObject)(permissionBusiness.insertEntityPermission(agoraEntity, username, accessObject))
           } ~
           put {
             val accessObject = AccessControl.fromParams(params)
-            val message: Future[Int] = permissionBusiness.editEntityPermission(agoraEntity, username, accessObject)
-            onComplete(message) {
-              case Success(m) => complete(accessObject)
-              case Failure(ex) => failWith(ex)
-            }
+            completeVia(accessObject)(permissionBusiness.editEntityPermission(agoraEntity, username, accessObject))
           } ~
           delete {
             val userToRemove = getUserFromParams(params)
-            val message: Future[Int] = permissionBusiness.deleteEntityPermission(agoraEntity, username, userToRemove)
-            onComplete(message) {
-              case Success(m) => complete(AccessControl(userToRemove, AgoraPermissions(Nothing)))
-              case Failure(ex) => failWith(ex)
-            }
+            val accessControl = AccessControl(userToRemove, AgoraPermissions(Nothing))
+            completeVia(accessControl)(permissionBusiness.deleteEntityPermission(agoraEntity, username, userToRemove))
           }
         }
       }

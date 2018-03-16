@@ -20,21 +20,21 @@ trait SwaggerRoutes {
           serveIndex()
       }
     } ~
-      path("agora.yaml") {
-        get {
-          getFromResource("swagger/agora.yaml")
-        }
-      } ~
-      // We have to be explicit about the paths here since we're matching at the root URL and we don't
-      // want to catch all paths lest we circumvent Spray's not-found and method-not-allowed error
-      // messages.
-      (pathSuffixTest("o2c.html") | pathSuffixTest("swagger-ui.js")
-        | pathPrefixTest("css") | pathPrefixTest("fonts") | pathPrefixTest("images")
-        | pathPrefixTest("lang") | pathPrefixTest("lib")) {
-        get {
-          getFromResourceDirectory(swaggerUiPath)
-        }
+    path("agora.yaml") {
+      get {
+        getFromResource("swagger/agora.yaml")
       }
+    } ~
+    // We have to be explicit about the paths here since we're matching at the root URL and we don't
+    // want to catch all paths lest we circumvent Spray's not-found and method-not-allowed error
+    // messages.
+    (pathSuffixTest("o2c.html") | pathSuffixTest("swagger-ui.js")
+      | pathPrefixTest("css") | pathPrefixTest("fonts") | pathPrefixTest("images")
+      | pathPrefixTest("lang") | pathPrefixTest("lib")) {
+      get {
+        getFromResourceDirectory(swaggerUiPath)
+      }
+    }
   }
 
   private def serveIndex(): server.Route = {

@@ -2,7 +2,7 @@ package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.actor.ActorRef
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.StatusCodes.{InternalServerError, OK}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.pattern.ask
@@ -11,7 +11,7 @@ import com.typesafe.config.ConfigFactory
 import net.ceedubs.ficus.Ficus._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
 import org.broadinstitute.dsde.workbench.util.health.HealthMonitor.GetCurrentStatus
-import org.broadinstitute.dsde.workbench.util.health.StatusCheckResponse
+import org.broadinstitute.dsde.workbench.util.health.{StatusCheckResponse, SubsystemStatus, Subsystems}
 import org.broadinstitute.dsde.workbench.util.health.StatusJsonSupport._
 
 import scala.concurrent.duration.FiniteDuration
@@ -31,10 +31,11 @@ class StatusService(permissionsDataSource: PermissionsDataSource, healthMonitor:
 
       onComplete(statusAttempt) {
         case Success(status) =>
-          val httpCode = if (status.ok) StatusCodes.OK else StatusCodes.InternalServerError
+          val httpCode = if (status.ok) OK else InternalServerError
           complete(httpCode, status)
         case Failure(_) =>
-          complete(StatusCodes.InternalServerError, "Unable to gather engine status")
+          val agoraStatus = SubsystemStatus(ok = false, Some(List("Unable to gather subsystem status")))
+          complete(InternalServerError, StatusCheckResponse(ok = false, Map(Subsystems.Agora -> agoraStatus)))
       }
     }
   }

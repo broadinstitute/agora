@@ -13,8 +13,7 @@ import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.routes.{BaseRoute, RouteHelpers}
 import spray.json.DefaultJsonProtocol
 
-import scala.concurrent.{ExecutionContextExecutor, Future}
-import scala.util.{Failure, Success}
+import scala.concurrent.ExecutionContextExecutor
 
 class NamespacePermissionsService(dataSource: PermissionsDataSource) extends RouteHelpers with BaseRoute
   with Directives with SprayJsonSupport with DefaultJsonProtocol with LazyLogging {
@@ -28,42 +27,26 @@ class NamespacePermissionsService(dataSource: PermissionsDataSource) extends Rou
       path("api" / AgoraConfig.version / ("configurations" | "methods") / Segment / "permissions") { namespace: String =>
         parameterMap { (params) =>
           val agoraEntity = AgoraEntity(Option(namespace))
-          entity(as[List[AccessControl]]) { (accessObjects) =>
+          entity(as[List[AccessControl]]) { accessObjects =>
             post {
-              val message: Future[Int] = permissionBusiness.batchNamespacePermission(agoraEntity, username, accessObjects)
-              onComplete(message) {
-                case Success(m) => complete(accessObjects)
-                case Failure(ex) => failWith(ex)
-              }
+              completeVia(accessObjects)(permissionBusiness.batchNamespacePermission(agoraEntity, username, accessObjects))
             }
           } ~
           get {
-            val message: Future[Seq[AccessControl]] = permissionBusiness.listNamespacePermissions(agoraEntity, username)
-            complete(message)
+            complete(permissionBusiness.listNamespacePermissions(agoraEntity, username))
           } ~
           post {
             val accessObject = AccessControl.fromParams(params)
-            val message: Future[Int] = permissionBusiness.insertNamespacePermission(agoraEntity, username, accessObject)
-            onComplete(message) {
-              case Success(m) => complete(accessObject)
-              case Failure(ex) => failWith(ex)
-            }
+            completeVia(accessObject)(permissionBusiness.insertNamespacePermission(agoraEntity, username, accessObject))
           } ~
           put {
             val accessObject = AccessControl.fromParams(params)
-            val message: Future[Int] = permissionBusiness.editNamespacePermission(agoraEntity, username, accessObject)
-            onComplete(message) {
-              case Success(m) => complete(accessObject)
-              case Failure(ex) => failWith(ex)
-            }
+            completeVia(accessObject)(permissionBusiness.editNamespacePermission(agoraEntity, username, accessObject))
           } ~
           delete {
             val userToRemove = getUserFromParams(params)
-            val message: Future[Int] = permissionBusiness.deleteNamespacePermission(agoraEntity, username, userToRemove)
-            onComplete(message) {
-              case Success(m) => complete(AccessControl(userToRemove, AgoraPermissions(Nothing)))
-              case Failure(ex) => failWith(ex)
-            }
+            val accessControl = AccessControl(userToRemove, AgoraPermissions(Nothing))
+            completeVia(accessControl)(permissionBusiness.deleteNamespacePermission(agoraEntity, username, userToRemove))
           }
         }
       }

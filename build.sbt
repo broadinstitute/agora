@@ -7,10 +7,9 @@ organization := "org.broadinstitute"
 
 scalaVersion := "2.12.4"
 
-// uncomment to see compile warnings
 scalacOptions := Seq("-unchecked", "-deprecation", "-feature")
 
-lazy val akkaV = "2.5.9"
+lazy val akkaV = "2.5.11"
 lazy val akkaHttpV = "10.0.11"
 
 val cromwellVersion = "30-4de204a"
@@ -33,11 +32,13 @@ libraryDependencies ++= Seq(
   "com.google.apis" % "google-api-services-admin-directory" % "directory_v1-rev53-1.20.0" excludeAll ExclusionRule(organization = "com.google.guava"),
   "com.h2database" % "h2" % "1.3.175",
   "com.typesafe.akka" %% "akka-actor" % akkaV,
+  // It was necessary to explicitly specify the version for akka-stream to appease Akka as it complains otherwise with:
+  // "Akka version MUST be the same across all modules of Akka that you are using."
   "com.typesafe.akka" %% "akka-stream" % akkaV,
   "com.typesafe.akka" %% "akka-http" % akkaHttpV,
   "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpV,
   "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpV,
-  "com.typesafe.akka" %% "akka-slf4j" % "2.5.9",
+  "com.typesafe.akka" %% "akka-slf4j" % akkaV,
   "com.typesafe" % "config" % "1.2.1",
   "com.typesafe.scala-logging" %% "scala-logging" % "3.7.1",
   "com.typesafe.slick" %% "slick" % "3.2.0",

@@ -18,12 +18,8 @@ trait Ga4ghQueryHandler extends LazyLogging {
   // Include entity payloads in returned results
   val DefaultProjection = Some(AgoraEntityProjection(Seq[String]("payload", "synopsis"), Seq.empty[String]))
 
-  def queryPublicSingle(entity: AgoraEntity): Future[ToolVersion] = {
-    val entityTypes = Seq(entity.entityType.getOrElse(throw ValidationException("need an entity type")))
-    agoraBusiness.findSingle(entity, entityTypes, AccessControl.publicUser) map { foundEntity =>
-      ToolVersion(foundEntity)
-    }
-  }
+  def queryPublicSingle(entity: AgoraEntity): Future[ToolVersion] =
+    queryPublicSingleEntity(entity) map (ToolVersion(_))
 
   def queryPublicSingleEntity(entity: AgoraEntity): Future[AgoraEntity] = {
     val entityTypes = Seq(entity.entityType.getOrElse(throw ValidationException("need an entity type")))

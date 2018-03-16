@@ -41,7 +41,7 @@ object ApiService extends LazyLogging with SprayJsonSupport with DefaultJsonProt
       case workbenchException: WorkbenchException =>
         val report = ErrorReport(Option(workbenchException.getMessage).getOrElse(""), Some(InternalServerError), Seq(), Seq(), Some(workbenchException.getClass))
         complete(InternalServerError, report)
-      case e: IllegalArgumentException => complete(BadRequest, e)
+      case e: IllegalArgumentException => complete(BadRequest, AgoraException(e.getMessage, e.getCause, BadRequest))
       case e: AgoraEntityAuthorizationException => complete(Forbidden, AgoraException(e.getMessage, e.getCause, Forbidden))
       case e: NamespaceAuthorizationException => complete(Forbidden, AgoraException(e.getMessage, e.getCause, Forbidden))
       case e: AgoraEntityNotFoundException => complete(NotFound, AgoraException(e.getMessage, e.getCause, NotFound))
@@ -59,9 +59,11 @@ object ApiService extends LazyLogging with SprayJsonSupport with DefaultJsonProt
 
   val rejectionHandler: RejectionHandler =
     RejectionHandler.newBuilder().handle {
-      case MalformedRequestContentRejection(message, cause) => complete(BadRequest, AgoraException(message = message, cause, BadRequest))
-      case UnacceptedResponseContentTypeRejection(supported) => complete(NotAcceptable,
-        "Resource representation is only available with these Content-Types:\n" + supported.map(_.format).mkString("\n"))
+      case MalformedRequestContentRejection(message, cause) =>
+        complete(BadRequest, AgoraException(message = message, cause, BadRequest))
+      case UnacceptedResponseContentTypeRejection(supported) =>
+        val msg = s"Resource representation is only available with these Content-Types:\n ${supported.map(_.format).mkString("\n")}"
+        complete(NotAcceptable, AgoraException(msg, NotAcceptable))
     }.result()
 
 }

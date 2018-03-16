@@ -463,8 +463,45 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     findSingle(entity.namespace.get, entity.name.get, entity.snapshotId.get, entityTypes, username)
   }
 
+//  private def validateDockerImage(task: Task) = {
+//    // Per DSDEEPB-2525, in the interests of expediency, we are disabling docker image validation as we do not support validation of private docker images
+//    // When that functionality is added back in, then this is where it should go.
+//
+////    if (task.runtimeAttributes.docker.isDefined) {
+////      val dockerImageReference = parseDockerString(task.runtimeAttributes.docker.get)
+////      if (dockerImageReference.isDefined) {
+////        DockerHubClient.doesDockerImageExist(dockerImageReference.get)
+////      }
+////    }
+//    true
+//  }
+
   private def resolveMethodRef(payload: String): AgoraEntity = {
     val queryMethod = AgoraApiJsonSupport.methodRef(payload)
     AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(queryMethod)
   }
+
+//  /**
+//   * Parses out user/image:tag from a docker string.
+//   *
+//   * @param imageId docker imageId string.  Looks like ubuntu:latest ggrant/joust:latest
+//   */
+//  private def parseDockerString(imageId: String) : Option[DockerImageReference] = {
+//    if (imageId.startsWith("gcr.io")) {
+//      None
+//    } else {
+//      val splitUser = imageId.split('/')
+//      if (splitUser.length > 2) {
+//        throw new SyntaxError("Docker image string '" + imageId + "' is malformed")
+//      }
+//      val user = if (splitUser.length == 1) None else Option(splitUser(0))
+//      val splitTag = splitUser(splitUser.length - 1).split(':')
+//      if (splitTag.length > 2) {
+//        throw new SyntaxError("Docker image string '" + imageId + "' is malformed")
+//      }
+//      val repo = splitTag(0)
+//      val tag = if (splitTag.length == 1) "latest" else splitTag(1)
+//      Option(DockerImageReference(user, repo, tag))
+//    }
+//  }
 }

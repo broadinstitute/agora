@@ -25,8 +25,6 @@ libraryDependencies ++= Seq(
   "com.fasterxml.jackson.core"     % "jackson-annotations" % jacksonV,
   "com.fasterxml.jackson.core"     % "jackson-databind"    % jacksonV,
   "com.fasterxml.jackson.core"     % "jackson-core"        % jacksonV,
-  "org.apache.commons" % "commons-compress" % "1.4.1",  // upgrading a transitive dependency to avoid security warnings
-  "org.apache.httpcomponents" % "httpclient" % "4.5.3",  // upgrading a transitive dependency to avoid security warnings
   "ch.qos.logback" % "logback-classic" % "1.2.2",
   "com.github.simplyscala" %% "scalatest-embedmongo" % "0.2.4",
   "com.google.api-client" % "google-api-client" % "1.20.0" excludeAll ExclusionRule(organization = "com.google.guava"),

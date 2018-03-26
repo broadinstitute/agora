@@ -5,12 +5,13 @@ name := "Agora"
 
 organization := "org.broadinstitute"
 
-scalaVersion := "2.12.4"
+scalaVersion := "2.12.5"
 
 scalacOptions := Seq("-unchecked", "-deprecation", "-feature")
 
 lazy val akkaV = "2.5.11"
-lazy val akkaHttpV = "10.0.11"
+lazy val akkaHttpV = "10.1.0"
+lazy val jacksonV = "2.9.4"
 
 val cromwellVersion = "30-4de204a"
 
@@ -21,9 +22,9 @@ resolvers += "artifactory-releases" at artifactory + "libs-release"
 resolvers += "artifactory-snapshots" at artifactory + "libs-snapshot"
 
 libraryDependencies ++= Seq(
-  "com.fasterxml.jackson.core"     % "jackson-annotations" % "2.8.10",
-  "com.fasterxml.jackson.core"     % "jackson-databind"    % "2.8.10",
-  "com.fasterxml.jackson.core"     % "jackson-core"        % "2.8.10",
+  "com.fasterxml.jackson.core"     % "jackson-annotations" % jacksonV,
+  "com.fasterxml.jackson.core"     % "jackson-databind"    % jacksonV,
+  "com.fasterxml.jackson.core"     % "jackson-core"        % jacksonV,
   "org.apache.commons" % "commons-compress" % "1.4.1",  // upgrading a transitive dependency to avoid security warnings
   "org.apache.httpcomponents" % "httpclient" % "4.5.3",  // upgrading a transitive dependency to avoid security warnings
   "ch.qos.logback" % "logback-classic" % "1.2.2",

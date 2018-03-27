@@ -10,7 +10,7 @@ dependencyOverrides += "org.scala-lang" % "scala-compiler" % "2.11.12"
 
 val sprayV = "1.3.4"
 
-val cromwellVersion = "30-4de204a"
+val cromwellVersion = "31-39223b8"
 
 val artifactory = "https://broadinstitute.jfrog.io/broadinstitute/"
 
@@ -40,7 +40,7 @@ libraryDependencies ++= Seq(
   "io.spray" %% "spray-json" % "1.3.3", // NB: Not at sprayV. 1.3.4 does not exist.
   "io.spray" %% "spray-routing-shapeless23" % sprayV,
   "mysql" % "mysql-connector-java" % "5.1.42",
-  "org.broadinstitute" %% "cromwell-wdl" % cromwellVersion,
+  "org.broadinstitute" %% "cromwell-wdl-model-draft2" % cromwellVersion,
   "org.broadinstitute.dsde.workbench" %% "workbench-util" % "0.3-f3ce961",
   "org.mongodb" %% "casbah" % "3.1.1",
   "org.scalaz" %% "scalaz-core" % "7.2.18",

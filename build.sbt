@@ -46,8 +46,8 @@ libraryDependencies ++= Seq(
   "org.broadinstitute" %% "cromwell-wdl" % cromwellVersion,
   "org.broadinstitute.dsde.workbench" %% "workbench-util" % "0.3-0e9d080",
   "org.mongodb" %% "casbah" % "3.1.1",
-  "org.scalaz" %% "scalaz-core" % "7.2.18",
-  "org.webjars" % "swagger-ui"  % "2.2.10-1",
+  "org.scalaz" %% "scalaz-core" % "7.2.20",
+  "org.webjars" % "swagger-ui"  % "2.2.10-1", // versions 3.x.x break
   //---------- Test libraries -------------------//
   "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpV % Test,
   "org.scalatest" %% "scalatest" % "3.0.4" % Test,

@@ -50,8 +50,8 @@ libraryDependencies ++= Seq(
   "org.webjars" % "swagger-ui"  % "2.2.10-1", // versions 3.x.x break
   //---------- Test libraries -------------------//
   "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpV % Test,
-  "org.scalatest" %% "scalatest" % "3.0.4" % Test,
-  "org.mock-server" % "mockserver-netty" % "3.10.2" % "test"
+  "org.scalatest" %% "scalatest" % "3.0.5" % Test,
+  "org.mock-server" % "mockserver-netty" % "3.10.2" % "test" // later versions break
 )
 
 //These can be overrided with system properties:

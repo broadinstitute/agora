@@ -28,8 +28,8 @@ libraryDependencies ++= Seq(
   "ch.qos.logback" % "logback-classic" % "1.2.3",
   "com.github.simplyscala" %% "scalatest-embedmongo" % "0.2.4",
   "com.google.api-client" % "google-api-client" % "1.23.0" excludeAll ExclusionRule(organization = "com.google.guava"),
-  "com.google.apis" % "google-api-services-admin-directory" % "directory_v1-rev53-1.20.0" excludeAll ExclusionRule(organization = "com.google.guava"),
-  "com.h2database" % "h2" % "1.3.175",
+  "com.google.apis" % "google-api-services-admin-directory" % "directory_v1-rev93-1.23.0" excludeAll ExclusionRule(organization = "com.google.guava"),
+  "com.h2database" % "h2" % "1.4.197",
   "com.typesafe.akka" %% "akka-actor" % akkaV,
   // It was necessary to explicitly specify the version for akka-stream to appease Akka as it complains otherwise with:
   // "Akka version MUST be the same across all modules of Akka that you are using."

@@ -44,7 +44,7 @@ libraryDependencies ++= Seq(
   "com.zaxxer" % "HikariCP" % "2.7.8",
   "mysql" % "mysql-connector-java" % "6.0.6",
   "org.broadinstitute" %% "cromwell-wdl" % cromwellVersion,
-  "org.broadinstitute.dsde.workbench" %% "workbench-util" % "0.3-f3ce961",
+  "org.broadinstitute.dsde.workbench" %% "workbench-util" % "0.3-0e9d080",
   "org.mongodb" %% "casbah" % "3.1.1",
   "org.scalaz" %% "scalaz-core" % "7.2.18",
   "org.webjars" % "swagger-ui"  % "2.2.10-1",

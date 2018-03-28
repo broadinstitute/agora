@@ -5,7 +5,7 @@ name := "Agora"
 
 organization := "org.broadinstitute"
 
-scalaVersion := "2.12.5"
+scalaVersion := "2.12.4"
 
 scalacOptions := Seq("-unchecked", "-deprecation", "-feature")
 
@@ -28,9 +28,6 @@ libraryDependencies ++= Seq(
   "com.google.apis" % "google-api-services-admin-directory" % "directory_v1-rev93-1.23.0" excludeAll ExclusionRule(organization = "com.google.guava"),
   "com.h2database" % "h2" % "1.4.197",
   "com.typesafe.akka" %% "akka-actor" % akkaV,
-  // It was necessary to explicitly specify the version for akka-stream to appease Akka as it complains otherwise with:
-  // "Akka version MUST be the same across all modules of Akka that you are using."
-  "com.typesafe.akka" %% "akka-stream" % akkaV,
   "com.typesafe.akka" %% "akka-http" % akkaHttpV,
   "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpV,
   "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpV,
@@ -50,6 +47,11 @@ libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "3.0.5" % Test,
   "org.mock-server" % "mockserver-netty" % "3.10.2" % "test" // later versions break
 )
+
+// It was necessary to explicitly specify the version for akka-stream to appease Akka as it complains otherwise with:
+// "Akka version MUST be the same across all modules of Akka that you are using."
+// This will not add a direct dependency on akka-stream, but will force the revision to be akkaV.
+dependencyOverrides += "com.typesafe.akka" %% "akka-stream" % akkaV
 
 //These can be overrided with system properties:
 // i.e: sbt -Dflyway.url=jdbc:mysql://DB_HOST:DB_PORT/DB_NAME -Dflyway.user=root -Dflyway.password=abc123

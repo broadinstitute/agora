@@ -26,6 +26,8 @@ class AgoraImportSpec extends ApiServiceSpec with FlatSpecLike{
     methodsService.querySingleRoute ~ methodsService.postRoute
   }
 
+  private val errorMessagePrefix = "Invalid WDL:"
+
   override def beforeAll() = {
     ensureDatabasesAreRunning()
     testAgoraEntityWithId = patiently(agoraBusiness.insert(testAgoraEntity, mockAuthenticatedOwner.get))
@@ -49,6 +51,7 @@ class AgoraImportSpec extends ApiServiceSpec with FlatSpecLike{
     Post(ApiUtil.Methods.withLeadingVersion, copyPayload(Some("this isn't valid WDL!"))) ~>
       routes ~> check {
       assert(status == BadRequest)
+      assert(responseAs[String] contains s"$errorMessagePrefix Unrecognized token")
     }
   }
 
@@ -56,7 +59,7 @@ class AgoraImportSpec extends ApiServiceSpec with FlatSpecLike{
     Post(ApiUtil.Methods.withLeadingVersion, testBadAgoraEntityInvalidWdlImportFormat) ~>
       routes ~> check {
       assert(status == BadRequest)
-      assert(responseAs[String] contains "Failed to import workflow invalid_syntax_for_tool.:")
+      assert(responseAs[String] contains s"$errorMessagePrefix Failed to import workflow invalid_syntax_for_tool.:")
     }
   }
 
@@ -87,6 +90,7 @@ class AgoraImportSpec extends ApiServiceSpec with FlatSpecLike{
     Post(copyUrl, copyPayload(Some("this isn't valid WDL!"))) ~>
       routes ~> check {
         assert(status == BadRequest)
+        assert(responseAs[String] contains s"$errorMessagePrefix Unrecognized token")
       }
   }
 
@@ -94,7 +98,7 @@ class AgoraImportSpec extends ApiServiceSpec with FlatSpecLike{
     Post(copyUrl, copyPayload(testBadAgoraEntityInvalidWdlImportFormat.payload)) ~>
       routes ~> check {
         assert(status == BadRequest)
-        assert(responseAs[String] contains "Failed to import workflow invalid_syntax_for_tool.:")
+        assert(responseAs[String] contains s"$errorMessagePrefix Failed to import workflow invalid_syntax_for_tool.:")
       }
   }
 

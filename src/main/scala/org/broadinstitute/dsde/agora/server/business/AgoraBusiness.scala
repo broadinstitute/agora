@@ -10,6 +10,7 @@ import org.bson.types.ObjectId
 import slick.dbio.DBIO
 import spray.json._
 import wdl4s.parser.WdlParser.SyntaxError
+import wdl.exception.{ValidationException => WdlValidationException}
 import wdl.{WdlNamespace, WdlNamespaceWithWorkflow}
 import wdl.WdlNamespace.httpResolver
 import wdl.WdlWorkflow
@@ -18,11 +19,13 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 object AgoraBusiness {
-  val nameRegex = """[a-zA-Z0-9-_.]+""".r // Applies to entity names & namespaces
-  val configIdsProjection = Some(new AgoraEntityProjection(Seq[String]("id", "methodId"), Seq.empty[String]))
+  private lazy val nameRegex = """[a-zA-Z0-9-_.]+""".r // Applies to entity names & namespaces
+  private val errorMessagePrefix = "Invalid WDL:"
+  private val configIdsProjection = Some(new AgoraEntityProjection(Seq[String]("id", "methodId"), Seq.empty[String]))
 }
 
 class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: ExecutionContext) {
+  import AgoraBusiness._
 
   //Creates a fake extra permission with the desired permission level conditional on checkAdmin and the user being an admin
   private def makeDummyAdminPermission(checkAdmin: Boolean, permClient: PermissionsClient, username: String, permLevel: AgoraPermissions) = {
@@ -103,20 +106,24 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
   }
 
   private def checkValidPayload[T](agoraEntity: AgoraEntity, username: String)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
+    println(s"\tValidating payload")
     val payload = agoraEntity.payload.get
 
     val payloadOK = agoraEntity.entityType match {
         case Some(AgoraEntityType.Task) =>
+          println(s"\t\tTask")
           WdlNamespace.loadUsingSource(payload, None, Option(Seq(httpResolver(_))))
         // NOTE: Still not validating existence of docker images.
         // namespace.tasks.foreach { validateDockerImage }
 
         case Some(AgoraEntityType.Workflow) =>
+          println(s"\t\tWorkflow")
           WdlNamespaceWithWorkflow.load(payload, Seq(httpResolver(_)))
         // NOTE: Still not validating existence of docker images.
         //namespace.tasks.foreach { validateDockerImage }
 
         case Some(AgoraEntityType.Configuration) =>
+          println(s"\t\tConfiguration")
           Try {
             val json = payload.parseJson
             val fields = json.asJsObject.getFields("methodRepoMethod")
@@ -135,8 +142,15 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     payloadOK match {
       case Success(_) => op
       case Failure(e: SyntaxError) =>
-        DBIO.failed(ValidationException(e.getMessage, e.getCause))
+        println(s"***SyntaxError***")
+        println(s"Original error message: ${e.getMessage}")
+        DBIO.failed(ValidationException(s"$errorMessagePrefix ${e.getMessage}", e.getCause))
+      case Failure(e: WdlValidationException) =>
+        println(s"***ValidationException***")
+        println(s"Original error message: ${e.getMessage}")
+        DBIO.failed(ValidationException(s"$errorMessagePrefix ${e.getMessage}", e.getCause))
       case Failure(regret) =>
+        println("***Some Other Error***")
         DBIO.failed(regret)
     }
   }
@@ -145,7 +159,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
   // Existing methods get a pass because cleaning up the repo is prohibitively difficult (GAWB-1614)
   private def validateNamesForNewEntity[T](entity: AgoraEntity)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
     (entity.namespace, entity.name) match {
-      case (Some(AgoraBusiness.nameRegex(_*)), Some(AgoraBusiness.nameRegex(_*))) => op
+      case (Some(nameRegex(_*)), Some(nameRegex(_*))) => op
       case _ => throw ValidationException(
         "Entity must have both namespace and name and may only contain letters, numbers, underscores, dashes, and periods."
       )
@@ -153,6 +167,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
   }
 
   def insert(agoraEntity: AgoraEntity, username: String): Future[AgoraEntity] = {
+    println(s"---Inserting---")
     //these next two go to Mongo, so do them outside the permissions txn
     val configReferencedMethodOpt = agoraEntity.entityType.get match {
       case AgoraEntityType.Configuration => Some(resolveMethodRef(agoraEntity.payload.get))
@@ -219,6 +234,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
   }
 
   def copy(sourceArgs: AgoraEntity, targetArgs: AgoraEntity, redact: Boolean, entityTypes: Seq[AgoraEntityType.EntityType], username: String): Future[AgoraEntity] = {
+    println(s"---Copying---")
 
     // we only allow this for methods.
     val dao = AgoraDao.createAgoraDao(Some(AgoraEntityType.Workflow))
@@ -335,7 +351,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     val methodCriteria = AgoraEntity(Some(namespace), Some(name))
 
     // get all method snapshots for the supplied namespace/name (that the user has permissions to)
-    val methodsFuture = findWithIds(methodCriteria, AgoraBusiness.configIdsProjection, Seq(AgoraEntityType.Workflow), username)
+    val methodsFuture = findWithIds(methodCriteria, configIdsProjection, Seq(AgoraEntityType.Workflow), username)
 
     methodsFuture flatMap { methods =>
       // if we didn't find any methods, throw 404

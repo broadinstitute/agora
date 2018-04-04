@@ -67,7 +67,15 @@ class AgoraImportSpec extends ApiServiceSpec with FlatSpecLike{
     Post(ApiUtil.Methods.withLeadingVersion, testBadAgoraEntityNonExistentWdlImportFormat) ~>
       routes ~> check {
       assert(status == BadRequest)
-      assert(responseAs[String] contains "Failed to import workflow broad.non_existent_grep.1.:")
+      assert(responseAs[String] contains s"$errorMessagePrefix Failed to import workflow broad.non_existent_grep.1.:")
+    }
+  }
+
+  "MethodsService" should "return a 400 when posting a method and specifying a WDL with an import URL that returns a 404" in {
+    Post(ApiUtil.Methods.withLeadingVersion, copyPayload(testBadAgoraEntityWdlImportNotFound.payload)) ~>
+      routes ~> check {
+      assert(status == BadRequest)
+      assert(responseAs[String] contains s"$errorMessagePrefix Failed to import workflow http://localhost:$mockServerPort/not-found")
     }
   }
 
@@ -106,7 +114,7 @@ class AgoraImportSpec extends ApiServiceSpec with FlatSpecLike{
     Post(copyUrl, copyPayload(testBadAgoraEntityNonExistentWdlImportFormat.payload)) ~>
       routes ~> check {
         assert(status == BadRequest)
-        assert(responseAs[String] contains "Failed to import workflow broad.non_existent_grep.1.:")
+        assert(responseAs[String] contains s"$errorMessagePrefix Failed to import workflow broad.non_existent_grep.1.:")
       }
   }
 
@@ -114,7 +122,7 @@ class AgoraImportSpec extends ApiServiceSpec with FlatSpecLike{
     Post(copyUrl, copyPayload(testBadAgoraEntityWdlImportNotFound.payload)) ~>
       routes ~> check {
         assert(status == BadRequest)
-        assert(responseAs[String] contains s"Failed to import workflow http://localhost:$mockServerPort/not-found")
+        assert(responseAs[String] contains s"$errorMessagePrefix Failed to import workflow http://localhost:$mockServerPort/not-found")
       }
   }
 

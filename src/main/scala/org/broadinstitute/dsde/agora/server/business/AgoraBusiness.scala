@@ -109,13 +109,11 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     def withPayload(payload: String)(f: String => Try[Any]): ReadWriteAction[T] = {
       f(payload) match {
         case Success(_) => op
-        case Failure(e: SyntaxError) =>
+        case Failure(e @ (_: SyntaxError | _: WdlValidationException)) =>
           DBIO.failed(ValidationException(s"$errorMessagePrefix ${e.getMessage}", e.getCause))
-        case Failure(e: WdlValidationException) =>
-          DBIO.failed(ValidationException(s"$errorMessagePrefix ${e.getMessage}", e.getCause))
-        case Failure(regret) =>
-          DBIO.failed(regret)
-      }
+        case Failure(unknown) =>
+          DBIO.failed(unknown)
+        }
     }
 
     agoraEntity.payload.map { payload =>

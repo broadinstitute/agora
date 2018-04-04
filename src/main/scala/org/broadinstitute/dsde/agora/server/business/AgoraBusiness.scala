@@ -106,44 +106,48 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
   }
 
   private def checkValidPayload[T](agoraEntity: AgoraEntity, username: String)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
-    val payload = agoraEntity.payload.get
-
-    val payloadOK = agoraEntity.entityType match {
-        case Some(AgoraEntityType.Task) =>
-          WdlNamespace.loadUsingSource(payload, None, Option(Seq(httpResolver(_))))
-        // NOTE: Still not validating existence of docker images.
-        // namespace.tasks.foreach { validateDockerImage }
-
-        case Some(AgoraEntityType.Workflow) =>
-          WdlNamespaceWithWorkflow.load(payload, Seq(httpResolver(_)))
-        // NOTE: Still not validating existence of docker images.
-        //namespace.tasks.foreach { validateDockerImage }
-
-        case Some(AgoraEntityType.Configuration) =>
-          Try {
-            val json = payload.parseJson
-            val fields = json.asJsObject.getFields("methodRepoMethod")
-            if (fields.size != 1) throw ValidationException("Configuration payload must define at least one field named 'methodRepoMethod'.")
-
-            val subFields = fields.head.asJsObject.getFields("methodNamespace", "methodName", "methodVersion")
-            if (!subFields(0).isInstanceOf[JsString]) throw ValidationException("Configuration methodRepoMethod must include a 'methodNamespace' key with a string value")
-            if (!subFields(1).isInstanceOf[JsString]) throw ValidationException("Configuration methodRepoMethod must include a 'methodName' key with a string value")
-            if (!subFields(2).isInstanceOf[JsNumber]) throw ValidationException("Configuration methodRepoMethod must include a 'methodVersion' key with a JSNumber value")
-          }
-
-        case _ => //hello "shouldn't get here" my old friend
-          Failure(ValidationException(s"AgoraEntity $agoraEntity has no type!"))
+    def withPayload(payload: String)(f: String => Try[Any]): ReadWriteAction[T] = {
+      f(payload) match {
+        case Success(_) => op
+        case Failure(e: SyntaxError) =>
+          DBIO.failed(ValidationException(s"$errorMessagePrefix ${e.getMessage}", e.getCause))
+        case Failure(e: WdlValidationException) =>
+          DBIO.failed(ValidationException(s"$errorMessagePrefix ${e.getMessage}", e.getCause))
+        case Failure(regret) =>
+          DBIO.failed(regret)
       }
-
-    payloadOK match {
-      case Success(_) => op
-      case Failure(e: SyntaxError) =>
-        DBIO.failed(ValidationException(s"$errorMessagePrefix ${e.getMessage}", e.getCause))
-      case Failure(e: WdlValidationException) =>
-        DBIO.failed(ValidationException(s"$errorMessagePrefix ${e.getMessage}", e.getCause))
-      case Failure(regret) =>
-        DBIO.failed(regret)
     }
+
+    agoraEntity.payload.map { payload =>
+      withPayload(payload) {
+        payload => agoraEntity.entityType match {
+          case Some(AgoraEntityType.Task) =>
+            WdlNamespace.loadUsingSource(payload, None, Option(Seq(httpResolver(_))))
+          // NOTE: Still not validating existence of docker images.
+          // namespace.tasks.foreach { validateDockerImage }
+
+          case Some(AgoraEntityType.Workflow) =>
+            WdlNamespaceWithWorkflow.load(payload, Seq(httpResolver(_)))
+          // NOTE: Still not validating existence of docker images.
+          //namespace.tasks.foreach { validateDockerImage }
+
+          case Some(AgoraEntityType.Configuration) =>
+            Try {
+              val json = payload.parseJson
+              val fields = json.asJsObject.getFields("methodRepoMethod")
+              if (fields.size != 1) throw ValidationException("Configuration payload must define at least one field named 'methodRepoMethod'.")
+
+              val subFields = fields.head.asJsObject.getFields("methodNamespace", "methodName", "methodVersion")
+              if (!subFields(0).isInstanceOf[JsString]) throw ValidationException("Configuration methodRepoMethod must include a 'methodNamespace' key with a string value")
+              if (!subFields(1).isInstanceOf[JsString]) throw ValidationException("Configuration methodRepoMethod must include a 'methodName' key with a string value")
+              if (!subFields(2).isInstanceOf[JsNumber]) throw ValidationException("Configuration methodRepoMethod must include a 'methodVersion' key with a JSNumber value")
+            }
+
+          case _ => //hello "shouldn't get here" my old friend
+            Failure(ValidationException(s"AgoraEntity $agoraEntity has no type!"))
+        }
+      }
+    }.getOrElse(DBIO.failed(ValidationException("Agora entity has no payload.")))
   }
 
   // Name & namespace for new methods are validated against the regex.

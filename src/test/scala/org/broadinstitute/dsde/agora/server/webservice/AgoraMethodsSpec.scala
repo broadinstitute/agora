@@ -27,6 +27,8 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
     methodsService.postRoute ~ methodsService.querySingleRoute ~ methodsService.queryRoute
   }
 
+  private val errorMessagePrefix = "Invalid WDL:"
+
   override def beforeAll() = {
     ensureDatabasesAreRunning()
     testEntity1WithId = patiently(agoraBusiness.insert(testEntity1, mockAuthenticatedOwner.get))
@@ -115,7 +117,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
     Post(ApiUtil.Methods.withLeadingVersion, testBadAgoraEntity) ~>
       routes ~> check {
       assert(status === BadRequest)
-      assert(responseAs[String] != null)
+      assert(responseAs[String] contains s"$errorMessagePrefix ERROR: No more tokens.  Expecting")
     }
   }
 

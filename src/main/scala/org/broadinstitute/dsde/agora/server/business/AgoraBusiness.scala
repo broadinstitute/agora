@@ -106,24 +106,20 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
   }
 
   private def checkValidPayload[T](agoraEntity: AgoraEntity, username: String)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
-    println(s"\tValidating payload")
     val payload = agoraEntity.payload.get
 
     val payloadOK = agoraEntity.entityType match {
         case Some(AgoraEntityType.Task) =>
-          println(s"\t\tTask")
           WdlNamespace.loadUsingSource(payload, None, Option(Seq(httpResolver(_))))
         // NOTE: Still not validating existence of docker images.
         // namespace.tasks.foreach { validateDockerImage }
 
         case Some(AgoraEntityType.Workflow) =>
-          println(s"\t\tWorkflow")
           WdlNamespaceWithWorkflow.load(payload, Seq(httpResolver(_)))
         // NOTE: Still not validating existence of docker images.
         //namespace.tasks.foreach { validateDockerImage }
 
         case Some(AgoraEntityType.Configuration) =>
-          println(s"\t\tConfiguration")
           Try {
             val json = payload.parseJson
             val fields = json.asJsObject.getFields("methodRepoMethod")
@@ -142,15 +138,10 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     payloadOK match {
       case Success(_) => op
       case Failure(e: SyntaxError) =>
-        println(s"***SyntaxError***")
-        println(s"Original error message: ${e.getMessage}")
         DBIO.failed(ValidationException(s"$errorMessagePrefix ${e.getMessage}", e.getCause))
       case Failure(e: WdlValidationException) =>
-        println(s"***ValidationException***")
-        println(s"Original error message: ${e.getMessage}")
         DBIO.failed(ValidationException(s"$errorMessagePrefix ${e.getMessage}", e.getCause))
       case Failure(regret) =>
-        println("***Some Other Error***")
         DBIO.failed(regret)
     }
   }
@@ -167,7 +158,6 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
   }
 
   def insert(agoraEntity: AgoraEntity, username: String): Future[AgoraEntity] = {
-    println(s"---Inserting---")
     //these next two go to Mongo, so do them outside the permissions txn
     val configReferencedMethodOpt = agoraEntity.entityType.get match {
       case AgoraEntityType.Configuration => Some(resolveMethodRef(agoraEntity.payload.get))
@@ -234,8 +224,6 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
   }
 
   def copy(sourceArgs: AgoraEntity, targetArgs: AgoraEntity, redact: Boolean, entityTypes: Seq[AgoraEntityType.EntityType], username: String): Future[AgoraEntity] = {
-    println(s"---Copying---")
-
     // we only allow this for methods.
     val dao = AgoraDao.createAgoraDao(Some(AgoraEntityType.Workflow))
 

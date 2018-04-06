@@ -12,7 +12,7 @@ scalacOptions := Seq("-unchecked", "-deprecation", "-feature")
 lazy val akkaV = "2.5.11"
 lazy val akkaHttpV = "10.0.11"
 
-val cromwellVersion = "30-4de204a"
+val cromwellVersion = "31-39223b8"
 
 val artifactory = "https://broadinstitute.jfrog.io/broadinstitute/"
 
@@ -44,7 +44,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.slick" %% "slick" % "3.2.0",
   "com.zaxxer" % "HikariCP" % "2.3.9",
   "mysql" % "mysql-connector-java" % "5.1.42",
-  "org.broadinstitute" %% "cromwell-wdl" % cromwellVersion,
+  "org.broadinstitute" %% "cromwell-wdl-model-draft2" % cromwellVersion,
   "org.broadinstitute.dsde.workbench" %% "workbench-util" % "0.3-f3ce961",
   "org.mongodb" %% "casbah" % "3.1.1",
   "org.scalaz" %% "scalaz-core" % "7.2.18",

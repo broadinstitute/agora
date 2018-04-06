@@ -105,20 +105,12 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     }
   }
 
-  private def checkValidPayload[T](agoraEntity: AgoraEntity, username: String)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
-    def withPayload(payload: String)(f: String => Try[Any]): ReadWriteAction[T] = {
-      f(payload) match {
-        case Success(_) => op
-        case Failure(e @ (_: SyntaxError | _: WdlValidationException)) =>
-          DBIO.failed(ValidationException(s"$errorMessagePrefix ${e.getMessage}", e.getCause))
-        case Failure(unknown) =>
-          DBIO.failed(unknown)
-        }
-    }
-
-    agoraEntity.payload.map { payload =>
-      withPayload(payload) {
-        payload => agoraEntity.entityType match {
+  private def checkValidPayload[T](agoraEntity: AgoraEntity)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
+    agoraEntity.payload match {
+      case None =>
+        DBIO.failed(ValidationException(s"Agora entity $agoraEntity has no payload."))
+      case Some(payload) =>
+        val payloadOK = agoraEntity.entityType match {
           case Some(AgoraEntityType.Task) =>
             WdlNamespace.loadUsingSource(payload, None, Option(Seq(httpResolver(_))))
           // NOTE: Still not validating existence of docker images.
@@ -144,8 +136,17 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
           case _ => //hello "shouldn't get here" my old friend
             Failure(ValidationException(s"AgoraEntity $agoraEntity has no type!"))
         }
-      }
-    }.getOrElse(DBIO.failed(ValidationException("Agora entity has no payload.")))
+
+        payloadOK match {
+          case Success(_) => op
+          case Failure(e: SyntaxError) =>
+            DBIO.failed(ValidationException(s"$errorMessagePrefix ${e.getMessage}", e.getCause))
+          case Failure(e: WdlValidationException) =>
+            DBIO.failed(ValidationException(s"$errorMessagePrefix ${e.getMessage}", e.getCause))
+          case Failure(regret) =>
+            DBIO.failed(regret)
+        }
+    }
   }
 
   // Name & namespace for new methods are validated against the regex.
@@ -174,7 +175,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
       db.aePerms.addUserIfNotInDatabase(username) flatMap { _ =>
         checkInsertPermission(db, agoraEntity, username, snapshots) {
           validateNamesForNewEntity(agoraEntity) {
-            checkValidPayload(agoraEntity, username) {
+            checkValidPayload(agoraEntity) {
 
               //this silliness required to check whether the referenced method is readable if it's a config
               val entityToInsertAction = configReferencedMethodOpt match {
@@ -237,7 +238,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     permissionsDataSource.inTransaction { db =>
       // do we have permissions to create a new snapshot?
       checkEntityPermission(db, sourceEntity, username, AgoraPermissions(Create)) {
-        checkValidPayload(entityToInsert, username) {
+        checkValidPayload(entityToInsert) {
           // insert target
           val targetEntity = dao.insert(entityToInsert)
 

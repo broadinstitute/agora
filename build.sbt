@@ -11,9 +11,7 @@ scalacOptions := Seq("-unchecked", "-deprecation", "-feature")
 
 lazy val akkaV = "2.5.11"
 lazy val akkaHttpV = "10.1.0"
-lazy val jacksonV = "2.9.4"
-
-val cromwellVersion = "30-4de204a"
+lazy val cromwellV = "31-39223b8"
 
 val artifactory = "https://broadinstitute.jfrog.io/broadinstitute/"
 
@@ -28,6 +26,13 @@ libraryDependencies ++= Seq(
   "com.google.apis" % "google-api-services-admin-directory" % "directory_v1-rev93-1.23.0" excludeAll ExclusionRule(organization = "com.google.guava"),
   "com.h2database" % "h2" % "1.4.197",
   "com.typesafe.akka" %% "akka-actor" % akkaV,
+  "com.google.api-client" % "google-api-client" % "1.20.0" excludeAll ExclusionRule(organization = "com.google.guava"),
+  "com.google.apis" % "google-api-services-admin-directory" % "directory_v1-rev53-1.20.0" excludeAll ExclusionRule(organization = "com.google.guava"),
+  "com.h2database" % "h2" % "1.3.175",
+  "com.typesafe.akka" %% "akka-actor" % akkaV,
+  // It was necessary to explicitly specify the version for akka-stream to appease Akka as it complains otherwise with:
+  // "Akka version MUST be the same across all modules of Akka that you are using."
+  "com.typesafe.akka" %% "akka-stream" % akkaV,
   "com.typesafe.akka" %% "akka-http" % akkaHttpV,
   "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpV,
   "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpV,
@@ -37,7 +42,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.slick" %% "slick" % "3.2.2",
   "com.zaxxer" % "HikariCP" % "2.7.8",
   "mysql" % "mysql-connector-java" % "6.0.6",
-  "org.broadinstitute" %% "cromwell-wdl" % cromwellVersion,
+  "org.broadinstitute" %% "cromwell-wdl-model-draft2" % cromwellV,
   "org.broadinstitute.dsde.workbench" %% "workbench-util" % "0.3-0e9d080",
   "org.mongodb" %% "casbah" % "3.1.1",
   "org.scalaz" %% "scalaz-core" % "7.2.20",

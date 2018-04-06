@@ -1,6 +1,8 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
-import akka.actor.ActorSystem
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import akka.http.scaladsl.server.directives.ExecutionDirectives
+import akka.http.scaladsl.testkit.ScalatestRouteTest
 import org.broadinstitute.dsde.agora.server.AgoraTestFixture
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraPermissions, EntityAccessControl}
@@ -8,24 +10,26 @@ import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
 import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpec}
-import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
-import spray.testkit.{RouteTest, ScalatestRouteTest}
-import spray.http.StatusCodes._
-import spray.httpx.SprayJsonSupport._
+import org.broadinstitute.dsde.agora.server.webservice.permissions.{EntityPermissionsService, MultiEntityPermissionsService, NamespacePermissionsService}
 import spray.json.{DefaultJsonProtocol, JsArray, JsObject, JsValue, RootJsonFormat}
-
-import scala.concurrent.duration._
+import akka.http.scaladsl.model.StatusCodes._
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.Route
+import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
 
 @DoNotDiscover
-class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRouteTest with BeforeAndAfterAll with AgoraTestFixture {
+class PermissionIntegrationSpec extends FlatSpec with ScalatestRouteTest with BeforeAndAfterAll
+  with AgoraTestFixture with ExecutionDirectives with SprayJsonSupport with DefaultJsonProtocol {
 
-  implicit val routeTestTimeout = RouteTestTimeout(20.seconds)
+  val namespacePermissionsService = new NamespacePermissionsService(permsDataSource)
+  val entityPermissionsService = new EntityPermissionsService(permsDataSource)
+  val multiEntityPermissionsService = new MultiEntityPermissionsService(permsDataSource)
+  val methodsService = new MethodsService(permsDataSource)
 
-  trait ActorRefFactoryContext {
-    def actorRefFactory: ActorSystem = system
+  val routes: Route = ApiService.handleExceptionsAndRejections {
+    namespacePermissionsService.routes ~ entityPermissionsService.routes ~ multiEntityPermissionsService.routes ~
+    methodsService.querySingleRoute
   }
-
-  val methodsService = new MethodsService(permsDataSource) with ActorRefFactoryContext
 
   var agoraEntity1: AgoraEntity = _
   var agoraEntity2: AgoraEntity = _
@@ -48,17 +52,17 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
   "Agora" should "return namespace permissions. list for authorized users" in {
 
     Get(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + "permissions") ~>
-      methodsService.namespacePermissionsRoute ~>
+      routes ~>
       check {
         assert(status == OK)
-        assert(body.asString contains "Manage")
+        assert(responseAs[String] contains "Manage")
     }
   }
 
   "Agora" should "not return namespace permissions. list for unauthorized users" in {
 
     Get(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity2.namespace.get + "/" + "permissions") ~>
-      methodsService.namespacePermissionsRoute ~>
+      routes ~>
       check {
         assert(status == Forbidden)
       }
@@ -68,10 +72,10 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
 
     Post(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + "permissions" +
       s"?user=$owner2&roles=Read,Create,Manage") ~>
-      methodsService.namespacePermissionsRoute ~>
+      routes ~>
       check {
         assert(status == OK)
-        assert(body.asString contains "Create")
+        assert(responseAs[String] contains "Create")
       }
   }
 
@@ -79,19 +83,17 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
 
     Post(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + "permissions" +
       s"?user=${mockAuthenticatedOwner.get}&roles=Read") ~>
-      methodsService.namespacePermissionsRoute ~>
+      routes ~>
       check {
         assert(status == BadRequest)
       }
   }
 
-
-
   "Agora" should "not allow unauthorized users to insert a namespace permissions." in {
 
     Post(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity2.namespace.get + "/" + "permissions" +
       s"?user=$owner2&roles=All") ~>
-      methodsService.namespacePermissionsRoute ~>
+      routes ~>
       check {
         assert(status == Forbidden)
       }
@@ -101,10 +103,10 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
 
     Put(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + "permissions" +
       s"?user=$owner2&roles=Read") ~>
-      methodsService.namespacePermissionsRoute ~>
+      routes ~>
       check {
         assert(status == OK)
-        assert(body.asString contains "Read")
+        assert(responseAs[String] contains "Read")
       }
   }
 
@@ -112,7 +114,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
 
     Put(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + "permissions" +
       s"?user=${mockAuthenticatedOwner.get}&roles=Read") ~>
-      methodsService.namespacePermissionsRoute ~>
+      routes ~>
       check {
         assert(status == BadRequest)
       }
@@ -122,10 +124,10 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
 
     Delete(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + "permissions" +
       s"?user=$owner2&roles=Read") ~>
-      methodsService.namespacePermissionsRoute ~>
+      routes ~>
       check {
         assert(status == OK)
-        assert(body.asString contains "[]")
+        assert(responseAs[String] contains "[]")
       }
   }
 
@@ -133,7 +135,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
 
     Delete(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + "permissions" +
       s"?user=${mockAuthenticatedOwner.get}&roles=Read") ~>
-      methodsService.namespacePermissionsRoute ~>
+      routes ~>
       check {
         assert(status == BadRequest)
       }
@@ -143,7 +145,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
 
     Delete(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity2.namespace.get + "/" + "permissions" +
       s"?user=$owner2&roles=All") ~>
-      methodsService.namespacePermissionsRoute ~>
+      routes ~>
       check {
         assert(status == Forbidden)
       }
@@ -154,10 +156,10 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
 
     Get(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
         "/" + agoraEntity1.snapshotId.get + "/" + "permissions") ~>
-      methodsService.entityPermissionsRoute ~>
+      routes ~>
       check {
         assert(status == OK)
-        assert(body.asString contains "Manage")
+        assert(responseAs[String] contains "Manage")
       }
   }
 
@@ -165,7 +167,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
 
     Get(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity2.namespace.get + "/" + agoraEntity2.name.get +
       "/" + agoraEntity2.snapshotId.get + "/" + "permissions") ~>
-      methodsService.entityPermissionsRoute ~>
+      routes ~>
       check {
         assert(status == Forbidden)
       }
@@ -175,10 +177,10 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
 
     Post(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
       "/" + agoraEntity1.snapshotId.get + "/" + "permissions" + s"?user=$owner2&roles=All") ~>
-      methodsService.entityPermissionsRoute ~>
+      routes ~>
       check {
         assert(status == OK)
-        assert(body.asString contains "Manage")
+        assert(responseAs[String] contains "Manage")
       }
   }
 
@@ -186,7 +188,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
 
     Post(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
       "/" + agoraEntity1.snapshotId.get + "/" + "permissions" + s"?user=${mockAuthenticatedOwner.get}&roles=Read") ~>
-      methodsService.entityPermissionsRoute ~>
+      routes ~>
       check {
         assert(status == BadRequest)
       }
@@ -196,7 +198,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
 
     Post(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity2.namespace.get + "/" + agoraEntity2.name.get +
       "/" + agoraEntity2.snapshotId.get + "/" + "permissions" + s"?user=$agoraTestOwner&roles=All") ~>
-      methodsService.entityPermissionsRoute ~>
+      routes ~>
       check {
         assert(status == Forbidden)
       }
@@ -206,10 +208,10 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
 
     Put(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
       "/" + agoraEntity1.snapshotId.get + "/" + "permissions" + s"?user=$owner2&roles=Read") ~>
-      methodsService.entityPermissionsRoute ~>
+      routes ~>
       check {
         assert(status == OK)
-        assert(body.asString contains "Read")
+        assert(responseAs[String] contains "Read")
       }
   }
 
@@ -217,7 +219,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
 
     Put(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
       "/" + agoraEntity1.snapshotId.get + "/" + "permissions" + s"?user=${mockAuthenticatedOwner.get}&roles=Read") ~>
-      methodsService.entityPermissionsRoute ~>
+      routes ~>
       check {
         assert(status == BadRequest)
       }
@@ -227,10 +229,10 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
 
     Delete(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
       "/" + agoraEntity1.snapshotId.get + "/" + "permissions" + s"?user=$owner2&roles=All") ~>
-      methodsService.entityPermissionsRoute ~>
+      routes ~>
       check {
         assert(status == OK)
-        assert(body.asString contains "[]")
+        assert(responseAs[String] contains "[]")
       }
   }
 
@@ -238,7 +240,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
 
     Delete(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
       "/" + agoraEntity1.snapshotId.get + "/" + "permissions" + s"?user=${mockAuthenticatedOwner.get}&roles=All") ~>
-      methodsService.entityPermissionsRoute ~>
+      routes ~>
       check {
         assert(status == BadRequest)
       }
@@ -248,7 +250,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
 
     Delete(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity2.namespace.get + "/" + agoraEntity2.name.get +
       "/" + agoraEntity2.snapshotId.get + "/" + "permissions" + s"?user=$owner2&roles=All") ~>
-      methodsService.entityPermissionsRoute ~>
+      routes ~>
       check {
         assert(status == Forbidden)
       }
@@ -264,7 +266,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
     )
 
     Post(ApiUtil.Methods.withLeadingVersion + "/permissions", payload) ~>
-      methodsService.multiEntityPermissionsRoute ~>
+      routes ~>
       check {
         assert(status == OK)
         val entityAclList = responseAs[Seq[EntityAccessControl]]
@@ -321,7 +323,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
 
 
     Post(ApiUtil.Methods.withLeadingVersion + "/permissions", payload) ~>
-      methodsService.multiEntityPermissionsRoute ~>
+      routes ~>
       check {
         assert(status == OK)
 
@@ -385,7 +387,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
 
 
     Post(ApiUtil.Methods.withLeadingVersion + "/permissions", payload) ~>
-      methodsService.multiEntityPermissionsRoute ~>
+      routes ~>
       check {
         assert(status == OK)
 
@@ -449,7 +451,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
     )
 
     Put(ApiUtil.Methods.withLeadingVersion + "/permissions", payload) ~>
-      methodsService.multiEntityPermissionsRoute ~>
+      routes ~>
       check {
         assert(status == OK)
         assertResult(Some(AgoraPermissions(AgoraPermissions.Read)), "owner 2 on entity 1") {getUserPermissions(agoraEntity1, owner2.get)(mockAuthenticatedOwner.get)}
@@ -479,7 +481,7 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
       EntityAccessControl(agoraEntity1, Seq(AccessControl((adminUser.get, AgoraPermissions.Write))))
 
     Put(ApiUtil.Methods.withLeadingVersion + "/permissions", payload) ~>
-      methodsService.multiEntityPermissionsRoute ~>
+      routes ~>
       check {
         assert(status == OK)
         val resp = responseAs[Seq[EntityAccessControl]]
@@ -500,29 +502,25 @@ class PermissionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRo
       AccessControl(AccessControl.publicUser, AgoraPermissions(AgoraPermissions.Read))))
 
     Get(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity2.namespace.get + "/" +
-      agoraEntity2.name.get + "/" + agoraEntity2.snapshotId.get) ~>
-      methodsService.querySingleRoute ~> check {
+      agoraEntity2.name.get + "/" + agoraEntity2.snapshotId.get) ~> routes ~> check {
+        val rawJs = responseAs[JsObject]
+        val entity = AgoraApiJsonSupportWithManagerAndPublicRead.AgoraEntityFormatWithManagerAndPublicRead.read(rawJs)
 
-      val rawJs = responseAs[JsObject]
-      val entity = AgoraApiJsonSupportWithManagerAndPublicRead.AgoraEntityFormatWithManagerAndPublicRead.read(rawJs)
-
-      assert(status == OK)
-      assert(entity.public.contains(true))
-    }
+        assert(status == OK)
+        assert(entity.public.contains(true))
+      }
   }
 
   "Agora" should "set the `public` field to false for a non-public entity" in {
 
     Get(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" +
-      agoraEntity1.name.get + "/" + agoraEntity1.snapshotId.get) ~>
-      methodsService.querySingleRoute ~> check {
+      agoraEntity1.name.get + "/" + agoraEntity1.snapshotId.get) ~> routes ~> check {
+        val rawJs = responseAs[JsObject]
+        val entity = AgoraApiJsonSupportWithManagerAndPublicRead.AgoraEntityFormatWithManagerAndPublicRead.read(rawJs)
 
-      val rawJs = responseAs[JsObject]
-      val entity = AgoraApiJsonSupportWithManagerAndPublicRead.AgoraEntityFormatWithManagerAndPublicRead.read(rawJs)
-
-      assert(status == OK)
-      assert(entity.public.contains(false))
-    }
+        assert(status == OK)
+        assert(entity.public.contains(false))
+      }
   }
 
   private def getUserPermissions(entity: AgoraEntity, userToCheck: String)(requester: String): Option[AgoraPermissions] = {

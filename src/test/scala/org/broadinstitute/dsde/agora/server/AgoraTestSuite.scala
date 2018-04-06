@@ -12,6 +12,7 @@ class AgoraTestSuite extends Suites(
   new AgoraServiceUnhealthyStatusSpec,
   new AgoraServiceHealthyStatusSpec,
   new AgoraMethodsSpec,
+  new DockerHubClientSpec,
   new EntityCreationPermissionSpec,
   new EntityCopySpec,
   new AgoraProjectionsSpec,
@@ -31,18 +32,17 @@ class AgoraTestSuite extends Suites(
   new CompatibleConfigurationIntegrationSpec,
   new Ga4ghServiceSpec,
   new Ga4ghModelTest,
+  new SwaggerRoutesSpec,
   new AdminSweeperSpec(ActorSystem("test"))) with BeforeAndAfterAll with AgoraTestFixture {
 
   val agora = new Agora()
-
 
   override def beforeAll() {
     startDatabases()
     println(s"Starting Agora web services ($suiteName)")
     agora.start()
   }
-
-
+  
   override def afterAll() {
     stopDatabases()
     println(s"Stopping Agora web services ($suiteName)")

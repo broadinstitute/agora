@@ -5,10 +5,12 @@ name := "Agora"
 
 organization := "org.broadinstitute"
 
-scalaVersion := "2.11.12"
-dependencyOverrides += "org.scala-lang" % "scala-compiler" % "2.11.12"
+scalaVersion := "2.12.4"
 
-val sprayV = "1.3.4"
+scalacOptions := Seq("-unchecked", "-deprecation", "-feature")
+
+lazy val akkaV = "2.5.11"
+lazy val akkaHttpV = "10.0.11"
 
 val cromwellVersion = "31-39223b8"
 
@@ -29,16 +31,18 @@ libraryDependencies ++= Seq(
   "com.google.api-client" % "google-api-client" % "1.20.0" excludeAll ExclusionRule(organization = "com.google.guava"),
   "com.google.apis" % "google-api-services-admin-directory" % "directory_v1-rev53-1.20.0" excludeAll ExclusionRule(organization = "com.google.guava"),
   "com.h2database" % "h2" % "1.3.175",
-  "com.typesafe.akka" %% "akka-actor" % "2.5.9",
-  "com.typesafe.akka" %% "akka-slf4j" % "2.5.9",
+  "com.typesafe.akka" %% "akka-actor" % akkaV,
+  // It was necessary to explicitly specify the version for akka-stream to appease Akka as it complains otherwise with:
+  // "Akka version MUST be the same across all modules of Akka that you are using."
+  "com.typesafe.akka" %% "akka-stream" % akkaV,
+  "com.typesafe.akka" %% "akka-http" % akkaHttpV,
+  "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpV,
+  "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpV,
+  "com.typesafe.akka" %% "akka-slf4j" % akkaV,
   "com.typesafe" % "config" % "1.2.1",
   "com.typesafe.scala-logging" %% "scala-logging" % "3.7.1",
   "com.typesafe.slick" %% "slick" % "3.2.0",
   "com.zaxxer" % "HikariCP" % "2.3.9",
-  "io.spray" %% "spray-can" % sprayV,
-  "io.spray" %% "spray-client" % sprayV,
-  "io.spray" %% "spray-json" % "1.3.3", // NB: Not at sprayV. 1.3.4 does not exist.
-  "io.spray" %% "spray-routing-shapeless23" % sprayV,
   "mysql" % "mysql-connector-java" % "5.1.42",
   "org.broadinstitute" %% "cromwell-wdl-model-draft2" % cromwellVersion,
   "org.broadinstitute.dsde.workbench" %% "workbench-util" % "0.3-f3ce961",
@@ -46,7 +50,7 @@ libraryDependencies ++= Seq(
   "org.scalaz" %% "scalaz-core" % "7.2.18",
   "org.webjars" % "swagger-ui"  % "2.2.10-1",
   //---------- Test libraries -------------------//
-  "io.spray" %% "spray-testkit" % sprayV % Test,
+  "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpV % Test,
   "org.scalatest" %% "scalatest" % "3.0.4" % Test,
   "org.mock-server" % "mockserver-netty" % "3.10.2" % "test"
 )

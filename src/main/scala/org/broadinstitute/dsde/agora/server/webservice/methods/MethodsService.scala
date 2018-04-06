@@ -11,7 +11,7 @@ import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
  * This file defines a methods path (config) and Swagger annotations.
  */
 
-abstract class MethodsService(permissionsDataSource: PermissionsDataSource) extends AgoraService(permissionsDataSource) {
+class MethodsService(permissionsDataSource: PermissionsDataSource) extends AgoraService(permissionsDataSource) {
   override def path = ApiUtil.Methods.path
 
   override def querySingleRoute = super.querySingleRoute

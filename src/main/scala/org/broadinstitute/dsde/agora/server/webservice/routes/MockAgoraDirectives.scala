@@ -1,9 +1,9 @@
 package org.broadinstitute.dsde.agora.server.webservice.routes
 
+import akka.http.scaladsl.server.Directive1
+import akka.http.scaladsl.server.Directives._
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.webservice.util.ImplicitMagnet
-import spray.routing.Directives._
-import spray.routing._
 
 import scala.concurrent.ExecutionContext
 

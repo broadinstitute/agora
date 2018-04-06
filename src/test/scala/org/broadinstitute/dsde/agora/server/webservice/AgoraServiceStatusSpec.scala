@@ -1,8 +1,11 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.actor.ActorSystem
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.testkit.RouteTest
 import akka.pattern._
-import akka.testkit.{TestKit, TestKitBase}
+import akka.testkit.TestKitBase
 import akka.util.Timeout
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDBStatus
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
@@ -10,8 +13,6 @@ import org.broadinstitute.dsde.workbench.util.health.HealthMonitor._
 import org.broadinstitute.dsde.workbench.util.health.{HealthMonitor, StatusCheckResponse, SubsystemStatus}
 import org.broadinstitute.dsde.workbench.util.health.StatusJsonSupport.StatusCheckResponseFormat
 import org.broadinstitute.dsde.workbench.util.health.Subsystems.{Database, Mongo}
-import spray.http.StatusCodes
-import spray.httpx.SprayJsonSupport._
 import org.scalatest.{DoNotDiscover, FlatSpecLike}
 
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -20,7 +21,7 @@ import scala.util.{Failure, Success}
 
 
 @DoNotDiscover
-class AgoraServiceUnhealthyStatusSpec extends ApiServiceSpec with TestKitBase with FlatSpecLike {
+class AgoraServiceUnhealthyStatusSpec extends ApiServiceSpec with TestKitBase with FlatSpecLike with RouteTest {
   implicit val unitTestActorSystem = ActorSystem("AgoraServiceUnhealthyStatusSpec")
   // this health monitor uses the same SQL check as our runtime mysql, which calls VERSION() in the db.
   // H2 does not support VERSION(), so we expect this health monitor to show as unhealthy.

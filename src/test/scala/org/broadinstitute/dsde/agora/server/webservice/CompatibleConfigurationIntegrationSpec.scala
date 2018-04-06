@@ -1,6 +1,11 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.actor.ActorSystem
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.model.StatusCodes._
+import akka.http.scaladsl.testkit.{RouteTest, RouteTestTimeout, ScalatestRouteTest}
+import akka.http.scaladsl.model.HttpMethods
+import akka.http.scaladsl.server.directives.ExecutionDirectives
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.AgoraTestFixture
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
@@ -8,16 +13,13 @@ import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
 import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FreeSpec}
-import spray.http.HttpMethods
-import spray.http.StatusCodes._
-import spray.httpx.SprayJsonSupport._
-import spray.testkit.{RouteTest, ScalatestRouteTest}
 
 import scala.concurrent.duration._
 import scala.util.Random
 
 @DoNotDiscover
-class CompatibleConfigurationIntegrationSpec extends FreeSpec with RouteTest with ScalatestRouteTest with BeforeAndAfterAll with AgoraTestFixture {
+class CompatibleConfigurationIntegrationSpec extends FreeSpec with ExecutionDirectives with RouteTest
+  with ScalatestRouteTest with BeforeAndAfterAll with AgoraTestFixture {
 
   implicit val routeTestTimeout = RouteTestTimeout(20.seconds)
 
@@ -26,7 +28,7 @@ class CompatibleConfigurationIntegrationSpec extends FreeSpec with RouteTest wit
   }
 
   val methodsService = new MethodsService(permsDataSource) with ActorRefFactoryContext
-  val testRoutes = methodsService.queryCompatibleConfigurationsRoute
+  val testRoutes = ApiService.handleExceptionsAndRejections (methodsService.queryCompatibleConfigurationsRoute)
 
   override def beforeAll(): Unit = {
     ensureDatabasesAreRunning()

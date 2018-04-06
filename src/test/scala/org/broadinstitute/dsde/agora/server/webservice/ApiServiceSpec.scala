@@ -1,15 +1,17 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.model.StatusCodes._
+import akka.http.scaladsl.server.{Directives, ExceptionHandler}
+import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
+
 import org.broadinstitute.dsde.agora.server.AgoraTestFixture
 import org.broadinstitute.dsde.agora.server.exceptions.ValidationException
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.configurations.ConfigurationsService
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
+
 import org.scalatest.{DoNotDiscover, _}
-import spray.http.StatusCodes._
-import spray.httpx.unmarshalling._
-import spray.routing.{Directives, ExceptionHandler, MalformedRequestContentRejection, RejectionHandler}
-import spray.testkit.ScalatestRouteTest
 
 import scala.concurrent.duration._
 
@@ -22,13 +24,10 @@ class ApiServiceSpec extends AgoraTestFixture with Directives with Suite with Sc
 
   implicit val routeTestTimeout = RouteTestTimeout(5.seconds)
 
+  // TODO: AgoraProjectionsSpec uses this but should not have to. Running those tests through ApiService exception handler fails the test for some reason.
   val wrapWithExceptionHandler = handleExceptions(ExceptionHandler {
     case e: IllegalArgumentException => complete(BadRequest, e.getMessage)
     case ve: ValidationException => complete(BadRequest, ve.getMessage)
-  })
-
-  val wrapWithRejectionHandler = handleRejections(RejectionHandler {
-    case MalformedRequestContentRejection(message, cause) :: _ => complete(BadRequest, message)
   })
 
   trait ActorRefFactoryContext {
@@ -37,14 +36,6 @@ class ApiServiceSpec extends AgoraTestFixture with Directives with Suite with Sc
 
   val methodsService = new MethodsService(permsDataSource) with ActorRefFactoryContext
   val configurationsService = new ConfigurationsService(permsDataSource) with ActorRefFactoryContext
-
-  def handleError[T](deserialized: Deserialized[T], assertions: (T) => Unit) = {
-    if (status.isSuccess) {
-      if (deserialized.isRight) assertions(deserialized.right.get) else failTest(deserialized.left.get.toString)
-    } else {
-      failTest(response.message.toString)
-    }
-  }
 
   def uriEncode(uri: String): String = {
     java.net.URLEncoder.encode(uri, "UTF-8")

@@ -1,6 +1,9 @@
 
 package org.broadinstitute.dsde.agora.server.webservice
 
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.model.StatusCodes._
+import akka.http.scaladsl.server._
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraPermissions}
@@ -10,13 +13,7 @@ import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
 import org.scalatest.{DoNotDiscover, FlatSpecLike}
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.rawls.model.MethodConfiguration
-import spray.http.StatusCodes._
-import spray.httpx.SprayJsonSupport._
-import spray.httpx.unmarshalling._
 import spray.json.{DeserializationException, JsObject}
-import spray.routing.{MalformedQueryParamRejection, ValidationRejection}
-
-import scala.concurrent.Future
 
 @DoNotDiscover
 class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
@@ -24,6 +21,10 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
   var method1: AgoraEntity = _
   var testEntityToBeRedacted2WithId: AgoraEntity = _
   var testAgoraConfigurationToBeRedactedWithId: AgoraEntity = _
+
+  val routes = ApiService.handleExceptionsAndRejections {
+    configurationsService.querySingleRoute ~ configurationsService.postRoute ~ methodsService.querySingleRoute
+  }
 
   override def beforeAll() = {
     ensureDatabasesAreRunning()
@@ -44,7 +45,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
 
   "Agora" should "accept and record a snapshot comment when creating the initial snapshot of a config" in {
     Post(ApiUtil.Configurations.withLeadingVersion, testConfigWithSnapshotComment1.copy(snapshotId = None, payload = taskConfigPayload)) ~>
-      configurationsService.postRoute ~> check {
+      routes ~> check {
       assert(status == Created)
       assert(responseAs[AgoraEntity].snapshotComment == snapshotComment1)
       assert(responseAs[AgoraEntity].snapshotId.contains(1))
@@ -53,7 +54,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
 
   "Agora" should "apply a new snapshot comment when creating a new config snapshot" in {
     Post(ApiUtil.Configurations.withLeadingVersion, testConfigWithSnapshotComment1.copy(snapshotId = None, snapshotComment = snapshotComment2, method = Some(method1))) ~>
-      configurationsService.postRoute ~> check {
+      routes ~> check {
       assert(status == Created)
       assert(responseAs[AgoraEntity].snapshotComment == snapshotComment2)
       assert(responseAs[AgoraEntity].snapshotId.contains(2))
@@ -62,7 +63,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
 
   "Agora" should "record no snapshot comment for a new config snapshot if none is provided" in {
     Post(ApiUtil.Configurations.withLeadingVersion, testConfigWithSnapshotComment1.copy(snapshotId = None, snapshotComment = None, method = Some(method1))) ~>
-      configurationsService.postRoute ~> check {
+      routes ~> check {
       assert(status == Created)
       assert(responseAs[AgoraEntity].snapshotComment.isEmpty)
       assert(responseAs[AgoraEntity].snapshotId.contains(3))
@@ -71,11 +72,10 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
 
   "Agora" should "be able to store a task configuration" in {
     Post(ApiUtil.Configurations.withLeadingVersion, testAgoraConfigurationEntity3) ~>
-      configurationsService.postRoute ~> check {
+      routes ~> check {
+        val referencedMethod = AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(namespace1.get, name1.get, snapshotId1.get)
 
-      val referencedMethod = AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(namespace1.get, name1.get, snapshotId1.get)
-
-      handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => {
+        val entity = responseAs[AgoraEntity]
         assert(entity.namespace == namespace2)
         assert(entity.name == name1)
         assert(entity.synopsis == synopsis3)
@@ -92,15 +92,14 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
         assert(foundMethod.name == name1)
         assert(foundMethod.snapshotId == snapshotId1)
         assert(foundMethod.url.isDefined)
-      })
-    }
+      }
   }
 
   "Agora" should "populate method references when returning configurations" in {
     Get(ApiUtil.Configurations.withLeadingVersion) ~>
       configurationsService.queryRoute ~> check {
+        val configs = responseAs[Seq[AgoraEntity]]
 
-      handleError(entity.as[Seq[AgoraEntity]], (configs: Seq[AgoraEntity]) => {
         val method1 = AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(namespace1.get, name1.get, snapshotId1.get)
         val method2 = AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(namespace2.get, name1.get, snapshotId1.get)
         val method3 = AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(namespace1.get, name1.get, snapshotId1.get)
@@ -115,7 +114,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
         val foundConfig1 = configs.find(config => namespaceNameIdMatch(config, config1)).get
         val foundConfig2 = configs.find(config => namespaceNameIdMatch(config, config2)).get
         val foundConfig3 = configs.find(config => namespaceNameIdMatch(config, config3)).get
-        
+
         val methodRef1 = foundConfig1.method.get
         val methodRef2 = foundConfig2.method.get
         val methodRef3 = foundConfig3.method.get
@@ -139,8 +138,6 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
         assert(methodRef3.namespace == method3.namespace)
         assert(methodRef3.name == method3.name)
         assert(methodRef3.snapshotId == method3.snapshotId)
-      })
-
     }
   }
 
@@ -150,7 +147,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
       db.aePerms.editEntityPermission(method1, noPermission)
     }
     Post(ApiUtil.Configurations.withLeadingVersion, testAgoraConfigurationEntity3) ~>
-      configurationsService.postRoute ~> check {
+      routes ~> check {
         assert(status == NotFound)
     }
   }
@@ -163,7 +160,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
   
   "Agora" should "not allow you to post a new task to the configurations route" in {
     Post(ApiUtil.Configurations.withLeadingVersion, testEntityTaskWc) ~>
-    configurationsService.postRoute ~> check {
+    routes ~> check {
       assert(rejection.isInstanceOf[ValidationRejection])
     }
   }
@@ -173,9 +170,9 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
       testEntityToBeRedacted2WithId.namespace.get + "/" +
       testEntityToBeRedacted2WithId.name.get + "/" +
       testEntityToBeRedacted2WithId.snapshotId.get) ~>
-    methodsService.querySingleRoute ~>
+    routes ~>
     check {
-      assert(body.asString == "1")
+      assert(responseAs[String] == "1")
     }
   }
 
@@ -184,9 +181,9 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
       testAgoraConfigurationToBeRedactedWithId.namespace.get + "/" +
       testAgoraConfigurationToBeRedactedWithId.name.get + "/" +
       testAgoraConfigurationToBeRedactedWithId.snapshotId.get) ~>
-    configurationsService.querySingleRoute ~>
+    routes ~>
     check {
-      assert(body.asString contains "not found")
+      assert(responseAs[String] contains "not found")
     }
   }
 
@@ -198,8 +195,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
 
     "Agora" should "return the payload as an object if you ask it to" in {
       Get(baseURL + "?payloadAsObject=true") ~>
-      configurationsService.querySingleRoute ~>
-      check {
+      routes ~> check {
         assert(status == OK)
 
         val entity = responseAs[AgoraEntity]
@@ -213,9 +209,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
     }
 
     "Agora" should "return the payload as a string by default" in {
-      Get(baseURL) ~>
-      configurationsService.querySingleRoute ~>
-      check {
+      Get(baseURL) ~> routes ~> check {
         assert(status == OK)
 
         val entity = responseAs[AgoraEntity]
@@ -225,16 +219,15 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
     }
 
     "Agora" should "not let you use payloadAsObject and onlyPayload at the same time" in {
-      Get(baseURL + "?payloadAsObject=true&onlyPayload=true") ~>
-        configurationsService.querySingleRoute ~> check {
-        assert(body.asString contains "onlyPayload, payloadAsObject cannot be used together")
+      Get(baseURL + "?payloadAsObject=true&onlyPayload=true") ~> routes ~> check {
+        assert(responseAs[String] contains "onlyPayload, payloadAsObject cannot be used together")
         assert(status == BadRequest)
       }
     }
 
     "Agora" should "throw an error if you try to use an illegal value for both parameters" in {
       Get(baseURL + "?payloadAsObject=fire&onlyPayload=cloud") ~>
-        wrapWithRejectionHandler {
+        ApiService.handleExceptionsAndRejections {
           configurationsService.querySingleRoute
         } ~> check {
         rejection.isInstanceOf[MalformedQueryParamRejection]
@@ -243,7 +236,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
 
     "Agora" should "throw an error if you try to use an illegal value for one parameter" in {
       Get(baseURL + "?payloadAsObject=fire&onlyPayload=false") ~>
-        wrapWithRejectionHandler {
+        ApiService.handleExceptionsAndRejections {
           configurationsService.querySingleRoute
         } ~> check {
         rejection.isInstanceOf[MalformedQueryParamRejection]

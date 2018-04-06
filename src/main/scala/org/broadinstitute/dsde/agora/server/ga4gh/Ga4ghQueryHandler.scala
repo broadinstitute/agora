@@ -1,87 +1,48 @@
 package org.broadinstitute.dsde.agora.server.ga4gh
 
-import akka.pattern.pipe
+import com.typesafe.scalalogging.LazyLogging
+import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, PermissionsDataSource}
 import org.broadinstitute.dsde.agora.server.exceptions.ValidationException
-import org.broadinstitute.dsde.agora.server.ga4gh.Ga4ghServiceMessages._
 import org.broadinstitute.dsde.agora.server.ga4gh.Models._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection, AgoraEntityType}
-import org.broadinstitute.dsde.agora.server.webservice.PerRequest.{PerRequestMessage, RequestComplete}
-import org.broadinstitute.dsde.agora.server.webservice.handlers.QueryHandler
-import spray.httpx.SprayJsonSupport._
-import spray.json.DefaultJsonProtocol._
-import spray.routing.RequestContext
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class Ga4ghQueryHandler(dataSource: PermissionsDataSource, override implicit val ec: ExecutionContext)
-  extends QueryHandler(dataSource, ec) {
+trait Ga4ghQueryHandler extends LazyLogging {
+
+  implicit val dataSource: PermissionsDataSource
+  implicit val ec: ExecutionContext
+  def agoraBusiness = new AgoraBusiness(dataSource)(ec)
 
   // Include entity payloads in returned results
   val DefaultProjection = Some(AgoraEntityProjection(Seq[String]("payload", "synopsis"), Seq.empty[String]))
 
-  override def receive: akka.actor.Actor.Receive = {
-    case QueryPublicSingle(requestContext: RequestContext, entity: AgoraEntity) =>
-      queryPublicSingle(requestContext, entity) pipeTo context.parent
+  def queryPublicSingle(entity: AgoraEntity): Future[ToolVersion] =
+    queryPublicSingleEntity(entity) map (ToolVersion(_))
 
-    case QueryPublicSinglePayload(requestContext: RequestContext, entity: AgoraEntity, descriptorType: ToolDescriptorType.DescriptorType) =>
-      queryPublicSinglePayload(requestContext, entity, descriptorType) pipeTo context.parent
-
-    case QueryPublic(requestContext: RequestContext, agoraSearch: AgoraEntity) =>
-      queryPublic(requestContext, agoraSearch) pipeTo context.parent
-
-    case QueryPublicTool(requestContext: RequestContext, agoraSearch: AgoraEntity) =>
-      queryPublicTool(requestContext, agoraSearch) pipeTo context.parent
-
-    case QueryPublicTools(requestContext: RequestContext) =>
-      queryPublicTools(requestContext) pipeTo context.parent
-
-
-  }
-
-  def queryPublicSingle(requestContext: RequestContext, entity: AgoraEntity): Future[PerRequestMessage] = {
+  def queryPublicSingleEntity(entity: AgoraEntity): Future[AgoraEntity] = {
     val entityTypes = Seq(entity.entityType.getOrElse(throw ValidationException("need an entity type")))
-    agoraBusiness.findSingle(entity, entityTypes, AccessControl.publicUser) map { foundEntity =>
-      RequestComplete(ToolVersion(foundEntity))
-    }
+    agoraBusiness.findSingle(entity, entityTypes, AccessControl.publicUser)
   }
 
-  def queryPublicSinglePayload(requestContext: RequestContext, entity: AgoraEntity, descriptorType: ToolDescriptorType.DescriptorType): Future[PerRequestMessage] = {
-    val entityTypes = Seq(entity.entityType.getOrElse(throw ValidationException("need an entity type")))
-    agoraBusiness.findSingle(entity, entityTypes, AccessControl.publicUser) map { foundEntity =>
-      descriptorType match {
-        case ToolDescriptorType.WDL =>
-          // the url we return here is known to be incorrect in FireCloud (GAWB-1741).
-          // we return it anyway because it still provides some information, even if it
-          // requires manual user intervention to work.
-          val result = ToolDescriptor(foundEntity)
-          RequestComplete(result)
-        case ToolDescriptorType.PLAIN_WDL =>
-          RequestComplete(foundEntity.payload.getOrElse(""))
-      }
-    }
-  }
-
-  def queryPublic(requestContext: RequestContext,
-                  agoraSearch: AgoraEntity): Future[PerRequestMessage] = {
+  def queryPublic(agoraSearch: AgoraEntity): Future[Seq[ToolVersion]] = {
     agoraBusiness.find(agoraSearch, DefaultProjection, Seq(AgoraEntityType.Workflow), AccessControl.publicUser) map { entities =>
-      val toolVersions = entities map ToolVersion.apply
-      RequestComplete(toolVersions)
+      entities map ToolVersion.apply
     }
   }
 
-  def queryPublicTool(requestContext: RequestContext,
-                      agoraSearch: AgoraEntity): Future[PerRequestMessage] = {
+  def queryPublicTool(agoraSearch: AgoraEntity): Future[Tool] = {
     agoraBusiness.find(agoraSearch, DefaultProjection, Seq(AgoraEntityType.Workflow), AccessControl.publicUser) map { entities =>
-      RequestComplete(Tool(entities))
+      Tool(entities)
     }
   }
 
-  def queryPublicTools(requestContext: RequestContext): Future[PerRequestMessage] = {
+  def queryPublicTools(): Future[Seq[Tool]] = {
     agoraBusiness.find(AgoraEntity(), DefaultProjection, Seq(AgoraEntityType.Workflow), AccessControl.publicUser) map { allentities =>
       val groupedSnapshots = allentities.groupBy( ae => (ae.namespace,ae.name))
       val tools:Seq[Tool] = (groupedSnapshots.values map { entities => Tool(entities )}).toSeq
-      RequestComplete(tools.sortBy(_.id))
+      tools.sortBy(_.id)
     }
   }
 }

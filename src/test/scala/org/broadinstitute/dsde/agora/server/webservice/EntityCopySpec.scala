@@ -3,6 +3,10 @@ package org.broadinstitute.dsde.agora.server.webservice
 
 import java.util.UUID
 
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.model.StatusCodes._
+import akka.http.scaladsl.model.Uri.Query
+import akka.http.scaladsl.model._
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraPermissions}
@@ -11,10 +15,6 @@ import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.routes.MockAgoraDirectives
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
 import org.scalatest.{DoNotDiscover, FlatSpecLike}
-import spray.http.{StatusCode, Uri}
-import spray.http.StatusCodes._
-import spray.httpx.SprayJsonSupport._
-import spray.httpx.unmarshalling._
 
 import scala.concurrent.Future
 
@@ -61,7 +61,7 @@ class EntityCopySpec extends ApiServiceSpec with FlatSpecLike {
     val targetUri = ApiUtil.Configurations.withLeadingVersion + "/nosupportfor/configs/1"
     Post(targetUri, AgoraEntity()) ~>
       addHeader(MockAgoraDirectives.mockAuthenticatedUserEmailHeader, owner1.get) ~>
-      configurationsService.querySingleRoute ~> check {
+      ApiService.handleExceptionsAndRejections { configurationsService.querySingleRoute } ~> check {
         assert(!handled)
     }
   }
@@ -118,56 +118,54 @@ class EntityCopySpec extends ApiServiceSpec with FlatSpecLike {
                              argument: AgoraEntity = AgoraEntity(),
                              redact: Boolean = false, assertRedact: Boolean = true) = {
 
-    val getUri = Uri(testRoute.format(namespace,name,snapshotId))
-    val postUri = getUri.withQuery(Map("redact"->redact.toString))
+    val getUri: Uri = Uri(testRoute.format(namespace,name,snapshotId))
+    val postUri = getUri.withQuery(Query(Map("redact" -> redact.toString)))
 
     Post(postUri, AgoraEntity()) ~>
       addHeader(MockAgoraDirectives.mockAuthenticatedUserEmailHeader, asUser) ~>
-      methodsService.querySingleRoute ~> check {
-        assert(status == expectedStatus, response.message)
+      ApiService.handleExceptionsAndRejections { methodsService.querySingleRoute } ~> check {
+        assert(status == expectedStatus, response.toString)
         if (expectedStatus == Created) {
-          handleError(entity.as[AgoraEntity], (entity: AgoraEntity) => {
-            assert(entity.namespace == testEntity1WithId.namespace)
-            assert(entity.name == testEntity1WithId.name)
-            assert(entity.owner == testEntity1WithId.owner)
-            assert(entity.entityType == testEntity1WithId.entityType)
-            assert(entity.snapshotId.isDefined)
-            assert(entity.createDate.isDefined)
-            if (argument.synopsis.isDefined)
-              assert(entity.synopsis == argument.synopsis)
-            else
-              assert(entity.synopsis == testEntity1WithId.synopsis)
-            if (argument.documentation.isDefined)
-              assert(entity.documentation == argument.documentation)
-            else
-              assert(entity.documentation == testEntity1WithId.documentation)
-            if (argument.payload.isDefined)
-              assert(entity.payload == argument.payload)
-            else
-              assert(entity.payload == testEntity1WithId.payload)
-            if (argument.snapshotComment.isDefined)
-              assert(entity.snapshotComment == argument.snapshotComment)
-            else
-              assert(entity.snapshotComment.isEmpty)
-          })
+          val entity = responseAs[AgoraEntity]
+
+          assert(entity.namespace == testEntity1WithId.namespace)
+          assert(entity.name == testEntity1WithId.name)
+          assert(entity.owner == testEntity1WithId.owner)
+          assert(entity.entityType == testEntity1WithId.entityType)
+          assert(entity.snapshotId.isDefined)
+          assert(entity.createDate.isDefined)
+
+          if (argument.synopsis.isDefined)
+            assert(entity.synopsis == argument.synopsis)
+          else
+            assert(entity.synopsis == testEntity1WithId.synopsis)
+          if (argument.documentation.isDefined)
+            assert(entity.documentation == argument.documentation)
+          else
+            assert(entity.documentation == testEntity1WithId.documentation)
+          if (argument.payload.isDefined)
+            assert(entity.payload == argument.payload)
+          else
+            assert(entity.payload == testEntity1WithId.payload)
+          if (argument.snapshotComment.isDefined)
+            assert(entity.snapshotComment == argument.snapshotComment)
+          else
+            assert(entity.snapshotComment.isEmpty)
         }
       }
 
     if (assertRedact) {
       Get(getUri) ~>
         addHeader(MockAgoraDirectives.mockAuthenticatedUserEmailHeader, asUser) ~>
-        methodsService.querySingleRoute ~> check {
+        ApiService.handleExceptionsAndRejections { methodsService.querySingleRoute } ~> check {
           if (redact) {
-            assert(status == NotFound, response.message)
+            assert(status == NotFound, response.toString)
           } else {
-            assert(status == OK, response.message)
+            assert(status == OK, response.toString)
           }
-
-      }
+        }
     }
-
-
-    }
+  }
 
   private def randUUID: String = UUID.randomUUID.toString
 

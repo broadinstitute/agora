@@ -1,25 +1,25 @@
 package org.broadinstitute.dsde.agora.server
 
 import akka.actor.{ActorSystem, Cancellable}
-import akka.io.IO
-import akka.io.Tcp.CommandFailed
-import akka.pattern.ask
+import akka.http.scaladsl.Http
+import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDBStatus
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.EmbeddedMongo
-import org.broadinstitute.dsde.agora.server.webservice.ApiServiceActor
-import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AdminSweeper.Sweep
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AdminSweeper, PermissionsDataSource}
+import org.broadinstitute.dsde.agora.server.webservice.ApiService
 import org.broadinstitute.dsde.workbench.util.health.HealthMonitor
 import org.broadinstitute.dsde.workbench.util.health.Subsystems.{Database, Mongo}
-import spray.can.Http
 
-import scala.concurrent.Await
 import scala.concurrent.duration._
+import scala.language.postfixOps
 import scala.util.Try
 
 class ServerInitializer extends LazyLogging {
   implicit val actorSystem = ActorSystem("agora")
+  implicit val materializer = ActorMaterializer()
   implicit val executionContext = scala.concurrent.ExecutionContext.Implicits.global
   val permsDataSource = new PermissionsDataSource(AgoraConfig.sqlDatabase)
 
@@ -30,6 +30,7 @@ class ServerInitializer extends LazyLogging {
     Map(Database -> dbStatus.mysqlStatus, Mongo -> dbStatus.mongoStatus)
   }, "health-monitor")
   private var healthMonitorSchedule: Cancellable = _
+  private var adminGroupPollerSchedule: Cancellable = _
 
   def startAllServices() {
     if (AgoraConfig.usesEmbeddedMongo)
@@ -37,35 +38,54 @@ class ServerInitializer extends LazyLogging {
 
     healthMonitorSchedule = actorSystem.scheduler.schedule(3.seconds, 1.minute, healthMonitor, HealthMonitor.CheckAll)
 
-    startWebServiceActors()
+    startAdminGroupPoller()
+    startWebService()
   }
 
   def stopAllServices() {
+    logger.info("Closing all connections")
+    Http().shutdownAllConnectionPools()
     if (AgoraConfig.usesEmbeddedMongo)
       EmbeddedMongo.stopMongo()
-
-    println("Closing connection to sql db.")
     permsDataSource.close()
-
     healthMonitorSchedule.cancel() // stop the health monitor
-
-    stopAndCatchExceptions(stopWebServiceActors())
+    stopAdminGroupPoller() // stop the admin google group poller
   }
 
-  private def startWebServiceActors() = {
+  private def startWebService() = {
     implicit val bindTimeout: Timeout = 120.seconds
-    val service = actorSystem.actorOf(ApiServiceActor.props(permsDataSource, healthMonitor), "agora-actor")
-    Await.result(IO(Http) ? Http.Bind(service, interface = AgoraConfig.webserviceInterface, port = AgoraConfig.port), bindTimeout.duration) match {
-      case CommandFailed(b: Http.Bind) =>
-        logger.error(s"Unable to bind to port ${AgoraConfig.port} on interface ${AgoraConfig.webserviceInterface}")
-        actorSystem.terminate()
-        stopAndExit()
-      case _ => logger.info("Actor system started.")
+
+    val apiService = new ApiService(permsDataSource, healthMonitor)
+
+    Http().bindAndHandle(apiService.route, AgoraConfig.webserviceInterface, AgoraConfig.port)
+      .recover {
+        case t: Throwable =>
+          logger.error(s"Unable to bind to port ${AgoraConfig.port} on interface ${AgoraConfig.webserviceInterface}")
+          actorSystem.terminate()
+          stopAndExit()
+          throw t
+      }
+  }
+
+  /**
+    * Firecloud system maintains its set of admins as a google group.
+    * If such a group is specified in config, poll it at regular intervals
+    * to synchronize the admins defined in our users table.
+    */
+  private def startAdminGroupPoller() = {
+    AgoraConfig.adminGoogleGroup match {
+      case Some(group) =>
+        val adminGroupPoller = actorSystem.actorOf(AdminSweeper.props(AdminSweeper.adminsGoogleGroupPoller, permsDataSource))
+        adminGroupPollerSchedule = actorSystem.scheduler.schedule(5 seconds, AgoraConfig.adminSweepInterval minutes, adminGroupPoller, Sweep)
+      case None =>
     }
   }
 
-  private def stopWebServiceActors() {
-    IO(Http) ! Http.CloseAll
+  private def stopAdminGroupPoller() = {
+    Try(adminGroupPollerSchedule.cancel()) recover {
+      case _: NullPointerException => // Nothing to do; no scheduler was created at the first place
+      case t: Throwable => logger.warn(s"Unable to stop the admin group poller because '${t.getMessage}'")
+    }
   }
 
   private def stopAndExit() {
@@ -73,11 +93,5 @@ class ServerInitializer extends LazyLogging {
     stopAllServices()
     logger.info("Services stopped")
     throw new RuntimeException("Errors were found while initializing Agora.  This server will shutdown.")
-  }
-
-  private def stopAndCatchExceptions(closure: => Unit) {
-    Try(closure).recover {
-      case ex: Throwable => logger.error("Exception ignored while shutting down.", ex)
-    }
   }
 }

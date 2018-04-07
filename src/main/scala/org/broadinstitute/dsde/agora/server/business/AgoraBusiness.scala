@@ -139,9 +139,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
 
         payloadOK match {
           case Success(_) => op
-          case Failure(e: SyntaxError) =>
-            DBIO.failed(ValidationException(s"$errorMessagePrefix ${e.getMessage}", e.getCause))
-          case Failure(e: WdlValidationException) =>
+          case Failure(e @ (_: SyntaxError | _: WdlValidationException)) =>
             DBIO.failed(ValidationException(s"$errorMessagePrefix ${e.getMessage}", e.getCause))
           case Failure(regret) =>
             DBIO.failed(regret)

@@ -9,11 +9,11 @@ import org.broadinstitute.dsde.agora.server.model._
 import org.bson.types.ObjectId
 import slick.dbio.DBIO
 import spray.json._
-import wdl4s.parser.WdlParser.SyntaxError
-import wdl.exception.{ValidationException => WdlValidationException}
-import wdl.{WdlNamespace, WdlNamespaceWithWorkflow}
-import wdl.WdlNamespace.httpResolver
-import wdl.WdlWorkflow
+import wdl.draft2.parser.WdlParser.SyntaxError
+import wdl.draft2.model.exception.{ValidationException => WdlValidationException}
+import wdl.draft2.model.{WdlNamespace, WdlNamespaceWithWorkflow}
+import wdl.draft2.model.WdlNamespace.httpResolver
+import wdl.draft2.model.WdlWorkflow
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}

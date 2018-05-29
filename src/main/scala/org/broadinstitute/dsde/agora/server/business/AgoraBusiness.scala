@@ -12,7 +12,7 @@ import spray.json._
 import wdl.draft2.parser.WdlParser.SyntaxError
 import wdl.draft2.model.exception.{ValidationException => WdlValidationException}
 import wdl.draft2.model.{WdlNamespace, WdlNamespaceWithWorkflow}
-import wdl.draft2.model.WdlNamespace.httpResolver
+import languages.wdl.draft2.WdlDraft2LanguageFactory.httpResolver
 import wdl.draft2.model.WdlWorkflow
 
 import scala.concurrent.{ExecutionContext, Future}

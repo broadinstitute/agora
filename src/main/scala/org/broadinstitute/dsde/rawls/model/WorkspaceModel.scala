@@ -11,7 +11,7 @@ case class MethodRepoMethod(
 case class MethodConfiguration(
                    namespace: String,
                    name: String,
-                   rootEntityType: String,
+                   rootEntityType: Option[String] = None,
                    prerequisites: Map[String, AttributeString],
                    inputs: Map[String, AttributeString],
                    outputs: Map[String, AttributeString],

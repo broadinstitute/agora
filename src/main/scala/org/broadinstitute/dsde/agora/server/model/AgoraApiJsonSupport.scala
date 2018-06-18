@@ -63,7 +63,7 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
       val fields = json.asJsObject.fields
 
       // check required keys
-      val requiredKeys = Set("namespace","name","rootEntityType","prerequisites","inputs","outputs","methodRepoMethod")
+      val requiredKeys = Set("namespace","name","prerequisites","inputs","outputs","methodRepoMethod")
       val missingKeys = requiredKeys diff fields.keySet
       if (missingKeys.nonEmpty)
         throw DeserializationException(s"Failed to read field(s) [${missingKeys.mkString(",")}] from method configuration")
@@ -71,7 +71,7 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
       MethodConfiguration(
         namespace = fields("namespace").convertTo[String],
         name = fields("name").convertTo[String],
-        rootEntityType = fields("rootEntityType").convertTo[String],
+        rootEntityType = fields.get("rootEntityType") map (_.convertTo[String]),
         prerequisites = fields("prerequisites").convertTo[Map[String, AttributeString]],
         inputs = fields("inputs").convertTo[Map[String, AttributeString]],
         outputs = fields("outputs").convertTo[Map[String, AttributeString]],

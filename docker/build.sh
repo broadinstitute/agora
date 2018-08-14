@@ -10,6 +10,7 @@ function make_jar() {
             broadinstitute/scala-baseimage /working/docker/install.sh /working
 }
 
+
 function docker_cmd()
 {
     if [ $DOCKER_CMD = "build" ] || [ $DOCKER_CMD = "push" ]; then
@@ -25,6 +26,9 @@ function docker_cmd()
             docker push $REPO:${HASH_TAG}
             docker tag $REPO:${HASH_TAG} $REPO:${BRANCH}
             docker push $REPO:${BRANCH}
+            
+            docker tag $REPO:${HASH_TAG} $GCR_REPO:${HASH_TAG}
+            docker push $GCR_REPO:${HASH_TAG}
         fi
     else
         echo "Not a valid docker option!  Choose either build or push (which includes build)"
@@ -36,6 +40,7 @@ DOCKER_CMD=
 BRANCH=${BRANCH:-$(git rev-parse --abbrev-ref HEAD)}  # default to current branch
 REPO=${REPO:-broadinstitute/$PROJECT}  
 ENV=${ENV:-""}
+GCR_REPO=gcr.io/broad-dsp-gcr-public/$PROJECT
 while [ "$1" != "" ]; do
     case $1 in
         jar) make_jar ;;

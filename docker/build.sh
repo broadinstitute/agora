@@ -6,8 +6,7 @@ HELP_TEXT="$(cat <<EOF
    jar : build jar
    -d | --docker : (default: no action) provide either "build" or "push" to
            build or push a docker image.  "push" will also perform build.
-   -g | --gcr-registry: a GCR registry to push to
-   -h | --dockerhub-registry: a Docker Hub registry to push to
+   -g | --gcr-registry: If this flag is set, will push to the specified GCR repository.
    -k | --service-account-key-file: (optional) path to a service account key json
            file. If set, the script will call "gcloud auth activate-service-account".
            Otherwise, the script will not authenticate with gcloud.
@@ -28,7 +27,7 @@ set -e
 DOCKER_CMD=
 BRANCH=${BRANCH:-$(git rev-parse --abbrev-ref HEAD)}  # default to current branch
 DOCKERHUB_REGISTRY=${DOCKERHUB_REGISTRY:-broadinstitute/$PROJECT}
-GCR_REGISTRY=${GCR_REGISTRY:-gcr.io/broad-dsp-gcr-public/$PROJECT}
+GCR_REGISTRY=""
 ENV=${ENV:-""}
 SERVICE_ACCT_KEY_FILE=""
 
@@ -56,11 +55,6 @@ while [ "$1" != "" ]; do
             shift
             echo "gcr registry = $1"
             GCR_REGISTRY=$1
-            ;;
-        -h | --dockerhub-registry)
-            shift
-            echo "docker hub registry = $1"
-            DOCKERHUB_REGISTRY=$1
             ;;
         -k | --service-account-key-file)
             shift
@@ -117,9 +111,11 @@ function docker_cmd()
             docker push $DOCKERHUB_REGISTRY:${HASH_TAG}
             docker tag $DOCKERHUB_REGISTRY:${HASH_TAG} $DOCKERHUB_REGISTRY:${BRANCH}
             docker push $DOCKERHUB_REGISTRY:${BRANCH}
-            
-            docker tag $DOCKERHUB_REGISTRY:${HASH_TAG} $GCR_REGISTRY:${HASH_TAG}
-            docker push $GCR_REGISTRY:${HASH_TAG}
+
+            if [[ -n $GCR_REGISTRY ]]; then
+                docker tag $DOCKERHUB_REGISTRY:${HASH_TAG} $GCR_REGISTRY:${HASH_TAG}
+                docker push $GCR_REGISTRY:${HASH_TAG}
+            fi
         fi
     else
         echo "Not a valid docker option!  Choose either build or push (which includes build)"

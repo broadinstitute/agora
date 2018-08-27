@@ -13,9 +13,7 @@ HELP_TEXT="$(cat <<EOF
    -h | --help: print help text.
  Examples:
    Jenkins build job should run with all options, for example,
-     ./docker/build.sh jar -d push
-   To build the jar, the image, and push it to a gcr repository.
-     ./docker/build.sh jar -d build -r gcr --project "my-awesome-project"
+     ./docker/build.sh jar -d push -g "my-gcr-repo" -k "path-to-my-keyfile"
 \t
 EOF
 )"

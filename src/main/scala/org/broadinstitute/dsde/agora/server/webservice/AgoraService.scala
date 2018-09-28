@@ -55,7 +55,7 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
                       }
                     case Failure(error) => failWith(error)
                   }
-                case Failure(_:AgoraEntityNotFoundException) => complete(NotFound) // expected not-found exception
+                case Failure(nfe:AgoraEntityNotFoundException) => failWith(nfe) // expected not-found exception
                 case Failure(ex) => failWith(ex) // unexpected exception thrown when querying for entity
 
               }

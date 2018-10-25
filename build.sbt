@@ -11,7 +11,7 @@ scalacOptions := Seq("-unchecked", "-deprecation", "-feature")
 
 lazy val akkaV = "2.5.11"
 lazy val akkaHttpV = "10.1.0"
-lazy val cromwellV = "34-bda9485"
+lazy val cromwellV = "36-732c860"
 
 val artifactory = "https://broadinstitute.jfrog.io/broadinstitute/"
 

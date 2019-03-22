@@ -19,10 +19,6 @@ class OpenIdConnectDirectives extends AgoraDirectives {
     serviceAccountDomain.pattern.matcher(email).matches
   }
 
-  override def commonNameFromRequest(magnet: ImplicitMagnet[ExecutionContext]): Directive1[String] = {
-    headerValueByName("OIDC_CLAIM_name")
-  }
-
   override def usernameFromRequest(magnet: ImplicitMagnet[ExecutionContext]): Directive1[String] = {
     (headerValueByName("OIDC_CLAIM_email") & headerValueByName("OIDC_access_token")).tmap { case (email, token) =>
       if (isServiceAccount(email)) {

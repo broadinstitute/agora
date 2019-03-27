@@ -13,7 +13,5 @@ import scala.concurrent.ExecutionContext
  * running server.
  */
 trait AgoraDirectives {
-  def commonNameFromRequest(magnet: ImplicitMagnet[ExecutionContext]): Directive1[String]
-
   def usernameFromRequest(magnet: ImplicitMagnet[ExecutionContext]): Directive1[String]
 }

@@ -67,6 +67,9 @@ object AgoraConfig {
   lazy val gcsUserEmail = config.as[String]("gcs.user.email")
   lazy val adminGoogleGroup = config.as[Option[String]]("admin.google.group")
 
+  // sam
+  lazy val samUrl = config.as[String]("sam.url")
+
   //Config Settings
   object SwaggerConfig {
     private val swagger = config.getConfig("swagger")

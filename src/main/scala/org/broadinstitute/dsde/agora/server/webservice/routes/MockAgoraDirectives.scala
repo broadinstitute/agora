@@ -8,10 +8,6 @@ import org.broadinstitute.dsde.agora.server.webservice.util.ImplicitMagnet
 import scala.concurrent.ExecutionContext
 
 trait MockAgoraDirectives extends AgoraDirectives {
-  def commonNameFromRequest(magnet: ImplicitMagnet[ExecutionContext]): Directive1[String] = {
-    provide(AgoraConfig.mockAuthenticatedUserEmail)
-  }
-
   // allow unit tests to specify the user making the request; if they don't, use the default
   def usernameFromRequest(magnet: ImplicitMagnet[ExecutionContext]): Directive1[String] = {
     optionalHeaderValueByName(MockAgoraDirectives.mockAuthenticatedUserEmailHeader) map {

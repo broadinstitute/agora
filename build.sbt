@@ -11,7 +11,7 @@ scalacOptions := Seq("-unchecked", "-deprecation", "-feature")
 
 lazy val akkaV = "2.5.11"
 lazy val akkaHttpV = "10.1.0"
-lazy val cromwellV = "38-bf46f39"
+lazy val cromwellV = "39-8cf7129"
 
 val artifactory = "https://broadinstitute.jfrog.io/broadinstitute/"
 
@@ -79,7 +79,7 @@ logLevel in assembly := Level.Info
 assemblyMergeStrategy in assembly := {
   case x if Assembly.isConfigFile(x) =>
     MergeStrategy.concat
-  case x if x.endsWith("io.netty.versions.properties") => 
+  case x if x.endsWith("io.netty.versions.properties") =>
     MergeStrategy.discard
   case PathList(ps@_*) if Assembly.isReadme(ps.last) || Assembly.isLicenseFile(ps.last) =>
     MergeStrategy.rename

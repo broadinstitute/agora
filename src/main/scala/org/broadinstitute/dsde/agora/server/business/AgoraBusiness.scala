@@ -285,11 +285,19 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
 
   def listDefinitions(username: String): Future[Seq[MethodDefinition]] = {
 
-    val methodsFuture = findWithIds(AgoraEntity(), None, Seq(AgoraEntityType.Workflow), username)
-    val configsFuture = findWithIds(AgoraEntity(), None, Seq(AgoraEntityType.Configuration), username)
+    // for this query, don't return heavy fields like the documentation or payload
+    val projection = AgoraEntityProjection(
+      includedFields = AgoraEntityProjection.RequiredProjectionFields ++ Seq("synopsis", "methodId"),
+      excludedFields = Seq.empty[String])
 
-    configsFuture flatMap { configSnapshots =>
-      methodsFuture flatMap { methodSnapshots =>
+    val methodsAndConfigsFuture = findWithIds(AgoraEntity(), Some(projection), Seq(AgoraEntityType.Configuration, AgoraEntityType.Workflow), username)
+
+    methodsAndConfigsFuture flatMap { methodsAndConfigsSnapshots =>
+
+      val groupedMC = methodsAndConfigsSnapshots.groupBy(_.entityType)
+      val methodSnapshots = groupedMC.getOrElse(Some(AgoraEntityType.Workflow), Seq.empty[AgoraEntity])
+      val configSnapshots = groupedMC.getOrElse(Some(AgoraEntityType.Configuration), Seq.empty[AgoraEntity])
+
         // group/count config snapshots by methodId
         val configCounts:Map[Option[ObjectId],Int] = configSnapshots
             .groupBy(_.methodId)
@@ -333,7 +341,6 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
           }
         }
       }
-    }
   }
 
   def listAssociatedConfigurations(namespace: String, name: String, username: String): Future[Seq[AgoraEntity]] = {

@@ -11,8 +11,9 @@ import org.broadinstitute.dsde.agora.server.AgoraTestFixture
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
+import org.broadinstitute.dsde.agora.server.webservice.routes.MockAgoraDirectives
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
-import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FreeSpec}
+import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FreeSpec, Ignore}
 
 import scala.concurrent.duration._
 import scala.util.Random
@@ -32,78 +33,87 @@ class CompatibleConfigurationIntegrationSpec extends FreeSpec with ExecutionDire
 
   override def beforeAll(): Unit = {
     ensureDatabasesAreRunning()
+    startMockWaas()
 
     // has no configurations
+    setSingleMockWaasDescribeOkResponse(genericOkDescribeResponse)
     patiently(agoraBusiness.insert(testMethod("A",
-      Seq("in1"), Seq("out1")), mockAuthenticatedOwner.get))
+      Seq("in1"), Seq("out1")), mockAuthenticatedOwner.get, mockAccessToken))
 
     // one method snapshot, two compatible configs
+    setSingleMockWaasDescribeOkResponse(genericOkDescribeResponse)
     patiently(agoraBusiness.insert(testMethod("B",
-      Seq("in1","in2"), Seq("out1", "out2")), mockAuthenticatedOwner.get))
+      Seq("in1","in2"), Seq("out1", "out2")), mockAuthenticatedOwner.get, mockAccessToken))
     patiently(agoraBusiness.insert(testConfig("B", 1,
-      Seq("in1","in2"), Seq("out1", "out2")), mockAuthenticatedOwner.get))
+      Seq("in1","in2"), Seq("out1", "out2")), mockAuthenticatedOwner.get, mockAccessToken))
     patiently(agoraBusiness.insert(testConfig("B", 1,
-      Seq("in1","in2"), Seq("out1", "out2")), mockAuthenticatedOwner.get))
+      Seq("in1","in2"), Seq("out1", "out2")), mockAuthenticatedOwner.get, mockAccessToken))
 
     // two method snapshots, with one and two compatible configs
+    setMockWaasDescribeOkResponse(genericOkDescribeResponse, 2)
     patiently(agoraBusiness.insert(testMethod("C",
-      Seq("in1","in2","in3"), Seq("out1", "out2","out3")), mockAuthenticatedOwner.get))
+      Seq("in1","in2","in3"), Seq("out1", "out2","out3")), mockAuthenticatedOwner.get, mockAccessToken))
     patiently(agoraBusiness.insert(testMethod("C",
-      Seq("in1","in2","in3"), Seq("out1", "out2","out3")), mockAuthenticatedOwner.get))
+      Seq("in1","in2","in3"), Seq("out1", "out2","out3")), mockAuthenticatedOwner.get, mockAccessToken))
     patiently(agoraBusiness.insert(testConfig("C", 1,
-      Seq("in1","in2","in3"), Seq("out1", "out2","out3")), mockAuthenticatedOwner.get))
+      Seq("in1","in2","in3"), Seq("out1", "out2","out3")), mockAuthenticatedOwner.get, mockAccessToken))
     patiently(agoraBusiness.insert(testConfig("C", 2,
-      Seq("in1","in2","in3"), Seq("out1", "out2","out3")), mockAuthenticatedOwner.get))
+      Seq("in1","in2","in3"), Seq("out1", "out2","out3")), mockAuthenticatedOwner.get, mockAccessToken))
     patiently(agoraBusiness.insert(testConfig("C", 2,
-      Seq("in1","in2","in3"), Seq("out1", "out2","out3")), mockAuthenticatedOwner.get))
+      Seq("in1","in2","in3"), Seq("out1", "out2","out3")), mockAuthenticatedOwner.get, mockAccessToken))
 
     // one method snapshot, two compatible configs and one with incompatible inputs
+    setSingleMockWaasDescribeOkResponse(genericOkDescribeResponse)
     patiently(agoraBusiness.insert(testMethod("D",
-      Seq("D1"), Seq("D2","D3")), mockAuthenticatedOwner.get))
+      Seq("D1"), Seq("D2","D3")), mockAuthenticatedOwner.get, mockAccessToken))
     patiently(agoraBusiness.insert(testConfig("D", 1,
-      Seq("D1"), Seq("D2","D3")), mockAuthenticatedOwner.get))
+      Seq("D1"), Seq("D2","D3")), mockAuthenticatedOwner.get, mockAccessToken))
     patiently(agoraBusiness.insert(testConfig("D", 1,
-      Seq("D1","incompatible"), Seq("D2","D3")), mockAuthenticatedOwner.get)) // <-- extra input
+      Seq("D1","incompatible"), Seq("D2","D3")), mockAuthenticatedOwner.get, mockAccessToken)) // <-- extra input
     patiently(agoraBusiness.insert(testConfig("D", 1,
-      Seq("D1"), Seq("D2","D3")), mockAuthenticatedOwner.get))
+      Seq("D1"), Seq("D2","D3")), mockAuthenticatedOwner.get, mockAccessToken))
 
     // one method snapshot, two compatible configs and one with incompatible outputs
+    setSingleMockWaasDescribeOkResponse(genericOkDescribeResponse)
     patiently(agoraBusiness.insert(testMethod("E",
-      Seq("E1"), Seq("E2","E3")), mockAuthenticatedOwner.get))
+      Seq("E1"), Seq("E2","E3")), mockAuthenticatedOwner.get, mockAccessToken))
     patiently(agoraBusiness.insert(testConfig("E", 1,
-      Seq("E1"), Seq("E2","E3")), mockAuthenticatedOwner.get))
+      Seq("E1"), Seq("E2","E3")), mockAuthenticatedOwner.get, mockAccessToken))
     patiently(agoraBusiness.insert(testConfig("E", 1,
-      Seq("E1"), Seq("E2")), mockAuthenticatedOwner.get)) // <-- missing output
+      Seq("E1"), Seq("E2")), mockAuthenticatedOwner.get, mockAccessToken)) // <-- missing output
     patiently(agoraBusiness.insert(testConfig("E", 1,
-      Seq("E1"), Seq("E2","E3")), mockAuthenticatedOwner.get))
+      Seq("E1"), Seq("E2","E3")), mockAuthenticatedOwner.get, mockAccessToken))
 
     // one method snapshot, one compatible config, but uses same ins/outs as "B"
+    setSingleMockWaasDescribeOkResponse(genericOkDescribeResponse)
     patiently(agoraBusiness.insert(testMethod("F",
-      Seq("in1","in2"), Seq("out1", "out2")), mockAuthenticatedOwner.get))
+      Seq("in1","in2"), Seq("out1", "out2")), mockAuthenticatedOwner.get, mockAccessToken))
     patiently(agoraBusiness.insert(testConfig("F", 1,
-      Seq("in1"), Seq("out1", "out2")), mockAuthenticatedOwner.get)) // <-- wrong inputs
+      Seq("in1"), Seq("out1", "out2")), mockAuthenticatedOwner.get, mockAccessToken)) // <-- wrong inputs
     patiently(agoraBusiness.insert(testConfig("F", 1,
-      Seq("in1","in2"), Seq("out1")), mockAuthenticatedOwner.get)) // <-- wrong outputs
+      Seq("in1","in2"), Seq("out1")), mockAuthenticatedOwner.get, mockAccessToken)) // <-- wrong outputs
 
     // method has optional inputs
+    setSingleMockWaasDescribeOkResponse(genericOkDescribeResponse)
     patiently(agoraBusiness.insert(testMethod("G",
-      Seq("in1","in2"), Seq("out1", "out2"), Seq("optional1", "optional2")), mockAuthenticatedOwner.get))
+      Seq("in1","in2"), Seq("out1", "out2"), Seq("optional1", "optional2")), mockAuthenticatedOwner.get, mockAccessToken))
     patiently(agoraBusiness.insert(testConfig("G", 1,
-      Seq("in1","in2"), Seq("out1", "out2")), mockAuthenticatedOwner.get)) // <-- all required, no optionals
+      Seq("in1","in2"), Seq("out1", "out2")), mockAuthenticatedOwner.get, mockAccessToken)) // <-- all required, no optionals
     patiently(agoraBusiness.insert(testConfig("G", 1,
-      Seq("in1","in2","optional1"), Seq("out1","out2")), mockAuthenticatedOwner.get)) // <-- all required, some optional
+      Seq("in1","in2","optional1"), Seq("out1","out2")), mockAuthenticatedOwner.get, mockAccessToken)) // <-- all required, some optional
     patiently(agoraBusiness.insert(testConfig("G", 1,
-      Seq("in1","in2","optional1","optional2"), Seq("out1","out2")), mockAuthenticatedOwner.get)) // <-- all required, all optional
+      Seq("in1","in2","optional1","optional2"), Seq("out1","out2")), mockAuthenticatedOwner.get, mockAccessToken)) // <-- all required, all optional
     patiently(agoraBusiness.insert(testConfig("G", 1,
-      Seq("in1", "optional1", "optional2"), Seq("out1","out2")), mockAuthenticatedOwner.get)) // <-- some required, all optional
+      Seq("in1", "optional1", "optional2"), Seq("out1","out2")), mockAuthenticatedOwner.get, mockAccessToken)) // <-- some required, all optional
     patiently(agoraBusiness.insert(testConfig("G", 1,
-      Seq("in1", "in2", "in3"), Seq("out1","out2")), mockAuthenticatedOwner.get)) // <-- extraneous inputs
+      Seq("in1", "in2", "in3"), Seq("out1","out2")), mockAuthenticatedOwner.get, mockAccessToken)) // <-- extraneous inputs
 
 
   }
 
   override def afterAll(): Unit = {
     clearDatabases()
+    stopMockWaas()
   }
 
   "Agora's compatible configurations endpoint" - {
@@ -119,19 +129,19 @@ class CompatibleConfigurationIntegrationSpec extends FreeSpec with ExecutionDire
       }
     }
     "should return NotFound for a method snapshot that doesn't exist" in {
-      Get(testUrl("not", "found", 1)) ~> testRoutes ~> check {
+      Get(testUrl("not", "found", 1)) ~> addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> testRoutes ~> check {
         assert(status == NotFound)
       }
     }
     "should return empty array for a method that has no configurations" in {
-      Get(testUrl("A", 1)) ~> testRoutes ~> check {
+      Get(testUrl("A", 1)) ~> addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> testRoutes ~> check {
         assert(status == OK)
         val configs = responseAs[Seq[AgoraEntity]]
         assert(configs.isEmpty)
       }
     }
     "should return configs for a method that has compatible configurations" in {
-      Get(testUrl("B", 1)) ~> testRoutes ~> check {
+      Get(testUrl("B", 1)) ~> addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> testRoutes ~> check {
         assert(status == OK)
         val configs = responseAs[Seq[AgoraEntity]]
         assert(configs.size == 2)
@@ -142,7 +152,7 @@ class CompatibleConfigurationIntegrationSpec extends FreeSpec with ExecutionDire
 
     "should return compatible configurations that reference any snapshot of this method" in {
       Seq(1,2) foreach { snapshotId =>
-        Get(testUrl("C", snapshotId)) ~> testRoutes ~> check {
+        Get(testUrl("C", snapshotId)) ~> addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> testRoutes ~> check {
           assert(status == OK)
           val configs = responseAs[Seq[AgoraEntity]]
           assert(configs.size == 3)
@@ -153,7 +163,7 @@ class CompatibleConfigurationIntegrationSpec extends FreeSpec with ExecutionDire
 
     }
     "should omit configurations with different inputs" in {
-      Get(testUrl("D", 1)) ~> testRoutes ~> check {
+      Get(testUrl("D", 1)) ~> addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> testRoutes ~> check {
         assert(status == OK)
         val configs = responseAs[Seq[AgoraEntity]]
         assert(configs.size == 2)
@@ -162,7 +172,7 @@ class CompatibleConfigurationIntegrationSpec extends FreeSpec with ExecutionDire
       }
     }
     "should omit configurations with different outputs" in {
-      Get(testUrl("E", 1)) ~> testRoutes ~> check {
+      Get(testUrl("E", 1)) ~> addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> testRoutes ~> check {
         assert(status == OK)
         val configs = responseAs[Seq[AgoraEntity]]
         assert(configs.size == 2)
@@ -173,14 +183,14 @@ class CompatibleConfigurationIntegrationSpec extends FreeSpec with ExecutionDire
     "should omit compatible configurations that reference a different method" in {
       // also tests properly returning an empty array when the method
       // has only incompatible configs associated with it
-      Get(testUrl("F", 1)) ~> testRoutes ~> check {
+      Get(testUrl("F", 1)) ~> addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> testRoutes ~> check {
         assert(status == OK)
         val configs = responseAs[Seq[AgoraEntity]]
         assert(configs.isEmpty)
       }
     }
     "should consider configurations compatible if they don't satisfy all optionals" in {
-      Get(testUrl("G", 1)) ~> testRoutes ~> check {
+      Get(testUrl("G", 1)) ~> addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> testRoutes ~> check {
         assert(status == OK)
         val configs = responseAs[Seq[AgoraEntity]]
         assert(configs.size == 3)

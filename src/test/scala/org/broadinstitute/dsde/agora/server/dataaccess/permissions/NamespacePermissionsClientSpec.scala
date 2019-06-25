@@ -18,15 +18,18 @@ class NamespacePermissionsClientSpec extends FlatSpec with ScalaFutures with Bef
   override def beforeAll(): Unit = {
     import scala.concurrent.ExecutionContext.Implicits.global
     ensureDatabasesAreRunning()
+    startMockWaas()
 
-    patiently(agoraBusiness.insert(testEntity1, mockAuthenticatedOwner.get))
-    patiently(agoraBusiness.insert(testEntity2, mockAuthenticatedOwner.get))
-    patiently(agoraBusiness.insert(testEntity3, mockAuthenticatedOwner.get))
+    setMockWaasDescribeOkResponse(payload1DescribeResponse, 3)
+    patiently(agoraBusiness.insert(testEntity1, mockAuthenticatedOwner.get, mockAccessToken))
+    patiently(agoraBusiness.insert(testEntity2, mockAuthenticatedOwner.get, mockAccessToken))
+    patiently(agoraBusiness.insert(testEntity3, mockAuthenticatedOwner.get, mockAccessToken))
     testBatchPermissionEntityWithId = patiently(agoraBusiness.find(testEntity3, None, Seq(testEntity3.entityType.get), mockAuthenticatedOwner.get)).head
   }
 
   override def afterAll(): Unit = {
     clearDatabases()
+    stopMockWaas()
   }
 
   "Agora" should "add namespace permissions." in {

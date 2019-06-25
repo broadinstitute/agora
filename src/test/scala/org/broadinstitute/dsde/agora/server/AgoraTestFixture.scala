@@ -1,13 +1,18 @@
 
 package org.broadinstitute.dsde.agora.server
 
+import akka.http.scaladsl.model.StatusCodes.OK
 import com.mongodb.casbah.MongoCollection
 import com.mongodb.casbah.commons.MongoDBObject
-import org.broadinstitute.dsde.agora.server.AgoraTestData._
+import org.broadinstitute.dsde.agora.server.AgoraTestData.{waasMockServerPort, _}
 import org.broadinstitute.dsde.agora.server.business.{AgoraBusiness, PermissionBusiness}
 import org.broadinstitute.dsde.agora.server.dataaccess.ReadWriteAction
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.{AgoraMongoClient, EmbeddedMongo}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
+import org.mockserver.integration.ClientAndServer
+import org.mockserver.integration.ClientAndServer.startClientAndServer
+import org.mockserver.matchers.Times
+import org.mockserver.model.HttpRequest.request
 import slick.dbio.DBIOAction
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.meta.MTable
@@ -24,6 +29,31 @@ trait AgoraTestFixture {
   val permsDataSource: PermissionsDataSource = new PermissionsDataSource(AgoraConfig.sqlDatabase)
   val agoraBusiness: AgoraBusiness = new AgoraBusiness(permsDataSource)
   val permissionBusiness: PermissionBusiness = new PermissionBusiness(permsDataSource)
+
+  var waasMockServer: ClientAndServer = _
+  val waasRequest = request()
+    .withMethod("POST")
+    .withPath("/api/womtool/v1/describe")
+
+  val mockAccessToken = AgoraConfig.mockAccessToken
+
+  def startMockWaas() = {
+    waasMockServer = startClientAndServer(waasMockServerPort)
+  }
+
+  def setMockWaasDescribeOkResponse(responseAsJson : String, times : Int) = {
+    waasMockServer.when(waasRequest, Times.exactly(times))
+      .respond(
+        org.mockserver.model.HttpResponse.response().withBody(responseAsJson).withStatusCode(OK.intValue).withHeader("Content-Type", "application/json"))
+  }
+
+  def setSingleMockWaasDescribeOkResponse(responseAsJson : String) = {
+    setMockWaasDescribeOkResponse(responseAsJson, 1)
+  }
+
+  def stopMockWaas() = {
+    waasMockServer.stop()
+  }
 
   def startDatabases() = {
     EmbeddedMongo.startMongo()

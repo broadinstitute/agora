@@ -16,6 +16,7 @@ import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
+import org.broadinstitute.dsde.agora.server.webservice.routes.MockAgoraDirectives
 
 @DoNotDiscover
 class PermissionIntegrationSpec extends FlatSpec with ScalatestRouteTest with BeforeAndAfterAll
@@ -38,15 +39,21 @@ class PermissionIntegrationSpec extends FlatSpec with ScalatestRouteTest with Be
 
   override def beforeAll(): Unit = {
     ensureDatabasesAreRunning()
-    agoraEntity1 = patiently(agoraBusiness.insert(testIntegrationEntity, mockAuthenticatedOwner.get))
-    agoraEntity2 = patiently(agoraBusiness.insert(testIntegrationEntity2, owner2.get))
-    agoraEntity3 = patiently(agoraBusiness.insert(testIntegrationEntity3, mockAuthenticatedOwner.get))
-    redactedEntity = patiently(agoraBusiness.insert(testEntityToBeRedacted2, mockAuthenticatedOwner.get))
+    startMockWaas()
+
+    setMockWaasDescribeOkResponse(payload1DescribeResponse, 3)
+    agoraEntity1 = patiently(agoraBusiness.insert(testIntegrationEntity, mockAuthenticatedOwner.get, mockAccessToken))
+    agoraEntity2 = patiently(agoraBusiness.insert(testIntegrationEntity2, owner2.get, mockAccessToken))
+    agoraEntity3 = patiently(agoraBusiness.insert(testIntegrationEntity3, mockAuthenticatedOwner.get, mockAccessToken))
+
+    setSingleMockWaasDescribeOkResponse(payload2DescribeResponse)
+    redactedEntity = patiently(agoraBusiness.insert(testEntityToBeRedacted2, mockAuthenticatedOwner.get, mockAccessToken))
     patiently(agoraBusiness.delete(redactedEntity, Seq(redactedEntity.entityType.get), mockAuthenticatedOwner.get))
   }
 
   override def afterAll(): Unit = {
     clearDatabases()
+    stopMockWaas()
   }
 
   "Agora" should "return namespace permissions. list for authorized users" in {
@@ -502,7 +509,8 @@ class PermissionIntegrationSpec extends FlatSpec with ScalatestRouteTest with Be
       AccessControl(AccessControl.publicUser, AgoraPermissions(AgoraPermissions.Read))))
 
     Get(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity2.namespace.get + "/" +
-      agoraEntity2.name.get + "/" + agoraEntity2.snapshotId.get) ~> routes ~> check {
+      agoraEntity2.name.get + "/" + agoraEntity2.snapshotId.get) ~>
+      addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
         val rawJs = responseAs[JsObject]
         val entity = AgoraApiJsonSupportWithManagerAndPublicRead.AgoraEntityFormatWithManagerAndPublicRead.read(rawJs)
 
@@ -514,7 +522,8 @@ class PermissionIntegrationSpec extends FlatSpec with ScalatestRouteTest with Be
   "Agora" should "set the `public` field to false for a non-public entity" in {
 
     Get(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" +
-      agoraEntity1.name.get + "/" + agoraEntity1.snapshotId.get) ~> routes ~> check {
+      agoraEntity1.name.get + "/" + agoraEntity1.snapshotId.get) ~>
+      addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
         val rawJs = responseAs[JsObject]
         val entity = AgoraApiJsonSupportWithManagerAndPublicRead.AgoraEntityFormatWithManagerAndPublicRead.read(rawJs)
 

@@ -20,6 +20,7 @@ object AgoraConfig {
   var authenticationDirectives: AgoraDirectives = _
   var usesEmbeddedMongo: Boolean = _
   lazy val mockAuthenticatedUserEmail = config.as[Option[String]]("mockAuthenticatedUserEmail").getOrElse("noone@broadinstitute.org")
+  lazy val mockAccessToken = config.as[Option[String]]("mockAccessToken").getOrElse("ya.not.a.real.token")
 
   val environment = config.as[Option[String]]("environment")
   environment match {
@@ -56,6 +57,10 @@ object AgoraConfig {
   lazy val mongoDbUser = config.as[Option[String]]("mongodb.user")
   lazy val mongoDbPassword = config.as[Option[String]]("mongodb.password")
   lazy val mongoDbDatabase = config.as[Option[String]]("mongodb.db").getOrElse("agora")
+
+  // Womtool-as-a-Service (Waas)
+  lazy val waasServer = config.as[Option[String]]("waas.server")
+  lazy val waasPath = config.as[Option[String]]("waas.path")
 
   // SQL
   lazy val sqlDatabase = DatabaseConfig.forConfig[JdbcProfile]("sqlDatabase")

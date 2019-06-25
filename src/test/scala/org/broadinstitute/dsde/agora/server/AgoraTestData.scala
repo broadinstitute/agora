@@ -32,6 +32,7 @@ object AgoraTestData {
   val documentation2 = Option("This is documentation for another method")
   val testGA4GHpath = "/ga4gh/v1/tools/test_ns:test_wdl/versions/1/WDL/descriptor"
   val mockServerPort = 8001
+  val waasMockServerPort = 9001
 
   val badNamespace = Option("    ")
   val badName = Option("   ")
@@ -97,7 +98,93 @@ object AgoraTestData {
                            |
                            |
                            | """.stripMargin)
+
+  val payload1DescribeResponse = """{
+                               |  "valid": true,
+                               |  "errors": [],
+                               |  "validWorkflow": true,
+                               |  "name": "scatter_gather_grep_wc",
+                               |  "inputs": [
+                               |    {
+                               |      "name": "grep.flags",
+                               |      "valueType": {
+                               |        "typeName": "Optional",
+                               |        "optionalType": {
+                               |          "typeName": "String"
+                               |        }
+                               |      },
+                               |      "typeDisplayName": "String?",
+                               |      "optional": true,
+                               |      "default": null
+                               |    },
+                               |    {
+                               |      "name": "grep.pattern",
+                               |      "valueType": {
+                               |        "typeName": "String"
+                               |      },
+                               |      "typeDisplayName": "String",
+                               |      "optional": false,
+                               |      "default": null
+                               |    },
+                               |    {
+                               |      "name": "input_files",
+                               |      "valueType": {
+                               |        "typeName": "Array",
+                               |        "arrayType": {
+                               |          "typeName": "File"
+                               |        }
+                               |      },
+                               |      "typeDisplayName": "Array[File]",
+                               |      "optional": false,
+                               |      "default": null
+                               |    }
+                               |  ],
+                               |  "outputs": [
+                               |    {
+                               |      "name": "grep.out",
+                               |      "valueType": {
+                               |        "typeName": "Array",
+                               |        "arrayType": {
+                               |          "typeName": "File"
+                               |        }
+                               |      },
+                               |      "typeDisplayName": "Array[File]"
+                               |    },
+                               |    {
+                               |      "name": "wc.count",
+                               |      "valueType": {
+                               |        "typeName": "Int"
+                               |      },
+                               |      "typeDisplayName": "Int"
+                               |    }
+                               |  ],
+                               |  "images": [],
+                               |  "submittedDescriptorType": {
+                               |    "descriptorType": "WDL",
+                               |    "descriptorTypeVersion": "draft-2"
+                               |  },
+                               |  "importedDescriptorTypes": [],
+                               |  "meta": {}
+                               |}""".stripMargin
+
   val payload2 = Option("task test { command { test } }")
+  val payload2DescribeResponse =
+    """
+      |{
+      |    "valid":true,
+      |    "errors":[],
+      |    "validWorkflow":true,
+      |    "name":"test",
+      |    "inputs":[],
+      |    "outputs":[],
+      |    "images":[],
+      |    "submittedDescriptorType":{"descriptorType":"WDL","descriptorTypeVersion":"draft-2"},
+      |    "importedDescriptorTypes":[],
+      |    "meta":{},
+      |    "parameterMeta":{}
+      |}
+    """.stripMargin
+
   val payloadWcTask = Option( """
                                 |task wc {
                                 |  Array[File]+ files
@@ -112,6 +199,108 @@ object AgoraTestData {
                                 |
                                 | """.stripMargin)
 
+  def wdlVersionPayload(version: String) = Option(
+    s"""
+      |version ${version}
+      |task hello {
+      |  command {
+      |    echo "hello"
+      |  }
+      |}
+      |
+      |workflow wf {
+      |  call hello
+      |}
+    """.stripMargin)
+
+  val genericOkDescribeResponse =
+    """
+      |{
+      |    "valid":true,
+      |    "errors":[],
+      |    "validWorkflow":true,
+      |    "name":"wf",
+      |    "inputs":[],
+      |    "outputs":[],
+      |    "images":[],
+      |    "submittedDescriptorType":{"descriptorType":"WDL","descriptorTypeVersion":"draft-2"},
+      |    "importedDescriptorTypes":[],
+      |    "meta":{},
+      |    "parameterMeta":{}
+      |}
+    """.stripMargin
+
+  val badVersionDescribeResponse =
+    """
+      |{
+      |    "valid":false,
+      |    "errors":["ERROR: Finished parsing without consuming all tokens.\n\nversion plaid\n^\n     "],
+      |    "validWorkflow":false,
+      |    "name":"wf",
+      |    "inputs":[],
+      |    "outputs":[],
+      |    "images":[],
+      |    "submittedDescriptorType":{},
+      |    "importedDescriptorTypes":[],
+      |    "meta":{},
+      |    "parameterMeta":{}
+      |}
+    """.stripMargin
+
+  val malformedPayloadDescribeResponse =
+    """
+      |{
+      |    "valid":false,
+      |    "errors":["ERROR: No more tokens.  Expecting rbrace\n\ntask test {\n          ^\n     "],
+      |    "validWorkflow":false,
+      |    "name":"",
+      |    "inputs":[],
+      |    "outputs":[],
+      |    "images":[],
+      |    "submittedDescriptorType":{},
+      |    "importedDescriptorTypes":[],
+      |    "meta":{},
+      |    "parameterMeta":{}
+      |}
+    """.stripMargin
+
+  val goodWdlVersionDescribeResponse =
+    """
+      |{
+      |    "valid":true,
+      |    "errors":[],
+      |    "validWorkflow":true,
+      |    "name":"wf",
+      |    "inputs":[],
+      |    "outputs":[],
+      |    "images":[],
+      |    "submittedDescriptorType":{"descriptorType":"WDL","descriptorTypeVersion":"1.0"},
+      |    "importedDescriptorTypes":[],
+      |    "meta":{},
+      |    "parameterMeta":{}
+      |}
+    """.stripMargin
+
+  val badWdlVersionDescribeResponse =
+    """
+      |{
+      |    "valid":false,
+      |    "errors":["ERROR: Finished parsing without consuming all tokens.\n\nversion plaid\n^\n     "],
+      |    "validWorkflow":false,
+      |    "name":"",
+      |    "inputs":[],
+      |    "outputs":[],
+      |    "images":[],
+      |    "submittedDescriptorType":{},
+      |    "importedDescriptorTypes":[],
+      |    "meta":{},
+      |    "parameterMeta":{}
+      |}
+    """.stripMargin
+
+  val payloadWdl10 = wdlVersionPayload("1.0")
+  val payloadWdlBadVersion = wdlVersionPayload("plaid")
+
   val testAgoraEntity = new AgoraEntity(
     namespace = namespace3,
     name = name1,
@@ -119,6 +308,16 @@ object AgoraTestData {
     documentation = documentation1,
     owner = owner1,
     payload = payload1,
+    entityType = Option(AgoraEntityType.Workflow)
+  )
+
+  def testAgoraEntity(myPayload: Option[String]) = new AgoraEntity(
+    namespace = namespace3,
+    name = name1,
+    synopsis = synopsis1,
+    documentation = documentation1,
+    owner = owner1,
+    payload = myPayload,
     entityType = Option(AgoraEntityType.Workflow)
   )
 
@@ -364,6 +563,25 @@ object AgoraTestData {
                                     |  }
                                     |}
                                     | """.stripMargin)
+
+  val genericDockerPayloadDescribeResponse =
+    """
+      |{
+      |    "valid":true,
+      |    "errors":[],
+      |    "validWorkflow":true,
+      |    "name":"wc",
+      |    "inputs":[],
+      |    "outputs":[],
+      |    "images":[],
+      |    "submittedDescriptorType":{"descriptorType":"WDL","descriptorTypeVersion":"draft-2"},
+      |    "importedDescriptorTypes":[],
+      |    "meta":{},
+      |    "parameterMeta":{}
+      |}
+    """.stripMargin
+
+
   val payloadWithInvalidOfficialDockerRepoNameInWdl = Option( """
                                                                 |task wc {
                                                                 |  Array[File]+ files

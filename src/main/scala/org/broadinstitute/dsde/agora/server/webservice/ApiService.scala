@@ -26,8 +26,6 @@ import spray.json.DefaultJsonProtocol
 
 import scala.concurrent.{ExecutionContext, Future}
 
-import wdl.draft2.model.exception.{ValidationException => WdlValidationException}
-
 object ApiService extends LazyLogging with SprayJsonSupport with DefaultJsonProtocol {
 
   // Required for marshalling errors:
@@ -52,7 +50,6 @@ object ApiService extends LazyLogging with SprayJsonSupport with DefaultJsonProt
       case e: ValidationException => complete(BadRequest, AgoraException(e.getMessage, e.getCause, BadRequest))
       case e: PermissionModificationException => complete(BadRequest, AgoraException(e.getMessage, e.getCause, BadRequest))
       case e: AgoraException => complete(e.statusCode, e)
-      case e: WdlValidationException => complete(BadRequest, AgoraException(e.getMessage, e.getCause, BadRequest))
       case e: Throwable =>
         logger.error("Exception caught by ExceptionHandler: ", e)
         complete(InternalServerError, AgoraException(e.getMessage, e.getCause, InternalServerError))

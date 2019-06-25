@@ -9,14 +9,23 @@ import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
 
-import org.scalatest.{DoNotDiscover, FlatSpecLike}
+import org.scalatest.{Ignore, FlatSpecLike}
 import org.scalatest.Matchers._
 
 import org.mockserver.integration.ClientAndServer
 import org.mockserver.integration.ClientAndServer._
 import org.mockserver.model.HttpRequest.request
 
-@DoNotDiscover
+//
+// NOTE: this test suite is ignored with the move to WaaS.  Previously WDL validation,
+// which includes resolving imports, was done in-process here and these tests were
+// checking that functionality.  However, at this point this is all being done now by WaaS
+// and testing of that functionality should be done there.  Also, since we are mocking out
+// WaaS for testing in Agora, nothing would be gained by having a test here with an import
+//
+// I would like to remove this test entirely, getting PR review feedback on that
+//
+@Ignore
 class AgoraImportSpec extends ApiServiceSpec with FlatSpecLike{
   var testAgoraEntityWithId: AgoraEntity = _
 
@@ -30,7 +39,7 @@ class AgoraImportSpec extends ApiServiceSpec with FlatSpecLike{
 
   override def beforeAll() = {
     ensureDatabasesAreRunning()
-    testAgoraEntityWithId = patiently(agoraBusiness.insert(testAgoraEntity, mockAuthenticatedOwner.get))
+    testAgoraEntityWithId = patiently(agoraBusiness.insert(testAgoraEntity, mockAuthenticatedOwner.get, mockAccessToken))
 
     mockServer = startClientAndServer(mockServerPort)
 

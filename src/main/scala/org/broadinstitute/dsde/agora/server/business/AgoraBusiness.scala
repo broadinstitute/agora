@@ -2,21 +2,18 @@ package org.broadinstitute.dsde.agora.server.business
 
 import akka.http.scaladsl.model.StatusCodes
 import org.broadinstitute.dsde.agora.server.exceptions._
-import org.broadinstitute.dsde.agora.server.dataaccess.{AgoraDao, ReadWriteAction}
+import org.broadinstitute.dsde.agora.server.dataaccess.{AgoraDao, ReadWriteAction, WaasClient}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.model._
 import org.bson.types.ObjectId
 import slick.dbio.DBIO
 import spray.json._
-import wdl.draft2.parser.WdlParser.SyntaxError
-import wdl.draft2.model.exception.{ValidationException => WdlValidationException}
-import wdl.draft2.model.{WdlNamespace, WdlNamespaceWithWorkflow}
-import languages.wdl.draft2.WdlDraft2LanguageFactory.httpResolver
-import wdl.draft2.model.WdlWorkflow
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
+
+import collection.JavaConverters._
 
 object AgoraBusiness {
   private lazy val nameRegex = """[a-zA-Z0-9-_.]+""".r // Applies to entity names & namespaces
@@ -105,19 +102,19 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     }
   }
 
-  private def checkValidPayload[T](agoraEntity: AgoraEntity)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
+  private def checkValidPayload[T](agoraEntity: AgoraEntity, accessToken: String)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
     agoraEntity.payload match {
       case None =>
         DBIO.failed(ValidationException(s"Agora entity $agoraEntity has no payload."))
       case Some(payload) =>
         val payloadOK = agoraEntity.entityType match {
           case Some(AgoraEntityType.Task) =>
-            WdlNamespace.loadUsingSource(payload, None, Option(Seq(httpResolver(_))))
+            WaasClient.validate(payload, accessToken)
           // NOTE: Still not validating existence of docker images.
           // namespace.tasks.foreach { validateDockerImage }
 
           case Some(AgoraEntityType.Workflow) =>
-            WdlNamespaceWithWorkflow.load(payload, Seq(httpResolver(_)))
+            WaasClient.validate(payload, accessToken)
           // NOTE: Still not validating existence of docker images.
           //namespace.tasks.foreach { validateDockerImage }
 
@@ -139,7 +136,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
 
         payloadOK match {
           case Success(_) => op
-          case Failure(e @ (_: SyntaxError | _: WdlValidationException)) =>
+          case Failure(e : ValidationException) =>
             DBIO.failed(ValidationException(s"$errorMessagePrefix ${e.getMessage}", e.getCause))
           case Failure(regret) =>
             DBIO.failed(regret)
@@ -158,7 +155,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     }
   }
 
-  def insert(agoraEntity: AgoraEntity, username: String): Future[AgoraEntity] = {
+  def insert(agoraEntity: AgoraEntity, username: String, accessToken: String): Future[AgoraEntity] = {
     //these next two go to Mongo, so do them outside the permissions txn
     val configReferencedMethodOpt = agoraEntity.entityType.get match {
       case AgoraEntityType.Configuration => Some(resolveMethodRef(agoraEntity.payload.get))
@@ -173,7 +170,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
       db.aePerms.addUserIfNotInDatabase(username) flatMap { _ =>
         checkInsertPermission(db, agoraEntity, username, snapshots) {
           validateNamesForNewEntity(agoraEntity) {
-            checkValidPayload(agoraEntity) {
+            checkValidPayload(agoraEntity, accessToken) {
 
               //this silliness required to check whether the referenced method is readable if it's a config
               val entityToInsertAction = configReferencedMethodOpt match {
@@ -224,7 +221,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     }
   }
 
-  def copy(sourceArgs: AgoraEntity, targetArgs: AgoraEntity, redact: Boolean, entityTypes: Seq[AgoraEntityType.EntityType], username: String): Future[AgoraEntity] = {
+  def copy(sourceArgs: AgoraEntity, targetArgs: AgoraEntity, redact: Boolean, entityTypes: Seq[AgoraEntityType.EntityType], username: String, accessToken: String): Future[AgoraEntity] = {
     // we only allow this for methods.
     val dao = AgoraDao.createAgoraDao(Some(AgoraEntityType.Workflow))
 
@@ -236,7 +233,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     permissionsDataSource.inTransaction { db =>
       // do we have permissions to create a new snapshot?
       checkEntityPermission(db, sourceEntity, username, AgoraPermissions(Create)) {
-        checkValidPayload(entityToInsert) {
+        checkValidPayload(entityToInsert, accessToken) {
           // insert target
           val targetEntity = dao.insert(entityToInsert)
 
@@ -370,7 +367,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     }
   }
 
-  def listCompatibleConfigurations(namespace: String, name: String, snapshotId: Int, username: String): Future[Seq[AgoraEntity]] = {
+  def listCompatibleConfigurations(namespace: String, name: String, snapshotId: Int, username: String, accessToken: String): Future[Seq[AgoraEntity]] = {
 
     // get the specific method snapshot specified by the user (will throw error if not found)
     findSingle(namespace, name, snapshotId, Seq(AgoraEntityType.Workflow), username) flatMap { methodSnapshot =>
@@ -380,14 +377,16 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
         if (configs.isEmpty) configs else {
           // from the method snapshot, get the WDL and parse it
           val wdl = methodSnapshot.payload.getOrElse(throw AgoraException(s"Method $namespace:$name:$snapshotId is missing a payload."))
-          parseWDL(wdl) match {
+
+          WaasClient.describe(wdl, accessToken) match {
             case Failure(ex) => throw ex
             case Success(workflow) =>
               // get the set of required input keys, optional input keys, and output keys for this WDL
-              val (optionalInputs, requiredInputs) = workflow.inputs.partition(_._2.optional)
-              val optionalInputKeys = optionalInputs.keySet.map(_.toString)
-              val requiredInputKeys = requiredInputs.keySet.map(_.toString)
-              val outputKeys:Set[String] = workflow.outputs.map(_.fullyQualifiedName.toString).toSet
+              // We expect fully qualified names, but WaaS doesn't return that. So we construct it here
+              val (optionalInputs, requiredInputs) = workflow.getInputs.asScala.partition(_.getOptional)
+              val optionalInputKeys = optionalInputs.map(workflow.getName + "." + _.getName).toSet
+              val requiredInputKeys = requiredInputs.map(workflow.getName + "." + _.getName).toSet
+              val outputKeys:Set[String] = workflow.getOutputs().asScala.map(workflow.getName + "." + _.getName).toSet
 
               // define "compatible" to be:
               //  - config has exact same set of output keys as method's WDL
@@ -413,14 +412,6 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
         }
       }
     }
-  }
-
-  // copied from org.broadinstitute.dsde.rawls.jobexec.MethodConfigResolver
-  def parseWDL(wdl: String): Try[WdlWorkflow] = {
-    val parsed: Try[WdlNamespaceWithWorkflow] = WdlNamespaceWithWorkflow.load(wdl, Seq(httpResolver(_))).recoverWith { case t: SyntaxError =>
-      Failure(AgoraException("Failed to parse WDL: " + t.getMessage))
-    }
-    parsed map( _.workflow )
   }
 
   private def findWithIds(agoraSearch: AgoraEntity,

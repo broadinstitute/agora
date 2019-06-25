@@ -38,7 +38,9 @@ libraryDependencies ++= Seq(
   "com.typesafe.slick" %% "slick" % "3.2.2",
   "com.zaxxer" % "HikariCP" % "2.7.8",
   "mysql" % "mysql-connector-java" % "6.0.6",
-  "org.broadinstitute" %% "wdl-draft2" % cromwellV,
+  
+  // ficus was being pulled in transitively from wdl-draft2 previously, now made explicit
+  "com.iheart" %% "ficus" % "1.4.6",
   "org.broadinstitute.dsde.workbench" %% "workbench-util" % "0.3-0e9d080",
   "org.mongodb" %% "casbah" % "3.1.1",
   "org.scalaz" %% "scalaz-core" % "7.2.20",
@@ -47,7 +49,8 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpV % Test,
   "org.scalatest" %% "scalatest" % "3.0.5" % Test,
   "org.mock-server" % "mockserver-netty" % "3.10.2" % "test", // later versions break
-  "org.broadinstitute.dsde.workbench" %% "sam-client" % "0.1-f6bf0ec"
+  "org.broadinstitute.dsde.workbench" %% "sam-client" % "0.1-f6bf0ec",
+  "org.broadinstitute.cromwell" %% "cromwell-client" % "0.1-18759ce53-SNAP"
 )
 
 //These can be overridden with system properties:

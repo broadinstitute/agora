@@ -17,11 +17,15 @@ class AgoraBusinessTest extends FlatSpec with Matchers with BeforeAndAfterAll wi
 
   override protected def beforeAll() = {
     ensureDatabasesAreRunning()
-    patiently(agoraBusiness.insert(testEntityToBeRedacted3, mockAuthenticatedOwner.get))
+    startMockWaas()
+
+    setSingleMockWaasDescribeOkResponse(payload2DescribeResponse)
+    patiently(agoraBusiness.insert(testEntityToBeRedacted3, mockAuthenticatedOwner.get, mockAccessToken))
   }
 
   override protected def afterAll() = {
     clearDatabases()
+    stopMockWaas()
   }
 
 //  "Agora" should "not find a method payload when resolving a WDL import statement if the method has not been added" in {
@@ -39,7 +43,9 @@ class AgoraBusinessTest extends FlatSpec with Matchers with BeforeAndAfterAll wi
 //  }
 
   "Agora" should "allow insertion of a method with all legal characters in its name and namespace" in {
-    val expected = patiently(agoraBusiness.insert(testAgoraEntityWithAllLegalNameChars, mockAuthenticatedOwner.get))
+    setSingleMockWaasDescribeOkResponse(payload1DescribeResponse)
+
+    val expected = patiently(agoraBusiness.insert(testAgoraEntityWithAllLegalNameChars, mockAuthenticatedOwner.get, mockAccessToken))
     val actual = patiently(agoraBusiness.findSingle(
       testAgoraEntityWithAllLegalNameChars,
       Seq(testAgoraEntityWithAllLegalNameChars.entityType.get),
@@ -50,14 +56,16 @@ class AgoraBusinessTest extends FlatSpec with Matchers with BeforeAndAfterAll wi
   }
 
   "Agora" should "throw an exception when inserting an entity with an illegal name" in {
+    setSingleMockWaasDescribeOkResponse(payload1DescribeResponse)
+
     intercept[ValidationException] {
-      patiently(agoraBusiness.insert(testAgoraEntityWithIllegalNameChars, mockAuthenticatedOwner.get))
+      patiently(agoraBusiness.insert(testAgoraEntityWithIllegalNameChars, mockAuthenticatedOwner.get, mockAccessToken))
     }
   }
 
   "Agora" should "throw an exception when inserting an entity with an illegal namespace" in {
     intercept[ValidationException] {
-      patiently(agoraBusiness.insert(testAgoraEntityWithIllegalNamespaceChars, mockAuthenticatedOwner.get))
+      patiently(agoraBusiness.insert(testAgoraEntityWithIllegalNamespaceChars, mockAuthenticatedOwner.get, mockAccessToken))
     }
   }
 

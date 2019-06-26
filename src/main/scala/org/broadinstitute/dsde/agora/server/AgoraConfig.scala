@@ -60,7 +60,6 @@ object AgoraConfig {
 
   // Womtool-as-a-Service (Waas)
   lazy val waasServer = config.as[Option[String]]("waas.server")
-  lazy val waasPath = config.as[Option[String]]("waas.path")
 
   // SQL
   lazy val sqlDatabase = DatabaseConfig.forConfig[JdbcProfile]("sqlDatabase")

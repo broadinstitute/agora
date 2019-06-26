@@ -108,15 +108,10 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
         DBIO.failed(ValidationException(s"Agora entity $agoraEntity has no payload."))
       case Some(payload) =>
         val payloadOK = agoraEntity.entityType match {
-          case Some(AgoraEntityType.Task) =>
+          case Some(AgoraEntityType.Task) |  Some(AgoraEntityType.Workflow)  =>
             WaasClient.validate(payload, accessToken)
           // NOTE: Still not validating existence of docker images.
           // namespace.tasks.foreach { validateDockerImage }
-
-          case Some(AgoraEntityType.Workflow) =>
-            WaasClient.validate(payload, accessToken)
-          // NOTE: Still not validating existence of docker images.
-          //namespace.tasks.foreach { validateDockerImage }
 
           case Some(AgoraEntityType.Configuration) =>
             Try {

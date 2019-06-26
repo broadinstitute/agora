@@ -7,8 +7,12 @@ import scala.io.Source
 object AgoraTestData {
   def getBigDocumentation: String = {
     // Read contents of a test markdown file into a single string.
-    val markdown = Source.fromFile("src/test/resources/TESTMARKDOWN.md").getLines() mkString "\n"
+    val markdown = readTestResource("TESTMARKDOWN.md")
     markdown * 7 // NB: File is 1.6 Kb, so 7* that is >10kb, our minimal required storage amount.
+  }
+
+  def readTestResource(file: String) : String = {
+    Source.fromFile(s"src/test/resources/${file}").getLines().mkString("\n")
   }
 
   val agoraTestOwner = Option("agora-test")
@@ -54,150 +58,13 @@ object AgoraTestData {
 
   val fillerText = "activated charcoal palo santo, occupy listicle quinoa scenester next level kitsch gentrify XOXO tumeric everyday carry"
 
-  val payload1 = Option( """task grep {
-                           |  String pattern
-                           |  String? flags
-                           |  File file_name
-                           |
-                           |  command {
-                           |    grep ${pattern} ${flags} ${file_name}
-                           |  }
-                           |  output {
-                           |    File out = "stdout"
-                           |  }
-                           |  runtime {
-                           |    memory: "2 MB"
-                           |    cpu: 1
-                           |    defaultDisks: "mydisk 3 LOCAL_SSD"
-                           |  }
-                           |}
-                           |
-                           |task wc {
-                           |  Array[File]+ files
-                           |
-                           |  command {
-                           |    wc -l ${sep=' ' files} | tail -1 | cut -d' ' -f 2
-                           |  }
-                           |  output {
-                           |    Int count = read_int("stdout")
-                           |  }
-                           |}
-                           |
-                           |workflow scatter_gather_grep_wc {
-                           |  Array[File] input_files
-                           |
-                           |  scatter(f in input_files) {
-                           |    call grep {
-                           |      input: file_name = f
-                           |    }
-                           |  }
-                           |  call wc {
-                           |    input: files = grep.out
-                           |  }
-                           |}
-                           |
-                           |
-                           | """.stripMargin)
+  lazy val payload1 = Option(readTestResource("payload1.wdl"))
+  lazy val payload1DescribeResponse = readTestResource("payload1.describe.json")
 
-  val payload1DescribeResponse = """{
-                               |  "valid": true,
-                               |  "errors": [],
-                               |  "validWorkflow": true,
-                               |  "name": "scatter_gather_grep_wc",
-                               |  "inputs": [
-                               |    {
-                               |      "name": "grep.flags",
-                               |      "valueType": {
-                               |        "typeName": "Optional",
-                               |        "optionalType": {
-                               |          "typeName": "String"
-                               |        }
-                               |      },
-                               |      "typeDisplayName": "String?",
-                               |      "optional": true,
-                               |      "default": null
-                               |    },
-                               |    {
-                               |      "name": "grep.pattern",
-                               |      "valueType": {
-                               |        "typeName": "String"
-                               |      },
-                               |      "typeDisplayName": "String",
-                               |      "optional": false,
-                               |      "default": null
-                               |    },
-                               |    {
-                               |      "name": "input_files",
-                               |      "valueType": {
-                               |        "typeName": "Array",
-                               |        "arrayType": {
-                               |          "typeName": "File"
-                               |        }
-                               |      },
-                               |      "typeDisplayName": "Array[File]",
-                               |      "optional": false,
-                               |      "default": null
-                               |    }
-                               |  ],
-                               |  "outputs": [
-                               |    {
-                               |      "name": "grep.out",
-                               |      "valueType": {
-                               |        "typeName": "Array",
-                               |        "arrayType": {
-                               |          "typeName": "File"
-                               |        }
-                               |      },
-                               |      "typeDisplayName": "Array[File]"
-                               |    },
-                               |    {
-                               |      "name": "wc.count",
-                               |      "valueType": {
-                               |        "typeName": "Int"
-                               |      },
-                               |      "typeDisplayName": "Int"
-                               |    }
-                               |  ],
-                               |  "images": [],
-                               |  "submittedDescriptorType": {
-                               |    "descriptorType": "WDL",
-                               |    "descriptorTypeVersion": "draft-2"
-                               |  },
-                               |  "importedDescriptorTypes": [],
-                               |  "meta": {}
-                               |}""".stripMargin
+  lazy val payload2 = Option(readTestResource("payload2.wdl"))
+  lazy val payload2DescribeResponse = readTestResource("payload2.describe.json")
 
-  val payload2 = Option("task test { command { test } }")
-  val payload2DescribeResponse =
-    """
-      |{
-      |    "valid":true,
-      |    "errors":[],
-      |    "validWorkflow":true,
-      |    "name":"test",
-      |    "inputs":[],
-      |    "outputs":[],
-      |    "images":[],
-      |    "submittedDescriptorType":{"descriptorType":"WDL","descriptorTypeVersion":"draft-2"},
-      |    "importedDescriptorTypes":[],
-      |    "meta":{},
-      |    "parameterMeta":{}
-      |}
-    """.stripMargin
-
-  val payloadWcTask = Option( """
-                                |task wc {
-                                |  Array[File]+ files
-                                |
-                                |  command {
-                                |    wc -l ${sep=' ' files} | tail -1 | cut -d' ' -f 2
-                                |  }
-                                |  output {
-                                |    Int count = read_int("stdout")
-                                |  }
-                                |}
-                                |
-                                | """.stripMargin)
+  lazy val payloadWcTask = Option( readTestResource("payload_wc_task.wdl"))
 
   def wdlVersionPayload(version: String) = Option(
     s"""
@@ -213,90 +80,10 @@ object AgoraTestData {
       |}
     """.stripMargin)
 
-  val genericOkDescribeResponse =
-    """
-      |{
-      |    "valid":true,
-      |    "errors":[],
-      |    "validWorkflow":true,
-      |    "name":"wf",
-      |    "inputs":[],
-      |    "outputs":[],
-      |    "images":[],
-      |    "submittedDescriptorType":{"descriptorType":"WDL","descriptorTypeVersion":"draft-2"},
-      |    "importedDescriptorTypes":[],
-      |    "meta":{},
-      |    "parameterMeta":{}
-      |}
-    """.stripMargin
-
-  val badVersionDescribeResponse =
-    """
-      |{
-      |    "valid":false,
-      |    "errors":["ERROR: Finished parsing without consuming all tokens.\n\nversion plaid\n^\n     "],
-      |    "validWorkflow":false,
-      |    "name":"wf",
-      |    "inputs":[],
-      |    "outputs":[],
-      |    "images":[],
-      |    "submittedDescriptorType":{},
-      |    "importedDescriptorTypes":[],
-      |    "meta":{},
-      |    "parameterMeta":{}
-      |}
-    """.stripMargin
-
-  val malformedPayloadDescribeResponse =
-    """
-      |{
-      |    "valid":false,
-      |    "errors":["ERROR: No more tokens.  Expecting rbrace\n\ntask test {\n          ^\n     "],
-      |    "validWorkflow":false,
-      |    "name":"",
-      |    "inputs":[],
-      |    "outputs":[],
-      |    "images":[],
-      |    "submittedDescriptorType":{},
-      |    "importedDescriptorTypes":[],
-      |    "meta":{},
-      |    "parameterMeta":{}
-      |}
-    """.stripMargin
-
-  val goodWdlVersionDescribeResponse =
-    """
-      |{
-      |    "valid":true,
-      |    "errors":[],
-      |    "validWorkflow":true,
-      |    "name":"wf",
-      |    "inputs":[],
-      |    "outputs":[],
-      |    "images":[],
-      |    "submittedDescriptorType":{"descriptorType":"WDL","descriptorTypeVersion":"1.0"},
-      |    "importedDescriptorTypes":[],
-      |    "meta":{},
-      |    "parameterMeta":{}
-      |}
-    """.stripMargin
-
-  val badWdlVersionDescribeResponse =
-    """
-      |{
-      |    "valid":false,
-      |    "errors":["ERROR: Finished parsing without consuming all tokens.\n\nversion plaid\n^\n     "],
-      |    "validWorkflow":false,
-      |    "name":"",
-      |    "inputs":[],
-      |    "outputs":[],
-      |    "images":[],
-      |    "submittedDescriptorType":{},
-      |    "importedDescriptorTypes":[],
-      |    "meta":{},
-      |    "parameterMeta":{}
-      |}
-    """.stripMargin
+  lazy val badVersionDescribeResponse = readTestResource("bad_version.describe.json")
+  lazy val malformedPayloadDescribeResponse = readTestResource("malformed_file.describe.json")
+  lazy val goodWdlVersionDescribeResponse = readTestResource("good_wdl_10.describe.json")
+  lazy val badWdlVersionDescribeResponse = readTestResource("bad_wdl_version.describe.json")
 
   val payloadWdl10 = wdlVersionPayload("1.0")
   val payloadWdlBadVersion = wdlVersionPayload("plaid")

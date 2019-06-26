@@ -11,9 +11,8 @@ import org.broadinstitute.dsde.agora.server.dataaccess.mongo.{AgoraMongoClient, 
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
 import org.mockserver.integration.ClientAndServer
 import org.mockserver.integration.ClientAndServer.startClientAndServer
-import org.mockserver.matchers.Times
 import org.mockserver.model.HttpRequest.request
-import org.mockserver.model.{Body, BodyWithContentType, StringBody}
+import org.mockserver.model.{BodyWithContentType, StringBody}
 import slick.dbio.DBIOAction
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.meta.MTable

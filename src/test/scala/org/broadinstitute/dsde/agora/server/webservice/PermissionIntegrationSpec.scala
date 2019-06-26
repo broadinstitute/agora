@@ -41,12 +41,10 @@ class PermissionIntegrationSpec extends FlatSpec with ScalatestRouteTest with Be
     ensureDatabasesAreRunning()
     startMockWaas()
 
-    setMockWaasDescribeOkResponse(payload1DescribeResponse, 3)
     agoraEntity1 = patiently(agoraBusiness.insert(testIntegrationEntity, mockAuthenticatedOwner.get, mockAccessToken))
     agoraEntity2 = patiently(agoraBusiness.insert(testIntegrationEntity2, owner2.get, mockAccessToken))
     agoraEntity3 = patiently(agoraBusiness.insert(testIntegrationEntity3, mockAuthenticatedOwner.get, mockAccessToken))
 
-    setSingleMockWaasDescribeOkResponse(payload2DescribeResponse)
     redactedEntity = patiently(agoraBusiness.insert(testEntityToBeRedacted2, mockAuthenticatedOwner.get, mockAccessToken))
     patiently(agoraBusiness.delete(redactedEntity, Seq(redactedEntity.entityType.get), mockAuthenticatedOwner.get))
   }

@@ -18,8 +18,6 @@ class AgoraBusinessIntegrationSpec extends FlatSpec with BeforeAndAfterAll with 
   }
 
   "Agora" should "be able to store a task configuration with a valid (extant) official docker image" in {
-    setSingleMockWaasDescribeOkResponse(genericDockerPayloadDescribeResponse)
-
     val entity = patiently(agoraBusiness.insert(testAgoraEntityWithValidOfficialDockerImageInWdl, mockAuthenticatedOwner.get, mockAccessToken)).addManagers(Seq(mockAuthenticatedOwner.get)).addIsPublic(false)
     val actual = patiently(agoraBusiness.findSingle(entity, Seq(entity.entityType.get), mockAuthenticatedOwner.get))
     assert(actual == entity)
@@ -38,8 +36,6 @@ class AgoraBusinessIntegrationSpec extends FlatSpec with BeforeAndAfterAll with 
   }
 
   "Agora" should "be able to store a task configuration with a valid (extant) personal docker image" in {
-    setSingleMockWaasDescribeOkResponse(genericDockerPayloadDescribeResponse)
-
     val entity = patiently(agoraBusiness.insert(testAgoraEntityWithValidPersonalDockerInWdl, mockAuthenticatedOwner.get, mockAccessToken)).addManagers(Seq(mockAuthenticatedOwner.get)).addIsPublic(false)
     assert(patiently(agoraBusiness.findSingle(entity, Seq(entity.entityType.get), mockAuthenticatedOwner.get)) == entity)
   }

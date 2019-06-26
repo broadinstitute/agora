@@ -20,7 +20,6 @@ class NamespacePermissionsClientSpec extends FlatSpec with ScalaFutures with Bef
     ensureDatabasesAreRunning()
     startMockWaas()
 
-    setMockWaasDescribeOkResponse(payload1DescribeResponse, 3)
     patiently(agoraBusiness.insert(testEntity1, mockAuthenticatedOwner.get, mockAccessToken))
     patiently(agoraBusiness.insert(testEntity2, mockAuthenticatedOwner.get, mockAccessToken))
     patiently(agoraBusiness.insert(testEntity3, mockAuthenticatedOwner.get, mockAccessToken))

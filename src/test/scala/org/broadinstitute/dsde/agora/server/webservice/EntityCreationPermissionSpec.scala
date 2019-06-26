@@ -38,11 +38,9 @@ class EntityCreationPermissionSpec extends ApiServiceSpec with FlatSpecLike {
     startMockWaas()
 
     // create namespace1, owned by owner1; namespace creation is a side effect of entity creation
-    setSingleMockWaasDescribeOkResponse(payload1DescribeResponse)
     testEntity1WithId = patiently(agoraBusiness.insert(testEntity1, owner1.get, mockAccessToken))
 
     // create namespace2, owned by owner2; namespace creation is a side effect of entity creation
-    setSingleMockWaasDescribeOkResponse(payload1DescribeResponse)
     testEntity2WithId = patiently(agoraBusiness.insert(testEntity2, owner2.get, mockAccessToken))
 
     // add owner3 as owner on namespace2
@@ -187,8 +185,6 @@ class EntityCreationPermissionSpec extends ApiServiceSpec with FlatSpecLike {
 
   private def testEntityCreation(asUser: String, namespace: String, name: String, expectedStatus: StatusCode) = {
     val randomEntity = createRandomMethod(namespace, name)
-
-    setSingleMockWaasDescribeOkResponse(payload1DescribeResponse)
 
     Post(ApiUtil.Methods.withLeadingVersion, randomEntity) ~>
       addHeader(MockAgoraDirectives.mockAuthenticatedUserEmailHeader, asUser) ~>

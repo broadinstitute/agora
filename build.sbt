@@ -48,7 +48,7 @@ libraryDependencies ++= Seq(
   //---------- Test libraries -------------------//
   "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpV % Test,
   "org.scalatest" %% "scalatest" % "3.0.5" % Test,
-  "org.mock-server" % "mockserver-netty" % "3.10.2" % "test", // later versions break
+  "org.mock-server" % "mockserver-netty" % "5.6.0" % "test",
   "org.broadinstitute.dsde.workbench" %% "sam-client" % "0.1-f6bf0ec",
   "org.broadinstitute.cromwell" %% "cromwell-client" % "0.1-18759ce53-SNAP"
 )

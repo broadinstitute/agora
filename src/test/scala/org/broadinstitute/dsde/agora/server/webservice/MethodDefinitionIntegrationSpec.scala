@@ -32,7 +32,6 @@ class MethodDefinitionIntegrationSpec extends FlatSpec with RouteTest with Scala
     startMockWaas()
 
     // create a few unique methods, each with multiple snapshots
-    setMockWaasDescribeOkResponse(payload1DescribeResponse, 15)
     patiently(agoraBusiness.insert(testMethod("one",1), mockAuthenticatedOwner.get, mockAccessToken))
     for (x <- 1 to 2)
       patiently(agoraBusiness.insert(testMethod("two",x), mockAuthenticatedOwner.get, mockAccessToken))
@@ -69,7 +68,6 @@ class MethodDefinitionIntegrationSpec extends FlatSpec with RouteTest with Scala
     patiently(agoraBusiness.insert(testConfig("otherowner",4), mockAuthenticatedOwner.get, mockAccessToken))
 
     // redact a method snapshot
-    setSingleMockWaasDescribeOkResponse(payload1DescribeResponse)
     patiently(agoraBusiness.delete(testMethod("redacts").copy(snapshotId = Some(2)), Seq(AgoraEntityType.Workflow), mockAuthenticatedOwner.get))
 
     // change perms on a method

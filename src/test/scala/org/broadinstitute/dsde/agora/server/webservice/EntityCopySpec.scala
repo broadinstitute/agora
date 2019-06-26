@@ -31,7 +31,6 @@ class EntityCopySpec extends ApiServiceSpec with FlatSpecLike {
     startMockWaas()
 
     // create entity1, owned by owner1
-    setSingleMockWaasDescribeOkResponse(payload1DescribeResponse)
     testEntity1WithId = patiently(agoraBusiness.insert(testEntity1, owner1.get, mockAccessToken))
 
     // add owner2 as reader on entity1
@@ -39,7 +38,6 @@ class EntityCopySpec extends ApiServiceSpec with FlatSpecLike {
     // add owner3 with Create (but not Redact) on entity1
     patiently(permissionBusiness.insertEntityPermission(testEntity1WithId, owner1.get, AccessControl(owner3.get, AgoraPermissions(Create))))
 
-    setSingleMockWaasDescribeOkResponse(payload1DescribeResponse)
     testEntityWithSnapshotComment = patiently(agoraBusiness.insert(testMethodWithSnapshotComment1, owner1.get, mockAccessToken))
   }
 
@@ -128,7 +126,6 @@ class EntityCopySpec extends ApiServiceSpec with FlatSpecLike {
     val getUri: Uri = Uri(testRoute.format(namespace,name,snapshotId))
     val postUri = getUri.withQuery(Query(Map("redact" -> redact.toString)))
 
-    setSingleMockWaasDescribeOkResponse(payload1DescribeResponse)
     Post(postUri, AgoraEntity()) ~>
       addHeader(MockAgoraDirectives.mockAuthenticatedUserEmailHeader, asUser) ~>
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~>

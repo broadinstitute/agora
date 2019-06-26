@@ -13,10 +13,9 @@ import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
 import org.broadinstitute.dsde.agora.server.webservice.routes.MockAgoraDirectives
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
-import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FreeSpec, Ignore}
+import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FreeSpec}
 
 import scala.concurrent.duration._
-import scala.util.Random
 
 @DoNotDiscover
 class CompatibleConfigurationIntegrationSpec extends FreeSpec with ExecutionDirectives with RouteTest
@@ -31,18 +30,58 @@ class CompatibleConfigurationIntegrationSpec extends FreeSpec with ExecutionDire
   val methodsService = new MethodsService(permsDataSource) with ActorRefFactoryContext
   val testRoutes = ApiService.handleExceptionsAndRejections (methodsService.queryCompatibleConfigurationsRoute)
 
+  // The following methods create a method AgoraEntity while at the same time constructing the Mock Waas
+  // describe response.  This test is more difficult than the others because it generates many unique
+  // method payloads (WDLs) so it can test the compatibility of methods
+  private def generateMethodWithWaasResponse(label:String, inputs:Seq[String], outputs:Seq[String], optionalInputs:Seq[String] = Seq.empty[String]) = {
+    val method = testMethod(label, inputs, outputs, optionalInputs)
+    addSubstringResponse(method.payload.get, waasResponse(inputs, outputs, optionalInputs))
+    method
+  }
+
+  private def waasResponse(inputs:Seq[String], outputs:Seq[String], optionalInputs:Seq[String] = Seq.empty[String]) = {
+    val requiredInputStanzas = (inputs map (x => generateInputStanza(x)))
+    val optionalInputStanzas = (optionalInputs map (x => generateInputStanza(x, true)))
+    val inputString = (requiredInputStanzas ++ optionalInputStanzas).mkString(",")
+    val outputString = (outputs map (x => generateOutputStanza(x))).mkString(",")
+
+    s"""
+       | {"valid":true,"errors":[],"validWorkflow":true,"name":"TheWorkflow",
+       |  "inputs":[${inputString}],
+       |  "outputs":[${outputString}],
+       |"images":[],
+       |"submittedDescriptorType":{"descriptorType":"WDL","descriptorTypeVersion":"draft-2"},
+       |"importedDescriptorTypes":[],
+       |"meta":{},
+       |"parameterMeta":{}
+       |}
+       |
+     """.stripMargin
+  }
+
+  private def generateInputStanza(name : String, optional : Boolean = false) = {
+    val optionalSuffix = if (optional) "?" else ""
+    s"""
+       |{"name":"TheTask.${name}","valueType":{"typeName":"File"},"typeDisplayName":"File${optionalSuffix}","optional":${optional},"default":null}
+     """.stripMargin
+  }
+
+  private def generateOutputStanza(name : String) = {
+    s"""
+       |{"name":"TheTask.${name}","valueType":{"typeName":"File"},"typeDisplayName":"File"}
+     """.stripMargin
+  }
+
   override def beforeAll(): Unit = {
     ensureDatabasesAreRunning()
     startMockWaas()
 
     // has no configurations
-    setSingleMockWaasDescribeOkResponse(genericOkDescribeResponse)
-    patiently(agoraBusiness.insert(testMethod("A",
+    patiently(agoraBusiness.insert(generateMethodWithWaasResponse("A",
       Seq("in1"), Seq("out1")), mockAuthenticatedOwner.get, mockAccessToken))
 
     // one method snapshot, two compatible configs
-    setSingleMockWaasDescribeOkResponse(genericOkDescribeResponse)
-    patiently(agoraBusiness.insert(testMethod("B",
+    patiently(agoraBusiness.insert(generateMethodWithWaasResponse("B",
       Seq("in1","in2"), Seq("out1", "out2")), mockAuthenticatedOwner.get, mockAccessToken))
     patiently(agoraBusiness.insert(testConfig("B", 1,
       Seq("in1","in2"), Seq("out1", "out2")), mockAuthenticatedOwner.get, mockAccessToken))
@@ -50,10 +89,9 @@ class CompatibleConfigurationIntegrationSpec extends FreeSpec with ExecutionDire
       Seq("in1","in2"), Seq("out1", "out2")), mockAuthenticatedOwner.get, mockAccessToken))
 
     // two method snapshots, with one and two compatible configs
-    setMockWaasDescribeOkResponse(genericOkDescribeResponse, 2)
-    patiently(agoraBusiness.insert(testMethod("C",
+    patiently(agoraBusiness.insert(generateMethodWithWaasResponse("C",
       Seq("in1","in2","in3"), Seq("out1", "out2","out3")), mockAuthenticatedOwner.get, mockAccessToken))
-    patiently(agoraBusiness.insert(testMethod("C",
+    patiently(agoraBusiness.insert(generateMethodWithWaasResponse("C",
       Seq("in1","in2","in3"), Seq("out1", "out2","out3")), mockAuthenticatedOwner.get, mockAccessToken))
     patiently(agoraBusiness.insert(testConfig("C", 1,
       Seq("in1","in2","in3"), Seq("out1", "out2","out3")), mockAuthenticatedOwner.get, mockAccessToken))
@@ -63,8 +101,7 @@ class CompatibleConfigurationIntegrationSpec extends FreeSpec with ExecutionDire
       Seq("in1","in2","in3"), Seq("out1", "out2","out3")), mockAuthenticatedOwner.get, mockAccessToken))
 
     // one method snapshot, two compatible configs and one with incompatible inputs
-    setSingleMockWaasDescribeOkResponse(genericOkDescribeResponse)
-    patiently(agoraBusiness.insert(testMethod("D",
+    patiently(agoraBusiness.insert(generateMethodWithWaasResponse("D",
       Seq("D1"), Seq("D2","D3")), mockAuthenticatedOwner.get, mockAccessToken))
     patiently(agoraBusiness.insert(testConfig("D", 1,
       Seq("D1"), Seq("D2","D3")), mockAuthenticatedOwner.get, mockAccessToken))
@@ -74,8 +111,7 @@ class CompatibleConfigurationIntegrationSpec extends FreeSpec with ExecutionDire
       Seq("D1"), Seq("D2","D3")), mockAuthenticatedOwner.get, mockAccessToken))
 
     // one method snapshot, two compatible configs and one with incompatible outputs
-    setSingleMockWaasDescribeOkResponse(genericOkDescribeResponse)
-    patiently(agoraBusiness.insert(testMethod("E",
+    patiently(agoraBusiness.insert(generateMethodWithWaasResponse("E",
       Seq("E1"), Seq("E2","E3")), mockAuthenticatedOwner.get, mockAccessToken))
     patiently(agoraBusiness.insert(testConfig("E", 1,
       Seq("E1"), Seq("E2","E3")), mockAuthenticatedOwner.get, mockAccessToken))
@@ -85,8 +121,7 @@ class CompatibleConfigurationIntegrationSpec extends FreeSpec with ExecutionDire
       Seq("E1"), Seq("E2","E3")), mockAuthenticatedOwner.get, mockAccessToken))
 
     // one method snapshot, one compatible config, but uses same ins/outs as "B"
-    setSingleMockWaasDescribeOkResponse(genericOkDescribeResponse)
-    patiently(agoraBusiness.insert(testMethod("F",
+    patiently(agoraBusiness.insert(generateMethodWithWaasResponse("F",
       Seq("in1","in2"), Seq("out1", "out2")), mockAuthenticatedOwner.get, mockAccessToken))
     patiently(agoraBusiness.insert(testConfig("F", 1,
       Seq("in1"), Seq("out1", "out2")), mockAuthenticatedOwner.get, mockAccessToken)) // <-- wrong inputs
@@ -94,8 +129,7 @@ class CompatibleConfigurationIntegrationSpec extends FreeSpec with ExecutionDire
       Seq("in1","in2"), Seq("out1")), mockAuthenticatedOwner.get, mockAccessToken)) // <-- wrong outputs
 
     // method has optional inputs
-    setSingleMockWaasDescribeOkResponse(genericOkDescribeResponse)
-    patiently(agoraBusiness.insert(testMethod("G",
+    patiently(agoraBusiness.insert(generateMethodWithWaasResponse("G",
       Seq("in1","in2"), Seq("out1", "out2"), Seq("optional1", "optional2")), mockAuthenticatedOwner.get, mockAccessToken))
     patiently(agoraBusiness.insert(testConfig("G", 1,
       Seq("in1","in2"), Seq("out1", "out2")), mockAuthenticatedOwner.get, mockAccessToken)) // <-- all required, no optionals
@@ -107,7 +141,6 @@ class CompatibleConfigurationIntegrationSpec extends FreeSpec with ExecutionDire
       Seq("in1", "optional1", "optional2"), Seq("out1","out2")), mockAuthenticatedOwner.get, mockAccessToken)) // <-- some required, all optional
     patiently(agoraBusiness.insert(testConfig("G", 1,
       Seq("in1", "in2", "in3"), Seq("out1","out2")), mockAuthenticatedOwner.get, mockAccessToken)) // <-- extraneous inputs
-
 
   }
 
@@ -238,9 +271,9 @@ class CompatibleConfigurationIntegrationSpec extends FreeSpec with ExecutionDire
 
   private def makeWDL(inputs:Seq[String], outputs:Seq[String], optionalInputs:Seq[String]) = {
 
-    val inputWDL = (inputs map (in => s"$randType $in")).mkString("\n")
-    val optionalInputWDL = (optionalInputs map (in => s"$randType? $in")).mkString("\n")
-    val outputWDL = (outputs map (out => s"""$randType $out = "foo"""")).mkString("\n")
+    val inputWDL = (inputs map (in => s"File $in")).mkString("\n")
+    val optionalInputWDL = (optionalInputs map (in => s"File? $in")).mkString("\n")
+    val outputWDL = (outputs map (out => s"""File $out = "foo"""")).mkString("\n")
 
     val templateWDL = s"""task TheTask {
                         |  $inputWDL
@@ -259,8 +292,6 @@ class CompatibleConfigurationIntegrationSpec extends FreeSpec with ExecutionDire
 
     templateWDL
   }
-
-  private def randType:String = Random.shuffle(Seq("String","File")).head
 
   private def makeConfig(label:String, snapshotId:Int, inputs:Seq[String], outputs:Seq[String]) = {
 

@@ -19,7 +19,6 @@ class AgoraBusinessTest extends FlatSpec with Matchers with BeforeAndAfterAll wi
     ensureDatabasesAreRunning()
     startMockWaas()
 
-    setSingleMockWaasDescribeOkResponse(payload2DescribeResponse)
     patiently(agoraBusiness.insert(testEntityToBeRedacted3, mockAuthenticatedOwner.get, mockAccessToken))
   }
 
@@ -43,8 +42,6 @@ class AgoraBusinessTest extends FlatSpec with Matchers with BeforeAndAfterAll wi
 //  }
 
   "Agora" should "allow insertion of a method with all legal characters in its name and namespace" in {
-    setSingleMockWaasDescribeOkResponse(payload1DescribeResponse)
-
     val expected = patiently(agoraBusiness.insert(testAgoraEntityWithAllLegalNameChars, mockAuthenticatedOwner.get, mockAccessToken))
     val actual = patiently(agoraBusiness.findSingle(
       testAgoraEntityWithAllLegalNameChars,
@@ -56,8 +53,6 @@ class AgoraBusinessTest extends FlatSpec with Matchers with BeforeAndAfterAll wi
   }
 
   "Agora" should "throw an exception when inserting an entity with an illegal name" in {
-    setSingleMockWaasDescribeOkResponse(payload1DescribeResponse)
-
     intercept[ValidationException] {
       patiently(agoraBusiness.insert(testAgoraEntityWithIllegalNameChars, mockAuthenticatedOwner.get, mockAccessToken))
     }

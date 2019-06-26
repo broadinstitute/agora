@@ -37,32 +37,26 @@ class Ga4ghServiceSpec extends FreeSpecLike with ScalatestRouteTest with BeforeA
     startMockWaas()
 
     // private method
-    setSingleMockWaasDescribeOkResponse(payload1DescribeResponse)
     agoraEntity1 = patiently(agoraBusiness.insert(testIntegrationEntity, mockAuthenticatedOwner.get, mockAccessToken))
 
     // public method
-    setSingleMockWaasDescribeOkResponse(payload1DescribeResponse)
     agoraEntity2 = patiently(agoraBusiness.insert(testIntegrationEntity2, owner2.get, mockAccessToken))
     patiently(permissionBusiness.insertEntityPermission(testIntegrationEntity2.copy(snapshotId = Some(1)), owner2.get,
       AccessControl(AccessControl.publicUser, AgoraPermissions(AgoraPermissions.Read))))
     // additional non-public snapshot of this public method
-    setSingleMockWaasDescribeOkResponse(payload1DescribeResponse)
     patiently(agoraBusiness.insert(testIntegrationEntity2, owner2.get, mockAccessToken))
     // additional public snapshot of this public method
-    setSingleMockWaasDescribeOkResponse(payload1DescribeResponse)
     agoraEntity2Snapshot = patiently(agoraBusiness.insert(testIntegrationEntity2, owner2.get, mockAccessToken))
     patiently(permissionBusiness.insertEntityPermission(testIntegrationEntity2.copy(snapshotId = Some(3)), owner2.get,
       AccessControl(AccessControl.publicUser, AgoraPermissions(AgoraPermissions.Read))))
 
     // redacted public method
-    setSingleMockWaasDescribeOkResponse(payload2DescribeResponse)
     redactedEntity = patiently(agoraBusiness.insert(testEntityToBeRedacted2, mockAuthenticatedOwner.get, mockAccessToken))
     patiently(permissionBusiness.insertEntityPermission(testEntityToBeRedacted2.copy(snapshotId = Some(1)), mockAuthenticatedOwner.get,
       AccessControl(AccessControl.publicUser, AgoraPermissions(AgoraPermissions.Read))))
     patiently(agoraBusiness.delete(redactedEntity, Seq(redactedEntity.entityType.get), mockAuthenticatedOwner.get))
 
     // another public method
-    setSingleMockWaasDescribeOkResponse(payload1DescribeResponse)
     agoraEntity3 = patiently(agoraBusiness.insert(testIntegrationEntity3, owner2.get, mockAccessToken))
     patiently(permissionBusiness.insertEntityPermission(testIntegrationEntity3.copy(snapshotId = Some(1)), owner2.get,
       AccessControl(AccessControl.publicUser, AgoraPermissions(AgoraPermissions.Read))))

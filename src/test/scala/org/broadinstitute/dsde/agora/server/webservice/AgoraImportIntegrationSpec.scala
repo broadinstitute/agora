@@ -36,8 +36,6 @@ class AgoraImportIntegrationSpec extends FlatSpec with RouteTest with ScalatestR
   }
 
   "MethodsService" should "return a 201 when posting a WDL with a valid (extant) official docker image" in {
-    setSingleMockWaasDescribeOkResponse(genericDockerPayloadDescribeResponse)
-
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntityWithValidOfficialDockerImageInWdl) ~>
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> methodsService.postRoute ~> check {
         val entity = responseAs[AgoraEntity]
@@ -73,8 +71,6 @@ class AgoraImportIntegrationSpec extends FlatSpec with RouteTest with ScalatestR
   }
 
   "MethodsService" should "return a 201 when posting a WDL with a valid (extant) personal docker image" in {
-    setSingleMockWaasDescribeOkResponse(genericDockerPayloadDescribeResponse)
-
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntityWithValidPersonalDockerInWdl) ~>
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~>
       methodsService.postRoute ~> check {

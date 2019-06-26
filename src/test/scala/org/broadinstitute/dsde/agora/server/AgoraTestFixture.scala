@@ -13,6 +13,7 @@ import org.mockserver.integration.ClientAndServer
 import org.mockserver.integration.ClientAndServer.startClientAndServer
 import org.mockserver.matchers.Times
 import org.mockserver.model.HttpRequest.request
+import org.mockserver.model.{Body, BodyWithContentType, StringBody}
 import slick.dbio.DBIOAction
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.meta.MTable
@@ -39,16 +40,25 @@ trait AgoraTestFixture {
 
   def startMockWaas() = {
     waasMockServer = startClientAndServer(waasMockServerPort)
+    addSubstringResponse(payload1.get, payload1DescribeResponse)
+    addSubstringResponse(payload2.get, payload2DescribeResponse)
+    addSubstringResponse(payloadWithValidPersonalDockerImageInWdl.get, genericDockerPayloadDescribeResponse)
+    addSubstringResponse(payloadWithValidOfficialDockerImageInWdl.get, genericDockerPayloadDescribeResponse)
+    addSubstringResponse(payloadWdlBadVersion.get, badVersionDescribeResponse)
+    addSubstringResponse(badPayload.get, malformedPayloadDescribeResponse)
+    addSubstringResponse(payloadWdl10.get, goodWdlVersionDescribeResponse)
   }
 
-  def setMockWaasDescribeOkResponse(responseAsJson : String, times : Int) = {
-    waasMockServer.when(waasRequest, Times.exactly(times))
+  def addSubstringResponse(payload : String, response : String) = {
+    // necessary to declare this here in order to disambiguate overloaded method
+    val p2 : BodyWithContentType[String] = new StringBody(payload, true)
+    waasMockServer.when(
+      waasRequest
+        .withBody(p2)
+        )
       .respond(
-        org.mockserver.model.HttpResponse.response().withBody(responseAsJson).withStatusCode(OK.intValue).withHeader("Content-Type", "application/json"))
-  }
+        org.mockserver.model.HttpResponse.response().withBody(response).withStatusCode(OK.intValue).withHeader("Content-Type", "application/json"))
 
-  def setSingleMockWaasDescribeOkResponse(responseAsJson : String) = {
-    setMockWaasDescribeOkResponse(responseAsJson, 1)
   }
 
   def stopMockWaas() = {

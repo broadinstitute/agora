@@ -33,9 +33,7 @@ class AssociatedConfigurationIntegrationSpec extends FlatSpec with ExecutionDire
     ensureDatabasesAreRunning()
     startMockWaas()
 
-
     // create a few unique methods, each with multiple snapshots
-    setMockWaasDescribeOkResponse(genericOkDescribeResponse, 15)
     patiently(agoraBusiness.insert(testMethod("one"), mockAuthenticatedOwner.get, mockAccessToken))
     for (x <- 1 to 2)
       patiently(agoraBusiness.insert(testMethod("two"), mockAuthenticatedOwner.get, mockAccessToken))
@@ -71,7 +69,6 @@ class AssociatedConfigurationIntegrationSpec extends FlatSpec with ExecutionDire
     patiently(agoraBusiness.insert(testConfig("otherowner",4), mockAuthenticatedOwner.get, mockAccessToken))
 
     // redact a method snapshot
-    setSingleMockWaasDescribeOkResponse(genericOkDescribeResponse)
     patiently(agoraBusiness.delete(testMethod("redacts").copy(snapshotId = Some(2)), Seq(AgoraEntityType.Workflow), mockAuthenticatedOwner.get))
 
     // change perms on a method

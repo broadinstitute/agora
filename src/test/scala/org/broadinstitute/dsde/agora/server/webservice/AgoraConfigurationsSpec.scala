@@ -31,14 +31,11 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
     ensureDatabasesAreRunning()
     startMockWaas()
 
-    setSingleMockWaasDescribeOkResponse(payload1DescribeResponse)
     method1 = patiently(agoraBusiness.insert(testEntity1, mockAuthenticatedOwner.get, mockAccessToken))
 
-    setSingleMockWaasDescribeOkResponse(payload2DescribeResponse)
     testEntityToBeRedacted2WithId = patiently(agoraBusiness.insert(testEntityToBeRedacted2, mockAuthenticatedOwner.get, mockAccessToken))
     testAgoraConfigurationToBeRedactedWithId = patiently(agoraBusiness.insert(testAgoraConfigurationToBeRedacted, mockAuthenticatedOwner.get, mockAccessToken))
 
-    setSingleMockWaasDescribeOkResponse(payload1DescribeResponse)
     patiently(agoraBusiness.insert(testEntity2, mockAuthenticatedOwner.get, mockAccessToken))
     patiently(agoraBusiness.insert(testAgoraConfigurationEntity, mockAuthenticatedOwner.get, mockAccessToken))
     patiently(agoraBusiness.insert(testAgoraConfigurationEntity2, mockAuthenticatedOwner.get, mockAccessToken))

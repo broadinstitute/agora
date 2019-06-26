@@ -26,7 +26,6 @@ class EntityPermissionsClientSpec extends FlatSpec with ScalaFutures with Before
     ensureDatabasesAreRunning()
     startMockWaas()
 
-    setMockWaasDescribeOkResponse(genericOkDescribeResponse, 5)
     patiently(agoraBusiness.insert(testEntity1, mockAuthenticatedOwner.get, mockAccessToken))
     patiently(agoraBusiness.insert(testEntity2, mockAuthenticatedOwner.get, mockAccessToken))
     patiently(agoraBusiness.insert(testEntityWithPublicPermissions, mockAuthenticatedOwner.get, mockAccessToken))

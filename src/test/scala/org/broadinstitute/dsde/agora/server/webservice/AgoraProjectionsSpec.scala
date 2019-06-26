@@ -29,7 +29,6 @@ class AgoraProjectionsSpec extends ApiServiceSpec with FlatSpecLike {
     ensureDatabasesAreRunning()
     startMockWaas()
 
-    setMockWaasDescribeOkResponse(genericOkDescribeResponse, 8)
     testEntity1WithId = patiently(agoraBusiness.insert(testEntity1, mockAuthenticatedOwner.get, mockAccessToken))
     testEntity2WithId = patiently(agoraBusiness.insert(testEntity2, mockAuthenticatedOwner.get, mockAccessToken))
     testEntity3WithId = patiently(agoraBusiness.insert(testEntity3, mockAuthenticatedOwner.get, mockAccessToken))

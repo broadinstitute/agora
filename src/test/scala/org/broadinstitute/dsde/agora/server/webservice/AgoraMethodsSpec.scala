@@ -33,8 +33,8 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
   override def beforeAll() = {
     ensureDatabasesAreRunning()
     startMockWaas()
-
-    setMockWaasDescribeOkResponse(genericOkDescribeResponse, 8)
+//    setMappedResponse("f","f")
+//    setMockWaasDescribeOkResponse(genericOkDescribeResponse, 8)
 
     testEntity1WithId = patiently(agoraBusiness.insert(testEntity1, mockAuthenticatedOwner.get, mockAccessToken))
     testEntity2WithId = patiently(agoraBusiness.insert(testEntity2, mockAuthenticatedOwner.get, mockAccessToken))
@@ -44,6 +44,9 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
     testEntity6WithId = patiently(agoraBusiness.insert(testEntity6, mockAuthenticatedOwner.get, mockAccessToken))
     testEntity7WithId = patiently(agoraBusiness.insert(testEntity7, mockAuthenticatedOwner.get, mockAccessToken))
     testEntityToBeRedactedWithId = patiently(agoraBusiness.insert(testEntityToBeRedacted, mockAuthenticatedOwner.get, mockAccessToken))
+
+    stopMockWaas()
+    startMockWaas()
   }
 
   override def afterAll() = {
@@ -103,8 +106,6 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
   }
 
   "Agora" should "create a method and return with a status of 201" in {
-    setSingleMockWaasDescribeOkResponse(payload1DescribeResponse)
-
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity) ~>
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
         val entity = responseAs[AgoraEntity]
@@ -122,8 +123,6 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
   }
 
   "Agora" should "create a method and return with a status of 201 with a WDL1.0 Payload" in {
-    setSingleMockWaasDescribeOkResponse(goodWdlVersionDescribeResponse)
-
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity(payloadWdl10)) ~>
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
       assert(status == Created)
@@ -131,8 +130,6 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
   }
 
   "Agora" should "return a 400 bad request when posting with a bad version in the Payload" in {
-    setSingleMockWaasDescribeOkResponse(badVersionDescribeResponse)
-
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity(payloadWdlBadVersion)) ~>
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
       assert(status == BadRequest)
@@ -141,8 +138,6 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
   }
 
   "Agora" should "return a 400 bad request when posting a malformed payload" in {
-    setSingleMockWaasDescribeOkResponse(malformedPayloadDescribeResponse)
-
     Post(ApiUtil.Methods.withLeadingVersion, testBadAgoraEntity) ~>
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
       assert(status === BadRequest)
@@ -227,8 +222,6 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
 
   Seq(80, 79, 74) foreach { n =>
     "Agora" should s"return a Created success code when posting with a synopsis of $n characters" in {
-      setSingleMockWaasDescribeOkResponse(payload1DescribeResponse)
-
       val testSynopsis = Some(fillerText.take(80))
       Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(synopsis = testSynopsis)) ~>
         addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
@@ -300,8 +293,6 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
   }
 
   "Agora" should "accept and record a snapshot comment when creating the initial snapshot of a method" in {
-    setSingleMockWaasDescribeOkResponse(payload1DescribeResponse)
-
     Post(ApiUtil.Methods.withLeadingVersion, testMethodWithSnapshotComment1.copy(snapshotId = None)) ~>
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
       assert(status == Created)
@@ -311,8 +302,6 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
   }
 
   "Agora" should "apply a new snapshot comment when creating a new method snapshot" in {
-    setSingleMockWaasDescribeOkResponse(payload1DescribeResponse)
-
     Post(ApiUtil.Methods.withLeadingVersion, testMethodWithSnapshotComment1.copy(snapshotId = None, snapshotComment = snapshotComment2)) ~>
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
       assert(status == Created)
@@ -322,8 +311,6 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
   }
 
   "Agora" should "record no snapshot comment for a new method snapshot if none is provided" in {
-    setSingleMockWaasDescribeOkResponse(payload1DescribeResponse)
-
     Post(ApiUtil.Methods.withLeadingVersion, testMethodWithSnapshotComment1.copy(snapshotId = None, snapshotComment = None)) ~>
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
       assert(status == Created)

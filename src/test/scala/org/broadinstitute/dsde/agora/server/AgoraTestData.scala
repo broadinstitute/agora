@@ -351,23 +351,7 @@ object AgoraTestData {
                                     |}
                                     | """.stripMargin)
 
-  val genericDockerPayloadDescribeResponse =
-    """
-      |{
-      |    "valid":true,
-      |    "errors":[],
-      |    "validWorkflow":true,
-      |    "name":"wc",
-      |    "inputs":[],
-      |    "outputs":[],
-      |    "images":[],
-      |    "submittedDescriptorType":{"descriptorType":"WDL","descriptorTypeVersion":"draft-2"},
-      |    "importedDescriptorTypes":[],
-      |    "meta":{},
-      |    "parameterMeta":{}
-      |}
-    """.stripMargin
-
+  lazy val genericDockerPayloadDescribeResponse = readTestResource("generic_good.describe.json")
 
   val payloadWithInvalidOfficialDockerRepoNameInWdl = Option( """
                                                                 |task wc {

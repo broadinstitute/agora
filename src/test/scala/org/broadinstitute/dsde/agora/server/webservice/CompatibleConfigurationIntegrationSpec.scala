@@ -32,7 +32,8 @@ class CompatibleConfigurationIntegrationSpec extends FreeSpec with ExecutionDire
 
   // The following methods create a method AgoraEntity while at the same time constructing the Mock Waas
   // describe response.  This test is more difficult than the others because it generates many unique
-  // method payloads (WDLs) so it can test the compatibility of methods
+  // method payloads (WDLs) so it can test the compatibility of methods and we define "compatibility"
+  // in this context as having matching inputs/outputs, which requires WaaS parsing!
   private def generateMethodWithWaasResponse(label:String, inputs:Seq[String], outputs:Seq[String], optionalInputs:Seq[String] = Seq.empty[String]) = {
     val method = testMethod(label, inputs, outputs, optionalInputs)
     addSubstringResponse(method.payload.get, waasResponse(inputs, outputs, optionalInputs))

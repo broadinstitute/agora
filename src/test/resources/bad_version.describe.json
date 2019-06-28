@@ -1,6 +1,6 @@
 {
   "valid":false,
-  "errors":["ERROR: Finished parsing without consuming all tokens.\n\nversion plaid\n^\n     "],
+  "errors":["ERROR: Finished parsing without consuming all tokens.\n\nversion plaid"],
   "validWorkflow":false,
   "name":"wf",
   "inputs":[],

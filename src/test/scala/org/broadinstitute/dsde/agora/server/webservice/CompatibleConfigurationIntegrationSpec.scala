@@ -34,10 +34,10 @@ class CompatibleConfigurationIntegrationSpec extends FreeSpec with ExecutionDire
   // describe response.  This test is more difficult than the others because it generates many unique
   // method payloads (WDLs) so it can test the compatibility of methods and we define "compatibility"
   // in this context as having matching inputs/outputs, which requires WaaS parsing!
-  private def generateMethodWithWaasResponse(label:String, inputs:Seq[String], outputs:Seq[String], optionalInputs:Seq[String] = Seq.empty[String]) = {
+  private def insertMethodWithWaasResponse(label:String, inputs:Seq[String], outputs:Seq[String], username: String, accessToken: String, optionalInputs:Seq[String] =  Seq.empty[String]) = {
     val method = testMethod(label, inputs, outputs, optionalInputs)
     addSubstringResponse(method.payload.get, waasResponse(inputs, outputs, optionalInputs))
-    method
+    agoraBusiness.insert(method, username, accessToken)
   }
 
   private def waasResponse(inputs:Seq[String], outputs:Seq[String], optionalInputs:Seq[String] = Seq.empty[String]) = {
@@ -78,22 +78,22 @@ class CompatibleConfigurationIntegrationSpec extends FreeSpec with ExecutionDire
     startMockWaas()
 
     // has no configurations
-    patiently(agoraBusiness.insert(generateMethodWithWaasResponse("A",
-      Seq("in1"), Seq("out1")), mockAuthenticatedOwner.get, mockAccessToken))
+    patiently(insertMethodWithWaasResponse("A",
+      Seq("in1"), Seq("out1"), mockAuthenticatedOwner.get, mockAccessToken))
 
     // one method snapshot, two compatible configs
-    patiently(agoraBusiness.insert(generateMethodWithWaasResponse("B",
-      Seq("in1","in2"), Seq("out1", "out2")), mockAuthenticatedOwner.get, mockAccessToken))
+    patiently(insertMethodWithWaasResponse("B",
+      Seq("in1","in2"), Seq("out1", "out2"), mockAuthenticatedOwner.get, mockAccessToken))
     patiently(agoraBusiness.insert(testConfig("B", 1,
       Seq("in1","in2"), Seq("out1", "out2")), mockAuthenticatedOwner.get, mockAccessToken))
     patiently(agoraBusiness.insert(testConfig("B", 1,
       Seq("in1","in2"), Seq("out1", "out2")), mockAuthenticatedOwner.get, mockAccessToken))
 
     // two method snapshots, with one and two compatible configs
-    patiently(agoraBusiness.insert(generateMethodWithWaasResponse("C",
-      Seq("in1","in2","in3"), Seq("out1", "out2","out3")), mockAuthenticatedOwner.get, mockAccessToken))
-    patiently(agoraBusiness.insert(generateMethodWithWaasResponse("C",
-      Seq("in1","in2","in3"), Seq("out1", "out2","out3")), mockAuthenticatedOwner.get, mockAccessToken))
+    patiently(insertMethodWithWaasResponse("C",
+      Seq("in1","in2","in3"), Seq("out1", "out2","out3"), mockAuthenticatedOwner.get, mockAccessToken))
+    patiently(insertMethodWithWaasResponse("C",
+      Seq("in1","in2","in3"), Seq("out1", "out2","out3"), mockAuthenticatedOwner.get, mockAccessToken))
     patiently(agoraBusiness.insert(testConfig("C", 1,
       Seq("in1","in2","in3"), Seq("out1", "out2","out3")), mockAuthenticatedOwner.get, mockAccessToken))
     patiently(agoraBusiness.insert(testConfig("C", 2,
@@ -102,8 +102,8 @@ class CompatibleConfigurationIntegrationSpec extends FreeSpec with ExecutionDire
       Seq("in1","in2","in3"), Seq("out1", "out2","out3")), mockAuthenticatedOwner.get, mockAccessToken))
 
     // one method snapshot, two compatible configs and one with incompatible inputs
-    patiently(agoraBusiness.insert(generateMethodWithWaasResponse("D",
-      Seq("D1"), Seq("D2","D3")), mockAuthenticatedOwner.get, mockAccessToken))
+    patiently(insertMethodWithWaasResponse("D",
+      Seq("D1"), Seq("D2","D3"), mockAuthenticatedOwner.get, mockAccessToken))
     patiently(agoraBusiness.insert(testConfig("D", 1,
       Seq("D1"), Seq("D2","D3")), mockAuthenticatedOwner.get, mockAccessToken))
     patiently(agoraBusiness.insert(testConfig("D", 1,
@@ -112,8 +112,8 @@ class CompatibleConfigurationIntegrationSpec extends FreeSpec with ExecutionDire
       Seq("D1"), Seq("D2","D3")), mockAuthenticatedOwner.get, mockAccessToken))
 
     // one method snapshot, two compatible configs and one with incompatible outputs
-    patiently(agoraBusiness.insert(generateMethodWithWaasResponse("E",
-      Seq("E1"), Seq("E2","E3")), mockAuthenticatedOwner.get, mockAccessToken))
+    patiently(insertMethodWithWaasResponse("E",
+      Seq("E1"), Seq("E2","E3"), mockAuthenticatedOwner.get, mockAccessToken))
     patiently(agoraBusiness.insert(testConfig("E", 1,
       Seq("E1"), Seq("E2","E3")), mockAuthenticatedOwner.get, mockAccessToken))
     patiently(agoraBusiness.insert(testConfig("E", 1,
@@ -122,16 +122,16 @@ class CompatibleConfigurationIntegrationSpec extends FreeSpec with ExecutionDire
       Seq("E1"), Seq("E2","E3")), mockAuthenticatedOwner.get, mockAccessToken))
 
     // one method snapshot, one compatible config, but uses same ins/outs as "B"
-    patiently(agoraBusiness.insert(generateMethodWithWaasResponse("F",
-      Seq("in1","in2"), Seq("out1", "out2")), mockAuthenticatedOwner.get, mockAccessToken))
+    patiently(insertMethodWithWaasResponse("F",
+      Seq("in1","in2"), Seq("out1", "out2"), mockAuthenticatedOwner.get, mockAccessToken))
     patiently(agoraBusiness.insert(testConfig("F", 1,
       Seq("in1"), Seq("out1", "out2")), mockAuthenticatedOwner.get, mockAccessToken)) // <-- wrong inputs
     patiently(agoraBusiness.insert(testConfig("F", 1,
       Seq("in1","in2"), Seq("out1")), mockAuthenticatedOwner.get, mockAccessToken)) // <-- wrong outputs
 
     // method has optional inputs
-    patiently(agoraBusiness.insert(generateMethodWithWaasResponse("G",
-      Seq("in1","in2"), Seq("out1", "out2"), Seq("optional1", "optional2")), mockAuthenticatedOwner.get, mockAccessToken))
+    patiently(insertMethodWithWaasResponse("G",
+      Seq("in1","in2"), Seq("out1", "out2"), mockAuthenticatedOwner.get, mockAccessToken, Seq("optional1", "optional2")))
     patiently(agoraBusiness.insert(testConfig("G", 1,
       Seq("in1","in2"), Seq("out1", "out2")), mockAuthenticatedOwner.get, mockAccessToken)) // <-- all required, no optionals
     patiently(agoraBusiness.insert(testConfig("G", 1,

@@ -20,27 +20,16 @@ object WaasClient {
     new WomtoolApi(apiClient)
   }
 
+  def describe(payload: String, accessToken: String) :Try[WorkflowDescription] =
+    Try(womtoolApi(accessToken).describe("v1", payload, null, null, null, null))
+
   def validate(payload: String, accessToken: String): Try[String] = {
-    // is there a cleaner way to do this?
-    try {
-      val wd = womtoolApi(accessToken).describe("v1", payload, null, null, null, null)
-
-      if (wd.getValidWorkflow) {
-        Success("OK")
-      } else {
-        Failure(ValidationException(String.join("\n", wd.getErrors())))
-      }
-    } catch {
-      case e: ApiException => Failure(e)
+    describe(payload, accessToken) match {
+      case Success(wd) if wd.getValidWorkflow => Success("OK")
+      case Success(wd) =>
+        Failure(ValidationException(String.join("\n", wd.getErrors)))
+      case Failure(ex) =>
+        Failure(ex)
     }
   }
-
-  def describe(wdl: String, accessToken: String) :Try[WorkflowDescription] = {
-    Try {
-      womtoolApi(accessToken).describe("v1", wdl, null, null, null, null)
-    } recoverWith {
-      case e: ApiException => Failure(e)
-    }
-  }
-
 }

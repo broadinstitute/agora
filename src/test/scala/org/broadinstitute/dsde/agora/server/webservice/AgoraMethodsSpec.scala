@@ -33,8 +33,6 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
   override def beforeAll() = {
     ensureDatabasesAreRunning()
     startMockWaas()
-//    setMappedResponse("f","f")
-//    setMockWaasDescribeOkResponse(genericOkDescribeResponse, 8)
 
     testEntity1WithId = patiently(agoraBusiness.insert(testEntity1, mockAuthenticatedOwner.get, mockAccessToken))
     testEntity2WithId = patiently(agoraBusiness.insert(testEntity2, mockAuthenticatedOwner.get, mockAccessToken))
@@ -44,9 +42,6 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
     testEntity6WithId = patiently(agoraBusiness.insert(testEntity6, mockAuthenticatedOwner.get, mockAccessToken))
     testEntity7WithId = patiently(agoraBusiness.insert(testEntity7, mockAuthenticatedOwner.get, mockAccessToken))
     testEntityToBeRedactedWithId = patiently(agoraBusiness.insert(testEntityToBeRedacted, mockAuthenticatedOwner.get, mockAccessToken))
-
-    stopMockWaas()
-    startMockWaas()
   }
 
   override def afterAll() = {

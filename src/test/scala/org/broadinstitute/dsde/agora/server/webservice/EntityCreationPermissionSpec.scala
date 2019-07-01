@@ -35,16 +35,21 @@ class EntityCreationPermissionSpec extends ApiServiceSpec with FlatSpecLike {
 
   override def beforeAll() = {
     ensureDatabasesAreRunning()
+    startMockWaas()
+
     // create namespace1, owned by owner1; namespace creation is a side effect of entity creation
-    testEntity1WithId = patiently(agoraBusiness.insert(testEntity1, owner1.get))
+    testEntity1WithId = patiently(agoraBusiness.insert(testEntity1, owner1.get, mockAccessToken))
+
     // create namespace2, owned by owner2; namespace creation is a side effect of entity creation
-    testEntity2WithId = patiently(agoraBusiness.insert(testEntity2, owner2.get))
+    testEntity2WithId = patiently(agoraBusiness.insert(testEntity2, owner2.get, mockAccessToken))
+
     // add owner3 as owner on namespace2
     patiently(permissionBusiness.insertNamespacePermission(AgoraEntity(testEntity2.namespace), owner2.get, AccessControl(owner3.get, AgoraPermissions(All))))
   }
 
   override def afterAll() = {
     clearDatabases()
+    stopMockWaas()
   }
 
   behavior of "Agora, when creating/editing entities (methods and configs)"
@@ -183,7 +188,8 @@ class EntityCreationPermissionSpec extends ApiServiceSpec with FlatSpecLike {
 
     Post(ApiUtil.Methods.withLeadingVersion, randomEntity) ~>
       addHeader(MockAgoraDirectives.mockAuthenticatedUserEmailHeader, asUser) ~>
-      routes ~> check {
+      addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~>
+    routes ~> check {
         assert(status == expectedStatus, response.toString)
         if (expectedStatus == Created) {
           val entity = responseAs[AgoraEntity]

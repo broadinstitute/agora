@@ -36,7 +36,7 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
   // GET http://root.com/configurations/<namespace>/<name>/<snapshotId>
   def querySingleRoute =
     matchQuerySingleRoute(path)(ec) {
-      (namespace, name, snapshotId, username) =>
+      (namespace, name, snapshotId, username, accessToken) =>
         parameters( "onlyPayload".as[Boolean] ? false, "payloadAsObject".as[Boolean] ? false ) {
           (onlyPayload, payloadAsObject) =>
             val targetEntity = AgoraEntity(Option(namespace), Option(name), Option(snapshotId))
@@ -74,7 +74,7 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
                     case FailureZ(errors) => throw new IllegalArgumentException(s"Method is invalid: Errors: $errors")
                   }
                   parameters("redact".as[Boolean] ? false) { redact =>
-                    complete(agoraBusiness.copy(targetEntity, newEntity, redact, entityTypes, username))
+                    complete(agoraBusiness.copy(targetEntity, newEntity, redact, entityTypes, username, accessToken))
                   }
                 }
               }
@@ -99,8 +99,8 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
   // as well as referencing any snapshot of the supplied method
   def queryCompatibleConfigurationsRoute =
     (versionedPath(PathMatcher("methods" / Segment / Segment / IntNumber / "configurations")) & get &
-      authenticationDirectives.usernameFromRequest(())) { (namespace, name, snapshotId, username) =>
-        complete(agoraBusiness.listCompatibleConfigurations(namespace, name, snapshotId, username))
+      authenticationDirectives.usernameFromRequest(()) & authenticationDirectives.tokenFromRequest()) { (namespace, name, snapshotId, username, accessToken) =>
+        complete(agoraBusiness.listCompatibleConfigurations(namespace, name, snapshotId, username, accessToken))
     }
 
   // GET http://root.com/methods?
@@ -121,7 +121,7 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
   // POST http://root.com/methods
   // POST http://root.com/configurations
   def postRoute =
-    postPath(path)(ec) { username =>
+    postPath(path)(ec) { (username, accessToken) =>
       entity(as[AgoraEntity]) { agoraEntity =>
         validatePostRoute(agoraEntity, path) {
           val entityWithType = AgoraEntityType.byPath(path) match {
@@ -129,7 +129,7 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
             case _ => agoraEntity
           }
 
-          complete(Created, agoraBusiness.insert(entityWithType, username))
+          complete(Created, agoraBusiness.insert(entityWithType, username, accessToken))
         }
       }
     }

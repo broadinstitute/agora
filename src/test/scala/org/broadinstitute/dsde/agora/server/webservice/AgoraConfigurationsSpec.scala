@@ -12,6 +12,7 @@ import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
 import org.scalatest.{DoNotDiscover, FlatSpecLike}
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
+import org.broadinstitute.dsde.agora.server.webservice.routes.MockAgoraDirectives
 import org.broadinstitute.dsde.rawls.model.MethodConfiguration
 import spray.json.{DeserializationException, JsObject}
 
@@ -28,24 +29,28 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
 
   override def beforeAll() = {
     ensureDatabasesAreRunning()
-    method1 = patiently(agoraBusiness.insert(testEntity1, mockAuthenticatedOwner.get))
-    testEntityToBeRedacted2WithId = patiently(agoraBusiness.insert(testEntityToBeRedacted2, mockAuthenticatedOwner.get))
-    testAgoraConfigurationToBeRedactedWithId = patiently(agoraBusiness.insert(testAgoraConfigurationToBeRedacted, mockAuthenticatedOwner.get))
+    startMockWaas()
 
-    patiently(agoraBusiness.insert(testEntity2, mockAuthenticatedOwner.get))
-    patiently(agoraBusiness.insert(testAgoraConfigurationEntity, mockAuthenticatedOwner.get))
-    patiently(agoraBusiness.insert(testAgoraConfigurationEntity2, mockAuthenticatedOwner.get))
-    patiently(agoraBusiness.insert(testAgoraConfigurationEntity3, mockAuthenticatedOwner.get))
-    patiently(agoraBusiness.insert(testConfigWithSnapshot1, mockAuthenticatedOwner.get))
+    method1 = patiently(agoraBusiness.insert(testEntity1, mockAuthenticatedOwner.get, mockAccessToken))
+
+    testEntityToBeRedacted2WithId = patiently(agoraBusiness.insert(testEntityToBeRedacted2, mockAuthenticatedOwner.get, mockAccessToken))
+    testAgoraConfigurationToBeRedactedWithId = patiently(agoraBusiness.insert(testAgoraConfigurationToBeRedacted, mockAuthenticatedOwner.get, mockAccessToken))
+
+    patiently(agoraBusiness.insert(testEntity2, mockAuthenticatedOwner.get, mockAccessToken))
+    patiently(agoraBusiness.insert(testAgoraConfigurationEntity, mockAuthenticatedOwner.get, mockAccessToken))
+    patiently(agoraBusiness.insert(testAgoraConfigurationEntity2, mockAuthenticatedOwner.get, mockAccessToken))
+    patiently(agoraBusiness.insert(testAgoraConfigurationEntity3, mockAuthenticatedOwner.get, mockAccessToken))
+    patiently(agoraBusiness.insert(testConfigWithSnapshot1, mockAuthenticatedOwner.get, mockAccessToken))
   }
 
   override def afterAll() = {
     clearDatabases()
+    stopMockWaas()
   }
 
   "Agora" should "accept and record a snapshot comment when creating the initial snapshot of a config" in {
     Post(ApiUtil.Configurations.withLeadingVersion, testConfigWithSnapshotComment1.copy(snapshotId = None, payload = taskConfigPayload)) ~>
-      routes ~> check {
+      addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
       assert(status == Created)
       assert(responseAs[AgoraEntity].snapshotComment == snapshotComment1)
       assert(responseAs[AgoraEntity].snapshotId.contains(1))
@@ -54,7 +59,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
 
   "Agora" should "apply a new snapshot comment when creating a new config snapshot" in {
     Post(ApiUtil.Configurations.withLeadingVersion, testConfigWithSnapshotComment1.copy(snapshotId = None, snapshotComment = snapshotComment2, method = Some(method1))) ~>
-      routes ~> check {
+      addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
       assert(status == Created)
       assert(responseAs[AgoraEntity].snapshotComment == snapshotComment2)
       assert(responseAs[AgoraEntity].snapshotId.contains(2))
@@ -63,7 +68,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
 
   "Agora" should "record no snapshot comment for a new config snapshot if none is provided" in {
     Post(ApiUtil.Configurations.withLeadingVersion, testConfigWithSnapshotComment1.copy(snapshotId = None, snapshotComment = None, method = Some(method1))) ~>
-      routes ~> check {
+      addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
       assert(status == Created)
       assert(responseAs[AgoraEntity].snapshotComment.isEmpty)
       assert(responseAs[AgoraEntity].snapshotId.contains(3))
@@ -72,7 +77,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
 
   "Agora" should "be able to store a task configuration" in {
     Post(ApiUtil.Configurations.withLeadingVersion, testAgoraConfigurationEntity3) ~>
-      routes ~> check {
+      addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
         val referencedMethod = AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(namespace1.get, name1.get, snapshotId1.get)
 
         val entity = responseAs[AgoraEntity]
@@ -147,7 +152,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
       db.aePerms.editEntityPermission(method1, noPermission)
     }
     Post(ApiUtil.Configurations.withLeadingVersion, testAgoraConfigurationEntity3) ~>
-      routes ~> check {
+      addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
         assert(status == NotFound)
     }
   }
@@ -160,7 +165,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
   
   "Agora" should "not allow you to post a new task to the configurations route" in {
     Post(ApiUtil.Configurations.withLeadingVersion, testEntityTaskWc) ~>
-    routes ~> check {
+    addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
       assert(rejection.isInstanceOf[ValidationRejection])
     }
   }
@@ -170,7 +175,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
       testEntityToBeRedacted2WithId.namespace.get + "/" +
       testEntityToBeRedacted2WithId.name.get + "/" +
       testEntityToBeRedacted2WithId.snapshotId.get) ~>
-    routes ~>
+      addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~>
     check {
       assert(responseAs[String] == "1")
     }
@@ -181,7 +186,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
       testAgoraConfigurationToBeRedactedWithId.namespace.get + "/" +
       testAgoraConfigurationToBeRedactedWithId.name.get + "/" +
       testAgoraConfigurationToBeRedactedWithId.snapshotId.get) ~>
-    routes ~>
+      addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~>
     check {
       assert(responseAs[String] contains "not found")
     }
@@ -195,7 +200,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
 
     "Agora" should "return the payload as an object if you ask it to" in {
       Get(baseURL + "?payloadAsObject=true") ~>
-      routes ~> check {
+      addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
         assert(status == OK)
 
         val entity = responseAs[AgoraEntity]
@@ -209,7 +214,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
     }
 
     "Agora" should "return the payload as a string by default" in {
-      Get(baseURL) ~> routes ~> check {
+      Get(baseURL) ~> addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
         assert(status == OK)
 
         val entity = responseAs[AgoraEntity]
@@ -219,7 +224,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
     }
 
     "Agora" should "not let you use payloadAsObject and onlyPayload at the same time" in {
-      Get(baseURL + "?payloadAsObject=true&onlyPayload=true") ~> routes ~> check {
+      Get(baseURL + "?payloadAsObject=true&onlyPayload=true") ~> addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
         assert(responseAs[String] contains "onlyPayload, payloadAsObject cannot be used together")
         assert(status == BadRequest)
       }
@@ -250,7 +255,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
         testConfigWithSnapshotMissingConfigVersion.snapshotId.get
 
       Get(baseURL + "?payloadAsObject=true") ~>
-      configurationsService.querySingleRoute ~> check {
+        addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> configurationsService.querySingleRoute ~> check {
         assert(status == OK)
 
         val entity = responseAs[AgoraEntity]

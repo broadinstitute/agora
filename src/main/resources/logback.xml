@@ -30,6 +30,8 @@
         <suffixPattern>[%level] [%d{HH:mm:ss.SSS}] [%thread] %logger{36} - %msg%n</suffixPattern>
     </appender>
 
+    <logger name="org.mockserver.mock.HttpStateHandler" level="warn"/>
+    
     <!-- for debugging slick db calls / timing
     <logger name="slick.jdbc.JdbcBackend.statement" level="DEBUG" additivity="false">
         <appender-ref ref="file"/>

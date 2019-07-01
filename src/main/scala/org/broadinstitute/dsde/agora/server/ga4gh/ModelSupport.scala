@@ -3,9 +3,6 @@ package org.broadinstitute.dsde.agora.server.ga4gh
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.ga4gh.Models.{Metadata, Tool, ToolClass, ToolDescriptor, ToolDescriptorType, ToolId, ToolVersion}
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType, MethodDefinition}
-import wdl.draft2.model.WdlNamespaceWithWorkflow
-
-import scala.util.Success
 
 /**
   * Support class to handle apply methods with some degree of business logic
@@ -37,20 +34,21 @@ object ModelSupport {
     ToolClass(str, str, "")
   }
 
+  // This is used only from unauthenticated endpoint to get all public methods in a GA4GH format.
+  // This format includes an 'author' that we attempt to get by parsing the WDL of each method
+  // that is returned.  There is no pagination on this method.  In production, because of this
+  // parsing, the method times out and returns a 503.  It has been called 11 times in the previous
+  // 3 months and never returned successfully.  This method is currently broken, and spending
+  // effort to fix it is out of scope for WDL 1.0.  In light of the low usage and 100% failure
+  // rate in production with no complaints raises questions about it's value overall.  After
+  // discussion with product, we will not parse this field from the WDL any longer but
+  // will still return the field to be syntactically compliant.
   def toolFromEntities(entities:Seq[AgoraEntity]): Tool = {
     val representative = entities.last
     val versions = entities.toList map (x => toolVersionFromEntity(x))
     val latestVersion = versions.last
     val id = ToolId(representative).toString
     val url = AgoraConfig.GA4GH.toolUrl(id, latestVersion.id, latestVersion.`descriptor-type`.last)
-    val wdl = representative.payload match {
-      case x if x.isDefined =>
-        WdlNamespaceWithWorkflow.load(x.get, Seq.empty) match {
-          case Success(parsed) => Some(parsed)
-          case _ => None
-        }
-      case _ => None
-    }
     Tool(
       url=url,
       id=id,
@@ -58,7 +56,7 @@ object ModelSupport {
       toolname=latestVersion.name,
       toolclass=ToolClass(representative),
       description=representative.synopsis.getOrElse(""),
-      author=findAuthorsInWdl(wdl),
+      author="",
       `meta-version` = latestVersion.`meta-version`,
       contains=List.empty[String],
       verified=false,
@@ -99,34 +97,6 @@ object ModelSupport {
     */
   def metadata(): Metadata = {
     Metadata(version = version, `api-version` = apiVersion, country = country, `friendly-name` = friendlyName)
-  }
-
-  /**
-   * Looks for all populated "meta: author=X" and "meta: email=Y" fields in the optional wdl meta fields.
-   */
-  def findAuthorsInWdl(wdl: Option[WdlNamespaceWithWorkflow]): String = {
-    val authorField = "author"
-    val emailField = "email"
-    val authors: List[String] = wdl match {
-      case Some(parsed) =>
-        parsed.tasks.map { task =>
-          formatAuthorEmail(task.meta.getOrElse(emailField,""), task.meta.getOrElse(authorField,""))
-        }.toList ++ parsed.workflows.map { workflow =>
-          formatAuthorEmail(workflow.meta.getOrElse(emailField,""), workflow.meta.getOrElse(authorField,""))
-        }
-      case _ => List.empty[String]
-    }
-    authors.filterNot(_.isEmpty).distinct.mkString(", ")
-  }
-
-  private def formatAuthorEmail(email: String, author: String): String = {
-    val stringFormat = "%s <%s>"
-    (email.trim.isEmpty, author.trim.isEmpty) match {
-      case (true, false) => author.trim
-      case (false, true) => email.trim
-      case (false, false) => stringFormat.format(author.trim, email.trim)
-      case _ => ""
-    }
   }
 
 }

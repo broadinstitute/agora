@@ -7,8 +7,12 @@ import scala.io.Source
 object AgoraTestData {
   def getBigDocumentation: String = {
     // Read contents of a test markdown file into a single string.
-    val markdown = Source.fromFile("src/test/resources/TESTMARKDOWN.md").getLines() mkString "\n"
+    val markdown = readTestResource("TESTMARKDOWN.md")
     markdown * 7 // NB: File is 1.6 Kb, so 7* that is >10kb, our minimal required storage amount.
+  }
+
+  def readTestResource(file: String) : String = {
+    Source.fromFile(s"src/test/resources/${file}").getLines().mkString("\n")
   }
 
   val agoraTestOwner = Option("agora-test")
@@ -32,6 +36,7 @@ object AgoraTestData {
   val documentation2 = Option("This is documentation for another method")
   val testGA4GHpath = "/ga4gh/v1/tools/test_ns:test_wdl/versions/1/WDL/descriptor"
   val mockServerPort = 8001
+  val waasMockServerPort = 9001
 
   val badNamespace = Option("    ")
   val badName = Option("   ")
@@ -53,64 +58,35 @@ object AgoraTestData {
 
   val fillerText = "activated charcoal palo santo, occupy listicle quinoa scenester next level kitsch gentrify XOXO tumeric everyday carry"
 
-  val payload1 = Option( """task grep {
-                           |  String pattern
-                           |  String? flags
-                           |  File file_name
-                           |
-                           |  command {
-                           |    grep ${pattern} ${flags} ${file_name}
-                           |  }
-                           |  output {
-                           |    File out = "stdout"
-                           |  }
-                           |  runtime {
-                           |    memory: "2 MB"
-                           |    cpu: 1
-                           |    defaultDisks: "mydisk 3 LOCAL_SSD"
-                           |  }
-                           |}
-                           |
-                           |task wc {
-                           |  Array[File]+ files
-                           |
-                           |  command {
-                           |    wc -l ${sep=' ' files} | tail -1 | cut -d' ' -f 2
-                           |  }
-                           |  output {
-                           |    Int count = read_int("stdout")
-                           |  }
-                           |}
-                           |
-                           |workflow scatter_gather_grep_wc {
-                           |  Array[File] input_files
-                           |
-                           |  scatter(f in input_files) {
-                           |    call grep {
-                           |      input: file_name = f
-                           |    }
-                           |  }
-                           |  call wc {
-                           |    input: files = grep.out
-                           |  }
-                           |}
-                           |
-                           |
-                           | """.stripMargin)
-  val payload2 = Option("task test { command { test } }")
-  val payloadWcTask = Option( """
-                                |task wc {
-                                |  Array[File]+ files
-                                |
-                                |  command {
-                                |    wc -l ${sep=' ' files} | tail -1 | cut -d' ' -f 2
-                                |  }
-                                |  output {
-                                |    Int count = read_int("stdout")
-                                |  }
-                                |}
-                                |
-                                | """.stripMargin)
+  lazy val payload1 = Option(readTestResource("payload1.wdl"))
+  lazy val payload1DescribeResponse = readTestResource("payload1.describe.json")
+
+  lazy val payload2 = Option(readTestResource("payload2.wdl"))
+  lazy val payload2DescribeResponse = readTestResource("payload2.describe.json")
+
+  lazy val payloadWcTask = Option( readTestResource("payload_wc_task.wdl"))
+
+  def wdlVersionPayload(version: String) = Option(
+    s"""
+      |version ${version}
+      |task hello {
+      |  command {
+      |    echo "hello"
+      |  }
+      |}
+      |
+      |workflow wf {
+      |  call hello
+      |}
+    """.stripMargin)
+
+  lazy val badVersionDescribeResponse = readTestResource("bad_version.describe.json")
+  lazy val malformedPayloadDescribeResponse = readTestResource("malformed_file.describe.json")
+  lazy val goodWdlVersionDescribeResponse = readTestResource("good_wdl_10.describe.json")
+  lazy val badWdlVersionDescribeResponse = readTestResource("bad_wdl_version.describe.json")
+
+  val payloadWdl10 = wdlVersionPayload("1.0")
+  val payloadWdlBadVersion = wdlVersionPayload("plaid")
 
   val testAgoraEntity = new AgoraEntity(
     namespace = namespace3,
@@ -119,6 +95,16 @@ object AgoraTestData {
     documentation = documentation1,
     owner = owner1,
     payload = payload1,
+    entityType = Option(AgoraEntityType.Workflow)
+  )
+
+  def testAgoraEntity(myPayload: Option[String]) = new AgoraEntity(
+    namespace = namespace3,
+    name = name1,
+    synopsis = synopsis1,
+    documentation = documentation1,
+    owner = owner1,
+    payload = myPayload,
     entityType = Option(AgoraEntityType.Workflow)
   )
 
@@ -364,6 +350,9 @@ object AgoraTestData {
                                     |  }
                                     |}
                                     | """.stripMargin)
+
+  lazy val genericDockerPayloadDescribeResponse = readTestResource("generic_good.describe.json")
+
   val payloadWithInvalidOfficialDockerRepoNameInWdl = Option( """
                                                                 |task wc {
                                                                 |  Array[File]+ files

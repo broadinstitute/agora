@@ -49,7 +49,7 @@ libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "3.0.5" % Test,
   "org.mock-server" % "mockserver-netty" % "5.6.0" % "test",
   "org.broadinstitute.dsde.workbench" %% "sam-client" % "0.1-f6bf0ec",
-  "org.broadinstitute.cromwell" %% "cromwell-client" % "0.1-18759ce53-SNAP"
+  "org.broadinstitute.cromwell" %% "cromwell-client" % "0.1-15a30475d-SNAP"
 )
 
 //These can be overridden with system properties:

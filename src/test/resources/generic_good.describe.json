@@ -9,5 +9,6 @@
   "submittedDescriptorType":{"descriptorType":"WDL","descriptorTypeVersion":"draft-2"},
   "importedDescriptorTypes":[],
   "meta":{},
-  "parameterMeta":{}
+  "parameterMeta":{},
+  "isRunnableWorkflow":true
 }

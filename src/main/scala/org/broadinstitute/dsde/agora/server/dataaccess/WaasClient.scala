@@ -25,9 +25,13 @@ object WaasClient {
 
   def validate(payload: String, accessToken: String): Try[String] = {
     describe(payload, accessToken) match {
-      case Success(wd) if !wd.getIsRunnableWorkflow =>
+        // if valid and a runnable workflow
+      case Success(wd) if (wd.getValidWorkflow && wd.getIsRunnableWorkflow) =>
+        Success("OK")
+        // if valid and not a runnable workflow
+      case Success(wd) if wd.getValidWorkflow =>
         Failure(ValidationException(s"WDL ${wd.getName} does not contain a workflow."))
-      case Success(wd) if wd.getValidWorkflow => Success("OK")
+        // if invalid and not a runnable workflow
       case Success(wd) =>
         Failure(ValidationException(String.join("\n", wd.getErrors)))
       case Failure(ex) =>

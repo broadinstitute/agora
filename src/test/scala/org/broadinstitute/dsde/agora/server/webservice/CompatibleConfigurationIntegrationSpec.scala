@@ -54,7 +54,8 @@ class CompatibleConfigurationIntegrationSpec extends FreeSpec with ExecutionDire
        |"submittedDescriptorType":{"descriptorType":"WDL","descriptorTypeVersion":"draft-2"},
        |"importedDescriptorTypes":[],
        |"meta":{},
-       |"parameterMeta":{}
+       |"parameterMeta":{},
+       |"isRunnableWorkflow":true
        |}
        |
      """.stripMargin

@@ -1,1 +1,1 @@
-task test { command { test } }
+workflow test { command { test } }

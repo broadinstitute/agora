@@ -14,5 +14,4 @@ import scala.concurrent.ExecutionContext
  */
 trait AgoraDirectives {
   def usernameFromRequest(magnet: ImplicitMagnet[ExecutionContext]): Directive1[String]
-  def tokenFromRequest(): Directive1[String]
 }

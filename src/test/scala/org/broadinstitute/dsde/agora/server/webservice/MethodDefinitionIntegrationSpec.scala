@@ -29,43 +29,42 @@ class MethodDefinitionIntegrationSpec extends FlatSpec with RouteTest with Scala
 
   override def beforeAll(): Unit = {
     ensureDatabasesAreRunning()
-    startMockWaas()
 
     // create a few unique methods, each with multiple snapshots
-    patiently(agoraBusiness.insert(testMethod("one",1), mockAuthenticatedOwner.get, mockAccessToken))
+    patiently(agoraBusiness.insert(testMethod("one",1), mockAuthenticatedOwner.get))
     for (x <- 1 to 2)
-      patiently(agoraBusiness.insert(testMethod("two",x), mockAuthenticatedOwner.get, mockAccessToken))
+      patiently(agoraBusiness.insert(testMethod("two",x), mockAuthenticatedOwner.get))
     for (x <- 1 to 3)
-      patiently(agoraBusiness.insert(testMethod("three",x), mockAuthenticatedOwner.get, mockAccessToken))
+      patiently(agoraBusiness.insert(testMethod("three",x), mockAuthenticatedOwner.get))
     // this one will have a redacted snapshot
     for (x <- 1 to 4)
-      patiently(agoraBusiness.insert(testMethod("redacts",x), mockAuthenticatedOwner.get, mockAccessToken))
+      patiently(agoraBusiness.insert(testMethod("redacts",x), mockAuthenticatedOwner.get))
     // this will have a snapshot owned by someone else
     for (x <- 1 to 5)
-      patiently(agoraBusiness.insert(testMethod("otherowner",x), mockAuthenticatedOwner.get, mockAccessToken))
+      patiently(agoraBusiness.insert(testMethod("otherowner",x), mockAuthenticatedOwner.get))
 
     // create some configs
     // method 1 has 1 config
-    patiently(agoraBusiness.insert(testConfig("one",1), mockAuthenticatedOwner.get, mockAccessToken))
+    patiently(agoraBusiness.insert(testConfig("one",1), mockAuthenticatedOwner.get))
     // method 2 has 2 configs, both pointing at snapshot 1
     for (x <- 1 to 2)
-      patiently(agoraBusiness.insert(testConfig("two",1), mockAuthenticatedOwner.get, mockAccessToken))
+      patiently(agoraBusiness.insert(testConfig("two",1), mockAuthenticatedOwner.get))
     // method 3 has 2 configs, pointing at snapshots 2 and 3
-    patiently(agoraBusiness.insert(testConfig("three",2), mockAuthenticatedOwner.get, mockAccessToken))
-    patiently(agoraBusiness.insert(testConfig("three",3), mockAuthenticatedOwner.get, mockAccessToken))
+    patiently(agoraBusiness.insert(testConfig("three",2), mockAuthenticatedOwner.get))
+    patiently(agoraBusiness.insert(testConfig("three",3), mockAuthenticatedOwner.get))
     // method redacts has 4 configs, one of which points at the to-be-redacted snapshot
     // and one of which is itself redacted
-    patiently(agoraBusiness.insert(testConfig("redacts",1), mockAuthenticatedOwner.get, mockAccessToken))
-    patiently(agoraBusiness.insert(testConfig("redacts",1), mockAuthenticatedOwner.get, mockAccessToken))
-    patiently(agoraBusiness.insert(testConfig("redacts",2), mockAuthenticatedOwner.get, mockAccessToken))
-    patiently(agoraBusiness.insert(testConfig("redacts",3), mockAuthenticatedOwner.get, mockAccessToken))
+    patiently(agoraBusiness.insert(testConfig("redacts",1), mockAuthenticatedOwner.get))
+    patiently(agoraBusiness.insert(testConfig("redacts",1), mockAuthenticatedOwner.get))
+    patiently(agoraBusiness.insert(testConfig("redacts",2), mockAuthenticatedOwner.get))
+    patiently(agoraBusiness.insert(testConfig("redacts",3), mockAuthenticatedOwner.get))
     // method otherowner has 5 configs, one of which points at the snapshot to-be-owned
     // by somebody else, and one which is itself owned by somebody else
-    patiently(agoraBusiness.insert(testConfig("otherowner",1), mockAuthenticatedOwner.get, mockAccessToken))
-    patiently(agoraBusiness.insert(testConfig("otherowner",1), mockAuthenticatedOwner.get, mockAccessToken))
-    patiently(agoraBusiness.insert(testConfig("otherowner",2), mockAuthenticatedOwner.get, mockAccessToken))
-    patiently(agoraBusiness.insert(testConfig("otherowner",3), mockAuthenticatedOwner.get, mockAccessToken))
-    patiently(agoraBusiness.insert(testConfig("otherowner",4), mockAuthenticatedOwner.get, mockAccessToken))
+    patiently(agoraBusiness.insert(testConfig("otherowner",1), mockAuthenticatedOwner.get))
+    patiently(agoraBusiness.insert(testConfig("otherowner",1), mockAuthenticatedOwner.get))
+    patiently(agoraBusiness.insert(testConfig("otherowner",2), mockAuthenticatedOwner.get))
+    patiently(agoraBusiness.insert(testConfig("otherowner",3), mockAuthenticatedOwner.get))
+    patiently(agoraBusiness.insert(testConfig("otherowner",4), mockAuthenticatedOwner.get))
 
     // redact a method snapshot
     patiently(agoraBusiness.delete(testMethod("redacts").copy(snapshotId = Some(2)), Seq(AgoraEntityType.Workflow), mockAuthenticatedOwner.get))
@@ -105,7 +104,6 @@ class MethodDefinitionIntegrationSpec extends FlatSpec with RouteTest with Scala
 
   override def afterAll(): Unit = {
     clearDatabases()
-    stopMockWaas()
   }
 
   behavior of "Agora method definitions listing"

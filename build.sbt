@@ -11,6 +11,7 @@ scalacOptions := Seq("-unchecked", "-deprecation", "-feature")
 
 lazy val akkaV = "2.5.11"
 lazy val akkaHttpV = "10.1.0"
+lazy val cromwellV = "40-2754783"
 
 val artifactory = "https://broadinstitute.jfrog.io/broadinstitute/"
 
@@ -37,9 +38,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.slick" %% "slick" % "3.2.2",
   "com.zaxxer" % "HikariCP" % "2.7.8",
   "mysql" % "mysql-connector-java" % "6.0.6",
-  
-  // ficus was being pulled in transitively from wdl-draft2 previously, now made explicit
-  "com.iheart" %% "ficus" % "1.4.6",
+  "org.broadinstitute" %% "wdl-draft2" % cromwellV,
   "org.broadinstitute.dsde.workbench" %% "workbench-util" % "0.3-0e9d080",
   "org.mongodb" %% "casbah" % "3.1.1",
   "org.scalaz" %% "scalaz-core" % "7.2.20",
@@ -47,9 +46,8 @@ libraryDependencies ++= Seq(
   //---------- Test libraries -------------------//
   "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpV % Test,
   "org.scalatest" %% "scalatest" % "3.0.5" % Test,
-  "org.mock-server" % "mockserver-netty" % "5.6.0" % "test",
-  "org.broadinstitute.dsde.workbench" %% "sam-client" % "0.1-f6bf0ec",
-  "org.broadinstitute.cromwell" %% "cromwell-client" % "0.1-18759ce53-SNAP"
+  "org.mock-server" % "mockserver-netty" % "3.10.2" % "test", // later versions break	  "org.mock-server" % "mockserver-netty" % "5.6.0" % "test",
+  "org.broadinstitute.dsde.workbench" %% "sam-client" % "0.1-f6bf0ec"
 )
 
 //These can be overridden with system properties:

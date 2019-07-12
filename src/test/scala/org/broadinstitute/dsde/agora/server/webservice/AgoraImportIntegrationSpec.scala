@@ -9,7 +9,6 @@ import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
-import org.broadinstitute.dsde.agora.server.webservice.routes.MockAgoraDirectives
 import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpec}
 
 import scala.concurrent.duration._
@@ -27,17 +26,15 @@ class AgoraImportIntegrationSpec extends FlatSpec with RouteTest with ScalatestR
 
   override def beforeAll() = {
     ensureDatabasesAreRunning()
-    startMockWaas()
   }
 
   override def afterAll() = {
     clearDatabases()
-    stopMockWaas()
   }
 
   "MethodsService" should "return a 201 when posting a WDL with a valid (extant) official docker image" in {
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntityWithValidOfficialDockerImageInWdl) ~>
-      addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> methodsService.postRoute ~> check {
+      methodsService.postRoute ~> check {
         val entity = responseAs[AgoraEntity]
         assert(entity.namespace == testAgoraEntityWithValidOfficialDockerImageInWdl.namespace)
         assert(entity.name == testAgoraEntityWithValidOfficialDockerImageInWdl.name)
@@ -54,7 +51,6 @@ class AgoraImportIntegrationSpec extends FlatSpec with RouteTest with ScalatestR
 
   ignore should "return a 400 bad request when posting a WDL with an invalid official docker image (invalid/non-existent repo name)" in {
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntityWithInvalidOfficialDockerRepoNameInWdl) ~>
-      addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~>
       methodsService.postRoute ~> check {
       assert(status == BadRequest)
       assert(Option(responseAs[String]).nonEmpty)
@@ -63,7 +59,6 @@ class AgoraImportIntegrationSpec extends FlatSpec with RouteTest with ScalatestR
 
   ignore should "return a 400 bad request when posting a WDL with an invalid official docker image (invalid/non-existent tag name)" in {
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntityWithInvalidOfficialDockerTagNameInWdl) ~>
-      addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~>
       methodsService.postRoute ~> check {
       assert(status == BadRequest)
       assert(Option(responseAs[String]).nonEmpty)
@@ -72,7 +67,6 @@ class AgoraImportIntegrationSpec extends FlatSpec with RouteTest with ScalatestR
 
   "MethodsService" should "return a 201 when posting a WDL with a valid (extant) personal docker image" in {
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntityWithValidPersonalDockerInWdl) ~>
-      addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~>
       methodsService.postRoute ~> check {
         val entity = responseAs[AgoraEntity]
         assert(entity.namespace == testAgoraEntityWithValidPersonalDockerInWdl.namespace)
@@ -90,7 +84,6 @@ class AgoraImportIntegrationSpec extends FlatSpec with RouteTest with ScalatestR
 
   ignore should "return a 400 bad request when posting a WDL with an invalid personal docker image (invalid/non-existent user name)" in {
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntityWithInvalidPersonalDockerUserNameInWdl) ~>
-      addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~>
       methodsService.postRoute ~> check {
       assert(status == BadRequest)
       assert(Option(responseAs[String]).nonEmpty)

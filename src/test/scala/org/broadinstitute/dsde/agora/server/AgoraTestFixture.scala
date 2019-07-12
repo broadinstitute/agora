@@ -1,18 +1,13 @@
 
 package org.broadinstitute.dsde.agora.server
 
-import akka.http.scaladsl.model.StatusCodes.OK
 import com.mongodb.casbah.MongoCollection
 import com.mongodb.casbah.commons.MongoDBObject
-import org.broadinstitute.dsde.agora.server.AgoraTestData.{waasMockServerPort, _}
+import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.business.{AgoraBusiness, PermissionBusiness}
 import org.broadinstitute.dsde.agora.server.dataaccess.ReadWriteAction
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.{AgoraMongoClient, EmbeddedMongo}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
-import org.mockserver.integration.ClientAndServer
-import org.mockserver.integration.ClientAndServer.startClientAndServer
-import org.mockserver.model.HttpRequest.request
-import org.mockserver.model.{BodyWithContentType, StringBody}
 import slick.dbio.DBIOAction
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.meta.MTable
@@ -29,40 +24,6 @@ trait AgoraTestFixture {
   val permsDataSource: PermissionsDataSource = new PermissionsDataSource(AgoraConfig.sqlDatabase)
   val agoraBusiness: AgoraBusiness = new AgoraBusiness(permsDataSource)
   val permissionBusiness: PermissionBusiness = new PermissionBusiness(permsDataSource)
-
-  var waasMockServer: ClientAndServer = _
-  val waasRequest = request()
-    .withMethod("POST")
-    .withPath("/api/womtool/v1/describe")
-
-  val mockAccessToken = AgoraConfig.mockAccessToken
-
-  def startMockWaas() = {
-    waasMockServer = startClientAndServer(waasMockServerPort)
-    addSubstringResponse(payload1.get, payload1DescribeResponse)
-    addSubstringResponse(payload2.get, payload2DescribeResponse)
-    addSubstringResponse(payloadWithValidPersonalDockerImageInWdl.get, genericDockerPayloadDescribeResponse)
-    addSubstringResponse(payloadWithValidOfficialDockerImageInWdl.get, genericDockerPayloadDescribeResponse)
-    addSubstringResponse(payloadWdlBadVersion.get, badVersionDescribeResponse)
-    addSubstringResponse(badPayload.get, malformedPayloadDescribeResponse)
-    addSubstringResponse(payloadWdl10.get, goodWdlVersionDescribeResponse)
-  }
-
-  def addSubstringResponse(payload : String, response : String) = {
-    // necessary to declare this here in order to disambiguate overloaded method
-    val p2 : BodyWithContentType[String] = new StringBody(payload, true)
-    waasMockServer.when(
-      waasRequest
-        .withBody(p2)
-        )
-      .respond(
-        org.mockserver.model.HttpResponse.response().withBody(response).withStatusCode(OK.intValue).withHeader("Content-Type", "application/json"))
-
-  }
-
-  def stopMockWaas() = {
-    waasMockServer.stop()
-  }
 
   def startDatabases() = {
     EmbeddedMongo.startMongo()

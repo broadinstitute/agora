@@ -15,11 +15,8 @@ trait MockAgoraDirectives extends AgoraDirectives {
       case None => AgoraConfig.mockAuthenticatedUserEmail
     }
   }
-
-  override def tokenFromRequest = headerValueByName(MockAgoraDirectives.mockAccessToken)
 }
 
 object MockAgoraDirectives extends MockAgoraDirectives {
   val mockAuthenticatedUserEmailHeader = "X-UnitTest-MockAuthenticatedUserEmail"
-  val mockAccessToken = "X-UnitTestMockAccessToken"
 }

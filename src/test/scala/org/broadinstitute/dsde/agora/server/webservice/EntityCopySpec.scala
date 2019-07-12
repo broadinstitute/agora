@@ -28,22 +28,20 @@ class EntityCopySpec extends ApiServiceSpec with FlatSpecLike {
 
   override def beforeAll() = {
     ensureDatabasesAreRunning()
-    startMockWaas()
 
     // create entity1, owned by owner1
-    testEntity1WithId = patiently(agoraBusiness.insert(testEntity1, owner1.get, mockAccessToken))
+    testEntity1WithId = patiently(agoraBusiness.insert(testEntity1, owner1.get))
 
     // add owner2 as reader on entity1
     patiently(permissionBusiness.insertEntityPermission(testEntity1WithId, owner1.get, AccessControl(owner2.get, AgoraPermissions(Read))))
     // add owner3 with Create (but not Redact) on entity1
     patiently(permissionBusiness.insertEntityPermission(testEntity1WithId, owner1.get, AccessControl(owner3.get, AgoraPermissions(Create))))
 
-    testEntityWithSnapshotComment = patiently(agoraBusiness.insert(testMethodWithSnapshotComment1, owner1.get, mockAccessToken))
+    testEntityWithSnapshotComment = patiently(agoraBusiness.insert(testMethodWithSnapshotComment1, owner1.get))
   }
 
   override def afterAll() = {
     clearDatabases()
-    stopMockWaas()
   }
 
   behavior of "Agora, when creating/editing entities (methods and configs)"
@@ -65,7 +63,6 @@ class EntityCopySpec extends ApiServiceSpec with FlatSpecLike {
     val targetUri = ApiUtil.Configurations.withLeadingVersion + "/nosupportfor/configs/1"
     Post(targetUri, AgoraEntity()) ~>
       addHeader(MockAgoraDirectives.mockAuthenticatedUserEmailHeader, owner1.get) ~>
-      addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~>
     ApiService.handleExceptionsAndRejections { configurationsService.querySingleRoute } ~> check {
         assert(!handled)
     }
@@ -128,7 +125,6 @@ class EntityCopySpec extends ApiServiceSpec with FlatSpecLike {
 
     Post(postUri, AgoraEntity()) ~>
       addHeader(MockAgoraDirectives.mockAuthenticatedUserEmailHeader, asUser) ~>
-      addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~>
       ApiService.handleExceptionsAndRejections { methodsService.querySingleRoute } ~> check {
         assert(status == expectedStatus, response.toString)
         if (expectedStatus == Created) {
@@ -163,7 +159,6 @@ class EntityCopySpec extends ApiServiceSpec with FlatSpecLike {
     if (assertRedact) {
       Get(getUri) ~>
         addHeader(MockAgoraDirectives.mockAuthenticatedUserEmailHeader, asUser) ~>
-        addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~>
         ApiService.handleExceptionsAndRejections { methodsService.querySingleRoute } ~> check {
           if (redact) {
             assert(status == NotFound, response.toString)

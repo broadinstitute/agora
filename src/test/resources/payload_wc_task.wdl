@@ -8,3 +8,5 @@ task wc {
     Int count = read_int("stdout")
   }
 }
+
+workflow foo {}

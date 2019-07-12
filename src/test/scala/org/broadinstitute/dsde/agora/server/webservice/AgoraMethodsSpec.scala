@@ -141,7 +141,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
   }
 
   "Agora" should "reject the request with validation errors when metadata is invalid" in {
-    val entity = new AgoraEntity(namespace= Option(" "), name= Option(" ") , synopsis= Option(" "), payload= Option(" "), entityType= Option(AgoraEntityType.Task))
+    val entity = new AgoraEntity(namespace= Option(" "), name= Option(" ") , synopsis= Option(" "), payload= Option(" "), entityType= Option(AgoraEntityType.Workflow))
 
     Post(ApiUtil.Methods.withLeadingVersion, entity) ~>
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {

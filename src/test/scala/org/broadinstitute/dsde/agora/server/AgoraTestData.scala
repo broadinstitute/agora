@@ -160,7 +160,7 @@ object AgoraTestData {
                                                     |  }
                                                     |}
                                                     |
-                                                   |workflow scatter_gather_grep_wc {
+                                                    |workflow scatter_gather_grep_wc {
                                                     |  Array[File] input_files
                                                     |  scatter(f in input_files) {
                                                     |    call grep {
@@ -349,6 +349,8 @@ object AgoraTestData {
                                     |    docker: "ubuntu:latest"
                                     |  }
                                     |}
+                                    |
+                                    |workflow foo {}
                                     | """.stripMargin)
 
   lazy val genericDockerPayloadDescribeResponse = readTestResource("generic_good.describe.json")
@@ -366,6 +368,8 @@ object AgoraTestData {
                                                                 |    docker: "ubuntu_doesnotexist:latest"
                                                                 |  }
                                                                 |}
+                                                                |
+                                                                |workflow foo {}
                                                                 | """.stripMargin)
   val payloadWithInvalidOfficialDockerTagNameInWdl = Option( """
                                                              |task wc {
@@ -380,6 +384,8 @@ object AgoraTestData {
                                                              |    docker: "ubuntu:ggrant_latest"
                                                              |  }
                                                              |}
+                                                             |
+                                                             |workflow foo {}
                                                              | """.stripMargin)
   val payloadWithValidPersonalDockerImageInWdl = Option( """
                                                            |task wc {
@@ -394,6 +400,8 @@ object AgoraTestData {
                                                            |    docker: "broadinstitute/scala-baseimage"
                                                            |  }
                                                            |}
+                                                           |
+                                                           |workflow foo {}
                                                            | """.stripMargin)
   val payloadWithInvalidPersonalDockerUserNameInWdl = Option( """
                                                                |task wc {
@@ -411,6 +419,8 @@ object AgoraTestData {
                                                                |    defaultDisks: "mydisk 3 LOCAL_SSD"
                                                                |  }
                                                                |}
+                                                               |
+                                                               |workflow foo {}
                                                                | """.stripMargin)
   val payloadWithInvalidPersonalDockerRepoNameInWdl = Option( """
                                                                 |task wc {
@@ -428,6 +438,8 @@ object AgoraTestData {
                                                                 |    defaultDisks: "mydisk 3 LOCAL_SSD"
                                                                 |  }
                                                                 |}
+                                                                |
+                                                                |workflow foo {}
                                                                 | """.stripMargin)
   val payloadWithInvalidPersonalDockerTagNameInWdl = Option( """
                                                                 |task wc {
@@ -445,6 +457,8 @@ object AgoraTestData {
                                                                 |    defaultDisks: "mydisk 3 LOCAL_SSD"
                                                                 |  }
                                                                 |}
+                                                                |
+                                                                |workflow foo {}
                                                                 | """.stripMargin)
   val testEntity1 = AgoraEntity(namespace = namespace1,
     name = name1,
@@ -502,7 +516,7 @@ object AgoraTestData {
     documentation = documentation1,
     owner = owner1,
     payload = payload2,
-    entityType = Option(AgoraEntityType.Task),
+    entityType = Option(AgoraEntityType.Workflow),
     snapshotComment = snapshotComment1
   )
 
@@ -512,7 +526,7 @@ object AgoraTestData {
     documentation = documentation1,
     owner = owner2,
     payload = payload1,
-    entityType = Option(AgoraEntityType.Task)
+    entityType = Option(AgoraEntityType.Workflow)
   )
 
   val testEntityToBeRedacted2 = AgoraEntity(namespace = namespace3,
@@ -521,7 +535,7 @@ object AgoraTestData {
     documentation = documentation1,
     owner = owner1,
     payload = payload2,
-    entityType = Option(AgoraEntityType.Task)
+    entityType = Option(AgoraEntityType.Workflow)
   )
 
   val testEntityToBeRedacted3 = AgoraEntity(namespace = namespace3,
@@ -530,7 +544,7 @@ object AgoraTestData {
     documentation = documentation1,
     owner = owner1,
     payload = payload2,
-    entityType = Option(AgoraEntityType.Task)
+    entityType = Option(AgoraEntityType.Workflow)
   )
 
   val testEntityWithPublicPermissions = AgoraEntity(namespace = namespace1,
@@ -539,7 +553,7 @@ object AgoraTestData {
     documentation = documentation1,
     owner = owner1,
     payload = payload2,
-    entityType = Option(AgoraEntityType.Task)
+    entityType = Option(AgoraEntityType.Workflow)
   )
 
   val testEntityTaskWc = AgoraEntity(namespace = namespace1,
@@ -548,7 +562,7 @@ object AgoraTestData {
     documentation = documentationWc,
     owner = owner1,
     payload = payloadWcTask,
-    entityType = Option(AgoraEntityType.Task)
+    entityType = Option(AgoraEntityType.Workflow)
   )
 
   val testMethodWithSnapshot1 = new AgoraEntity(
@@ -587,7 +601,7 @@ object AgoraTestData {
     documentation = documentation1,
     owner = owner1,
     payload = badPayload,
-    entityType = Option(AgoraEntityType.Task)
+    entityType = Option(AgoraEntityType.Workflow)
   )
 
   val testBadAgoraEntityInvalidWdlImportFormat = new AgoraEntity(
@@ -618,7 +632,7 @@ object AgoraTestData {
     documentation = documentation1,
     owner = owner1,
     payload = payloadWithInvalidOfficialDockerTagNameInWdl,
-    entityType = Option(AgoraEntityType.Task)
+    entityType = Option(AgoraEntityType.Workflow)
   )
 
   val testEntityWorkflowWithExistentWdlImport = new AgoraEntity(
@@ -711,7 +725,7 @@ object AgoraTestData {
     documentation = documentation1,
     owner = mockAuthenticatedOwner,
     payload = payloadWithValidOfficialDockerImageInWdl,
-    entityType = Option(AgoraEntityType.Task)
+    entityType = Option(AgoraEntityType.Workflow)
   )
 
   val testAgoraEntityWithInvalidOfficialDockerRepoNameInWdl = new AgoraEntity(namespace = Option("___docker_test"),
@@ -720,7 +734,7 @@ object AgoraTestData {
     documentation = documentation1,
     owner = mockAuthenticatedOwner,
     payload = payloadWithInvalidOfficialDockerRepoNameInWdl,
-    entityType = Option(AgoraEntityType.Task)
+    entityType = Option(AgoraEntityType.Workflow)
   )
 
   val testAgoraEntityWithInvalidOfficialDockerTagNameInWdl = new AgoraEntity(namespace = Option("___docker_test"),
@@ -729,7 +743,7 @@ object AgoraTestData {
     documentation = documentation1,
     owner = mockAuthenticatedOwner,
     payload = payloadWithInvalidOfficialDockerTagNameInWdl,
-    entityType = Option(AgoraEntityType.Task)
+    entityType = Option(AgoraEntityType.Workflow)
   )
 
   val testAgoraEntityWithValidPersonalDockerInWdl = new AgoraEntity(namespace = Option("___docker_test"),
@@ -738,7 +752,7 @@ object AgoraTestData {
     documentation = documentation1,
     owner = mockAuthenticatedOwner,
     payload = payloadWithValidPersonalDockerImageInWdl,
-    entityType = Option(AgoraEntityType.Task)
+    entityType = Option(AgoraEntityType.Workflow)
   )
 
   val testAgoraEntityWithInvalidPersonalDockerUserNameInWdl = new AgoraEntity(namespace = Option("___docker_test"),
@@ -747,7 +761,7 @@ object AgoraTestData {
     documentation = documentation1,
     owner = mockAuthenticatedOwner,
     payload = payloadWithInvalidPersonalDockerUserNameInWdl,
-    entityType = Option(AgoraEntityType.Task)
+    entityType = Option(AgoraEntityType.Workflow)
   )
 
   val testAgoraEntityWithInvalidPersonalDockerRepoNameInWdl = new AgoraEntity(namespace = Option("___docker_test"),
@@ -756,7 +770,7 @@ object AgoraTestData {
     documentation = documentation1,
     owner = mockAuthenticatedOwner,
     payload = payloadWithInvalidPersonalDockerRepoNameInWdl,
-    entityType = Option(AgoraEntityType.Task)
+    entityType = Option(AgoraEntityType.Workflow)
   )
 
   val testAgoraEntityWithInvalidPersonalDockerTagNameInWdl = new AgoraEntity(namespace = Option("___docker_test"),
@@ -765,7 +779,7 @@ object AgoraTestData {
     documentation = documentation1,
     owner = mockAuthenticatedOwner,
     payload = payloadWithInvalidPersonalDockerTagNameInWdl,
-    entityType = Option(AgoraEntityType.Task)
+    entityType = Option(AgoraEntityType.Workflow)
   )
 
   val testAgoraEntityWithAllLegalNameChars = new AgoraEntity(

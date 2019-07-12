@@ -65,7 +65,7 @@ class AgoraEntityTest extends FlatSpec {
   }
 
   "Agora" should "return a URL given an entity with a namespace, name, and id" in {
-    val entity = AgoraEntity(namespace = Option("broad"), name = Option("test"), snapshotId = Option(12), entityType = Option(AgoraEntityType.Task))
+    val entity = AgoraEntity(namespace = Option("broad"), name = Option("test"), snapshotId = Option(12), entityType = Option(AgoraEntityType.Workflow))
     assert(entity.agoraUrl === AgoraConfig.methodsUrl + "broad/test/12")
   }
 

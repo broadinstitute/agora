@@ -54,6 +54,7 @@ trait SwaggerRoutes {
           .replace("scopeSeparator: \",\"", "scopeSeparator: \" \"")
           .replace("jsonEditor: false,", "jsonEditor: false," + swaggerOptions)
           .replace("url = \"http://petstore.swagger.io/v2/swagger.json\";", "url = '/agora.yaml';")
+          .replace("additionalQueryStringParams: {}", """additionalQueryStringParams: { "nonce": "1234" }""")
         )})
     } {
       getFromResource(swaggerUiPath + "/index.html")

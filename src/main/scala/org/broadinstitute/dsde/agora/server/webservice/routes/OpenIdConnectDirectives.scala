@@ -20,7 +20,7 @@ class OpenIdConnectDirectives extends AgoraDirectives {
   }
 
   override def usernameFromRequest(magnet: ImplicitMagnet[ExecutionContext]): Directive1[String] = {
-    (headerValueByName("OIDC_CLAIM_email") & headerValueByName("OIDC_access_token")).tflatMap { case (email, token) =>
+    (headerValueByName("OIDC_CLAIM_sub") & headerValueByName("OIDC_access_token")).tflatMap { case (email, token) =>
       if (isServiceAccount(email)) {
         onSuccess(SamClient.getUserEmail(token)).map(_.getOrElse(email))
       } else {

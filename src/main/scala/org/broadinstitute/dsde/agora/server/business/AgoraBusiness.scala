@@ -356,7 +356,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
       permissionsDataSource.inTransaction { db =>
         for {
           _ <- db.aePerms.addUserIfNotInDatabase(username)
-          entity <- db.aePerms.filterEntityByRead(configs, username)
+          entity <- db.aePerms.filterEntityByRead(configs, username, "listAssociatedConfigurations")
         } yield entity
       }
     }
@@ -420,7 +420,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     permissionsDataSource.inTransaction { db =>
       for {
         _ <- db.aePerms.addUserIfNotInDatabase(username)
-        entity <- db.aePerms.filterEntityByRead(entities, username)
+        entity <- db.aePerms.filterEntityByRead(entities, username, s"findWithIds(${entityTypes.sorted.mkString(",")})")
       } yield entity
     }
   }
@@ -442,7 +442,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
 
     permissionsDataSource.inTransaction { db =>
       db.aePerms.addUserIfNotInDatabase(username) flatMap { _ =>
-        db.aePerms.filterEntityByRead(Seq(foundEntity), username) flatMap {
+        db.aePerms.filterEntityByRead(Seq(foundEntity), username, "findSingle") flatMap {
           case Seq(ae: AgoraEntity) =>
             db.aePerms.listOwners(foundEntity) flatMap { owners =>
               db.aePerms.getEntityPermission(foundEntity, AccessControl.publicUser) map { perms: AgoraPermissions =>

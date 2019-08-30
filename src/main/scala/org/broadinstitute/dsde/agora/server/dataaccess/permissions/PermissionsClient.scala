@@ -263,9 +263,6 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
   }
 
   def filterEntityByRead(agoraEntities: Seq[AgoraEntity], userEmail: String, callerTag: String = "unknown"): ReadAction[Seq[AgoraEntity]] = {
-
-
-
     val entitiesThatUserCanReadQuery = for {
       user <- users if user.email === userEmail || user.email === AccessControl.publicUser
       permission <- permissions if permission.userID === user.id && (

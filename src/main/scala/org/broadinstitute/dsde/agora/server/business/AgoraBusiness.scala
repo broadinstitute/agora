@@ -420,7 +420,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     permissionsDataSource.inTransaction { db =>
       for {
         _ <- db.aePerms.addUserIfNotInDatabase(username)
-        entity <- db.aePerms.filterEntityByRead(entities, username, "findWithIds")
+        entity <- db.aePerms.filterEntityByRead(entities, username, s"findWithIds(${entityTypes.sorted.mkString(",")})")
       } yield entity
     }
   }

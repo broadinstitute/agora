@@ -1,6 +1,7 @@
 package org.broadinstitute.dsde.agora.server.dataaccess.permissions
 
 import AgoraPermissions._
+import com.typesafe.scalalogging.LazyLogging
 import org.broadinstitute.dsde.agora.server.dataaccess.{ReadAction, ReadWriteAction, WriteAction}
 import org.broadinstitute.dsde.agora.server.exceptions.PermissionNotFoundException
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
@@ -10,7 +11,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
 
-abstract class PermissionsClient(profile: JdbcProfile) {
+abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
   import profile.api._
 
   def alias(entity: AgoraEntity): String
@@ -261,7 +262,10 @@ abstract class PermissionsClient(profile: JdbcProfile) {
     }
   }
 
-  def filterEntityByRead(agoraEntities: Seq[AgoraEntity], userEmail: String): ReadAction[Seq[AgoraEntity]] = {
+  def filterEntityByRead(agoraEntities: Seq[AgoraEntity], userEmail: String, callerTag: String = "unknown"): ReadAction[Seq[AgoraEntity]] = {
+
+
+
     val entitiesThatUserCanReadQuery = for {
       user <- users if user.email === userEmail || user.email === AccessControl.publicUser
       permission <- permissions if permission.userID === user.id && (
@@ -274,8 +278,18 @@ abstract class PermissionsClient(profile: JdbcProfile) {
 
     entitiesThatUserCanReadQuery.result map { entitiesThatCanBeRead =>
       val aliasedAgoraEntitiesWithReadPermissions = entitiesThatCanBeRead.map(_.alias) //this map is a seq map, not a dbio map
-      agoraEntities.filter(agoraEntity => aliasedAgoraEntitiesWithReadPermissions.contains(alias(agoraEntity)))
+      val filteredEntities = agoraEntities.filter(agoraEntity => aliasedAgoraEntitiesWithReadPermissions.contains(alias(agoraEntity)))
+
+      // metrics on how efficient this operation is: of all the Mongo entities supplied in arguments,
+      // how many are filtered out due to permissions?
+      val rawCount = agoraEntities.size
+      val filteredCount = filteredEntities.size
+      val efficiency:Float = filteredCount.toFloat / rawCount.toFloat
+      logger.info(f"""{"caller": "$callerTag", "method": "filterEntityByRead", "efficiency": $efficiency, "filtered": $filteredCount, "raw": $rawCount}""")
+
+      filteredEntities
     }
+
   }
 
   def listPublicAliases: ReadAction[Seq[String]] = {

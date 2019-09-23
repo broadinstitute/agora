@@ -1,6 +1,7 @@
 package org.broadinstitute.dsde.agora.server.business
 
 import akka.http.scaladsl.model.StatusCodes
+import com.typesafe.scalalogging.LazyLogging
 import org.broadinstitute.dsde.agora.server.exceptions._
 import org.broadinstitute.dsde.agora.server.dataaccess.{AgoraDao, ReadWriteAction, WaasClient}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
@@ -21,7 +22,7 @@ object AgoraBusiness {
   private val configIdsProjection = Some(new AgoraEntityProjection(Seq[String]("id", "methodId"), Seq.empty[String]))
 }
 
-class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: ExecutionContext) {
+class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: ExecutionContext) extends LazyLogging {
   import AgoraBusiness._
 
   //Creates a fake extra permission with the desired permission level conditional on checkAdmin and the user being an admin
@@ -410,6 +411,82 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
   }
 
   private def findWithIds(agoraSearch: AgoraEntity,
+                               agoraProjection: Option[AgoraEntityProjection],
+                               entityTypes: Seq[AgoraEntityType.EntityType],
+                               username: String): Future[Seq[AgoraEntity]] = {
+
+    /*
+      inspects the agoraSearch criteria used when querying Mongo.
+
+      if that criteria is specific enough that we expect to find fewer mongo entities
+      than mysql entities, query by mongo first. This will create a more efficient mongo
+      query while the mysql query remains the same.
+
+      if the critieria is too broad and we expect to find more (possibly many more) mongo
+      entities than mysql entities, query by mysql first. This will prevent us from retrieving
+      and discarding useless data out of mongo.
+
+      Currently, we use very basic criteria: if the user specified anything in the agoraSearch
+      other than entityType, we'll query mongo first.
+    */
+    def isCriteriaSpecific(agoraSearch: AgoraEntity): Boolean = {
+      agoraSearch.namespace.nonEmpty ||
+        agoraSearch.name.nonEmpty ||
+        agoraSearch.snapshotId.nonEmpty ||
+        agoraSearch.snapshotComment.nonEmpty ||
+        agoraSearch.synopsis.nonEmpty ||
+        agoraSearch.documentation.nonEmpty ||
+        agoraSearch.owner.nonEmpty ||
+        agoraSearch.createDate.nonEmpty ||
+        agoraSearch.payload.nonEmpty ||
+        agoraSearch.url.nonEmpty ||
+        agoraSearch.id.nonEmpty ||
+        agoraSearch.methodId.nonEmpty ||
+        agoraSearch.method.nonEmpty ||
+        agoraSearch.managers.nonEmpty ||
+        agoraSearch.public.nonEmpty
+    }
+
+    if (isCriteriaSpecific(agoraSearch)) {
+      findByMongoFirst(agoraSearch, agoraProjection, entityTypes, username)
+    } else {
+      findByMySqlFirst(agoraSearch, agoraProjection, entityTypes, username)
+    }
+  }
+
+  // TODO: rename method
+  private def findByMySqlFirst(agoraSearch: AgoraEntity,
+                          agoraProjection: Option[AgoraEntityProjection],
+                          entityTypes: Seq[AgoraEntityType.EntityType],
+                          username: String): Future[Seq[AgoraEntity]] = {
+
+    // get the list of entities the user can read from mysql
+    val aliasesFuture = permissionsDataSource.inTransaction{ db =>
+      for {
+        alias <- db.aePerms.listReadableEntities(username)
+      } yield alias
+    }
+
+    // materialize the aliases result
+    aliasesFuture.map { aliases =>
+      // TODO: batch requests to Mongo and re-combine here in Scala,
+      // to avoid mongo queries with too many "where" clauses
+      val entityResults = AgoraDao.createAgoraDao(entityTypes)
+        .findByAliases(aliases.toList.distinct, agoraSearch, agoraProjection)
+
+      val rawCount = aliases.length
+      val filteredCount = entityResults.length
+      val efficiency:Float = filteredCount.toFloat/rawCount.toFloat
+
+      logger.info(f"""{"caller": "findByMySqlFirst(${entityTypes.sorted.mkString(",")})", "method": "findByMySqlFirst", "efficiency": $efficiency, "filtered": $filteredCount, "raw": $rawCount}""")
+
+      entityResults
+    }
+
+  }
+
+  // TODO: rename method. Previously this was findWithIds.
+  private def findByMongoFirst(agoraSearch: AgoraEntity,
     agoraProjection: Option[AgoraEntityProjection],
     entityTypes: Seq[AgoraEntityType.EntityType],
     username: String): Future[Seq[AgoraEntity]] = {
@@ -420,7 +497,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     permissionsDataSource.inTransaction { db =>
       for {
         _ <- db.aePerms.addUserIfNotInDatabase(username)
-        entity <- db.aePerms.filterEntityByRead(entities, username, s"findWithIds(${entityTypes.sorted.mkString(",")})")
+        entity <- db.aePerms.filterEntityByRead(entities, username, s"findByMongoFirst(${entityTypes.sorted.mkString(",")})")
       } yield entity
     }
   }

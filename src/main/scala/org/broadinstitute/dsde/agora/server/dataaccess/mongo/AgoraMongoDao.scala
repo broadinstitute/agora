@@ -7,13 +7,14 @@ import com.mongodb.casbah.MongoCollection
 import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb.casbah.query.Imports
 import com.mongodb.util.JSON
+import com.typesafe.scalalogging.LazyLogging
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.AgoraMongoClient._
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.AgoraMongoDao._
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
-import org.broadinstitute.dsde.agora.server.exceptions.AgoraEntityNotFoundException
+import org.broadinstitute.dsde.agora.server.exceptions.{AgoraEntityNotFoundException, AgoraException}
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntityProjection._
-import org.broadinstitute.dsde.agora.server.model.{AgoraEntityType, AgoraEntity, AgoraEntityProjection}
+import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection, AgoraEntityType}
 import org.bson.types.ObjectId
 import spray.json._
 
@@ -28,6 +29,31 @@ object AgoraMongoDao {
     JSON.parse(entity.copy(url = None).toJson.toString()).asInstanceOf[DBObject]
   }
 
+  def EntitiesToMongoDbObject(criteria: AgoraEntity, aliases: List[AgoraEntity]): DBObject = {
+
+    // TODO: check for empty aliases - should that return nothing or everything?
+
+    // strip urls if they exist
+    val cleanEntities = aliases.map(_.copy(url = None))
+
+    // is criteria empty?
+    val critObject = criteria.toJson
+    val resultObj = critObject match {
+      case jso:JsObject if jso.fields.nonEmpty =>
+        JSON.parse("{$and: [" +
+          criteria.copy(url = None).toJson.compactPrint +
+          ",{$or:" + cleanEntities.toJson.compactPrint +
+          "}]}").asInstanceOf[DBObject]
+      case jso:JsObject =>
+        JSON.parse("{$or:" + cleanEntities.toJson.compactPrint + "}").asInstanceOf[DBObject]
+      case _ =>
+        throw new AgoraException("illegal criteria object")
+    }
+
+    resultObj
+
+  }
+
   def MongoDbObjectToEntity(mongoDBObject: DBObject): AgoraEntity = {
     mongoDBObject.toString.parseJson.convertTo[AgoraEntity]
   }
@@ -38,7 +64,7 @@ object AgoraMongoDao {
  * collections. However, only a single collection is allowed for doing insert operations.
  * @param collections The collections to query. In order to insert a single colleciton must be specified.
  */
-class AgoraMongoDao(collections: Seq[MongoCollection]) extends AgoraDao {
+class AgoraMongoDao(collections: Seq[MongoCollection]) extends AgoraDao with LazyLogging {
 
   /**
    * On insert we query for the given namespace/name if it exists we increment the snapshotId and store a new one.
@@ -73,6 +99,33 @@ class AgoraMongoDao(collections: Seq[MongoCollection]) extends AgoraDao {
       case 0 => throw new AgoraEntityNotFoundException(entity)
       case _ => throw new Exception("Found > 1 documents matching: " + entity.toString)
     }
+  }
+
+  override def findByAliases(aliases: List[String], entity: AgoraEntity, projectionOpt: Option[AgoraEntityProjection]): Seq[AgoraEntity] = {
+    val projection = projectionOpt match {
+      case Some(_) => projectionOpt
+      case None => DefaultFindProjection
+    }
+
+    // split the aliases back into namespace/name/snapshotId (ugly!)
+    val entityIdentifiers: List[AgoraEntity] = aliases.flatMap { alias =>
+      val partsArray = alias.split('.')
+      if (partsArray.length == 3) {
+        Option(AgoraEntity(
+          namespace = Option(partsArray(0)),
+          name = Option(partsArray(1)),
+          snapshotId = Option(partsArray(2).toInt)
+        ))
+      } else if (partsArray.length == 1) {
+        None // this is expected, for namespace permissions
+      } else {
+        logger.warn(s"found alias with neither 3 nor 1 parts: [$alias]. Can't process this; skipping.")
+        None
+      }
+    }
+
+    val entities = find(EntitiesToMongoDbObject(entity, entityIdentifiers.distinct), projection)
+    addMethodRef(entities, projection)
   }
 
   override def find(entity: AgoraEntity, projectionOpt: Option[AgoraEntityProjection]): Seq[AgoraEntity] = {

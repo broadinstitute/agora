@@ -262,14 +262,29 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
     }
   }
 
+
+  /** The list of entity aliases this user has at-least read access to, including public entities.
+    *
+    * @param userEmail the user for which to query
+    * @return entity aliases
+    */
+  def listReadableEntities(userEmail: String): ReadAction[Seq[String]] = {
+    val aliasQuery = for {
+      user <- users if user.email.inSetBind(List(userEmail, AccessControl.publicUser))
+      permission <- permissions if permission.userID === user.id && permission.roles.inSetBind(List(1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31))
+      entity <- entities if permission.entityID === entity.id
+    } yield entity.alias
+
+    aliasQuery.result
+  }
+
+  // be careful with this method. Many previous callers of this method were very inefficient, retrieving entire
+  // collections from Mongo and then filtering out 90%+ of those documents, leading to scale issues.
+  // We are not deprecating or removing this method because it is appropriate for certain use cases.
   def filterEntityByRead(agoraEntities: Seq[AgoraEntity], userEmail: String, callerTag: String = "unknown"): ReadAction[Seq[AgoraEntity]] = {
     val entitiesThatUserCanReadQuery = for {
-      user <- users if user.email === userEmail || user.email === AccessControl.publicUser
-      permission <- permissions if permission.userID === user.id && (
-        permission.roles === 1 || permission.roles === 3 || permission.roles === 5 || permission.roles === 7 || permission.roles === 9 ||
-        permission.roles === 11 || permission.roles === 13 || permission.roles === 15 || permission.roles === 17 || permission.roles === 19 ||
-        permission.roles === 21 || permission.roles === 23 || permission.roles === 25 || permission.roles === 27 || permission.roles === 29 ||
-        permission.roles === 31)
+      user <- users if user.email.inSetBind(List(userEmail, AccessControl.publicUser))
+      permission <- permissions if permission.userID === user.id && permission.roles.inSetBind(List(1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31))
       entity <- entities if permission.entityID === entity.id
     } yield entity
 

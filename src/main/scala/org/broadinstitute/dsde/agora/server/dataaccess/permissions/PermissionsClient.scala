@@ -282,14 +282,7 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
   // collections from Mongo and then filtering out 90%+ of those documents, leading to scale issues.
   // We are not deprecating or removing this method because it is appropriate for certain use cases.
   def filterEntityByRead(agoraEntities: Seq[AgoraEntity], userEmail: String, callerTag: String = "unknown"): ReadAction[Seq[AgoraEntity]] = {
-    val entitiesThatUserCanReadQuery = for {
-      user <- users if user.email.inSetBind(List(userEmail, AccessControl.publicUser))
-      permission <- permissions if permission.userID === user.id && permission.roles.inSetBind(List(1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31))
-      entity <- entities if permission.entityID === entity.id
-    } yield entity
-
-    entitiesThatUserCanReadQuery.result map { entitiesThatCanBeRead =>
-      val aliasedAgoraEntitiesWithReadPermissions = entitiesThatCanBeRead.map(_.alias) //this map is a seq map, not a dbio map
+    listReadableEntities(userEmail) map { aliasedAgoraEntitiesWithReadPermissions =>
       val filteredEntities = agoraEntities.filter(agoraEntity => aliasedAgoraEntitiesWithReadPermissions.contains(alias(agoraEntity)))
 
       // metrics on how efficient this operation is: of all the Mongo entities supplied in arguments,
@@ -301,7 +294,6 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
 
       filteredEntities
     }
-
   }
 
   def listPublicAliases: ReadAction[Seq[String]] = {

@@ -422,7 +422,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
       than mysql entities, query by mongo first. This will create a more efficient mongo
       query while the mysql query remains the same.
 
-      if the critieria is too broad and we expect to find more (possibly many more) mongo
+      if the criteria is too broad and we expect to find more (possibly many more) mongo
       entities than mysql entities, query by mysql first. This will prevent us from retrieving
       and discarding useless data out of mongo.
 

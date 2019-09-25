@@ -426,8 +426,9 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
       entities than mysql entities, query by mysql first. This will prevent us from retrieving
       and discarding useless data out of mongo.
 
-      Currently, we use very basic criteria: if the user specified anything in the agoraSearch
-      other than entityType, we'll query mongo first.
+      Currently, we use very basic criteria: if the user specified any search parameters
+      other than entityType, we'll query mongo first. We exclude entityType because it is too
+      broad. The list of parameters below matches what we document in swagger  (minus entityType).
     */
     def isCriteriaSpecific(agoraSearch: AgoraEntity): Boolean = {
       agoraSearch.namespace.nonEmpty ||
@@ -437,14 +438,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
         agoraSearch.synopsis.nonEmpty ||
         agoraSearch.documentation.nonEmpty ||
         agoraSearch.owner.nonEmpty ||
-        agoraSearch.createDate.nonEmpty ||
-        agoraSearch.payload.nonEmpty ||
-        agoraSearch.url.nonEmpty ||
-        agoraSearch.id.nonEmpty ||
-        agoraSearch.methodId.nonEmpty ||
-        agoraSearch.method.nonEmpty ||
-        agoraSearch.managers.nonEmpty ||
-        agoraSearch.public.nonEmpty
+        agoraSearch.payload.nonEmpty
     }
 
     if (isCriteriaSpecific(agoraSearch)) {
@@ -454,13 +448,21 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     }
   }
 
-  // TODO: rename method
+  /** Implementation, called by findWithIds, that queries mysql to list all entities the user can read,
+    * then queries mongo using that list of entities to get all the entity details.
+    *
+    * @param agoraSearch user-supplied criteria for searching entities
+    * @param agoraProjection the list of fields to return from mongo
+    * @param entityTypes entity types to search for
+    * @param username user performing the search
+    * @return Future containing entity search results.
+    */
   private def findByMySqlFirst(agoraSearch: AgoraEntity,
                           agoraProjection: Option[AgoraEntityProjection],
                           entityTypes: Seq[AgoraEntityType.EntityType],
                           username: String): Future[Seq[AgoraEntity]] = {
 
-    // get the list of entities the user can read from mysql
+    // query mysql for the list of entity aliases to which the user has permissions
     val aliasesFuture = permissionsDataSource.inTransaction{ db =>
       for {
         alias <- db.aePerms.listReadableEntities(username)
@@ -470,18 +472,22 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     // materialize the aliases result
     aliasesFuture.map { aliases =>
 
-      // for debugging/instrumentation purposes only
-      val badAliases = aliases.filter { x =>
-        val numParts = x.split('.')
-        numParts.length != 3 && numParts.length != 1
-      }
-      if (badAliases.nonEmpty) {
-        logger.warn(s"found some bad aliases: ${badAliases.length} with lengths: ${badAliases.map(_.split('.').length)}")
+      // for debugging/instrumentation purposes only.
+      // we expect an entity alias have either 1 part (it's a namespace) or 3 parts (it's namespace.name.snapshotId).
+      // but we know that the prod env has some aliases with other sizes, before validation was enabled.
+      // how often are these unexpected aliases encountered in actuality?
+      if (logger.underlying.isInfoEnabled) {
+        val badAliases = aliases.filter { x =>
+          val numParts = x.split('.')
+          numParts.length != 3 && numParts.length != 1
+        }
+        if (badAliases.nonEmpty) {
+          logger.info(s"found some bad aliases: ${badAliases.length} with lengths: ${badAliases.map(_.split('.').length)}")
+        }
       }
 
-
-      // TODO: batch requests to Mongo and re-combine here in Scala,
-      // to avoid mongo queries with too many "where" clauses
+      // NB: at some point we may need to batch queries to Mongo, if the "$where:" clause containing aliases
+      // becomes too large. Mongo query-document size limit is 16MB and that feels far away, but ...
       val entityResults = AgoraDao.createAgoraDao(entityTypes)
         .findByAliases(aliases.toList.distinct, agoraSearch, agoraProjection)
 
@@ -496,7 +502,16 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
 
   }
 
-  // TODO: rename method. Previously this was findWithIds.
+  /** Implementation, called by findWithIds, that queries mongo for all potential entities matching
+    * the user's search criteria, then queries mysql to filters those potential entities down to
+    * just those that the user has permissions to read.
+    *
+    * @param agoraSearch user-supplied criteria for searching entities
+    * @param agoraProjection the list of fields to return from mongo
+    * @param entityTypes entity types to search for
+    * @param username user performing the search
+    * @return Future containing entity search results.
+    */
   private def findByMongoFirst(agoraSearch: AgoraEntity,
     agoraProjection: Option[AgoraEntityProjection],
     entityTypes: Seq[AgoraEntityType.EntityType],

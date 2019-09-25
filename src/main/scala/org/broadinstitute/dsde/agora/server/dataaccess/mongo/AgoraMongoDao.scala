@@ -29,24 +29,32 @@ object AgoraMongoDao {
     JSON.parse(entity.copy(url = None).toJson.toString()).asInstanceOf[DBObject]
   }
 
-  def EntitiesToMongoDbObject(criteria: AgoraEntity, aliases: List[String]): DBObject = {
+  def EntityAndAliasesToMongoDbObject(criteria: AgoraEntity, aliases: List[String]): DBObject = {
 
-    // TODO: validate aliases. wrong number of parts? empty?
+    // the core entity: used as search criteria
+    val critObject = criteria.copy(url = None).toJson
+
+    // the aliases, as a comma-delimited list of single-quoted strings
     val aliasArrayString = aliases.map(x => s"'$x'").mkString(",")
 
+    // the Mongo $where clause. This checks to see if the namespace.name.snapshotId stored
+    // in Mongo is equal to one of our aliases.
+    // NB: our Mongo version does not support Array.contains, so we use Array.indexOf
     val whereClause = s"""{ $$where: "[$aliasArrayString].indexOf(this.namespace + '.' + this.name + '.' + this.snapshotId) !==  -1"}"""
 
-    // is criteria empty?
-    val critObject = criteria.toJson
+    // build the final JSON to use when querying Mongo.
+    // if the criteria is empty, just use the aliases.
+    // if criteria is populated, use $and:[criteria,aliases]
+    // NB: if aliases is empty, this will result in a $where clause of [].indexOf(...), which
+    // will always return false - that's what we want.
     val resultObj = critObject match {
       case jso:JsObject if jso.fields.nonEmpty =>
-        JSON.parse("{$and: [" +
-          criteria.copy(url = None).toJson.compactPrint +
-          "," + whereClause + "]}").asInstanceOf[DBObject]
+        val jsonString = "{$and: [" + jso.compactPrint + "," + whereClause + "]}"
+        JSON.parse(jsonString).asInstanceOf[DBObject]
       case jso:JsObject =>
         JSON.parse(whereClause).asInstanceOf[DBObject]
       case _ =>
-        throw new AgoraException("illegal criteria object")
+        throw new AgoraException("illegal criteria; expected a JsObject")
     }
 
     resultObj
@@ -105,7 +113,7 @@ class AgoraMongoDao(collections: Seq[MongoCollection]) extends AgoraDao with Laz
       case None => DefaultFindProjection
     }
 
-    val entities = find(EntitiesToMongoDbObject(entity, aliases), projection)
+    val entities = find(EntityAndAliasesToMongoDbObject(entity, aliases), projection)
     addMethodRef(entities, projection)
   }
 

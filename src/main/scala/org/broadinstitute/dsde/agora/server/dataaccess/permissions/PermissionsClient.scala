@@ -266,23 +266,45 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
   /** The list of entity aliases this user has at-least read access to, including public entities.
     *
     * @param userEmail the user for which to query
+    * @param entityAliases the list of entity aliases to consider for the query
     * @return entity aliases
     */
-  def listReadableEntities(userEmail: String): ReadAction[Seq[String]] = {
+  def listReadableEntities(userEmail: String, entityAliases: Option[Seq[String]] = None): ReadAction[Seq[String]] = {
     val aliasQuery = for {
       user <- users if user.email.inSetBind(List(userEmail, AccessControl.publicUser))
-      permission <- permissions if permission.userID === user.id && permission.roles.inSetBind(List(1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31))
+      // see AgoraPermissions; roles will always be odd if the user has read perms, because bitmasks.
+      permission <- permissions if permission.userID === user.id && permission.roles.%(2) === 1
       entity <- entities if permission.entityID === entity.id
     } yield entity.alias
 
-    aliasQuery.result
+    val filteredQuery = entityAliases match {
+      case Some(aliases) => aliasQuery.filter(_.inSetBind(aliases))
+      case None => aliasQuery
+    }
+
+    filteredQuery.result
   }
 
   // be careful with this method. Many previous callers of this method were very inefficient, retrieving entire
   // collections from Mongo and then filtering out 90%+ of those documents, leading to scale issues.
   // We are not deprecating or removing this method because it is appropriate for certain use cases.
   def filterEntityByRead(agoraEntities: Seq[AgoraEntity], userEmail: String, callerTag: String = "unknown"): ReadAction[Seq[AgoraEntity]] = {
-    listReadableEntities(userEmail) map { aliasedAgoraEntitiesWithReadPermissions =>
+
+    // The maximum number of entity aliases we would send to mysql for an "IN" clause.
+    // if we find we change this number frequently, or want different values in different environments,
+    // please move to config.
+    // The primary use case this targets is AgoraBusiness.findSingle(), which retrieves one entity from Mongo
+    // and then calls this method to check permissions. When we have one Mongo entity, we really don't want
+    // to get ALL permissions from MySQL.
+    val entityFilterMaxCount = 100
+
+    val entityAliases = if (agoraEntities.nonEmpty && agoraEntities.size < entityFilterMaxCount) {
+      Option(agoraEntities.map(alias))
+    } else {
+      None
+    }
+
+    listReadableEntities(userEmail, entityAliases) map { aliasedAgoraEntitiesWithReadPermissions =>
       val filteredEntities = agoraEntities.filter(agoraEntity => aliasedAgoraEntitiesWithReadPermissions.contains(alias(agoraEntity)))
 
       // metrics on how efficient this operation is: of all the Mongo entities supplied in arguments,

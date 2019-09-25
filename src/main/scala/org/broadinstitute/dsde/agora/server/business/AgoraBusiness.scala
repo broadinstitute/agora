@@ -469,6 +469,17 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
 
     // materialize the aliases result
     aliasesFuture.map { aliases =>
+
+      // for debugging/instrumentation purposes only
+      val badAliases = aliases.filter { x =>
+        val numParts = x.split('.')
+        numParts.length != 3 && numParts.length != 1
+      }
+      if (badAliases.nonEmpty) {
+        logger.warn(s"found some bad aliases: ${badAliases.length} with lengths: ${badAliases.map(_.split('.').length)}")
+      }
+
+
       // TODO: batch requests to Mongo and re-combine here in Scala,
       // to avoid mongo queries with too many "where" clauses
       val entityResults = AgoraDao.createAgoraDao(entityTypes)

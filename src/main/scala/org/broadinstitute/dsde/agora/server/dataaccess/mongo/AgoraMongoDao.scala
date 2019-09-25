@@ -29,12 +29,12 @@ object AgoraMongoDao {
     JSON.parse(entity.copy(url = None).toJson.toString()).asInstanceOf[DBObject]
   }
 
-  def EntitiesToMongoDbObject(criteria: AgoraEntity, aliases: List[AgoraEntity]): DBObject = {
+  def EntitiesToMongoDbObject(criteria: AgoraEntity, aliases: List[String]): DBObject = {
 
-    // TODO: check for empty aliases - should that return nothing or everything?
+    // TODO: validate aliases. wrong number of parts? empty?
+    val aliasArrayString = aliases.map(x => s"'$x'").mkString(",")
 
-    // strip urls if they exist
-    val cleanEntities = aliases.map(_.copy(url = None))
+    val whereClause = s"""{ $$where: "[$aliasArrayString].indexOf(this.namespace + '.' + this.name + '.' + this.snapshotId) !==  -1"}"""
 
     // is criteria empty?
     val critObject = criteria.toJson
@@ -42,16 +42,14 @@ object AgoraMongoDao {
       case jso:JsObject if jso.fields.nonEmpty =>
         JSON.parse("{$and: [" +
           criteria.copy(url = None).toJson.compactPrint +
-          ",{$or:" + cleanEntities.toJson.compactPrint +
-          "}]}").asInstanceOf[DBObject]
+          "," + whereClause + "]}").asInstanceOf[DBObject]
       case jso:JsObject =>
-        JSON.parse("{$or:" + cleanEntities.toJson.compactPrint + "}").asInstanceOf[DBObject]
+        JSON.parse(whereClause).asInstanceOf[DBObject]
       case _ =>
         throw new AgoraException("illegal criteria object")
     }
 
     resultObj
-
   }
 
   def MongoDbObjectToEntity(mongoDBObject: DBObject): AgoraEntity = {
@@ -107,24 +105,7 @@ class AgoraMongoDao(collections: Seq[MongoCollection]) extends AgoraDao with Laz
       case None => DefaultFindProjection
     }
 
-    // split the aliases back into namespace/name/snapshotId (ugly!)
-    val entityIdentifiers: List[AgoraEntity] = aliases.flatMap { alias =>
-      val partsArray = alias.split('.')
-      if (partsArray.length == 3) {
-        Option(AgoraEntity(
-          namespace = Option(partsArray(0)),
-          name = Option(partsArray(1)),
-          snapshotId = Option(partsArray(2).toInt)
-        ))
-      } else if (partsArray.length == 1) {
-        None // this is expected, for namespace permissions
-      } else {
-        logger.warn(s"found alias with neither 3 nor 1 parts: [$alias]. Can't process this; skipping.")
-        None
-      }
-    }
-
-    val entities = find(EntitiesToMongoDbObject(entity, entityIdentifiers.distinct), projection)
+    val entities = find(EntitiesToMongoDbObject(entity, aliases), projection)
     addMethodRef(entities, projection)
   }
 

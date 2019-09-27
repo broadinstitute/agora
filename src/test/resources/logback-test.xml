@@ -1,5 +1,5 @@
+<?xml version="1.0" encoding="UTF-8" ?>
 <configuration>
-
     <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <!-- See http://logback.qos.ch/manual/layouts.html -->
@@ -31,7 +31,7 @@
     </appender>
 
     <logger name="org.mockserver.mock.HttpStateHandler" level="warn"/>
-    
+
     <!-- for debugging slick db calls / timing
     <logger name="slick.jdbc.JdbcBackend.statement" level="DEBUG" additivity="false">
         <appender-ref ref="file"/>
@@ -43,7 +43,8 @@
     </logger>
     -->
 
-    <logger name="org.broadinstitute.dsde.agora.server.dataaccess.MetricsClient" level="info" additivity="false">
+    <!-- change this loglevel to see metrics output in unit tests -->
+    <logger name="org.broadinstitute.dsde.agora.server.dataaccess.MetricsClient" level="warn" additivity="false">
         <appender-ref ref="file"/>
         <appender-ref ref="console"/>
         <appender-ref ref="SYSLOG"/>
@@ -66,7 +67,4 @@
         <appender-ref ref="console"/>
         <appender-ref ref="SYSLOG"/>
     </root>
-
 </configuration>
-
-

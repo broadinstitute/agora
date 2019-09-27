@@ -2,10 +2,12 @@ package org.broadinstitute.dsde.agora.server.dataaccess.permissions
 
 import AgoraPermissions._
 import com.typesafe.scalalogging.LazyLogging
-import org.broadinstitute.dsde.agora.server.dataaccess.{ReadAction, ReadWriteAction, WriteAction}
+import org.broadinstitute.dsde.agora.server.AgoraConfig
+import org.broadinstitute.dsde.agora.server.dataaccess.{MetricsClient, ReadAction, ReadWriteAction, WriteAction}
 import org.broadinstitute.dsde.agora.server.exceptions.PermissionNotFoundException
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import slick.jdbc.JdbcProfile
+import spray.json.{JsNumber, JsObject, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -13,6 +15,8 @@ import scala.util.{Failure, Success, Try}
 
 abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
   import profile.api._
+
+  lazy val metricsClient = new MetricsClient()
 
   def alias(entity: AgoraEntity): String
 
@@ -278,7 +282,11 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
     } yield entity.alias
 
     val filteredQuery = entityAliases match {
-      case Some(aliases) => aliasQuery.filter(_.inSetBind(aliases))
+      case Some(aliases) =>
+        metricsClient.recordMetric("mysql", JsObject(
+          "aliasInClauseSize" -> JsNumber(aliases.size)
+        ))
+        aliasQuery.filter(_.inSetBind(aliases))
       case None => aliasQuery
     }
 
@@ -290,31 +298,47 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
   // We are not deprecating or removing this method because it is appropriate for certain use cases.
   def filterEntityByRead(agoraEntities: Seq[AgoraEntity], userEmail: String, callerTag: String = "unknown"): ReadAction[Seq[AgoraEntity]] = {
 
-    // The maximum number of entity aliases we would send to mysql for an "IN" clause.
-    // if we find we change this number frequently, or want different values in different environments,
-    // please move to config.
-    // The primary use case this targets is AgoraBusiness.findSingle(), which retrieves one entity from Mongo
-    // and then calls this method to check permissions. When we have one Mongo entity, we really don't want
-    // to get ALL permissions from MySQL.
-    val entityFilterMaxCount = 100
+    if (agoraEntities.isEmpty) {
+      // short-circuit: if we're asked to filter the empty set, don't go to mysql. Just return the empty set.
+      DBIO.successful(Seq.empty[AgoraEntity])
 
-    val entityAliases = if (agoraEntities.nonEmpty && agoraEntities.size < entityFilterMaxCount) {
-      Option(agoraEntities.map(alias))
-    } else {
-      None
-    }
+    } else  {
 
-    listReadableEntities(userEmail, entityAliases) map { aliasedAgoraEntitiesWithReadPermissions =>
-      val filteredEntities = agoraEntities.filter(agoraEntity => aliasedAgoraEntitiesWithReadPermissions.contains(alias(agoraEntity)))
+      // The maximum number of entity aliases we would send to mysql for an "IN" clause.
+      // The primary use case this targets is AgoraBusiness.findSingle(), which retrieves one entity from Mongo
+      // and then calls this method to check permissions. When we have one Mongo entity, we really don't want
+      // to get ALL permissions from MySQL.
+      val entityFilterMaxCount = AgoraConfig.sqlAliasBatchSize // defaults to 100
 
-      // metrics on how efficient this operation is: of all the Mongo entities supplied in arguments,
-      // how many are filtered out due to permissions?
-      val rawCount = agoraEntities.size
-      val filteredCount = filteredEntities.size
-      val efficiency:Float = filteredCount.toFloat / rawCount.toFloat
-      logger.info(f"""{"caller": "$callerTag", "method": "filterEntityByRead", "efficiency": $efficiency, "filtered": $filteredCount, "raw": $rawCount}""")
+      val entityAliases = if (agoraEntities.nonEmpty && agoraEntities.size < entityFilterMaxCount) {
+        Option(agoraEntities.map(alias))
+      } else {
+        logger.info(s"filterEntityByRead bypassing IN clause because it found ${agoraEntities.size}/$entityFilterMaxCount entities")
+        metricsClient.recordMetric("mysql", JsObject(
+          "inClauseOverLimit" -> JsNumber(agoraEntities.size),
+          "inClauseMaxSize" -> JsNumber(entityFilterMaxCount)
+        ))
+        None
+      }
 
-      filteredEntities
+      listReadableEntities(userEmail, entityAliases) map { aliasedAgoraEntitiesWithReadPermissions =>
+        val filteredEntities = agoraEntities.filter(agoraEntity => aliasedAgoraEntitiesWithReadPermissions.contains(alias(agoraEntity)))
+
+        // metrics on how efficient this operation is: of all the Mongo entities supplied in arguments,
+        // how many are filtered out due to permissions?
+        val rawCount = agoraEntities.size
+        val filteredCount = filteredEntities.size
+        val efficiency:Float = filteredCount.toFloat / rawCount.toFloat
+        metricsClient.recordMetric("queryEfficiency", JsObject(
+          "caller" -> JsString(s"$callerTag"),
+          "method" -> JsString("filterEntityByRead"),
+          "efficiency" -> JsNumber(efficiency),
+          "filtered" -> JsNumber(filteredCount),
+          "raw" -> JsNumber(rawCount)
+        ))
+
+        filteredEntities
+      }
     }
   }
 

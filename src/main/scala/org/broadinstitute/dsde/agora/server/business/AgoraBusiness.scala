@@ -2,8 +2,9 @@ package org.broadinstitute.dsde.agora.server.business
 
 import akka.http.scaladsl.model.StatusCodes
 import com.typesafe.scalalogging.LazyLogging
+import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.exceptions._
-import org.broadinstitute.dsde.agora.server.dataaccess.{AgoraDao, ReadWriteAction, WaasClient}
+import org.broadinstitute.dsde.agora.server.dataaccess.{AgoraDao, MetricsClient, ReadWriteAction, WaasClient}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.model._
@@ -13,7 +14,6 @@ import spray.json._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
-
 import collection.JavaConverters._
 
 object AgoraBusiness {
@@ -24,6 +24,8 @@ object AgoraBusiness {
 
 class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: ExecutionContext) extends LazyLogging {
   import AgoraBusiness._
+
+  lazy val metricsClient = new MetricsClient()
 
   //Creates a fake extra permission with the desired permission level conditional on checkAdmin and the user being an admin
   private def makeDummyAdminPermission(checkAdmin: Boolean, permClient: PermissionsClient, username: String, permLevel: AgoraPermissions) = {
@@ -486,16 +488,37 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
         }
       }
 
-      // NB: at some point we may need to batch queries to Mongo, if the "$where:" clause containing aliases
-      // becomes too large. Mongo query-document size limit is 16MB and that feels far away, but ...
-      val entityResults = AgoraDao.createAgoraDao(entityTypes)
-        .findByAliases(aliases.toList.distinct, agoraSearch, agoraProjection)
+      // The maximum number of entity aliases we would send to Mongo for an "IN" clause.
+      val mongoBatchSize = AgoraConfig.mongoAliasBatchSize // defaults to 5000
+
+      // execute multiple queries to Mongo, each limited to ${mongoBatchSize}. This prevents
+      // the Mongo "IN" clause (actually a $where evaluation) from being too large and slow.
+      // it also keeps the query request document below Mongo's limit of 16MB
+      val distinctAliases = aliases.distinct
+      val batchedAliases = distinctAliases.grouped(mongoBatchSize).toSeq // toSeq materializes the iterator
+
+      metricsClient.recordMetric("mongo", JsObject(
+        "numBatches" -> JsNumber(batchedAliases.size),
+        "batchSize" -> JsNumber(mongoBatchSize),
+        "numAliases" -> JsNumber(distinctAliases.size)
+      ))
+
+      val entityResults = batchedAliases.flatMap { batch =>
+        AgoraDao.createAgoraDao(entityTypes)
+          .findByAliases(batch.toList, agoraSearch, agoraProjection)
+      }
 
       val rawCount = aliases.length
       val filteredCount = entityResults.length
       val efficiency:Float = filteredCount.toFloat/rawCount.toFloat
 
-      logger.info(f"""{"caller": "findByMySqlFirst(${entityTypes.sorted.mkString(",")})", "method": "findByMySqlFirst", "efficiency": $efficiency, "filtered": $filteredCount, "raw": $rawCount}""")
+      metricsClient.recordMetric("queryEfficiency", JsObject(
+        "caller" -> JsString(s"findByMySqlFirst(${entityTypes.sorted.mkString(",")})"),
+        "method" -> JsString("findByMySqlFirst"),
+        "efficiency" -> JsNumber(efficiency),
+        "filtered" -> JsNumber(filteredCount),
+        "raw" -> JsNumber(rawCount)
+      ))
 
       entityResults
     }

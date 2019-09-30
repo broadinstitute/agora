@@ -34,13 +34,25 @@ object AgoraMongoDao {
     // the core entity: used as search criteria
     val critObject = criteria.copy(url = None).toJson
 
-    // the aliases, as a comma-delimited list of single-quoted strings
-    val aliasArrayString = aliases.map(x => s"'$x'").mkString(",")
+              // the aliases, as a comma-delimited list of single-quoted strings
+//              val aliasArrayString = aliases.map(x => s"'$x'").mkString(",")
 
-    // the Mongo $where clause. This checks to see if the namespace.name.snapshotId stored
-    // in Mongo is equal to one of our aliases.
-    // NB: our Mongo version does not support Array.contains, so we use Array.indexOf
-    val whereClause = s"""{ $$where: "[$aliasArrayString].indexOf(this.namespace + '.' + this.name + '.' + this.snapshotId) !==  -1"}"""
+              // the Mongo $where clause. This checks to see if the namespace.name.snapshotId stored
+              // in Mongo is equal to one of our aliases.
+              // NB: our Mongo version does not support Array.contains, so we use Array.indexOf
+//              val whereClause = s"""{ $$where: "[$aliasArrayString].indexOf(this.namespace + '.' + this.name + '.' + this.snapshotId) !==  -1"}"""
+
+    val aliasClauses = aliases.flatMap { alias =>
+      val aliasParts = alias.split('.')
+      if (aliasParts.length != 3) {
+        println(s"alias of wrong size: $alias")
+        None
+      } else {
+        Option(s"""{namespace: "${aliasParts(0)}", name: "${aliasParts(1)}", snapshotId: ${aliasParts(2)}}""")
+      }
+    }
+
+    val whereClause = s"{$$or: [${aliasClauses.mkString(",")}]}"
 
     // build the final JSON to use when querying Mongo.
     // if the criteria is empty, just use the aliases.

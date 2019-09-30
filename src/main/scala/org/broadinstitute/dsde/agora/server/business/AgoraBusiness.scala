@@ -443,7 +443,9 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
         agoraSearch.payload.nonEmpty
     }
 
-    if (isCriteriaSpecific(agoraSearch)) {
+    // TODO: temporarily sending all queries through findByMongoFirst while resolving performance issues
+    // if (isCriteriaSpecific(agoraSearch)) {
+    if (true) {
       findByMongoFirst(agoraSearch, agoraProjection, entityTypes, username)
     } else {
       findByMySqlFirst(agoraSearch, agoraProjection, entityTypes, username)

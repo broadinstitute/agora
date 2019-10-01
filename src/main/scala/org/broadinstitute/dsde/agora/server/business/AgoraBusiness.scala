@@ -1,8 +1,10 @@
 package org.broadinstitute.dsde.agora.server.business
 
 import akka.http.scaladsl.model.StatusCodes
+import com.typesafe.scalalogging.LazyLogging
+import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.exceptions._
-import org.broadinstitute.dsde.agora.server.dataaccess.{AgoraDao, ReadWriteAction, WaasClient}
+import org.broadinstitute.dsde.agora.server.dataaccess.{AgoraDao, MetricsClient, ReadWriteAction, WaasClient}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.model._
@@ -12,7 +14,6 @@ import spray.json._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
-
 import collection.JavaConverters._
 
 object AgoraBusiness {
@@ -21,8 +22,10 @@ object AgoraBusiness {
   private val configIdsProjection = Some(new AgoraEntityProjection(Seq[String]("id", "methodId"), Seq.empty[String]))
 }
 
-class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: ExecutionContext) {
+class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: ExecutionContext) extends LazyLogging {
   import AgoraBusiness._
+
+  lazy val metricsClient = new MetricsClient()
 
   //Creates a fake extra permission with the desired permission level conditional on checkAdmin and the user being an admin
   private def makeDummyAdminPermission(checkAdmin: Boolean, permClient: PermissionsClient, username: String, permLevel: AgoraPermissions) = {
@@ -410,6 +413,131 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
   }
 
   private def findWithIds(agoraSearch: AgoraEntity,
+                               agoraProjection: Option[AgoraEntityProjection],
+                               entityTypes: Seq[AgoraEntityType.EntityType],
+                               username: String): Future[Seq[AgoraEntity]] = {
+
+    /*
+      inspects the agoraSearch criteria used when querying Mongo.
+
+      if that criteria is specific enough that we expect to find fewer mongo entities
+      than mysql entities, query by mongo first. This will create a more efficient mongo
+      query while the mysql query remains the same.
+
+      if the criteria is too broad and we expect to find more (possibly many more) mongo
+      entities than mysql entities, query by mysql first. This will prevent us from retrieving
+      and discarding useless data out of mongo.
+
+      Currently, we use very basic criteria: if the user specified any search parameters
+      other than entityType, we'll query mongo first. We exclude entityType because it is too
+      broad. The list of parameters below matches what we document in swagger  (minus entityType).
+    */
+    def isCriteriaSpecific(agoraSearch: AgoraEntity): Boolean = {
+      agoraSearch.namespace.nonEmpty ||
+        agoraSearch.name.nonEmpty ||
+        agoraSearch.snapshotId.nonEmpty ||
+        agoraSearch.snapshotComment.nonEmpty ||
+        agoraSearch.synopsis.nonEmpty ||
+        agoraSearch.documentation.nonEmpty ||
+        agoraSearch.owner.nonEmpty ||
+        agoraSearch.payload.nonEmpty
+    }
+
+    // TODO: temporarily sending all queries through findByMongoFirst while resolving performance issues
+    // if (isCriteriaSpecific(agoraSearch)) {
+    if (true) {
+      findByMongoFirst(agoraSearch, agoraProjection, entityTypes, username)
+    } else {
+      findByMySqlFirst(agoraSearch, agoraProjection, entityTypes, username)
+    }
+  }
+
+  /** Implementation, called by findWithIds, that queries mysql to list all entities the user can read,
+    * then queries mongo using that list of entities to get all the entity details.
+    *
+    * @param agoraSearch user-supplied criteria for searching entities
+    * @param agoraProjection the list of fields to return from mongo
+    * @param entityTypes entity types to search for
+    * @param username user performing the search
+    * @return Future containing entity search results.
+    */
+  private def findByMySqlFirst(agoraSearch: AgoraEntity,
+                          agoraProjection: Option[AgoraEntityProjection],
+                          entityTypes: Seq[AgoraEntityType.EntityType],
+                          username: String): Future[Seq[AgoraEntity]] = {
+
+    // query mysql for the list of entity aliases to which the user has permissions
+    val aliasesFuture = permissionsDataSource.inTransaction{ db =>
+      for {
+        alias <- db.aePerms.listReadableEntities(username)
+      } yield alias
+    }
+
+    // materialize the aliases result
+    aliasesFuture.map { aliases =>
+
+      // for debugging/instrumentation purposes only.
+      // we expect an entity alias have either 1 part (it's a namespace) or 3 parts (it's namespace.name.snapshotId).
+      // but we know that the prod env has some aliases with other sizes, before validation was enabled.
+      // how often are these unexpected aliases encountered in actuality?
+      if (logger.underlying.isInfoEnabled) {
+        val badAliases = aliases.filter { x =>
+          val numParts = x.split('.')
+          numParts.length != 3 && numParts.length != 1
+        }
+        if (badAliases.nonEmpty) {
+          logger.info(s"found some bad aliases: ${badAliases.length} with lengths: ${badAliases.map(_.split('.').length)}")
+        }
+      }
+
+      // The maximum number of entity aliases we would send to Mongo for an "IN" clause.
+      val mongoBatchSize = AgoraConfig.mongoAliasBatchSize // defaults to 5000
+
+      // execute multiple queries to Mongo, each limited to ${mongoBatchSize}. This prevents
+      // the Mongo "IN" clause (actually a $where evaluation) from being too large and slow.
+      // it also keeps the query request document below Mongo's limit of 16MB
+      val distinctAliases = aliases.distinct
+      val batchedAliases = distinctAliases.grouped(mongoBatchSize).toSeq // toSeq materializes the iterator
+
+      metricsClient.recordMetric("mongo", JsObject(
+        "numBatches" -> JsNumber(batchedAliases.size),
+        "batchSize" -> JsNumber(mongoBatchSize),
+        "numAliases" -> JsNumber(distinctAliases.size)
+      ))
+
+      val entityResults = batchedAliases.flatMap { batch =>
+        AgoraDao.createAgoraDao(entityTypes)
+          .findByAliases(batch.toList, agoraSearch, agoraProjection)
+      }
+
+      val rawCount = aliases.length
+      val filteredCount = entityResults.length
+      val efficiency:Float = filteredCount.toFloat/rawCount.toFloat
+
+      metricsClient.recordMetric("queryEfficiency", JsObject(
+        "caller" -> JsString(s"findByMySqlFirst(${entityTypes.sorted.mkString(",")})"),
+        "method" -> JsString("findByMySqlFirst"),
+        "efficiency" -> JsNumber(efficiency),
+        "filtered" -> JsNumber(filteredCount),
+        "raw" -> JsNumber(rawCount)
+      ))
+
+      entityResults
+    }
+
+  }
+
+  /** Implementation, called by findWithIds, that queries mongo for all potential entities matching
+    * the user's search criteria, then queries mysql to filters those potential entities down to
+    * just those that the user has permissions to read.
+    *
+    * @param agoraSearch user-supplied criteria for searching entities
+    * @param agoraProjection the list of fields to return from mongo
+    * @param entityTypes entity types to search for
+    * @param username user performing the search
+    * @return Future containing entity search results.
+    */
+  private def findByMongoFirst(agoraSearch: AgoraEntity,
     agoraProjection: Option[AgoraEntityProjection],
     entityTypes: Seq[AgoraEntityType.EntityType],
     username: String): Future[Seq[AgoraEntity]] = {
@@ -420,7 +548,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     permissionsDataSource.inTransaction { db =>
       for {
         _ <- db.aePerms.addUserIfNotInDatabase(username)
-        entity <- db.aePerms.filterEntityByRead(entities, username, s"findWithIds(${entityTypes.sorted.mkString(",")})")
+        entity <- db.aePerms.filterEntityByRead(entities, username, s"findByMongoFirst(${entityTypes.sorted.mkString(",")})")
       } yield entity
     }
   }

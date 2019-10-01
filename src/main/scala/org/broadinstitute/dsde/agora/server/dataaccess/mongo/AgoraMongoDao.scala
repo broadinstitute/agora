@@ -7,13 +7,14 @@ import com.mongodb.casbah.MongoCollection
 import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb.casbah.query.Imports
 import com.mongodb.util.JSON
+import com.typesafe.scalalogging.LazyLogging
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.AgoraMongoClient._
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.AgoraMongoDao._
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
-import org.broadinstitute.dsde.agora.server.exceptions.AgoraEntityNotFoundException
+import org.broadinstitute.dsde.agora.server.exceptions.{AgoraEntityNotFoundException, AgoraException}
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntityProjection._
-import org.broadinstitute.dsde.agora.server.model.{AgoraEntityType, AgoraEntity, AgoraEntityProjection}
+import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection, AgoraEntityType}
 import org.bson.types.ObjectId
 import spray.json._
 
@@ -28,6 +29,37 @@ object AgoraMongoDao {
     JSON.parse(entity.copy(url = None).toJson.toString()).asInstanceOf[DBObject]
   }
 
+  def EntityAndAliasesToMongoDbObject(criteria: AgoraEntity, aliases: List[String]): DBObject = {
+
+    // the core entity: used as search criteria
+    val critObject = criteria.copy(url = None).toJson
+
+    // the aliases, as a comma-delimited list of single-quoted strings
+    val aliasArrayString = aliases.map(x => s"'$x'").mkString(",")
+
+    // the Mongo $where clause. This checks to see if the namespace.name.snapshotId stored
+    // in Mongo is equal to one of our aliases.
+    // NB: our Mongo version does not support Array.contains, so we use Array.indexOf
+    val whereClause = s"""{ $$where: "[$aliasArrayString].indexOf(this.namespace + '.' + this.name + '.' + this.snapshotId) !==  -1"}"""
+
+    // build the final JSON to use when querying Mongo.
+    // if the criteria is empty, just use the aliases.
+    // if criteria is populated, use $and:[criteria,aliases]
+    // NB: if aliases is empty, this will result in a $where clause of [].indexOf(...), which
+    // will always return false - that's what we want.
+    val resultObj = critObject match {
+      case jso:JsObject if jso.fields.nonEmpty =>
+        val jsonString = "{$and: [" + jso.compactPrint + "," + whereClause + "]}"
+        JSON.parse(jsonString).asInstanceOf[DBObject]
+      case jso:JsObject =>
+        JSON.parse(whereClause).asInstanceOf[DBObject]
+      case _ =>
+        throw new AgoraException("illegal criteria; expected a JsObject")
+    }
+
+    resultObj
+  }
+
   def MongoDbObjectToEntity(mongoDBObject: DBObject): AgoraEntity = {
     mongoDBObject.toString.parseJson.convertTo[AgoraEntity]
   }
@@ -38,7 +70,7 @@ object AgoraMongoDao {
  * collections. However, only a single collection is allowed for doing insert operations.
  * @param collections The collections to query. In order to insert a single colleciton must be specified.
  */
-class AgoraMongoDao(collections: Seq[MongoCollection]) extends AgoraDao {
+class AgoraMongoDao(collections: Seq[MongoCollection]) extends AgoraDao with LazyLogging {
 
   /**
    * On insert we query for the given namespace/name if it exists we increment the snapshotId and store a new one.
@@ -73,6 +105,16 @@ class AgoraMongoDao(collections: Seq[MongoCollection]) extends AgoraDao {
       case 0 => throw new AgoraEntityNotFoundException(entity)
       case _ => throw new Exception("Found > 1 documents matching: " + entity.toString)
     }
+  }
+
+  override def findByAliases(aliases: List[String], entity: AgoraEntity, projectionOpt: Option[AgoraEntityProjection]): Seq[AgoraEntity] = {
+    val projection = projectionOpt match {
+      case Some(_) => projectionOpt
+      case None => DefaultFindProjection
+    }
+
+    val entities = find(EntityAndAliasesToMongoDbObject(entity, aliases), projection)
+    addMethodRef(entities, projection)
   }
 
   override def find(entity: AgoraEntity, projectionOpt: Option[AgoraEntityProjection]): Seq[AgoraEntity] = {

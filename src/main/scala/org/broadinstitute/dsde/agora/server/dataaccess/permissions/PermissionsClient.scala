@@ -2,10 +2,12 @@ package org.broadinstitute.dsde.agora.server.dataaccess.permissions
 
 import AgoraPermissions._
 import com.typesafe.scalalogging.LazyLogging
-import org.broadinstitute.dsde.agora.server.dataaccess.{ReadAction, ReadWriteAction, WriteAction}
+import org.broadinstitute.dsde.agora.server.AgoraConfig
+import org.broadinstitute.dsde.agora.server.dataaccess.{MetricsClient, ReadAction, ReadWriteAction, WriteAction}
 import org.broadinstitute.dsde.agora.server.exceptions.PermissionNotFoundException
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import slick.jdbc.JdbcProfile
+import spray.json.{JsNumber, JsObject, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -13,6 +15,8 @@ import scala.util.{Failure, Success, Try}
 
 abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
   import profile.api._
+
+  lazy val metricsClient = new MetricsClient()
 
   def alias(entity: AgoraEntity): String
 
@@ -262,31 +266,80 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
     }
   }
 
-  def filterEntityByRead(agoraEntities: Seq[AgoraEntity], userEmail: String, callerTag: String = "unknown"): ReadAction[Seq[AgoraEntity]] = {
-    val entitiesThatUserCanReadQuery = for {
-      user <- users if user.email === userEmail || user.email === AccessControl.publicUser
-      permission <- permissions if permission.userID === user.id && (
-        permission.roles === 1 || permission.roles === 3 || permission.roles === 5 || permission.roles === 7 || permission.roles === 9 ||
-        permission.roles === 11 || permission.roles === 13 || permission.roles === 15 || permission.roles === 17 || permission.roles === 19 ||
-        permission.roles === 21 || permission.roles === 23 || permission.roles === 25 || permission.roles === 27 || permission.roles === 29 ||
-        permission.roles === 31)
+
+  /** The list of entity aliases this user has at-least read access to, including public entities.
+    *
+    * @param userEmail the user for which to query
+    * @param entityAliases the list of entity aliases to consider for the query
+    * @return entity aliases
+    */
+  def listReadableEntities(userEmail: String, entityAliases: Option[Seq[String]] = None): ReadAction[Seq[String]] = {
+    val aliasQuery = for {
+      user <- users if user.email.inSetBind(List(userEmail, AccessControl.publicUser))
+      // see AgoraPermissions; roles will always be odd if the user has read perms, because bitmasks.
+      permission <- permissions if permission.userID === user.id && permission.roles.%(2) === 1
       entity <- entities if permission.entityID === entity.id
-    } yield entity
+    } yield entity.alias
 
-    entitiesThatUserCanReadQuery.result map { entitiesThatCanBeRead =>
-      val aliasedAgoraEntitiesWithReadPermissions = entitiesThatCanBeRead.map(_.alias) //this map is a seq map, not a dbio map
-      val filteredEntities = agoraEntities.filter(agoraEntity => aliasedAgoraEntitiesWithReadPermissions.contains(alias(agoraEntity)))
-
-      // metrics on how efficient this operation is: of all the Mongo entities supplied in arguments,
-      // how many are filtered out due to permissions?
-      val rawCount = agoraEntities.size
-      val filteredCount = filteredEntities.size
-      val efficiency:Float = filteredCount.toFloat / rawCount.toFloat
-      logger.info(f"""{"caller": "$callerTag", "method": "filterEntityByRead", "efficiency": $efficiency, "filtered": $filteredCount, "raw": $rawCount}""")
-
-      filteredEntities
+    val filteredQuery = entityAliases match {
+      case Some(aliases) =>
+        metricsClient.recordMetric("mysql", JsObject(
+          "aliasInClauseSize" -> JsNumber(aliases.size)
+        ))
+        aliasQuery.filter(_.inSetBind(aliases))
+      case None => aliasQuery
     }
 
+    filteredQuery.result
+  }
+
+  // be careful with this method. Many previous callers of this method were very inefficient, retrieving entire
+  // collections from Mongo and then filtering out 90%+ of those documents, leading to scale issues.
+  // We are not deprecating or removing this method because it is appropriate for certain use cases.
+  def filterEntityByRead(agoraEntities: Seq[AgoraEntity], userEmail: String, callerTag: String = "unknown"): ReadAction[Seq[AgoraEntity]] = {
+
+    if (agoraEntities.isEmpty) {
+      // short-circuit: if we're asked to filter the empty set, don't go to mysql. Just return the empty set.
+      DBIO.successful(Seq.empty[AgoraEntity])
+
+    } else  {
+
+      // The maximum number of entity aliases we would send to mysql for an "IN" clause.
+      // The primary use case this targets is AgoraBusiness.findSingle(), which retrieves one entity from Mongo
+      // and then calls this method to check permissions. When we have one Mongo entity, we really don't want
+      // to get ALL permissions from MySQL.
+      val entityFilterMaxCount = AgoraConfig.sqlAliasBatchSize // defaults to 100
+
+      val entityAliases = if (agoraEntities.nonEmpty && agoraEntities.size < entityFilterMaxCount) {
+        Option(agoraEntities.map(alias))
+      } else {
+        logger.info(s"filterEntityByRead bypassing IN clause because it found ${agoraEntities.size}/$entityFilterMaxCount entities")
+        metricsClient.recordMetric("mysql", JsObject(
+          "inClauseOverLimit" -> JsNumber(agoraEntities.size),
+          "inClauseMaxSize" -> JsNumber(entityFilterMaxCount)
+        ))
+        None
+      }
+
+      listReadableEntities(userEmail, entityAliases) map { aliasedAgoraEntitiesWithReadPermissions =>
+        val filteredEntities = agoraEntities.filter(agoraEntity => aliasedAgoraEntitiesWithReadPermissions.contains(alias(agoraEntity)))
+
+        // metrics on how efficient this operation is: of all the Mongo entities supplied in arguments,
+        // how many are filtered out due to permissions?
+        val rawCount = agoraEntities.size
+        val filteredCount = filteredEntities.size
+        val efficiency:Float = filteredCount.toFloat / rawCount.toFloat
+        metricsClient.recordMetric("queryEfficiency", JsObject(
+          "caller" -> JsString(s"$callerTag"),
+          "method" -> JsString("filterEntityByRead"),
+          "efficiency" -> JsNumber(efficiency),
+          "filtered" -> JsNumber(filteredCount),
+          "raw" -> JsNumber(rawCount)
+        ))
+
+        filteredEntities
+      }
+    }
   }
 
   def listPublicAliases: ReadAction[Seq[String]] = {

@@ -57,12 +57,17 @@ object AgoraConfig {
   lazy val mongoDbUser = config.as[Option[String]]("mongodb.user")
   lazy val mongoDbPassword = config.as[Option[String]]("mongodb.password")
   lazy val mongoDbDatabase = config.as[Option[String]]("mongodb.db").getOrElse("agora")
+  // not part of the mongo connection, so kept in a separate config tree
+  lazy val mongoAliasBatchSize = config.as[Option[Int]]("mongo.aliasBatchSize").getOrElse(5000)
 
   // Womtool-as-a-Service (Waas)
   lazy val waasServer = config.as[Option[String]]("waas.server")
 
   // SQL
   lazy val sqlDatabase = DatabaseConfig.forConfig[JdbcProfile]("sqlDatabase")
+  // not part of the SQL connection, so kept in a separate config tree
+  lazy val sqlAliasBatchSize = config.as[Option[Int]]("sql.aliasBatchSize").getOrElse(100)
+
 
   // Google Credentials
   lazy val gcsProjectId = config.as[String]("gcs.project.id")

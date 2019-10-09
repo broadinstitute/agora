@@ -80,9 +80,12 @@ class ApiService(permissionsDataSource: PermissionsDataSource, healthMonitor: Ac
   val multiEntityPermissionsService = new MultiEntityPermissionsService(permissionsDataSource)
 
   def route: Route = (logRequestResult & ApiService.handleExceptionsAndRejections) {
-    options { complete(OK) } ~ statusService.statusRoute ~ swaggerRoutes ~ ga4ghService.routes ~ methodsService.routes ~
-      configurationsService.routes ~ namespacePermissionsService.routes ~ entityPermissionsService.routes ~
-      multiEntityPermissionsService.routes
+    options { complete(OK) } ~ statusService.statusRoute ~ swaggerRoutes ~
+      withExecutionContext(ExecutionContext.global) {
+        ga4ghService.routes ~ methodsService.routes ~
+          configurationsService.routes ~ namespacePermissionsService.routes ~ entityPermissionsService.routes ~
+          multiEntityPermissionsService.routes
+      }
   }
 
   // basis for logRequestResult lifted from http://stackoverflow.com/questions/32475471/how-does-one-log-akka-http-client-requests

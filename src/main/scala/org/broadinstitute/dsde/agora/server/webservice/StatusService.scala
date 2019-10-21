@@ -33,8 +33,8 @@ class StatusService(permissionsDataSource: PermissionsDataSource, healthMonitor:
         case Success(status) =>
           val httpCode = if (status.ok) OK else InternalServerError
           complete(httpCode, status)
-        case Failure(_) =>
-          val agoraStatus = SubsystemStatus(ok = false, Some(List("Unable to gather subsystem status")))
+        case Failure(t) =>
+          val agoraStatus = SubsystemStatus(ok = false, Some(List(s"Unable to gather subsystem status: ${t.getMessage}")))
           complete(InternalServerError, StatusCheckResponse(ok = false, Map(Subsystems.Agora -> agoraStatus)))
       }
     }

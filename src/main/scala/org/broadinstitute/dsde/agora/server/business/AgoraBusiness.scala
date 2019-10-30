@@ -311,11 +311,12 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
           // find and add owners
           db.aePerms.listOwnersAndAliases map { ownersAndAliases =>
 
+            // In Scala 2.13 this can be replaced with a .groupMap()
+            val ownersAndAliasesMap = ownersAndAliases.groupBy(_._1).mapValues(_.map(_._2))
+
             val annotatedSnapshots = snapshotsWithPublic.map { snap =>
               val snapshotAlias = permissionsDataSource.dataAccess.aePerms.alias(snap)
-              val owners = ownersAndAliases.collect {
-                case ((alias:String,email:String)) if alias == snapshotAlias => email
-              }
+              val owners = ownersAndAliasesMap.getOrElse(snapshotAlias, Nil)
               snap.addManagers(owners)
             }
 

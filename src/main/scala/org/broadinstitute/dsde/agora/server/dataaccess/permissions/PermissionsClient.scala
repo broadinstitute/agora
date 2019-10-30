@@ -322,7 +322,10 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
       }
 
       listReadableEntities(userEmail, entityAliases) map { aliasedAgoraEntitiesWithReadPermissions =>
-        val filteredEntities = agoraEntities.filter(agoraEntity => aliasedAgoraEntitiesWithReadPermissions.contains(alias(agoraEntity)))
+        val aliasedAgoraEntitiesWithReadPermissionsSet = aliasedAgoraEntitiesWithReadPermissions.toSet
+        val filteredEntities = agoraEntities.filter(agoraEntity =>
+          aliasedAgoraEntitiesWithReadPermissionsSet.contains(alias(agoraEntity))
+        )
 
         // metrics on how efficient this operation is: of all the Mongo entities supplied in arguments,
         // how many are filtered out due to permissions?

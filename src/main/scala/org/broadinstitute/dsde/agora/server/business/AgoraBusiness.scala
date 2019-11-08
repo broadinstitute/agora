@@ -302,10 +302,11 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
       permissionsDataSource.inTransaction { db =>
         db.aePerms.listPublicAliases flatMap { publicAliases =>
 
+          val publicAliasesSet = publicAliases.toSet
           // apply public status
           val snapshotsWithPublic = methodSnapshots.map { snap =>
             val snapshotAlias = permissionsDataSource.dataAccess.aePerms.alias(snap)
-            snap.copy(public = Some(publicAliases.contains(snapshotAlias)))
+            snap.copy(public = Some(publicAliasesSet.contains(snapshotAlias)))
           }
 
           // find and add owners

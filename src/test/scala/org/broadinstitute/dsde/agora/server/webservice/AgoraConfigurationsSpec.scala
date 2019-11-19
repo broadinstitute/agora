@@ -249,19 +249,10 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
     }
 
     "Agora" should "supply a default methodConfigVersion of 1 if it's missing" in {
+      import spray.json._
+      val config: MethodConfiguration = MethodConfigurationFormat.read(methodConfigPayloadMissingConfigVersion.get.parseJson)
 
-      val missingConfigVersionUrl = testConfigWithSnapshotMissingConfigVersion.namespace.get + "/" +
-        testConfigWithSnapshotMissingConfigVersion.name.get + "/" +
-        testConfigWithSnapshotMissingConfigVersion.snapshotId.get
-
-      Get(missingConfigVersionUrl + "?payloadAsObject=true") ~>
-        addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> configurationsService.querySingleRoute ~> check {
-        assert(status == OK)
-
-        val entity = responseAs[AgoraEntity]
-
-        assert(entity.payloadObject.get.methodConfigVersion == 1)
-      }
+      assert(config.methodConfigVersion == 1)
     }
 
     "Agora" should "throw DeserializationError if missing keys" in {

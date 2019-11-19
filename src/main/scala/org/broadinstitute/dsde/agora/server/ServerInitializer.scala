@@ -80,7 +80,7 @@ class ServerInitializer extends LazyLogging {
   }
 
   private def stopAdminGroupPoller(): Try[Boolean] = {
-    Try(adminGroupPollerSchedule.cancel())  recover {
+    Try(adminGroupPollerSchedule.cancel()) recover {
       case _: NullPointerException =>
         false // Nothing to do; no scheduler was created at the first place
       case t: Throwable =>

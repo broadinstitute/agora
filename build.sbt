@@ -29,7 +29,7 @@ scalacOptions := Seq(
   "-Xlint:option-implicit",
   "-Xlint:package-object-classes",
   "-Xlint:poly-implicit-overload",
-//  "-Xlint:private-shadow",
+  "-Xlint:private-shadow",
   "-Xlint:stars-align",
   "-Xlint:type-parameter-shadow",
   "-Xlint:unsound-match",
@@ -40,7 +40,7 @@ scalacOptions := Seq(
   "-Ywarn-inaccessible",
 //  "-Ywarn-unused:implicits",
 //  "-Ywarn-unused:privates",
-//  "-Ywarn-unused:locals",
+  "-Ywarn-unused:locals",
   "-Ypartial-unification",
   "-Ywarn-unused:patvars"
 )

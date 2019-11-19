@@ -250,11 +250,11 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
 
     "Agora" should "supply a default methodConfigVersion of 1 if it's missing" in {
 
-      val url = testConfigWithSnapshotMissingConfigVersion.namespace.get + "/" +
+      val missingConfigVersionUrl = testConfigWithSnapshotMissingConfigVersion.namespace.get + "/" +
         testConfigWithSnapshotMissingConfigVersion.name.get + "/" +
         testConfigWithSnapshotMissingConfigVersion.snapshotId.get
 
-      Get(baseURL + "?payloadAsObject=true") ~>
+      Get(missingConfigVersionUrl + "?payloadAsObject=true") ~>
         addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> configurationsService.querySingleRoute ~> check {
         assert(status == OK)
 

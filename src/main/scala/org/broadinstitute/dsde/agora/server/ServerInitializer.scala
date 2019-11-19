@@ -3,7 +3,6 @@ package org.broadinstitute.dsde.agora.server
 import akka.actor.{ActorSystem, Cancellable}
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
-import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDBStatus
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.EmbeddedMongo
@@ -53,7 +52,6 @@ class ServerInitializer extends LazyLogging {
   }
 
   private def startWebService() = {
-    implicit val bindTimeout: Timeout = 120.seconds
 
     val apiService = new ApiService(permsDataSource, healthMonitor)
 

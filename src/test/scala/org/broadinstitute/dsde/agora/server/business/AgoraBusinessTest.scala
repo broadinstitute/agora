@@ -66,7 +66,6 @@ class AgoraBusinessTest extends FlatSpec with Matchers with BeforeAndAfterAll wi
 
   "Agora" should "allow a pre-existing entity with illegal name to be loaded successfully" in {
 
-    implicit val executionContext = scala.concurrent.ExecutionContext.Implicits.global
     val agoraDao = AgoraDao.createAgoraDao(Seq(testAgoraEntityWithIllegalNameChars.entityType.get))
 
     // Strategy: bypass the business rule validation in AgoraBusiness by inserting directly through the DAO & perms client

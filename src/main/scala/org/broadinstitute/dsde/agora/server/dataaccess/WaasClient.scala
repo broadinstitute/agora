@@ -1,6 +1,6 @@
 package org.broadinstitute.dsde.agora.server.dataaccess
 
-import cromwell.client.{ApiClient, ApiException}
+import cromwell.client.ApiClient
 import cromwell.client.api.WomtoolApi
 import cromwell.client.model.WorkflowDescription
 import org.broadinstitute.dsde.agora.server.AgoraConfig

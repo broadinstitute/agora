@@ -7,10 +7,7 @@ import org.broadinstitute.dsde.agora.server.exceptions.PermissionModificationExc
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpec}
-import slick.dbio.DBIOAction
 
-import scala.concurrent.{Await, Future}
-import scala.concurrent.duration.Duration
 
 @DoNotDiscover
 class EntityPermissionsClientSpec extends FlatSpec with ScalaFutures with BeforeAndAfterAll with AgoraTestFixture {
@@ -22,7 +19,6 @@ class EntityPermissionsClientSpec extends FlatSpec with ScalaFutures with Before
 
 
   override def beforeAll(): Unit = {
-    import scala.concurrent.ExecutionContext.Implicits.global
     ensureDatabasesAreRunning()
     startMockWaas()
 

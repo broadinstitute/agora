@@ -32,7 +32,7 @@ class ServerInitializer extends LazyLogging {
   private var healthMonitorSchedule: Cancellable = _
   private var adminGroupPollerSchedule: Cancellable = _
 
-  def startAllServices() {
+  def startAllServices(): Unit = {
     if (AgoraConfig.usesEmbeddedMongo)
       EmbeddedMongo.startMongo()
 
@@ -42,7 +42,7 @@ class ServerInitializer extends LazyLogging {
     startWebService()
   }
 
-  def stopAllServices() {
+  def stopAllServices(): Unit = {
     logger.info("Closing all connections")
     Http().shutdownAllConnectionPools()
     if (AgoraConfig.usesEmbeddedMongo)
@@ -74,7 +74,7 @@ class ServerInitializer extends LazyLogging {
     */
   private def startAdminGroupPoller() = {
     AgoraConfig.adminGoogleGroup match {
-      case Some(group) =>
+      case Some(_) =>
         val adminGroupPoller = actorSystem.actorOf(AdminSweeper.props(AdminSweeper.adminsGoogleGroupPoller, permsDataSource))
         adminGroupPollerSchedule = actorSystem.scheduler.schedule(5 seconds, AgoraConfig.adminSweepInterval minutes, adminGroupPoller, Sweep)
       case None =>
@@ -88,7 +88,7 @@ class ServerInitializer extends LazyLogging {
     }
   }
 
-  private def stopAndExit() {
+  private def stopAndExit(): Unit = {
     logger.info("Stopping all services and exiting.")
     stopAllServices()
     logger.info("Services stopped")

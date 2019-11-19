@@ -532,7 +532,7 @@ class PermissionIntegrationSpec extends FlatSpec with ScalatestRouteTest with Be
 
   private def getUserPermissions(entity: AgoraEntity, userToCheck: String)(requester: String): Option[AgoraPermissions] = {
     val allAcls = patiently(permissionBusiness.listEntityPermissions(entity, requester) recover {
-      case e:Exception => Seq.empty[AccessControl] })
+      case _: Exception => Seq.empty[AccessControl] })
     allAcls.find(_.user == userToCheck).map(_.roles)
   }
 

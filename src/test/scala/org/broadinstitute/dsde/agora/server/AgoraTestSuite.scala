@@ -36,13 +36,13 @@ class AgoraTestSuite extends Suites(
 
   val agora = new Agora()
 
-  override def beforeAll() {
+  override def beforeAll(): Unit = {
     startDatabases()
     println(s"Starting Agora web services ($suiteName)")
     agora.start()
   }
   
-  override def afterAll() {
+  override def afterAll(): Unit = {
     stopDatabases()
     println(s"Stopping Agora web services ($suiteName)")
     agora.stop()

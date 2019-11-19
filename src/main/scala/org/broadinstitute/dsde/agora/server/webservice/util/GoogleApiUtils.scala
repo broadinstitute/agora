@@ -8,10 +8,8 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
 import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.services.admin.directory.{DirectoryScopes, Directory}
-import org.broadinstitute.dsde.agora.server
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 
-import scala.concurrent.duration._
 
 object GoogleApiUtils {
   val emailAddress = AgoraConfig.gcsServiceAccountEmail

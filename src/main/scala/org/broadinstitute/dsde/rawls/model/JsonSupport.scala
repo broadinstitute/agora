@@ -5,7 +5,6 @@ import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
 
 class JsonSupport {
-  import spray.json.DefaultJsonProtocol._
 
   /* David An: this is not exactly the same AttributeStringFormat as in rawls-model;
       I've simplified it to keep the copy-paste to a minimum. It should act exactly the same.

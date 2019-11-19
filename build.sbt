@@ -5,9 +5,45 @@ name := "Agora"
 
 organization := "org.broadinstitute"
 
-scalaVersion := "2.12.6"
+scalaVersion := "2.12.9"
 
-scalacOptions := Seq("-unchecked", "-deprecation", "-feature")
+// Ported from Cromwell 2019-11-19
+// The disabled ones are not too crazy to get compliant with, but more work than I want to do just now (AEN)
+scalacOptions := Seq(
+  "-unchecked",
+  "-deprecation",
+  "-feature",
+  "-Xfatal-warnings",
+  "-Ywarn-unused:imports",
+//  "-Xfuture",
+//  "-Xlint:adapted-args",
+  "-Xlint:by-name-right-associative",
+  "-Xlint:constant",
+  "-Xlint:delayedinit-select",
+  "-Xlint:doc-detached",
+  "-Xlint:inaccessible",
+//  "-Xlint:infer-any",
+//  "-Xlint:missing-interpolator",
+  "-Xlint:nullary-override",
+  "-Xlint:nullary-unit",
+  "-Xlint:option-implicit",
+  "-Xlint:package-object-classes",
+  "-Xlint:poly-implicit-overload",
+//  "-Xlint:private-shadow",
+  "-Xlint:stars-align",
+  "-Xlint:type-parameter-shadow",
+  "-Xlint:unsound-match",
+//  "-Yno-adapted-args",
+  "-Ywarn-dead-code",
+//  "-Ywarn-numeric-widen",
+//  "-Ywarn-value-discard",
+  "-Ywarn-inaccessible",
+//  "-Ywarn-unused:implicits",
+//  "-Ywarn-unused:privates",
+//  "-Ywarn-unused:locals",
+  "-Ypartial-unification",
+  "-Ywarn-unused:patvars"
+)
 
 lazy val akkaV = "2.5.11"
 lazy val akkaHttpV = "10.1.0"

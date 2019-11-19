@@ -125,7 +125,7 @@ class PermissionBusiness(permissionsDataSource: PermissionsDataSource)(implicit 
       def sequentially(futures: Iterable[() => Future[EntityAccessControl]], acc: Seq[EntityAccessControl]): Future[Seq[EntityAccessControl]] = {
         futures match {
           case x if x.isEmpty => Future.successful(acc)
-          case y =>
+          case _ =>
             futures.head() flatMap { eac =>
               sequentially(futures.tail, acc :+ eac)
             }

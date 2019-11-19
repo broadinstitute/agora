@@ -11,12 +11,12 @@ class Agora() extends LazyLogging with App {
 
   sys addShutdownHook stop()
 
-  def start() {
+  def start(): Unit = {
     server.startAllServices()
     logger.info("Agora instance " + AgoraConfig.host + " initialized, Environment: " + AgoraConfig.environment)
   }
 
-  def stop() {
+  def stop(): Unit = {
     logger.info("Stopping server...")
     server.stopAllServices()
     logger.info("Server stopped.")

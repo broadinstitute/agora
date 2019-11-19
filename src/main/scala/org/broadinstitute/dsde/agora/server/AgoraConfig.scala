@@ -127,7 +127,7 @@ object AgoraConfig {
     private def getOption[T](key: String, f: String => T): Option[T] = {
       Try(f(key)) match {
         case Success(value) => Option(value)
-        case Failure(e: ConfigException.Missing) => None
+        case Failure(_: ConfigException.Missing) => None
         case Failure(e) => throw e
       }
     }

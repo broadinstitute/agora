@@ -25,7 +25,7 @@ trait DockerHubClient extends HttpClient {
           case _ => throw DockerImageNotFoundException(dockerImage)
         }
       } recoverWith { //on failure
-        case e => throw DockerImageNotFoundException(dockerImage)
+        case _ => throw DockerImageNotFoundException(dockerImage)
       }
   }
 

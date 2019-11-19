@@ -48,10 +48,10 @@ object AgoraMongoDao {
     // NB: if aliases is empty, this will result in a $where clause of [].indexOf(...), which
     // will always return false - that's what we want.
     val resultObj = critObject match {
-      case jso:JsObject if jso.fields.nonEmpty =>
+      case jso: JsObject if jso.fields.nonEmpty =>
         val jsonString = "{$and: [" + jso.compactPrint + "," + whereClause + "]}"
         JSON.parse(jsonString).asInstanceOf[DBObject]
-      case jso:JsObject =>
+      case _: JsObject =>
         JSON.parse(whereClause).asInstanceOf[DBObject]
       case _ =>
         throw new AgoraException("illegal criteria; expected a JsObject")
@@ -119,7 +119,7 @@ class AgoraMongoDao(collections: Seq[MongoCollection]) extends AgoraDao with Laz
 
   override def find(entity: AgoraEntity, projectionOpt: Option[AgoraEntityProjection]): Seq[AgoraEntity] = {
     val projection = projectionOpt match {
-      case Some(projection) => projectionOpt
+      case Some(_) => projectionOpt
       case None => DefaultFindProjection
     }
     val dbEntity = EntityToMongoDbObject(entity)

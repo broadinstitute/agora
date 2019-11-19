@@ -40,7 +40,7 @@ class CompatibleConfigurationIntegrationSpec extends FreeSpec with ExecutionDire
     agoraBusiness.insert(method, username, accessToken)
   }
 
-  private def waasResponse(inputs:Seq[String], outputs:Seq[String], optionalInputs:Seq[String] = Seq.empty[String]) = {
+  private def waasResponse(inputs:Seq[String], outputs:Seq[String], optionalInputs:Seq[String]) = {
     val requiredInputStanzas = (inputs map (x => generateInputStanza(x)))
     val optionalInputStanzas = (optionalInputs map (x => generateInputStanza(x, true)))
     val inputString = (requiredInputStanzas ++ optionalInputStanzas).mkString(",")
@@ -257,7 +257,7 @@ class CompatibleConfigurationIntegrationSpec extends FreeSpec with ExecutionDire
   private def testUrl(label:String, snapshotId: Int): String =
     testUrl(s"namespace-$label", s"name-$label", snapshotId)
 
-  private def testMethod(label:String, inputs:Seq[String], outputs:Seq[String], optionalInputs:Seq[String] = Seq.empty[String]): AgoraEntity =
+  private def testMethod(label:String, inputs:Seq[String], outputs:Seq[String], optionalInputs:Seq[String]): AgoraEntity =
     testIntegrationEntity.copy(namespace=Some(s"namespace-$label"),
       name=Some(s"name-$label"),
       payload=Some(makeWDL(inputs,outputs,optionalInputs)))

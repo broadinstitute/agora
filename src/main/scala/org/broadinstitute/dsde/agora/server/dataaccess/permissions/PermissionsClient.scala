@@ -10,8 +10,7 @@ import slick.jdbc.JdbcProfile
 import spray.json.{JsNumber, JsObject, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Success}
 
 abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
   import profile.api._
@@ -174,7 +173,7 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
 
       addPermissionAction.asTry flatMap {
         case Success(yay) => DBIO.successful(yay)
-        case Failure(nooo) => editPermission(agoraEntity, userAccessObject)
+        case Failure(_) => editPermission(agoraEntity, userAccessObject)
       }
     }
   }
@@ -335,8 +334,8 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
         metricsClient.recordMetric("queryEfficiency", JsObject(
           "caller" -> JsString(s"$callerTag"),
           "method" -> JsString("filterEntityByRead"),
-          "efficiency" -> JsNumber(efficiency),
-          "filtered" -> JsNumber(filteredCount),
+          "efficiency" -> JsNumber(efficiency.toDouble),
+          "filtered" -> JsNumber(filteredCount.toDouble),
           "raw" -> JsNumber(rawCount)
         ))
 

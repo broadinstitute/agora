@@ -2,7 +2,6 @@
 package org.broadinstitute.dsde.agora.server.webservice.configurations
 
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
-import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.AgoraService
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
 

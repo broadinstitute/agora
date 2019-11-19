@@ -573,9 +573,6 @@ object AgoraTestData {
     snapshotId = snapshotId1
   )
 
-  val testConfigWithSnapshotMissingConfigVersion =
-    testConfigWithSnapshot1.copy(name = name5, payload = methodConfigPayloadMissingConfigVersion)
-
   val testConfigWithSnapshotComment1 = testConfigWithSnapshot1.copy(snapshotComment = snapshotComment1, name = name4)
 
   val testMethodWithSnapshotComment1 = testMethodWithSnapshot1.copy(snapshotComment = snapshotComment1, name = name4)

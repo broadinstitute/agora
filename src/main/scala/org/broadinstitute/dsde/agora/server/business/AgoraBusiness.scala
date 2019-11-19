@@ -434,16 +434,16 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
       other than entityType, we'll query mongo first. We exclude entityType because it is too
       broad. The list of parameters below matches what we document in swagger  (minus entityType).
     */
-    def isCriteriaSpecific(agoraSearch: AgoraEntity): Boolean = {
-      agoraSearch.namespace.nonEmpty ||
-        agoraSearch.name.nonEmpty ||
-        agoraSearch.snapshotId.nonEmpty ||
-        agoraSearch.snapshotComment.nonEmpty ||
-        agoraSearch.synopsis.nonEmpty ||
-        agoraSearch.documentation.nonEmpty ||
-        agoraSearch.owner.nonEmpty ||
-        agoraSearch.payload.nonEmpty
-    }
+    // def isCriteriaSpecific(agoraSearch: AgoraEntity): Boolean = {
+    //   agoraSearch.namespace.nonEmpty ||
+    //     agoraSearch.name.nonEmpty ||
+    //     agoraSearch.snapshotId.nonEmpty ||
+    //     agoraSearch.snapshotComment.nonEmpty ||
+    //     agoraSearch.synopsis.nonEmpty ||
+    //     agoraSearch.documentation.nonEmpty ||
+    //     agoraSearch.owner.nonEmpty ||
+    //     agoraSearch.payload.nonEmpty
+    // }
 
     // TODO: temporarily sending all queries through findByMongoFirst while resolving performance issues
     // if (isCriteriaSpecific(agoraSearch)) {
@@ -519,8 +519,8 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
       metricsClient.recordMetric("queryEfficiency", JsObject(
         "caller" -> JsString(s"findByMySqlFirst(${entityTypes.sorted.mkString(",")})"),
         "method" -> JsString("findByMySqlFirst"),
-        "efficiency" -> JsNumber(efficiency),
-        "filtered" -> JsNumber(filteredCount),
+        "efficiency" -> JsNumber(efficiency.toDouble),
+        "filtered" -> JsNumber(filteredCount.toDouble),
         "raw" -> JsNumber(rawCount)
       ))
 

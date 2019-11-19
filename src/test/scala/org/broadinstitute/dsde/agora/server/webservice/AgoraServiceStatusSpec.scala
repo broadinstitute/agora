@@ -15,7 +15,7 @@ import org.broadinstitute.dsde.workbench.util.health.StatusJsonSupport.StatusChe
 import org.broadinstitute.dsde.workbench.util.health.Subsystems.{Database, Mongo}
 import org.scalatest.{DoNotDiscover, FlatSpecLike}
 
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
@@ -110,7 +110,7 @@ class AgoraServiceHealthyStatusSpec extends ApiServiceSpec with TestKitBase with
   }
 
 
-  class UnitTestAgoraDBStatus(dataSource: PermissionsDataSource)(implicit ec: ExecutionContext)
+  class UnitTestAgoraDBStatus(dataSource: PermissionsDataSource)
     extends AgoraDBStatus(dataSource: PermissionsDataSource) {
 
     // since H2 doesn't support the version function, we call an arbitrary (and less performant) SQL query
@@ -118,7 +118,7 @@ class AgoraServiceHealthyStatusSpec extends ApiServiceSpec with TestKitBase with
     def h2Status: Future[SubsystemStatus] = {
       dataSource.inTransaction { db =>
         db.admPerms.listAdminUsers.asTry map {
-          case Success(s) => HealthMonitor.OkStatus
+          case Success(_) => HealthMonitor.OkStatus
           case Failure(t) => HealthMonitor.failedStatus(t.getMessage)
         }
       }

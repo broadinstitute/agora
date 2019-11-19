@@ -5,7 +5,7 @@ name := "Agora"
 
 organization := "org.broadinstitute"
 
-scalaVersion := "2.12.9"
+scalaVersion := "2.12.10"
 
 // Ported from Cromwell 2019-11-19
 // The disabled ones are not too crazy to get compliant with, but more work than I want to do just now (AEN)

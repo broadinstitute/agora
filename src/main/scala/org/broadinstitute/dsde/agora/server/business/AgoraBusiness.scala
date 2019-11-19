@@ -519,8 +519,8 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
       metricsClient.recordMetric("queryEfficiency", JsObject(
         "caller" -> JsString(s"findByMySqlFirst(${entityTypes.sorted.mkString(",")})"),
         "method" -> JsString("findByMySqlFirst"),
-        "efficiency" -> JsNumber(efficiency),
-        "filtered" -> JsNumber(filteredCount),
+        "efficiency" -> JsNumber(efficiency.toDouble),
+        "filtered" -> JsNumber(filteredCount.toDouble),
         "raw" -> JsNumber(rawCount)
       ))
 

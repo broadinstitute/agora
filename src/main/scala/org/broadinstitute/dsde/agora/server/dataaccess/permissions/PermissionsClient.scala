@@ -334,8 +334,8 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
         metricsClient.recordMetric("queryEfficiency", JsObject(
           "caller" -> JsString(s"$callerTag"),
           "method" -> JsString("filterEntityByRead"),
-          "efficiency" -> JsNumber(efficiency),
-          "filtered" -> JsNumber(filteredCount),
+          "efficiency" -> JsNumber(efficiency.toDouble),
+          "filtered" -> JsNumber(filteredCount.toDouble),
           "raw" -> JsNumber(rawCount)
         ))
 

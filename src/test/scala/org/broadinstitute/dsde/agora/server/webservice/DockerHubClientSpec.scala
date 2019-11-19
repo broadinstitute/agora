@@ -1,23 +1,28 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
+import akka.actor.ActorSystem
 import akka.http.scaladsl.model.ContentTypes
 import akka.http.scaladsl.model.StatusCodes._
+import akka.stream.ActorMaterializer
 import org.broadinstitute.dsde.agora.server.AgoraTestData.mockServerPort
 import org.broadinstitute.dsde.agora.server.exceptions.DockerImageNotFoundException
+import org.broadinstitute.dsde.agora.server.webservice.util.DockerHubJsonSupport._
 import org.broadinstitute.dsde.agora.server.webservice.util.{DockerHubClient, DockerImageReference, DockerTagInfo}
 import org.mockserver.integration.ClientAndServer
 import org.mockserver.integration.ClientAndServer.startClientAndServer
 import org.mockserver.model.HttpRequest.request
 import org.scalatest._
-import org.broadinstitute.dsde.agora.server.webservice.util.DockerHubJsonSupport._
 import spray.json._
 
-import scala.concurrent.ExecutionContextExecutor
+import scala.concurrent.{Await, ExecutionContext}
+import scala.concurrent.duration._
 
 @DoNotDiscover
 class DockerHubClientSpec extends AsyncFreeSpec with Matchers with BeforeAndAfterAll with DockerHubClient {
 
-  override implicit val executionContext: ExecutionContextExecutor = scala.concurrent.ExecutionContext.global
+  override implicit def actorSystem: ActorSystem = ActorSystem("agoraHttpClient")
+  override implicit def materializer: ActorMaterializer = ActorMaterializer()
+  override implicit def executionContext: ExecutionContext = super[DockerHubClient].executionContext
 
   var mockServer: ClientAndServer = _
   val validPath = "/repo/tags/tag"
@@ -70,6 +75,7 @@ class DockerHubClientSpec extends AsyncFreeSpec with Matchers with BeforeAndAfte
 
   override protected def afterAll(): Unit = {
     if (mockServer.isRunning) { mockServer.stop() }
+    Await.result(actorSystem.terminate(), 30.seconds)
   }
 
   // We need to point all docker requests to local

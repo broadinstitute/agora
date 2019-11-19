@@ -18,10 +18,9 @@ import scala.concurrent.duration.FiniteDuration
 import scala.util.{Failure, Success}
 
 class StatusService(permissionsDataSource: PermissionsDataSource, healthMonitor: ActorRef) {
-  implicit val executionContext = scala.concurrent.ExecutionContext.Implicits.global
 
   // Derive timeouts (implicit and not) from akka http's request timeout since there's no point in being higher than that
-  implicit val duration = ConfigFactory.load().as[FiniteDuration]("akka.http.server.request-timeout")
+  implicit val duration: FiniteDuration = ConfigFactory.load().as[FiniteDuration]("akka.http.server.request-timeout")
   implicit val timeout: Timeout = duration
 
   // GET /status

@@ -11,9 +11,10 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 import scalaz.{Failure => zFailure, Success => zSuccess}
 
-class PermissionBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: ExecutionContext) {
+class PermissionBusiness(permissionsDataSource: PermissionsDataSource) {
 
-  def listNamespacePermissions(entity: AgoraEntity, requester: String): Future[Seq[AccessControl]] = {
+  def listNamespacePermissions(entity: AgoraEntity, requester: String)
+                              (implicit executionContext: ExecutionContext): Future[Seq[AccessControl]] = {
     permissionsDataSource.inTransaction { db =>
       authNamespaceRequester(db, entity, requester) {
         db.nsPerms.listNamespacePermissions(entity)
@@ -21,7 +22,8 @@ class PermissionBusiness(permissionsDataSource: PermissionsDataSource)(implicit 
     }
   }
 
-  def insertNamespacePermission(entity: AgoraEntity, requester: String, accessObject: AccessControl): Future[Int] = {
+  def insertNamespacePermission(entity: AgoraEntity, requester: String, accessObject: AccessControl)
+                               (implicit executionContext: ExecutionContext): Future[Int] = {
     permissionsDataSource.inTransaction { db =>
       authNamespaceRequester(db, entity, requester, accessObject) {
         db.nsPerms.insertNamespacePermission(entity, accessObject)
@@ -29,7 +31,8 @@ class PermissionBusiness(permissionsDataSource: PermissionsDataSource)(implicit 
     }
   }
 
-  def batchNamespacePermission(entity: AgoraEntity, requester: String, accessObjectList: List[AccessControl]): Future[Int] = {
+  def batchNamespacePermission(entity: AgoraEntity, requester: String, accessObjectList: List[AccessControl])
+                              (implicit executionContext: ExecutionContext): Future[Int] = {
     def authOne(db: DataAccess, accessObject: AccessControl) = {
       authNamespaceRequester(db, entity, requester, accessObject) {
         DBIOAction.successful(())
@@ -43,7 +46,8 @@ class PermissionBusiness(permissionsDataSource: PermissionsDataSource)(implicit 
     }
   }
 
-  def editNamespacePermission(entity: AgoraEntity, requester: String, accessObject: AccessControl): Future[Int] = {
+  def editNamespacePermission(entity: AgoraEntity, requester: String, accessObject: AccessControl)
+                             (implicit executionContext: ExecutionContext): Future[Int] = {
     permissionsDataSource.inTransaction { db =>
       authNamespaceRequester(db, entity, requester, accessObject) {
         db.nsPerms.editNamespacePermission(entity, accessObject)
@@ -51,24 +55,26 @@ class PermissionBusiness(permissionsDataSource: PermissionsDataSource)(implicit 
     }
   }
 
-  def deleteNamespacePermission(entity: AgoraEntity, requester: String, userToRemove: String): Future[Int] = {
+  def deleteNamespacePermission(entity: AgoraEntity, requester: String, userToRemove: String)
+                               (implicit executionContext: ExecutionContext): Future[Int] = {
     Try(checkSameRequester(requester, userToRemove)) match {
       case Failure(regret) => Future.failed(regret)
-      case Success(_) => {
+      case Success(_) =>
         permissionsDataSource.inTransaction { db =>
           authNamespaceRequester(db, entity, requester) {
             db.nsPerms.deleteNamespacePermission(entity, userToRemove)
           }
         }
-      }
     }
   }
 
-  def listEntityPermissions(entity: AgoraEntity, requester: String): Future[Seq[AccessControl]] = {
+  def listEntityPermissions(entity: AgoraEntity, requester: String)
+                           (implicit executionContext: ExecutionContext): Future[Seq[AccessControl]] = {
     // validate entity
     AgoraEntity.validate(entity, allowEmptyIdentifiers=false) match {
       case zSuccess(_) => // noop
-      case zFailure(errors) => throw new ValidationException(s"Entity [${entity.toShortString}] is not valid: Errors: $errors")
+      case zFailure(errors) =>
+        throw ValidationException(s"Entity [${entity.toShortString}] is not valid: Errors: $errors")
     }
 
     permissionsDataSource.inTransaction { db =>
@@ -78,7 +84,8 @@ class PermissionBusiness(permissionsDataSource: PermissionsDataSource)(implicit 
     }
   }
 
-  def listEntityPermissions(entities: List[AgoraEntity], requester: String): Future[Seq[EntityAccessControl]] = {
+  def listEntityPermissions(entities: List[AgoraEntity], requester: String)
+                           (implicit executionContext: ExecutionContext): Future[Seq[EntityAccessControl]] = {
     Future.sequence(entities map {entity =>
       permissionsDataSource.inTransaction { db =>
         for {
@@ -101,7 +108,8 @@ class PermissionBusiness(permissionsDataSource: PermissionsDataSource)(implicit 
     })
   }
 
-  def upsertEntityPermissions(aclPairs: List[EntityAccessControl], requester: String): Future[Seq[EntityAccessControl]] = {
+  def upsertEntityPermissions(aclPairs: List[EntityAccessControl], requester: String)
+                             (implicit executionContext: ExecutionContext): Future[Seq[EntityAccessControl]] = {
 
     if (aclPairs.isEmpty)
       Future.successful(Seq.empty[EntityAccessControl])
@@ -114,7 +122,7 @@ class PermissionBusiness(permissionsDataSource: PermissionsDataSource)(implicit 
       // run these sequentially to avoid DB deadlocks
       val batchFutures = groupedAccessControl map {
         case (entity, listAccessControl) => () =>
-          batchEntityPermission(entity, requester, listAccessControl) map { num =>
+          batchEntityPermission(entity, requester, listAccessControl) map { _ =>
             EntityAccessControl(entity, listAccessControl, None)
           } recover {
             case e:Exception =>
@@ -136,7 +144,8 @@ class PermissionBusiness(permissionsDataSource: PermissionsDataSource)(implicit 
     }
   }
 
-  def insertEntityPermission(entity: AgoraEntity, requester: String, accessObject: AccessControl): Future[Int] = {
+  def insertEntityPermission(entity: AgoraEntity, requester: String, accessObject: AccessControl)
+                            (implicit executionContext: ExecutionContext): Future[Int] = {
     permissionsDataSource.inTransaction { db =>
       authEntityRequester(db, entity, requester, accessObject) {
         db.aePerms.insertEntityPermission(entity, accessObject)
@@ -144,7 +153,8 @@ class PermissionBusiness(permissionsDataSource: PermissionsDataSource)(implicit 
     }
   }
 
-  def batchEntityPermission(entity: AgoraEntity, requester: String, accessObjectList: List[AccessControl]): Future[Int] = {
+  def batchEntityPermission(entity: AgoraEntity, requester: String, accessObjectList: List[AccessControl])
+                           (implicit executionContext: ExecutionContext): Future[Int] = {
     def authOne(db: DataAccess, accessObject: AccessControl) = {
       authEntityRequester(db, entity, requester, accessObject) {
         DBIOAction.successful(())
@@ -157,7 +167,8 @@ class PermissionBusiness(permissionsDataSource: PermissionsDataSource)(implicit 
     }
   }
 
-  def editEntityPermission(entity: AgoraEntity, requester: String, accessObject: AccessControl): Future[Int] = {
+  def editEntityPermission(entity: AgoraEntity, requester: String, accessObject: AccessControl)
+                          (implicit executionContext: ExecutionContext): Future[Int] = {
     permissionsDataSource.inTransaction { db =>
       authEntityRequester(db, entity, requester, accessObject) {
         db.aePerms.editEntityPermission(entity, accessObject)
@@ -165,16 +176,16 @@ class PermissionBusiness(permissionsDataSource: PermissionsDataSource)(implicit 
     }
   }
 
-  def deleteEntityPermission(entity: AgoraEntity, requester: String, userToRemove: String): Future[Int] = {
+  def deleteEntityPermission(entity: AgoraEntity, requester: String, userToRemove: String)
+                            (implicit executionContext: ExecutionContext): Future[Int] = {
     Try(checkSameRequester(requester, userToRemove)) match {
       case Failure(regret) => Future.failed(regret)
-      case Success(_) => {
+      case Success(_) =>
         permissionsDataSource.inTransaction { db =>
           authEntityRequester(db, entity, requester) {
             db.aePerms.deleteEntityPermission(entity, userToRemove)
           }
         }
-      }
     }
   }
 
@@ -183,21 +194,32 @@ class PermissionBusiness(permissionsDataSource: PermissionsDataSource)(implicit 
     * Utility method to both authorize the namespace requester and check that the requester is not modifying their own
     * permissions
     */
-  private def authNamespaceRequester[T](db: DataAccess, entity: AgoraEntity, requester: String, accessObject: AccessControl)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
+  private def authNamespaceRequester[T](db: DataAccess,
+                                        entity: AgoraEntity,
+                                        requester: String,
+                                        accessObject: AccessControl)
+                                       (op: => ReadWriteAction[T])
+                                       (implicit executionContext: ExecutionContext): ReadWriteAction[T] = {
     withNamespaceACLs(db, entity, requester) { namespaceACLs =>
       checkSameRequesterAndPermissions(namespaceACLs.find(acl => acl.user.equals(requester)), accessObject)
       authorizeNamespaceRequester(db, namespaceACLs, entity, requester) flatMap { _ => op }
     }
   }
 
-  private def authNamespaceRequester[T](db: DataAccess, entity: AgoraEntity, requester: String)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
+  private def authNamespaceRequester[T](db: DataAccess, entity: AgoraEntity, requester: String)
+                                       (op: => ReadWriteAction[T])
+                                       (implicit executionContext: ExecutionContext): ReadWriteAction[T] = {
     withNamespaceACLs(db, entity, requester) { namespaceACLs =>
       authorizeNamespaceRequester(db, namespaceACLs, entity, requester) flatMap { _ => op }
     }
 
   }
 
-  private def authorizeNamespaceRequester(db: DataAccess, acls: Seq[AccessControl], entity: AgoraEntity, requester: String): ReadWriteAction[Unit] = {
+  private def authorizeNamespaceRequester(db: DataAccess,
+                                          acls: Seq[AccessControl],
+                                          entity: AgoraEntity,
+                                          requester: String)
+                                         (implicit executionContext: ExecutionContext): ReadWriteAction[Unit] = {
     //NOTE: The use of aePerms here seems wrong, but it's not!
     db.aePerms.addUserIfNotInDatabase(requester) map { _ =>
       if (!acls.exists(_.roles.canManage))
@@ -209,20 +231,28 @@ class PermissionBusiness(permissionsDataSource: PermissionsDataSource)(implicit 
     * Utility method to both authorize the entity requester and check that the requester is not modifying their own
     * permissions
     */
-  private def authEntityRequester[T](db: DataAccess, entity: AgoraEntity, requester: String, accessObject: AccessControl)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
+  private def authEntityRequester[T](db: DataAccess,
+                                     entity: AgoraEntity,
+                                     requester: String,
+                                     accessObject: AccessControl)
+                                    (op: => ReadWriteAction[T])
+                                    (implicit executionContext: ExecutionContext): ReadWriteAction[T] = {
     withEntityACLs(db, entity, requester) { entityACLs =>
       checkSameRequesterAndPermissions(entityACLs.find(acl => acl.user.equals(requester)), accessObject)
       authorizeEntityRequester(db, entityACLs, entity, requester) flatMap { _ => op }
     }
   }
 
-  private def authEntityRequester[T](db: DataAccess, entity: AgoraEntity, requester: String)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
+  private def authEntityRequester[T](db: DataAccess, entity: AgoraEntity, requester: String)
+                                    (op: => ReadWriteAction[T])
+                                    (implicit executionContext: ExecutionContext): ReadWriteAction[T] = {
     withEntityACLs(db, entity, requester) { entityACLs =>
       authorizeEntityRequester(db, entityACLs, entity, requester) flatMap { _ => op }
     }
   }
 
-  private def authorizeEntityRequester(db: DataAccess, acls: Seq[AccessControl], entity: AgoraEntity, requester: String): ReadWriteAction[Unit] = {
+  private def authorizeEntityRequester(db: DataAccess, acls: Seq[AccessControl], entity: AgoraEntity, requester: String)
+                                      (implicit executionContext: ExecutionContext): ReadWriteAction[Unit] = {
     db.aePerms.addUserIfNotInDatabase(requester) map { _ =>
       if (!acls.exists(_.roles.canManage))
         throw AgoraEntityAuthorizationException(AgoraPermissions(Manage), entity, requester)
@@ -245,21 +275,23 @@ class PermissionBusiness(permissionsDataSource: PermissionsDataSource)(implicit 
     }
   }
 
-  private def withNamespaceACLs[T](db: DataAccess, entity: AgoraEntity, requester: String)(op: Seq[AccessControl] => ReadWriteAction[T]): ReadWriteAction[T] = {
-    db.nsPerms.listNamespacePermissions(entity) flatMap { perms =>
-      val filteredPerms = perms.filter {
-        perm => perm.user.equals(requester) || perm.user.equals(AccessControl.publicUser)
-      }
-      op(filteredPerms)
-    }
+  private def withNamespaceACLs[T](db: DataAccess, entity: AgoraEntity, requester: String)
+                                  (op: Seq[AccessControl] => ReadWriteAction[T])
+                                  (implicit executionContext: ExecutionContext): ReadWriteAction[T] = {
+    db.nsPerms.listNamespacePermissions(entity) flatMap filterRequesterOrPublic(requester, op)
   }
 
-  private def withEntityACLs[T](db: DataAccess, entity: AgoraEntity, requester: String)(op: Seq[AccessControl] => ReadWriteAction[T]): ReadWriteAction[T] = {
-    db.aePerms.listEntityPermissions(entity) flatMap { perms =>
-      val filteredPerms = perms.filter {
-        perm => perm.user.equals(requester) || perm.user.equals(AccessControl.publicUser)
-      }
-      op(filteredPerms)
+  private def withEntityACLs[T](db: DataAccess, entity: AgoraEntity, requester: String)
+                               (op: Seq[AccessControl] => ReadWriteAction[T])
+                               (implicit executionContext: ExecutionContext): ReadWriteAction[T] = {
+    db.aePerms.listEntityPermissions(entity) flatMap filterRequesterOrPublic(requester, op)
+  }
+
+  private def filterRequesterOrPublic[T](requester: String, op: Seq[AccessControl] => ReadWriteAction[T])
+                                        (perms: Seq[AccessControl]): ReadWriteAction[T] = {
+    val filteredPerms = perms.filter {
+      perm => perm.user.equals(requester) || perm.user.equals(AccessControl.publicUser)
     }
+    op(filteredPerms)
   }
 }

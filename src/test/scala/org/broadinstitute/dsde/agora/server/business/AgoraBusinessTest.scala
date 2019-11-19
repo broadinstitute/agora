@@ -10,19 +10,21 @@ import org.broadinstitute.dsde.agora.server.model.AgoraEntityType
 import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpec, Matchers}
 import slick.dbio.DBIOAction
 
+import scala.concurrent.ExecutionContext.Implicits.global
+
 @DoNotDiscover
 class AgoraBusinessTest extends FlatSpec with Matchers with BeforeAndAfterAll with AgoraTestFixture {
 
 //  val methodImportResolver = new MethodImportResolver(agoraTestOwner.get, agoraBusiness)
 
-  override protected def beforeAll() = {
+  override protected def beforeAll(): Unit = {
     ensureDatabasesAreRunning()
     startMockWaas()
 
     patiently(agoraBusiness.insert(testEntityToBeRedacted3, mockAuthenticatedOwner.get, mockAccessToken))
   }
 
-  override protected def afterAll() = {
+  override protected def afterAll(): Unit = {
     clearDatabases()
     stopMockWaas()
   }

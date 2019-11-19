@@ -81,10 +81,13 @@ class ServerInitializer extends LazyLogging {
     }
   }
 
-  private def stopAdminGroupPoller() = {
-    Try(adminGroupPollerSchedule.cancel()) recover {
-      case _: NullPointerException => // Nothing to do; no scheduler was created at the first place
-      case t: Throwable => logger.warn(s"Unable to stop the admin group poller because '${t.getMessage}'")
+  private def stopAdminGroupPoller(): Try[Boolean] = {
+    Try(adminGroupPollerSchedule.cancel())  recover {
+      case _: NullPointerException =>
+        false // Nothing to do; no scheduler was created at the first place
+      case t: Throwable =>
+        logger.warn(s"Unable to stop the admin group poller because '${t.getMessage}'")
+        false
     }
   }
 

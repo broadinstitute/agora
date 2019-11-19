@@ -39,7 +39,7 @@ scalacOptions := Seq(
 //  "-Ywarn-value-discard",
   "-Ywarn-inaccessible",
 //  "-Ywarn-unused:implicits",
-//  "-Ywarn-unused:privates",
+  "-Ywarn-unused:privates",
   "-Ywarn-unused:locals",
   "-Ypartial-unification",
   "-Ywarn-unused:patvars"

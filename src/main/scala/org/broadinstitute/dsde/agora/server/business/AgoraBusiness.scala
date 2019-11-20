@@ -7,7 +7,6 @@ import org.broadinstitute.dsde.agora.server.exceptions._
 import org.broadinstitute.dsde.agora.server.dataaccess.{AgoraDao, MetricsClient, ReadWriteAction, WaasClient}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
-import org.broadinstitute.dsde.agora.server.model.AgoraEntityType.EntityType
 import org.broadinstitute.dsde.agora.server.model._
 import org.bson.types.ObjectId
 import slick.dbio.DBIO

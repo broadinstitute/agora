@@ -7,6 +7,7 @@ import org.broadinstitute.dsde.agora.server.exceptions._
 import org.broadinstitute.dsde.agora.server.dataaccess.{AgoraDao, MetricsClient, ReadWriteAction, WaasClient}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
+import org.broadinstitute.dsde.agora.server.model.AgoraEntityType.EntityType
 import org.broadinstitute.dsde.agora.server.model._
 import org.bson.types.ObjectId
 import slick.dbio.DBIO
@@ -289,9 +290,8 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
 
     methodsAndConfigsFuture flatMap { methodsAndConfigsSnapshots =>
 
-      val groupedMC = methodsAndConfigsSnapshots.groupBy(_.entityType)
-      val methodSnapshots = groupedMC.getOrElse(Some(AgoraEntityType.Workflow), Seq.empty[AgoraEntity])
-      val configSnapshots = groupedMC.getOrElse(Some(AgoraEntityType.Configuration), Seq.empty[AgoraEntity])
+      val methodSnapshots = methodsAndConfigsSnapshots.filter(_.entityType == Option(AgoraEntityType.Workflow))
+      val configSnapshots = methodsAndConfigsSnapshots.filter(_.entityType == Option(AgoraEntityType.Configuration))
 
       // group/count config snapshots by methodId
       val configCounts:Map[Option[ObjectId],Int] = configSnapshots

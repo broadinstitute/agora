@@ -15,7 +15,7 @@ object AgoraEntityBsonSupport {
       snapshotComment = stringOrNone(obj, "snapshotComment"),
       synopsis        = stringOrNone(obj, "synopsis"),
       documentation   = stringOrNone(obj, "documentation"),
-      owner           = None, // Not in DB
+      owner           = stringOrNone(obj, "owner"), // Not in DB but checked by tests? Hmm.
       createDate      = dateOrNone(obj, "createDate"),
       payload         = stringOrNone(obj, "payload"),
       payloadObject   = None, // Not in DB

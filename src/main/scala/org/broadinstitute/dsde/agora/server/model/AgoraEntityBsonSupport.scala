@@ -2,6 +2,7 @@ package org.broadinstitute.dsde.agora.server.model
 
 import com.mongodb.DBObject
 import org.joda.time.DateTime
+import org.joda.time.format.ISODateTimeFormat
 
 
 object AgoraEntityBsonSupport {
@@ -36,7 +37,7 @@ object AgoraEntityBsonSupport {
   }
 
   private def dateOrNone(obj: DBObject, key: String): Option[DateTime] = {
-    if (obj.containsField(key)) Option(obj.get(key).asInstanceOf[DateTime]) else None
+    if (obj.containsField(key)) Option(DateTime.parse(obj.get(key).asInstanceOf[String], ISODateTimeFormat.dateTimeNoMillis())) else None
   }
 
   private def entityType(obj: DBObject): Option[AgoraEntityType.EntityType] = {

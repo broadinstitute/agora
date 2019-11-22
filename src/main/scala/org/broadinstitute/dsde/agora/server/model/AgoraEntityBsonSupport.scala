@@ -19,7 +19,7 @@ object AgoraEntityBsonSupport {
       payload         = stringOrNone(obj, "payload"),
       payloadObject   = None, // Not in DB
       url             = None, // Not in DB
-      entityType      = Option(AgoraEntityType.Workflow), // TODO happens to be true in Adam's DB at the moment...
+      entityType      = entityType(obj), // TODO happens to be true in Adam's DB at the moment...
       id              = None, // In DB, but I don't think we ever use this
       methodId        = None, // Not in DB
       method          = None, // Not in DB
@@ -39,14 +39,13 @@ object AgoraEntityBsonSupport {
     Option(DateTime.now()) // TODO needs proper parsing...
   }
 
-//  private def entityTypeOrNone(obj: DBObject, key: String): Option[AgoraEntityType.EntityType] = {
-//    import org.broadinstitute.dsde.agora.server.model.AgoraEntityType
-//    import org.broadinstitute.dsde.agora.server.model.AgoraEntityType._
-//    if (obj.containsField(key)) {
-//      val entityString = Option(obj.get(key).asInstanceOf[String])
-//
-//    } else
-//      None
-//  }
+  private def entityType(obj: DBObject): Option[AgoraEntityType.EntityType] = {
+    if (obj.containsField("entityType")) {
+      val entityString = Option(obj.get("entityType").asInstanceOf[String])
+      entityString.map(AgoraEntityType.withName)
+    } else {
+      None
+    }
+  }
 
 }

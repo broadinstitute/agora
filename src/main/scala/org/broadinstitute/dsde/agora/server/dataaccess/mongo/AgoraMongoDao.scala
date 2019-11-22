@@ -14,7 +14,7 @@ import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
 import org.broadinstitute.dsde.agora.server.exceptions.{AgoraEntityNotFoundException, AgoraException}
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntityProjection._
-import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection, AgoraEntityType}
+import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityBsonSupport, AgoraEntityProjection, AgoraEntityType}
 import org.bson.types.ObjectId
 import spray.json._
 
@@ -61,7 +61,7 @@ object AgoraMongoDao {
   }
 
   def MongoDbObjectToEntity(mongoDBObject: DBObject): AgoraEntity = {
-    mongoDBObject.toString.parseJson.convertTo[AgoraEntity]
+    AgoraEntityBsonSupport.read(mongoDBObject)
   }
 }
 

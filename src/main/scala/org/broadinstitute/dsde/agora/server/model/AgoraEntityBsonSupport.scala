@@ -1,6 +1,7 @@
 package org.broadinstitute.dsde.agora.server.model
 
 import com.mongodb.DBObject
+import org.bson.types.ObjectId
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
 
@@ -21,7 +22,7 @@ object AgoraEntityBsonSupport {
       payloadObject   = None, // Not in DB
       url             = None, // Not in DB
       entityType      = entityType(obj),
-      id              = None, // In DB, but I don't think we ever use this
+      id              = Option(new ObjectId(obj.get("_id").asInstanceOf[Map[String, String]].get("$oid").asInstanceOf[String])),
       methodId        = None, // Not in DB
       method          = None, // Not in DB
       managers        = Seq.empty, // Not in DB

@@ -19,7 +19,7 @@ object AgoraEntityBsonSupport {
       payload         = stringOrNone(obj, "payload"),
       payloadObject   = None, // Not in DB
       url             = None, // Not in DB
-      entityType      = entityType(obj), // TODO happens to be true in Adam's DB at the moment...
+      entityType      = entityType(obj),
       id              = None, // In DB, but I don't think we ever use this
       methodId        = None, // Not in DB
       method          = None, // Not in DB
@@ -36,7 +36,7 @@ object AgoraEntityBsonSupport {
   }
 
   private def dateOrNone(obj: DBObject, key: String): Option[DateTime] = {
-    Option(DateTime.now()) // TODO needs proper parsing...
+    if (obj.containsField(key)) Option(obj.get(key).asInstanceOf[DateTime]) else None
   }
 
   private def entityType(obj: DBObject): Option[AgoraEntityType.EntityType] = {

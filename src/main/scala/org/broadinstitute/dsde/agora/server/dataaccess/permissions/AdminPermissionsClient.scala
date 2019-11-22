@@ -1,12 +1,15 @@
 package org.broadinstitute.dsde.agora.server.dataaccess.permissions
 
+import org.broadinstitute.dsde.agora.server.dataaccess.ReadWriteAction
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import slick.jdbc.JdbcProfile
 
+import scala.concurrent.ExecutionContext
+
 class AdminPermissionsClient(profile: JdbcProfile) extends PermissionsClient(profile) {
 
-  def listAdminUsers = listAdmins
+  def listAdminUsers()(implicit executionContext: ExecutionContext): ReadWriteAction[Seq[String]] = listAdmins()
 
-  def alias(entity: AgoraEntity) =
+  def alias(entity: AgoraEntity): String =
     entity.namespace.get + "." + entity.name.get + "." + entity.snapshotId.get
 }

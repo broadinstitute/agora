@@ -4,7 +4,7 @@ import akka.http.scaladsl.model.StatusCodes
 import com.typesafe.scalalogging.LazyLogging
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.exceptions._
-import org.broadinstitute.dsde.agora.server.dataaccess.{AgoraDao, MetricsClient, ReadWriteAction, WaasClient}
+import org.broadinstitute.dsde.agora.server.dataaccess.{AgoraDao, MetricsClient, ReadAction, ReadWriteAction, WaasClient}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.model._
@@ -22,13 +22,17 @@ object AgoraBusiness {
   private val configIdsProjection = Some(new AgoraEntityProjection(Seq[String]("id", "methodId"), Seq.empty[String]))
 }
 
-class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: ExecutionContext) extends LazyLogging {
+class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLogging {
   import AgoraBusiness._
 
   lazy val metricsClient = new MetricsClient()
 
   //Creates a fake extra permission with the desired permission level conditional on checkAdmin and the user being an admin
-  private def makeDummyAdminPermission(checkAdmin: Boolean, permClient: PermissionsClient, username: String, permLevel: AgoraPermissions) = {
+  private def makeDummyAdminPermission(checkAdmin: Boolean,
+                                       permClient: PermissionsClient,
+                                       username: String,
+                                       permLevel: AgoraPermissions)
+                                      (implicit executionContext: ExecutionContext): ReadAction[AgoraPermissions] = {
     if(checkAdmin) {
       permClient.isAdmin(username) map {
         case true => permLevel
@@ -39,7 +43,12 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     }
   }
 
-  private def checkInsertPermission[T](db: DataAccess, agoraEntity: AgoraEntity, username: String, snapshots: Seq[AgoraEntity])(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
+  private def checkInsertPermission[T](db: DataAccess,
+                                       agoraEntity: AgoraEntity,
+                                       username: String,
+                                       snapshots: Seq[AgoraEntity])
+                                      (op: => ReadWriteAction[T])
+                                      (implicit executionContext: ExecutionContext): ReadWriteAction[T] = {
     // if previous snapshots exist, check ownership on them; if not, check permission on the namespace
     if (snapshots.isEmpty)
       checkNamespacePermission(db, agoraEntity, username, AgoraPermissions(Create))(op)
@@ -63,7 +72,13 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
   }
 
   // as of this writing, no caller specifies checkAdmin=true, but we leave the option here for future use
-  private def checkNamespacePermission[T](db: DataAccess, agoraEntity: AgoraEntity, username: String, permLevel: AgoraPermissions, checkAdmin: Boolean = false)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
+  private def checkNamespacePermission[T](db: DataAccess,
+                                          agoraEntity: AgoraEntity,
+                                          username: String,
+                                          permLevel: AgoraPermissions,
+                                          checkAdmin: Boolean = false)
+                                         (op: => ReadWriteAction[T])
+                                         (implicit executionContext: ExecutionContext): ReadWriteAction[T] = {
     //if we're supposed to check if the user is an admin, create a fake action
     val admAction = makeDummyAdminPermission(checkAdmin, db.nsPerms, username, permLevel)
 
@@ -76,7 +91,12 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     }
   }
 
-  private def checkEntityPermission[T](db: DataAccess, agoraEntity: AgoraEntity, username: String, permLevel: AgoraPermissions)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
+  private def checkEntityPermission[T](db: DataAccess,
+                                       agoraEntity: AgoraEntity,
+                                       username: String,
+                                       permLevel: AgoraPermissions)
+                                      (op: => ReadWriteAction[T])
+                                      (implicit executionContext: ExecutionContext): ReadWriteAction[T] = {
     DBIO.sequence(Seq(db.aePerms.getEntityPermission(agoraEntity, username), db.aePerms.getEntityPermission(agoraEntity, AccessControl.publicUser))) flatMap { entityPerms =>
       if (!entityPerms.exists(_.hasPermission(permLevel))) {
         // if the user can't even read the entity, throw NotFound for security.
@@ -93,7 +113,11 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     }
   }
 
-  private def createNamespaceIfNonexistent(db: DataAccess, entity: AgoraEntity, entityWithId: AgoraEntity, userAccess: AccessControl): ReadWriteAction[Unit] = {
+  private def createNamespaceIfNonexistent(db: DataAccess,
+                                           entity: AgoraEntity,
+                                           entityWithId: AgoraEntity,
+                                           userAccess: AccessControl)
+                                          (implicit executionContext: ExecutionContext): ReadWriteAction[Unit] = {
     db.nsPerms.doesEntityExists(entity) flatMap { exists =>
       if(!exists) {
         db.nsPerms.addEntity(entity) flatMap { _ =>
@@ -105,7 +129,8 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     }
   }
 
-  private def checkValidPayload[T](agoraEntity: AgoraEntity, accessToken: String)(op: => ReadWriteAction[T]): ReadWriteAction[T] = {
+  private def checkValidPayload[T](agoraEntity: AgoraEntity, accessToken: String)
+                                  (op: => ReadWriteAction[T]): ReadWriteAction[T] = {
     agoraEntity.payload match {
       case None =>
         DBIO.failed(ValidationException(s"Agora entity $agoraEntity has no payload."))
@@ -123,6 +148,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
               if (fields.size != 1) throw ValidationException("Configuration payload must define at least one field named 'methodRepoMethod'.")
 
               val subFields = fields.head.asJsObject.getFields("methodNamespace", "methodName", "methodVersion")
+              //noinspection ZeroIndexToHead
               if (!subFields(0).isInstanceOf[JsString]) throw ValidationException("Configuration methodRepoMethod must include a 'methodNamespace' key with a string value")
               if (!subFields(1).isInstanceOf[JsString]) throw ValidationException("Configuration methodRepoMethod must include a 'methodName' key with a string value")
               if (!subFields(2).isInstanceOf[JsNumber]) throw ValidationException("Configuration methodRepoMethod must include a 'methodVersion' key with a JSNumber value")
@@ -153,7 +179,8 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     }
   }
 
-  def insert(agoraEntity: AgoraEntity, username: String, accessToken: String): Future[AgoraEntity] = {
+  def insert(agoraEntity: AgoraEntity, username: String, accessToken: String)
+            (implicit executionContext: ExecutionContext): Future[AgoraEntity] = {
     //these next two go to Mongo, so do them outside the permissions txn
     val configReferencedMethodOpt = agoraEntity.entityType.get match {
       case AgoraEntityType.Configuration => Some(resolveMethodRef(agoraEntity.payload.get))
@@ -199,7 +226,8 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     }
   }
 
-  def delete(agoraEntity: AgoraEntity, entityTypes: Seq[AgoraEntityType.EntityType], username: String): Future[Int] = {
+  def delete(agoraEntity: AgoraEntity, entityTypes: Seq[AgoraEntityType.EntityType], username: String)
+            (implicit executionContext: ExecutionContext): Future[Int] = {
     //list of associated configurations. Goes to Mongo so we do it outside the sql txn
     val configurations = if (entityTypes equals AgoraEntityType.MethodTypes) {
       val dao = AgoraDao.createAgoraDao(entityTypes)
@@ -219,7 +247,13 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     }
   }
 
-  def copy(sourceArgs: AgoraEntity, targetArgs: AgoraEntity, redact: Boolean, entityTypes: Seq[AgoraEntityType.EntityType], username: String, accessToken: String): Future[AgoraEntity] = {
+  def copy(sourceArgs: AgoraEntity,
+           targetArgs: AgoraEntity,
+           redact: Boolean,
+           entityTypes: Seq[AgoraEntityType.EntityType],
+           username: String,
+           accessToken: String)
+          (implicit executionContext: ExecutionContext): Future[AgoraEntity] = {
     // we only allow this for methods.
     val dao = AgoraDao.createAgoraDao(Some(AgoraEntityType.Workflow))
 
@@ -238,8 +272,8 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
           // get source permissions, copy to target
           (for {
             sourcePerms <- db.aePerms.listEntityPermissions(sourceEntity)
-            stub <- db.aePerms.addEntity(targetEntity)
-            targetPerms <- DBIO.sequence(sourcePerms map {
+            _ <- db.aePerms.addEntity(targetEntity)
+            _ <- DBIO.sequence(sourcePerms map {
               db.aePerms.insertEntityPermission(targetEntity, _)
             })
           } yield targetEntity.removeIds()) cleanUp {
@@ -278,8 +312,8 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     )
   }
 
-  def listDefinitions(username: String): Future[Seq[MethodDefinition]] = {
-
+  def listDefinitions(username: String)
+                     (implicit executionContext: ExecutionContext): Future[Seq[MethodDefinition]] = {
     // for this query, don't return heavy fields like the documentation or payload
     val projection = AgoraEntityProjection(
       includedFields = AgoraEntityProjection.RequiredProjectionFields ++ Seq("synopsis", "methodId"),
@@ -340,7 +374,8 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     }
   }
 
-  def listAssociatedConfigurations(namespace: String, name: String, username: String): Future[Seq[AgoraEntity]] = {
+  def listAssociatedConfigurations(namespace: String, name: String, username: String)
+                                  (implicit executionContext: ExecutionContext): Future[Seq[AgoraEntity]] = {
     val methodCriteria = AgoraEntity(Some(namespace), Some(name))
 
     // get all method snapshots for the supplied namespace/name (that the user has permissions to)
@@ -349,7 +384,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     methodsFuture flatMap { methods =>
       // if we didn't find any methods, throw 404
       if (methods.isEmpty)
-        throw new AgoraEntityNotFoundException(methodCriteria)
+        throw AgoraEntityNotFoundException(methodCriteria)
 
       // get ids
       val methodIds = methods flatMap (_.id)
@@ -367,7 +402,12 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     }
   }
 
-  def listCompatibleConfigurations(namespace: String, name: String, snapshotId: Int, username: String, accessToken: String): Future[Seq[AgoraEntity]] = {
+  def listCompatibleConfigurations(namespace: String,
+                                   name: String,
+                                   snapshotId: Int,
+                                   username: String,
+                                   accessToken: String)
+                                  (implicit executionContext: ExecutionContext): Future[Seq[AgoraEntity]] = {
 
     // get the specific method snapshot specified by the user (will throw error if not found)
     findSingle(namespace, name, snapshotId, Seq(AgoraEntityType.Workflow), username) flatMap { methodSnapshot =>
@@ -386,7 +426,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
               val (optionalInputs, requiredInputs) = workflow.getInputs.asScala.partition(_.getOptional)
               val optionalInputKeys = optionalInputs.map(workflow.getName + "." + _.getName).toSet
               val requiredInputKeys = requiredInputs.map(workflow.getName + "." + _.getName).toSet
-              val outputKeys:Set[String] = workflow.getOutputs().asScala.map(workflow.getName + "." + _.getName).toSet
+              val outputKeys: Set[String] = workflow.getOutputs.asScala.map(workflow.getName + "." + _.getName).toSet
 
               // define "compatible" to be:
               //  - config has exact same set of output keys as method's WDL
@@ -417,8 +457,10 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
   private def findWithIds(agoraSearch: AgoraEntity,
                                agoraProjection: Option[AgoraEntityProjection],
                                entityTypes: Seq[AgoraEntityType.EntityType],
-                               username: String): Future[Seq[AgoraEntity]] = {
+                               username: String)
+                         (implicit executionContext: ExecutionContext): Future[Seq[AgoraEntity]] = {
 
+    //noinspection ScalaUnusedSymbol
     /*
       inspects the agoraSearch criteria used when querying Mongo.
 
@@ -464,9 +506,10 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     * @return Future containing entity search results.
     */
   private def findByMySqlFirst(agoraSearch: AgoraEntity,
-                          agoraProjection: Option[AgoraEntityProjection],
-                          entityTypes: Seq[AgoraEntityType.EntityType],
-                          username: String): Future[Seq[AgoraEntity]] = {
+                               agoraProjection: Option[AgoraEntityProjection],
+                               entityTypes: Seq[AgoraEntityType.EntityType],
+                               username: String)
+                              (implicit executionContext: ExecutionContext): Future[Seq[AgoraEntity]] = {
 
     // query mysql for the list of entity aliases to which the user has permissions
     val aliasesFuture = permissionsDataSource.inTransaction{ db =>
@@ -540,9 +583,10 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
     * @return Future containing entity search results.
     */
   private def findByMongoFirst(agoraSearch: AgoraEntity,
-    agoraProjection: Option[AgoraEntityProjection],
-    entityTypes: Seq[AgoraEntityType.EntityType],
-    username: String): Future[Seq[AgoraEntity]] = {
+                               agoraProjection: Option[AgoraEntityProjection],
+                               entityTypes: Seq[AgoraEntityType.EntityType],
+                               username: String)
+                              (implicit executionContext: ExecutionContext): Future[Seq[AgoraEntity]] = {
 
     val entities = AgoraDao.createAgoraDao(entityTypes)
       .find(agoraSearch, agoraProjection)
@@ -558,7 +602,8 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
   def find(agoraSearch: AgoraEntity,
            agoraProjection: Option[AgoraEntityProjection],
            entityTypes: Seq[AgoraEntityType.EntityType],
-           username: String): Future[Seq[AgoraEntity]] =
+           username: String)
+          (implicit executionContext: ExecutionContext): Future[Seq[AgoraEntity]] =
     findWithIds(agoraSearch, agoraProjection, entityTypes, username).map { entities =>
       entities.map(_.addUrl().removeIds())
     }
@@ -567,7 +612,8 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
                  name: String,
                  snapshotId: Int,
                  entityTypes: Seq[AgoraEntityType.EntityType],
-                 username: String): Future[AgoraEntity] = {
+                 username: String)
+                (implicit executionContext: ExecutionContext): Future[AgoraEntity] = {
     val foundEntity = AgoraDao.createAgoraDao(entityTypes).findSingle(namespace, name, snapshotId)
 
     permissionsDataSource.inTransaction { db =>
@@ -587,7 +633,8 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
 
   def findSingle(entity: AgoraEntity,
                  entityTypes: Seq[AgoraEntityType.EntityType],
-                 username: String): Future[AgoraEntity] = {
+                 username: String)
+                (implicit executionContext: ExecutionContext): Future[AgoraEntity] = {
     findSingle(entity.namespace.get, entity.name.get, entity.snapshotId.get, entityTypes, username)
   }
 

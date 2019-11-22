@@ -1,6 +1,6 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
-import akka.actor.{ActorRef, ActorSystem}
+import akka.actor.ActorRef
 import akka.event.{Logging, LoggingAdapter}
 import akka.event.Logging.LogLevel
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
@@ -14,6 +14,7 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.Sink
 import com.typesafe.scalalogging.LazyLogging
 import org.broadinstitute.dsde.agora.server.SwaggerRoutes
+import org.broadinstitute.dsde.agora.server.business.AgoraBusinessExecutionContext
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
 import org.broadinstitute.dsde.agora.server.exceptions._
 import org.broadinstitute.dsde.agora.server.ga4gh.Ga4ghService
@@ -68,7 +69,11 @@ object ApiService extends LazyLogging with SprayJsonSupport with DefaultJsonProt
 }
 
 class ApiService(permissionsDataSource: PermissionsDataSource, healthMonitor: ActorRef)
-                (implicit val system: ActorSystem, val ec: ExecutionContext, val materializer: Materializer)
+                (implicit
+                 ec: ExecutionContext,
+                 materializer: Materializer,
+                 agoraBusinessExecutionContext: AgoraBusinessExecutionContext
+                )
   extends LazyLogging with SwaggerRoutes {
 
   val statusService = new StatusService(permissionsDataSource, healthMonitor)

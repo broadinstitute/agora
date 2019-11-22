@@ -1,15 +1,15 @@
 package org.broadinstitute.dsde.agora.server.dataaccess.permissions
 
-import AgoraPermissions._
 import com.typesafe.scalalogging.LazyLogging
 import org.broadinstitute.dsde.agora.server.AgoraConfig
+import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.dataaccess.{MetricsClient, ReadAction, ReadWriteAction, WriteAction}
 import org.broadinstitute.dsde.agora.server.exceptions.PermissionNotFoundException
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import slick.jdbc.JdbcProfile
 import spray.json.{JsNumber, JsObject, JsString}
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
 abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
@@ -19,15 +19,17 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
 
   def alias(entity: AgoraEntity): String
 
-  def withPermissionNotFoundException[T](errorString: String = "Could not get permission")( op: => ReadWriteAction[T] ): ReadWriteAction[T] = {
+  def withPermissionNotFoundException[T](errorString: String = "Could not get permission")
+                                        (op: => ReadWriteAction[T])
+                                        (implicit executionContext: ExecutionContext): ReadWriteAction[T] = {
     op.asTry flatMap {
       case Success(permission) => DBIO.successful(permission)
-      case Failure(ex) => DBIO.failed(new PermissionNotFoundException(errorString, ex))
+      case Failure(ex) => DBIO.failed(PermissionNotFoundException(errorString, ex))
     }
   }
 
   // Users
-  def addUserIfNotInDatabase(userEmail: String): WriteAction[Int] = {
+  def addUserIfNotInDatabase(userEmail: String)(implicit executionContext: ExecutionContext): WriteAction[Int] = {
     // Attempts to add user to UserTable and ignores errors if user already exists
     (users += UserDao(userEmail)).asTry flatMap {
       case Success(count) => DBIO.successful(count)
@@ -35,13 +37,13 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
     }
   }
 
-  def isAdmin(userEmail: String): ReadAction[Boolean] = {
+  def isAdmin(userEmail: String)(implicit executionContext: ExecutionContext): ReadAction[Boolean] = {
     users.findByEmail(userEmail).result map { users =>
       users.head.isAdmin
     }
   }
 
-  def listAdmins(): ReadWriteAction[Seq[String]] = {
+  def listAdmins()(implicit executionContext: ExecutionContext): ReadWriteAction[Seq[String]] = {
     withPermissionNotFoundException() {
       val adminsQuery = for {
         user <- users if user.is_admin === true
@@ -51,8 +53,9 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
     }
   }
 
-  def updateAdmin(userEmail: String, adminStatus: Boolean): ReadWriteAction[Int] = {
-    withPermissionNotFoundException(s"Could not make user ${userEmail} admin") {
+  def updateAdmin(userEmail: String, adminStatus: Boolean)
+                 (implicit executionContext: ExecutionContext): ReadWriteAction[Int] = {
+    withPermissionNotFoundException(s"Could not make user $userEmail admin") {
       for {
         _ <- addUserIfNotInDatabase(userEmail)
         rowsUpdated <- users
@@ -74,13 +77,14 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
     entities += EntityDao(alias(entity))
   }
 
-  def doesEntityExists(agoraEntity: AgoraEntity): ReadAction[Boolean] = {
+  def doesEntityExists(agoraEntity: AgoraEntity)(implicit executionContext: ExecutionContext): ReadAction[Boolean] = {
     entities.findByAlias(alias(agoraEntity)).result map { entity =>
       entity.nonEmpty
     }
   }
 
-  private def permissionQuery(agoraEntity: AgoraEntity, userEmail: String): ReadAction[Option[PermissionDao]] = {
+  private def permissionQuery(agoraEntity: AgoraEntity, userEmail: String)
+                             (implicit executionContext: ExecutionContext): ReadAction[Option[PermissionDao]] = {
     // Construct query to get permissions
     for {
       user <- users
@@ -101,7 +105,8 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
   }
 
 
-  private def lookupPermissions(agoraEntity: AgoraEntity, userEmail: String): ReadWriteAction[AgoraPermissions] = {
+  private def lookupPermissions(agoraEntity: AgoraEntity, userEmail: String)
+                               (implicit executionContext: ExecutionContext): ReadWriteAction[AgoraPermissions] = {
     for {
       _ <- addUserIfNotInDatabase(userEmail)
       permissionResultOpt <- permissionQuery(agoraEntity, userEmail)
@@ -114,7 +119,8 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
   }
 
   // Permissions
-  def getPermission(agoraEntity: AgoraEntity, userEmail: String): ReadWriteAction[AgoraPermissions] = {
+  def getPermission(agoraEntity: AgoraEntity, userEmail: String)
+                   (implicit executionContext: ExecutionContext): ReadWriteAction[AgoraPermissions] = {
     withPermissionNotFoundException() {
       doesEntityExists(agoraEntity) flatMap {
         // Can create entities that do not exist
@@ -124,7 +130,8 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
     }
   }
 
-  def listOwners(agoraEntity: AgoraEntity): ReadWriteAction[Seq[String]] = {
+  def listOwners(agoraEntity: AgoraEntity)
+                (implicit executionContext: ExecutionContext): ReadWriteAction[Seq[String]] = {
     withPermissionNotFoundException("Couldn't find any managers.") {
       val permissionsQuery = for {
         entity <- entities if entity.alias === alias(agoraEntity)
@@ -136,7 +143,8 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
     }
   }
 
-  def listPermissions(agoraEntity: AgoraEntity): ReadWriteAction[Seq[AccessControl]] = {
+  def listPermissions(agoraEntity: AgoraEntity)
+                     (implicit executionContext: ExecutionContext): ReadWriteAction[Seq[AccessControl]] = {
     withPermissionNotFoundException("Could not list permissions") {
       // Construct query
       val permissionsQuery = for {
@@ -151,11 +159,12 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
     }
   }
 
-  def insertPermission(agoraEntity: AgoraEntity, userAccessObject: AccessControl): ReadWriteAction[Int] = {
+  def insertPermission(agoraEntity: AgoraEntity, userAccessObject: AccessControl)
+                      (implicit executionContext: ExecutionContext): ReadWriteAction[Int] = {
     val userEmail = userAccessObject.user
     val roles = userAccessObject.roles
 
-    addUserIfNotInDatabase(userEmail) flatMap { added =>
+    addUserIfNotInDatabase(userEmail) flatMap { _ =>
       // construct insert action
       val addPermissionAction = for {
         user <- users
@@ -178,7 +187,8 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
     }
   }
 
-  def editPermission(agoraEntity: AgoraEntity, userAccessObject: AccessControl): ReadWriteAction[Int] = {
+  def editPermission(agoraEntity: AgoraEntity, userAccessObject: AccessControl)
+                    (implicit executionContext: ExecutionContext): ReadWriteAction[Int] = {
     val userEmail = userAccessObject.user
     val roles = userAccessObject.roles
 
@@ -186,7 +196,7 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
       case AgoraPermissions(Nothing) =>
         deletePermission(agoraEntity, userEmail)
       case _ =>
-        addUserIfNotInDatabase(userEmail) flatMap { added =>
+        addUserIfNotInDatabase(userEmail) flatMap { _ =>
           withPermissionNotFoundException("Could not edit permission") {
             // construct update action
             val permissionsUpdateAction = for {
@@ -218,8 +228,9 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
       }
     }
 
-  def deletePermission(agoraEntity: AgoraEntity, userToRemove: String): ReadWriteAction[Int] = {
-    addUserIfNotInDatabase(userToRemove) flatMap { added =>
+  def deletePermission(agoraEntity: AgoraEntity, userToRemove: String)
+                      (implicit executionContext: ExecutionContext): ReadWriteAction[Int] = {
+    addUserIfNotInDatabase(userToRemove) flatMap { _ =>
       withPermissionNotFoundException("Could not delete permission") {
         // construct update action
         val permissionsUpdateAction = for {
@@ -241,7 +252,7 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
 
         permissionsUpdateAction flatMap { rowsEdited =>
           if (rowsEdited == 0) {
-            DBIO.failed(new Exception("No rows were edited."))
+            DBIO.failed(new Exception("No rows were deleted."))
           } else {
             DBIO.successful(rowsEdited)
           }
@@ -250,7 +261,8 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
     }
   }
 
-  def deleteAllPermissions(agoraEntity: AgoraEntity): ReadWriteAction[Int] = {
+  def deleteAllPermissions(agoraEntity: AgoraEntity)
+                          (implicit executionContext: ExecutionContext): ReadWriteAction[Int] = {
     withPermissionNotFoundException("Could not delete permissions") {
       for {
         entity <- entities
@@ -295,7 +307,8 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
   // be careful with this method. Many previous callers of this method were very inefficient, retrieving entire
   // collections from Mongo and then filtering out 90%+ of those documents, leading to scale issues.
   // We are not deprecating or removing this method because it is appropriate for certain use cases.
-  def filterEntityByRead(agoraEntities: Seq[AgoraEntity], userEmail: String, callerTag: String = "unknown"): ReadAction[Seq[AgoraEntity]] = {
+  def filterEntityByRead(agoraEntities: Seq[AgoraEntity], userEmail: String, callerTag: String = "unknown")
+                        (implicit executionContext: ExecutionContext): ReadAction[Seq[AgoraEntity]] = {
 
     if (agoraEntities.isEmpty) {
       // short-circuit: if we're asked to filter the empty set, don't go to mysql. Just return the empty set.
@@ -344,7 +357,7 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
     }
   }
 
-  def listPublicAliases: ReadAction[Seq[String]] = {
+  def listPublicAliases(): ReadAction[Seq[String]] = {
     val publicAliasQuery = for {
       user <- users if user.email === AccessControl.publicUser
       permission <- permissions if permission.userID === user.id && permission.roles > 0
@@ -354,7 +367,7 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
     publicAliasQuery.result
   }
 
-  def listOwnersAndAliases: ReadAction[Seq[(String,String)]] = {
+  def listOwnersAndAliases(): ReadAction[Seq[(String,String)]] = {
     val ownerAndAliasQuery = for {
       user <- users
       permission <- permissions if permission.userID === user.id && (permission.roles === Manage || permission.roles === All)
@@ -364,7 +377,8 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
     ownerAndAliasQuery.result
   }
 
-  def sqlDBStatus() = {
-    sql"select version();".as[String]
+  def sqlDBStatus()(implicit executionContext: ExecutionContext): ReadAction[Unit] = {
+    //noinspection SqlDialectInspection
+    sql"select version();".as[String].map(_ => ())
   }
 }

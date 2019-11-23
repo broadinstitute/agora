@@ -17,8 +17,6 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
 
   lazy val metricsClient = new MetricsClient()
 
-  def alias(entity: AgoraEntity): String
-
   def withPermissionNotFoundException[T](errorString: String = "Could not get permission")( op: => ReadWriteAction[T] ): ReadWriteAction[T] = {
     op.asTry flatMap {
       case Success(permission) => DBIO.successful(permission)
@@ -71,11 +69,11 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
 
   // Entities
   def addEntity(entity: AgoraEntity): WriteAction[Int] = {
-    entities += EntityDao(alias(entity))
+    entities += EntityDao(entity.alias)
   }
 
   def doesEntityExists(agoraEntity: AgoraEntity): ReadAction[Boolean] = {
-    entities.findByAlias(alias(agoraEntity)).result map { entity =>
+    entities.findByAlias(agoraEntity.alias).result map { entity =>
       entity.nonEmpty
     }
   }
@@ -89,7 +87,7 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
         .head
 
       entity <- entities
-        .filter(_.alias === alias(agoraEntity))
+        .filter(_.alias === agoraEntity.alias)
         .result
         .head
 
@@ -127,7 +125,7 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
   def listOwners(agoraEntity: AgoraEntity): ReadWriteAction[Seq[String]] = {
     withPermissionNotFoundException("Couldn't find any managers.") {
       val permissionsQuery = for {
-        entity <- entities if entity.alias === alias(agoraEntity)
+        entity <- entities if entity.alias === agoraEntity.alias
         permission <- permissions if permission.entityID === entity.id && (permission.roles >= AgoraPermissions.Manage)
         user <- users if user.id === permission.userID
       } yield user.email
@@ -140,7 +138,7 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
     withPermissionNotFoundException("Could not list permissions") {
       // Construct query
       val permissionsQuery = for {
-        entity <- entities if entity.alias === alias(agoraEntity)
+        entity <- entities if entity.alias === agoraEntity.alias
         _permissions <- permissions if _permissions.entityID === entity.id
         user <- users if user.id === _permissions.userID
       } yield (user.email, _permissions.roles)
@@ -164,7 +162,7 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
           .head
 
         entity <- entities
-          .filter(_.alias === alias(agoraEntity))
+          .filter(_.alias === agoraEntity.alias)
           .result
           .head
 
@@ -196,7 +194,7 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
                 .head
 
               entity <- entities
-                .filter(_.alias === alias(agoraEntity))
+                .filter(_.alias === agoraEntity.alias)
                 .result
                 .head
 
@@ -229,7 +227,7 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
             .head
 
           entity <- entities
-            .filter(_.alias === alias(agoraEntity))
+            .filter(_.alias === agoraEntity.alias)
             .result
             .head
 
@@ -254,7 +252,7 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
     withPermissionNotFoundException("Could not delete permissions") {
       for {
         entity <- entities
-          .filter(_.alias === alias(agoraEntity))
+          .filter(_.alias === agoraEntity.alias)
           .result
           .head
 
@@ -310,7 +308,7 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
       val entityFilterMaxCount = AgoraConfig.sqlAliasBatchSize // defaults to 100
 
       val entityAliases = if (agoraEntities.nonEmpty && agoraEntities.size < entityFilterMaxCount) {
-        Option(agoraEntities.map(alias))
+        Option(agoraEntities.map(_.alias))
       } else {
         logger.info(s"filterEntityByRead bypassing IN clause because it found ${agoraEntities.size}/$entityFilterMaxCount entities")
         metricsClient.recordMetric("mysql", JsObject(
@@ -323,7 +321,7 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
       listReadableEntities(userEmail, entityAliases) map { aliasedAgoraEntitiesWithReadPermissions =>
         val aliasedAgoraEntitiesWithReadPermissionsSet = aliasedAgoraEntitiesWithReadPermissions.toSet
         val filteredEntities = agoraEntities.filter(agoraEntity =>
-          aliasedAgoraEntitiesWithReadPermissionsSet.contains(alias(agoraEntity))
+          aliasedAgoraEntitiesWithReadPermissionsSet.contains(agoraEntity.alias)
         )
 
         // metrics on how efficient this operation is: of all the Mongo entities supplied in arguments,

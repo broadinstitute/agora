@@ -4,14 +4,23 @@ package org.broadinstitute.dsde.agora.server.dataaccess.permissions
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 
 object AgoraPermissions {
-  val Nothing = 0
-  val Read = 1 << 0
-  val Write = 1 << 1
-  val Create = 1 << 2
-  val Redact = 1 << 3
-  val Manage = 1 << 4
-  val ReadWrite = Read | Write
-  val All = Read | Write | Create | Redact | Manage
+  val Nothing: Int = 0
+  val Read: Int = 1 << 0
+  val Write: Int = 1 << 1
+  val Create: Int = 1 << 2
+  val Redact: Int = 1 << 3
+  val Manage: Int = 1 << 4
+  val ReadWrite: Int = Read | Write
+  val All: Int = Read | Write | Create | Redact | Manage
+
+  implicit class EnhancedAgoraPermissions(val givenPermission: Int) extends AnyVal {
+    /**
+     * Returns true if this permission has the passed checkPermission.
+     */
+    def hasPermission(checkPermission: Int): Boolean = {
+      (givenPermission & checkPermission) == checkPermission
+    }
+  }
 
   // The roles String input is formatted like "read, write, manage"
   def fromParams(roles: String): AgoraPermissions = {
@@ -42,11 +51,11 @@ case class AgoraPermissions(permissions: Int) {
     this(varPermissions.foldLeft(0) { (perm1, perm2) => perm1 | perm2 })
   }
 
-  def removePermissions(varPermissions: Int*) = {
+  def removePermissions(varPermissions: Int*): AgoraPermissions = {
     AgoraPermissions(varPermissions.foldLeft(permissions) { (perm1, perm2) => perm1 & ~perm2 })
   }
 
-  def addPermissions(varPermissions: Int*) = {
+  def addPermissions(varPermissions: Int*): AgoraPermissions = {
     AgoraPermissions(varPermissions.foldLeft(permissions) { (perm1, perm2) => perm1 | perm2 })
   }
 

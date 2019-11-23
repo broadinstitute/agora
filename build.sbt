@@ -45,8 +45,9 @@ scalacOptions := Seq(
   "-Ywarn-unused:patvars"
 )
 
-lazy val akkaV = "2.5.11"
-lazy val akkaHttpV = "10.1.0"
+val akkaV = "2.5.11"
+val akkaHttpV = "10.1.0"
+val slickV = "3.3.2"
 
 val artifactory = "https://broadinstitute.jfrog.io/broadinstitute/"
 
@@ -70,8 +71,8 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-stream" % akkaV,
   "com.typesafe" % "config" % "1.3.3",
   "com.typesafe.scala-logging" %% "scala-logging" % "3.8.0",
-  "com.typesafe.slick" %% "slick" % "3.2.2",
-  "com.zaxxer" % "HikariCP" % "2.7.8",
+  "com.typesafe.slick" %% "slick" % slickV,
+  "com.typesafe.slick" %% "slick-hikaricp" % slickV,
   "mysql" % "mysql-connector-java" % "6.0.6",
   
   // ficus was being pulled in transitively from wdl-draft2 previously, now made explicit
@@ -125,19 +126,19 @@ assemblyMergeStrategy in assembly := {
     xs map {
       _.toLowerCase
     } match {
-      case ("manifest.mf" :: Nil) | ("index.list" :: Nil) | ("dependencies" :: Nil) =>
+      case "manifest.mf" :: Nil | "index.list" :: Nil | "dependencies" :: Nil =>
         MergeStrategy.discard
-      case ps@(x :: strings) if ps.last.endsWith(".sf") || ps.last.endsWith(".dsa") =>
+      case ps@_ :: _ if ps.last.endsWith(".sf") || ps.last.endsWith(".dsa") =>
         MergeStrategy.discard
-      case "plexus" :: strings =>
+      case "plexus" :: _ =>
         MergeStrategy.discard
-      case "spring.tooling" :: strings =>
+      case "spring.tooling" :: _ =>
         MergeStrategy.discard
-      case "com.google.guava" :: strings =>
+      case "com.google.guava" :: _ =>
         MergeStrategy.discard
-      case "services" :: strings =>
+      case "services" :: _ =>
         MergeStrategy.filterDistinctLines
-      case ("spring.schemas" :: Nil) | ("spring.handlers" :: Nil) =>
+      case "spring.schemas" :: Nil | "spring.handlers" :: Nil =>
         MergeStrategy.filterDistinctLines
       case _ => MergeStrategy.deduplicate
     }

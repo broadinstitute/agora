@@ -623,7 +623,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLo
       for {
         _ <- db.aePerms.addUserIfNotInDatabase(username)
         foundEntity <- DBIO.from(foundEntityFuture)
-        agoraEntities = db.aePerms.filterEntityByRead(Seq(foundEntity), username, "findSingle")
+        agoraEntities <- db.aePerms.filterEntityByRead(Seq(foundEntity), username, "findSingle")
         agoraEntityResult <- agoraEntities match {
           case Seq(agoraEntity: AgoraEntity) =>
             for {

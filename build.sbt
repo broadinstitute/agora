@@ -103,7 +103,7 @@ shellPrompt := { state => "%s| %s> ".format(GitCommand.prompt.apply(state), vers
 
 // We need to fork the tests and provide the correct config so that users do not accidentally
 // provide a config that points to a real database.
-javaOptions in Test := Seq("-Dconfig.file=src/test/resources/reference.conf")
+javaOptions in Test := Seq("-Dconfig.file=src/test/resources/application.conf")
 fork in Test := true
 
 parallelExecution in Test := false

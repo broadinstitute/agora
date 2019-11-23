@@ -91,7 +91,7 @@ libraryDependencies ++= Seq(
 
 //These can be overridden with system properties:
 // i.e: sbt -Dflyway.url=jdbc:mysql://DB_HOST:DB_PORT/DB_NAME -Dflyway.user=root -Dflyway.password=abc123
-flywayUrl := "jdbc:h2:file:local"
+flywayUrl := "jdbc:h2:file:./agora_db"
 
 flywayUser := "root"
 

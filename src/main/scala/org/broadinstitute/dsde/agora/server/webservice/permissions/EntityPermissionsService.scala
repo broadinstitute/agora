@@ -13,20 +13,17 @@ import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.routes.{BaseRoute, RouteHelpers}
 import spray.json.DefaultJsonProtocol
 
-import scala.concurrent.ExecutionContextExecutor
+import scala.concurrent.ExecutionContext
 
-class EntityPermissionsService(dataSource: PermissionsDataSource) extends RouteHelpers with BaseRoute
-  with Directives with SprayJsonSupport with DefaultJsonProtocol with LazyLogging {
+class EntityPermissionsService(dataSource: PermissionsDataSource) extends RouteHelpers with BaseRoute with Directives with SprayJsonSupport with DefaultJsonProtocol with LazyLogging {
 
-  // ec Required for PermissionBusiness
-  implicit val ec: ExecutionContextExecutor = scala.concurrent.ExecutionContext.global
-  lazy val permissionBusiness = new PermissionBusiness(dataSource)(ec)
+  lazy val permissionBusiness = new PermissionBusiness(dataSource)
 
-  def routes: Route =
+  def routes(implicit executionContext: ExecutionContext): Route =
     authenticationDirectives.usernameFromRequest(()) { username: String =>
       path("api" / AgoraConfig.version / ("configurations" | "methods") / Segment / Segment / IntNumber / "permissions") {
         (namespace: String, name: String, snapshotId: Int) =>
-        parameterMap { (params) =>
+        parameterMap { params =>
           val agoraEntity = AgoraEntity(Option(namespace), Option(name), Option(snapshotId))
 
           entity(as[List[AccessControl]]) { acl =>

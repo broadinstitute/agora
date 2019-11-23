@@ -12,16 +12,14 @@ import org.broadinstitute.dsde.agora.server.webservice.routes.{BaseRoute, RouteH
 import spray.json.DefaultJsonProtocol
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 
-import scala.concurrent.{ExecutionContextExecutor, Future}
+import scala.concurrent.{ExecutionContext, Future}
 
 class MultiEntityPermissionsService(dataSource: PermissionsDataSource) extends RouteHelpers with BaseRoute
   with Directives with SprayJsonSupport with DefaultJsonProtocol with LazyLogging {
 
-  // ec Required for PermissionBusiness
-  implicit val ec: ExecutionContextExecutor = scala.concurrent.ExecutionContext.global
-  lazy val permissionBusiness = new PermissionBusiness(dataSource)(ec)
+  lazy val permissionBusiness = new PermissionBusiness(dataSource)
 
-  def routes: Route =
+  def routes(implicit executionContext: ExecutionContext): Route =
     authenticationDirectives.usernameFromRequest(()) { username: String =>
       path("api" / AgoraConfig.version / ("configurations" | "methods") / "permissions") {
         post {

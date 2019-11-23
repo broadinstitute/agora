@@ -1,9 +1,10 @@
 package org.broadinstitute.dsde.agora.server
 
-import akka.actor.{ActorSystem, Cancellable}
+import akka.actor.{ActorRef, ActorSystem, Cancellable}
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
 import com.typesafe.scalalogging.LazyLogging
+import org.broadinstitute.dsde.agora.server.business.AgoraBusinessExecutionContext
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDBStatus
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.EmbeddedMongo
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AdminSweeper.Sweep
@@ -12,22 +13,33 @@ import org.broadinstitute.dsde.agora.server.webservice.ApiService
 import org.broadinstitute.dsde.workbench.util.health.HealthMonitor
 import org.broadinstitute.dsde.workbench.util.health.Subsystems.{Database, Mongo}
 
+import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.util.Try
 
 class ServerInitializer extends LazyLogging {
-  implicit val actorSystem = ActorSystem("agora")
-  implicit val materializer = ActorMaterializer()
-  implicit val executionContext = scala.concurrent.ExecutionContext.Implicits.global
+  implicit val actorSystem: ActorSystem = ActorSystem("agora")
+  implicit val materializer: ActorMaterializer = ActorMaterializer()
+  implicit val executionContext: ExecutionContext = actorSystem.dispatcher
+
+  private val ioDispatcherName = "dispatchers.io-dispatcher"
+  private val healthMonitorDispatcherName = "dispatchers.health-monitor-dispatcher"
+  private val adminSweeperDispatcherName = "dispatchers.admin-sweeper-dispatcher"
+  private val ioDispatcher = actorSystem.dispatchers.lookup(ioDispatcherName)
+  private val healthMonitorDispatcher = actorSystem.dispatchers.lookup(healthMonitorDispatcherName)
+  private val adminSweeperDispatcher = actorSystem.dispatchers.lookup(adminSweeperDispatcherName)
+
+  private implicit val agoraBusinessExecutionContext: AgoraBusinessExecutionContext =
+    new AgoraBusinessExecutionContext(ioDispatcher)
   val permsDataSource = new PermissionsDataSource(AgoraConfig.sqlDatabase)
 
 
   // create these outside of the startAllServices def, so we have global access to their vals
   private val dbStatus = new AgoraDBStatus(permsDataSource)
-  val healthMonitor = actorSystem.actorOf(HealthMonitor.props(Set(Database, Mongo)) { () =>
-    Map(Database -> dbStatus.mysqlStatus, Mongo -> dbStatus.mongoStatus)
-  }, "health-monitor")
+  val healthMonitor: ActorRef = actorSystem.actorOf(HealthMonitor.props(Set(Database, Mongo))({ () =>
+    Map(Database -> dbStatus.mysqlStatus(), Mongo -> dbStatus.mongoStatus())
+  }).withDispatcher(healthMonitorDispatcherName), "health-monitor")
   private var healthMonitorSchedule: Cancellable = _
   private var adminGroupPollerSchedule: Cancellable = _
 
@@ -35,7 +47,9 @@ class ServerInitializer extends LazyLogging {
     if (AgoraConfig.usesEmbeddedMongo)
       EmbeddedMongo.startMongo()
 
-    healthMonitorSchedule = actorSystem.scheduler.schedule(3.seconds, 1.minute, healthMonitor, HealthMonitor.CheckAll)
+    healthMonitorSchedule = actorSystem.scheduler.schedule(3.seconds, 1.minute, healthMonitor, HealthMonitor.CheckAll)(
+      executor = healthMonitorDispatcher
+    )
 
     startAdminGroupPoller()
     startWebService()
@@ -70,11 +84,18 @@ class ServerInitializer extends LazyLogging {
     * If such a group is specified in config, poll it at regular intervals
     * to synchronize the admins defined in our users table.
     */
-  private def startAdminGroupPoller() = {
+  private def startAdminGroupPoller(): Unit = {
     AgoraConfig.adminGoogleGroup match {
       case Some(_) =>
-        val adminGroupPoller = actorSystem.actorOf(AdminSweeper.props(AdminSweeper.adminsGoogleGroupPoller, permsDataSource))
-        adminGroupPollerSchedule = actorSystem.scheduler.schedule(5 seconds, AgoraConfig.adminSweepInterval minutes, adminGroupPoller, Sweep)
+        val adminGroupPoller = actorSystem.actorOf(
+          AdminSweeper
+            .props(AdminSweeper.adminsGoogleGroupPoller, permsDataSource)
+            .withDispatcher(adminSweeperDispatcherName)
+        )
+        adminGroupPollerSchedule = actorSystem.scheduler
+          .schedule(5 seconds, AgoraConfig.adminSweepInterval minutes, adminGroupPoller, Sweep)(
+            executor = adminSweeperDispatcher
+          )
       case None =>
     }
   }

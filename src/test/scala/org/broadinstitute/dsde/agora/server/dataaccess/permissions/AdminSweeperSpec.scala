@@ -1,12 +1,13 @@
 package org.broadinstitute.dsde.agora.server.dataaccess.permissions
 
 import akka.actor.ActorSystem
-import akka.testkit.{ImplicitSender, TestKit, TestActorRef}
+import akka.testkit.{ImplicitSender, TestActorRef, TestKit}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AdminSweeper.Sweep
 import org.broadinstitute.dsde.agora.server.{AgoraTestData, AgoraTestFixture}
-import org.scalatest.{DoNotDiscover, WordSpecLike, Matchers, BeforeAndAfterAll}
-import scala.concurrent.duration._
+import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, Matchers, WordSpecLike}
 
+import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
 import scala.language.postfixOps
 
 object AdminSweeperSpec {
@@ -18,11 +19,13 @@ object AdminSweeperSpec {
 @DoNotDiscover
 class AdminSweeperSpec(_system: ActorSystem) extends TestKit(_system) with WordSpecLike with Matchers with BeforeAndAfterAll with AgoraTestFixture with ImplicitSender {
 
-  override protected def beforeAll() = {
+  implicit val executionContext: ExecutionContext = _system.dispatcher
+
+  override protected def beforeAll(): Unit = {
   ensureDatabasesAreRunning()
   }
 
-  override protected def afterAll() = {
+  override protected def afterAll(): Unit = {
   clearDatabases()
   }
 
@@ -35,7 +38,7 @@ class AdminSweeperSpec(_system: ActorSystem) extends TestKit(_system) with WordS
       adminSweeper ! Sweep
       awaitAssert{
         runInDB { db =>
-          db.admPerms.listAdminUsers
+          db.admPerms.listAdminUsers()
         } == AdminSweeperSpec.getMockAdminsList
       }
     }

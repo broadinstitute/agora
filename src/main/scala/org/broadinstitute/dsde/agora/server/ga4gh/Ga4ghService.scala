@@ -5,6 +5,7 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import com.typesafe.scalalogging.LazyLogging
+import org.broadinstitute.dsde.agora.server.business.AgoraBusinessExecutionContext
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
 import org.broadinstitute.dsde.agora.server.ga4gh.Models._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
@@ -12,15 +13,16 @@ import spray.json._
 
 import scala.util.Failure
 import scala.util.Success
-import scala.concurrent.{ExecutionContextExecutor, Future}
+import scala.concurrent.{ExecutionContext, Future}
 
 class Ga4ghService(permissionsDataSource: PermissionsDataSource) extends Ga4ghQueryHandler with Ga4ghServiceSupport with SprayJsonSupport with DefaultJsonProtocol with LazyLogging {
 
-  // dataSource and ec Required for Ga4ghQueryHandler
+  // dataSource required for Ga4ghQueryHandler
   implicit val dataSource: PermissionsDataSource = permissionsDataSource
-  implicit val ec: ExecutionContextExecutor = scala.concurrent.ExecutionContext.global
 
-  def routes: Route =
+  def routes(implicit
+             executionContext: ExecutionContext,
+             agoraBusinessExecutionContext: AgoraBusinessExecutionContext): Route =
     pathPrefix("ga4gh" / "v1") {
       get {
         path("metadata") {
@@ -43,7 +45,7 @@ class Ga4ghService(permissionsDataSource: PermissionsDataSource) extends Ga4ghQu
         path("tools" / Segment / "versions" / Segment) { (id, versionId) =>
           complete(queryPublicSingle(entityFromArguments(id, versionId)))
         } ~
-        path("tools" / Segment / "versions" / Segment / "dockerfile") { (id, versionId) =>
+        path("tools" / Segment / "versions" / Segment / "dockerfile") { (_, _) =>
           complete(StatusCodes.NotImplemented)
         } ~
         path("tools" / Segment / "versions" / Segment / Segment / "descriptor") { (id, versionId, descriptorType) =>
@@ -64,10 +66,10 @@ class Ga4ghService(permissionsDataSource: PermissionsDataSource) extends Ga4ghQu
             case Failure(ex) => failWith(ex)
           }
         } ~
-        path("tools" / Segment / "versions" / Segment / Segment / "descriptor" / Segment) { (id, versionId, descriptorType, relativePath) =>
+        path("tools" / Segment / "versions" / Segment / Segment / "descriptor" / Segment) { (_, _, _, _) =>
           complete(StatusCodes.NotImplemented)
         } ~
-        path("tools" / Segment / "versions" / Segment / Segment / "tests") { (id, versionId, descriptorType) =>
+        path("tools" / Segment / "versions" / Segment / Segment / "tests") { (_, _, _) =>
           complete(StatusCodes.NotImplemented)
         }
       }

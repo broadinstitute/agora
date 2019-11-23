@@ -11,11 +11,5 @@ import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
  */
 
 class MethodsService(permissionsDataSource: PermissionsDataSource) extends AgoraService(permissionsDataSource) {
-  override def path = ApiUtil.Methods.path
-
-  override def querySingleRoute = super.querySingleRoute
-
-  override def queryRoute = super.queryRoute
-
-  override def postRoute = super.postRoute
+  override def path: String = ApiUtil.Methods.path
 }

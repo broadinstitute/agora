@@ -7,16 +7,16 @@ import org.broadinstitute.dsde.workbench.util.health.{HealthMonitor, SubsystemSt
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
-class AgoraDBStatus(dataSource: PermissionsDataSource)(implicit ec: ExecutionContext) {
+class AgoraDBStatus(dataSource: PermissionsDataSource) {
 
-  def mongoStatus: Future[SubsystemStatus] = {
-    getMongoDBStatus match {
-      case Success(_) => Future.successful(HealthMonitor.OkStatus)
-      case Failure(t) => Future.successful(HealthMonitor.failedStatus(t.getMessage))
+  def mongoStatus()(implicit executionContext: ExecutionContext): Future[SubsystemStatus] = {
+    Future(getMongoDBStatus) map {
+      case Success(_) => HealthMonitor.OkStatus
+      case Failure(t) => HealthMonitor.failedStatus(t.getMessage)
     }
   }
 
-  def mysqlStatus: Future[SubsystemStatus] = {
+  def mysqlStatus()(implicit executionContext: ExecutionContext): Future[SubsystemStatus] = {
     dataSource.inTransaction { db =>
       db.aePerms.sqlDBStatus().asTry map {
         case Success(_) => HealthMonitor.OkStatus

@@ -5,8 +5,8 @@ import akka.http.scaladsl.model.StatusCodes.OK
 import com.mongodb.casbah.MongoCollection
 import com.mongodb.casbah.commons.MongoDBObject
 import com.typesafe.scalalogging.LazyLogging
-import org.broadinstitute.dsde.agora.server.AgoraTestData.{waasMockServerPort, _}
-import org.broadinstitute.dsde.agora.server.business.{AgoraBusiness, PermissionBusiness}
+import org.broadinstitute.dsde.agora.server.AgoraTestData._
+import org.broadinstitute.dsde.agora.server.business.{AgoraBusiness, AgoraBusinessExecutionContext, PermissionBusiness}
 import org.broadinstitute.dsde.agora.server.dataaccess.ReadWriteAction
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.{AgoraMongoClient, EmbeddedMongo}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
@@ -24,6 +24,8 @@ import scala.language.postfixOps
 
 trait AgoraTestFixture extends LazyLogging {
   import scala.concurrent.ExecutionContext.Implicits.global
+  implicit lazy val agoraBusinessExecutionContext: AgoraBusinessExecutionContext =
+    new AgoraBusinessExecutionContext(scala.concurrent.ExecutionContext.Implicits.global)
 
   val timeout = 10.seconds
   val db: Database = AgoraConfig.sqlDatabase.db

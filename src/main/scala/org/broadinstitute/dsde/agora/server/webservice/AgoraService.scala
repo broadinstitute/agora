@@ -4,10 +4,10 @@ package org.broadinstitute.dsde.agora.server.webservice
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes.{BadRequest, Created}
 import akka.http.scaladsl.model.HttpMethods.{DELETE, GET}
-import akka.http.scaladsl.server.{MethodRejection, PathMatcher}
+import akka.http.scaladsl.server.{MethodRejection, PathMatcher, Route}
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.AgoraConfig.authenticationDirectives
-import org.broadinstitute.dsde.agora.server.business.AgoraBusiness
+import org.broadinstitute.dsde.agora.server.business.{AgoraBusiness, AgoraBusinessExecutionContext}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
 import org.broadinstitute.dsde.agora.server.exceptions.AgoraEntityNotFoundException
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
@@ -17,24 +17,30 @@ import org.broadinstitute.dsde.agora.server.webservice.routes.RouteHelpers
 import scala.util.{Failure, Success, Try}
 import scalaz.{Failure => FailureZ, Success => SuccessZ}
 
+import scala.concurrent.ExecutionContext
+
 /**
  * AgoraService defines routes for ApiServiceActor.
  *
  * Concrete implementations are MethodsService and ConfigurationsService.
  */
 abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extends RouteHelpers {
-  implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
 
   private val agoraBusiness = new AgoraBusiness(permissionsDataSource)
 
   def path: String
 
-  def routes = queryAssociatedConfigurationsRoute ~ queryCompatibleConfigurationsRoute ~ querySingleRoute ~
+  def routes(implicit
+             executionContext: ExecutionContext,
+             agoraBusinessExecutionContext: AgoraBusinessExecutionContext): Route =
+    queryAssociatedConfigurationsRoute ~ queryCompatibleConfigurationsRoute ~ querySingleRoute ~
     queryMethodDefinitionsRoute ~ queryRoute ~ postRoute
 
   // GET http://root.com/methods/<namespace>/<name>/<snapshotId>?onlyPayload=true
   // GET http://root.com/configurations/<namespace>/<name>/<snapshotId>
-  def querySingleRoute =
+  def querySingleRoute(implicit
+                       ec: ExecutionContext,
+                       agoraBusinessExecutionContext: AgoraBusinessExecutionContext): Route =
     matchQuerySingleRoute(path)(ec) {
       (namespace, name, snapshotId, username, accessToken) =>
         parameters( "onlyPayload".as[Boolean] ? false, "payloadAsObject".as[Boolean] ? false ) {
@@ -43,7 +49,9 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
             val entityTypes = AgoraEntityType.byPath(path)
 
             get {
-              Try(agoraBusiness.findSingle(targetEntity, entityTypes, username)) match {
+              Try(agoraBusiness.findSingle(targetEntity, entityTypes, username)(
+                agoraBusinessExecutionContext.executionContext
+              )) match {
                 case Success(queryAttempt) =>
                   onComplete(queryAttempt) {
                     case Success(foundEntity) =>
@@ -61,7 +69,9 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
               }
             } ~
             delete {
-              complete(agoraBusiness.delete(targetEntity, entityTypes, username).map(_.toString))
+              complete(agoraBusiness.delete(targetEntity, entityTypes, username).map(_.toString)(
+                agoraBusinessExecutionContext.executionContext
+              ))
             } ~
             post {
               // only allow copying (post) for methods
@@ -74,7 +84,9 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
                     case FailureZ(errors) => throw new IllegalArgumentException(s"Method is invalid: Errors: $errors")
                   }
                   parameters("redact".as[Boolean] ? false) { redact =>
-                    complete(agoraBusiness.copy(targetEntity, newEntity, redact, entityTypes, username, accessToken))
+                    complete(agoraBusiness.copy(targetEntity, newEntity, redact, entityTypes, username, accessToken)(
+                      agoraBusinessExecutionContext.executionContext
+                    ))
                   }
                 }
               }
@@ -82,30 +94,44 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
         }
     }
 
-  def queryMethodDefinitionsRoute =
+  def queryMethodDefinitionsRoute(implicit
+                                  ec: ExecutionContext,
+                                  agoraBusinessExecutionContext: AgoraBusinessExecutionContext): Route =
     (versionedPath(PathMatcher("methods" / "definitions")) & get &
       authenticationDirectives.usernameFromRequest(())) { username =>
-        complete(agoraBusiness.listDefinitions(username))
+        complete(agoraBusiness.listDefinitions(username)(
+          agoraBusinessExecutionContext.executionContext
+        ))
     }
 
   // all configurations that reference any snapshot of the supplied method
-  def queryAssociatedConfigurationsRoute =
+  def queryAssociatedConfigurationsRoute(implicit
+                                         ec: ExecutionContext,
+                                         agoraBusinessExecutionContext: AgoraBusinessExecutionContext): Route =
     (versionedPath(PathMatcher("methods" / Segment / Segment / "configurations")) & get &
       authenticationDirectives.usernameFromRequest(())) { (namespace, name, username) =>
-        complete(agoraBusiness.listAssociatedConfigurations(namespace, name, username))
+        complete(agoraBusiness.listAssociatedConfigurations(namespace, name, username)(
+          agoraBusinessExecutionContext.executionContext
+        ))
     }
 
   // all configurations that have the same inputs and outputs of the supplied method snapshot,
   // as well as referencing any snapshot of the supplied method
-  def queryCompatibleConfigurationsRoute =
+  def queryCompatibleConfigurationsRoute(implicit
+                                         ec: ExecutionContext,
+                                         agoraBusinessExecutionContext: AgoraBusinessExecutionContext): Route =
     (versionedPath(PathMatcher("methods" / Segment / Segment / IntNumber / "configurations")) & get &
       authenticationDirectives.usernameFromRequest(()) & authenticationDirectives.tokenFromRequest()) { (namespace, name, snapshotId, username, accessToken) =>
-        complete(agoraBusiness.listCompatibleConfigurations(namespace, name, snapshotId, username, accessToken))
+        complete(agoraBusiness.listCompatibleConfigurations(namespace, name, snapshotId, username, accessToken)(
+          agoraBusinessExecutionContext.executionContext
+        ))
     }
 
   // GET http://root.com/methods?
   // GET http://root.com/configurations?
-  def queryRoute =
+  def queryRoute(implicit
+                 ec: ExecutionContext,
+                 agoraBusinessExecutionContext: AgoraBusinessExecutionContext): Route =
     matchQueryRoute(path)(ec) { username =>
       parameterMultiMap { params =>
         validateEntityType(params, path) {
@@ -113,14 +139,18 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
           val projection = projectionFromParams(params)
           val entityTypes = AgoraEntityType.byPath(path)
 
-          complete(agoraBusiness.find(entity, projection, entityTypes, username))
+          complete(agoraBusiness.find(entity, projection, entityTypes, username)(
+            agoraBusinessExecutionContext.executionContext
+          ))
         }
       }
     }
 
   // POST http://root.com/methods
   // POST http://root.com/configurations
-  def postRoute =
+  def postRoute(implicit
+                ec: ExecutionContext,
+                agoraBusinessExecutionContext: AgoraBusinessExecutionContext): Route =
     postPath(path)(ec) { (username, accessToken) =>
       entity(as[AgoraEntity]) { agoraEntity =>
         validatePostRoute(agoraEntity, path) {
@@ -129,7 +159,9 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
             case _ => agoraEntity
           }
 
-          complete(Created, agoraBusiness.insert(entityWithType, username, accessToken))
+          complete(Created, agoraBusiness.insert(entityWithType, username, accessToken)(
+            agoraBusinessExecutionContext.executionContext
+          ))
         }
       }
     }

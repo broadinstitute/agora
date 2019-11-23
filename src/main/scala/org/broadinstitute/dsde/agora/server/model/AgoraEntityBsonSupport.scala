@@ -22,7 +22,7 @@ object AgoraEntityBsonSupport {
       payloadObject   = None, // Not in DB
       url             = None, // Not in DB
       entityType      = entityType(obj),
-      id              = Option(new ObjectId(obj.get("_id").asInstanceOf[String])),
+      id              = Option(new ObjectId(obj.get("_id").toString)),
       methodId        = None, // Not in DB
       method          = None, // Not in DB
       managers        = Seq.empty, // Not in DB

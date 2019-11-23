@@ -7,6 +7,6 @@ class AdminPermissionsClient(profile: JdbcProfile) extends PermissionsClient(pro
 
   def listAdminUsers = listAdmins
 
-  def alias(entity: AgoraEntity) =
-    entity.namespace.get + "." + entity.name.get + "." + entity.snapshotId.get
+  def alias(entity: AgoraEntity): String =
+    entity.entityAlias
 }

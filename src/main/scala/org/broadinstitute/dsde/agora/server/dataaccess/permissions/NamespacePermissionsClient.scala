@@ -5,8 +5,8 @@ import slick.jdbc.JdbcProfile
 
 class NamespacePermissionsClient(profile: JdbcProfile) extends PermissionsClient(profile) {
 
-  def alias(entity: AgoraEntity) =
-    entity.namespace.get
+  def alias(entity: AgoraEntity): String =
+    entity.namespaceAlias
 
   def getNamespacePermission(entity: AgoraEntity, userEmail: String) =
     getPermission(entity, userEmail)

@@ -5,7 +5,7 @@ import slick.jdbc.JdbcProfile
 
 class AgoraEntityPermissionsClient(profile: JdbcProfile) extends PermissionsClient(profile) {
 
-  def alias(entity: AgoraEntity) =
+  def alias(entity: AgoraEntity): String =
     entity.entityAlias
 
   def getEntityPermission(entity: AgoraEntity, userEmail: String) =

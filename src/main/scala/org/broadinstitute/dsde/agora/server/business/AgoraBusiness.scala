@@ -305,7 +305,8 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
           val publicAliasesSet = publicAliases.toSet
           // apply public status
           val snapshotsWithPublic = methodSnapshots.map { snap =>
-            snap.copy(public = Some(publicAliasesSet.contains(snap.alias)))
+            val snapshotAlias = permissionsDataSource.dataAccess.aePerms.alias(snap)
+            snap.copy(public = Some(publicAliasesSet.contains(snapshotAlias)))
           }
 
           // find and add owners
@@ -315,7 +316,8 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource)(implicit ec: E
             val ownersAndAliasesMap = ownersAndAliases.groupBy(_._1).mapValues(_.map(_._2))
 
             val annotatedSnapshots = snapshotsWithPublic.map { snap =>
-              val owners = ownersAndAliasesMap.getOrElse(snap.alias, Nil)
+              val snapshotAlias = permissionsDataSource.dataAccess.aePerms.alias(snap)
+              val owners = ownersAndAliasesMap.getOrElse(snapshotAlias, Nil)
               snap.addManagers(owners)
             }
 

@@ -318,61 +318,67 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLo
       includedFields = AgoraEntityProjection.RequiredProjectionFields ++ Seq("synopsis", "methodId"),
       excludedFields = Seq.empty[String])
 
+    // Eagerly start finding ids
     val methodsAndConfigsFuture = findWithIds(AgoraEntity(), Some(projection), Seq(AgoraEntityType.Configuration, AgoraEntityType.Workflow), username)
-    // find public-ness
+    // Eagerly start finding public-ness
     val aliasesOwnersPermissionsFuture = permissionsDataSource.inTransaction(_.aePerms.listAliasesOwnersPermissions)
 
-    methodsAndConfigsFuture flatMap { methodsAndConfigsSnapshots =>
-      aliasesOwnersPermissionsFuture map { aliasesOwnersPermissions =>
+    // Both futures are already running, and when both IO operations complete, run the actual filtering
+    for {
+      methodsAndConfigs <- methodsAndConfigsFuture
+      aliasesOwnersPermissions <- aliasesOwnersPermissionsFuture
+    } yield filterByPermissions(methodsAndConfigs, aliasesOwnersPermissions)
+  }
 
-        val methodSnapshots = methodsAndConfigsSnapshots.filter(_.entityType.exists(_ == AgoraEntityType.Workflow))
-        val configSnapshots = methodsAndConfigsSnapshots.filter(_.entityType.exists(_ == AgoraEntityType.Configuration))
+  private def filterByPermissions(methodsAndConfigsSnapshots: Seq[AgoraEntity],
+                                  aliasesOwnersPermissions: Seq[(String, String, Int)]): Seq[MethodDefinition] = {
 
-        // group/count config snapshots by methodId
-        val configCounts: Map[Option[ObjectId], Int] = configSnapshots.groupBy(_.methodId) map {
-          case (objectIdOption, agoraEntities) => objectIdOption -> agoraEntities.size
-        }
+    val methodSnapshots = methodsAndConfigsSnapshots.filter(_.entityType.exists(_ == AgoraEntityType.Workflow))
+    val configSnapshots = methodsAndConfigsSnapshots.filter(_.entityType.exists(_ == AgoraEntityType.Configuration))
 
-        val publicAliasesSet = aliasesOwnersPermissions.collect({
-          case (alias, owner, permissions)
-            if owner == AccessControl.publicUser && permissions > AgoraPermissions.Nothing =>
-            alias
-        }).toSet
-        // apply public status
-
-        val snapshotsWithPublic = methodSnapshots.map { snap =>
-          val snapshotAlias = permissionsDataSource.dataAccess.aePerms.alias(snap)
-          snap.copy(public = Option(publicAliasesSet.contains(snapshotAlias)))
-        }
-
-        val ownersAndAliases = aliasesOwnersPermissions.collect({
-          case (alias, owner, permissions) if permissions.hasPermission(AgoraPermissions.Manage) => (alias, owner)
-        })
-
-        // In Scala 2.13 this can be replaced with a .groupMap()
-        val ownersAndAliasesMap = ownersAndAliases.groupBy(_._1).mapValues(_.map(_._2))
-
-        val annotatedSnapshots = snapshotsWithPublic.map { snap =>
-          val snapshotAlias = permissionsDataSource.dataAccess.aePerms.alias(snap)
-          val owners = ownersAndAliasesMap.getOrElse(snapshotAlias, Nil)
-          snap.addManagers(owners)
-        }
-
-        // group method snapshots by namespace/name; count method snapshots and sum config counts
-        val groupedMethods = annotatedSnapshots.groupBy(ae => (ae.namespace, ae.name))
-
-        groupedMethods.values.map { aes: Seq[AgoraEntity] =>
-          val numSnapshots: Int = aes.size
-          val numConfigurations: Int = aes.map { ae => configCounts.getOrElse(ae.id, 0) }.sum
-          val isPublic = aes.exists(_.public.contains(true))
-          val managers = aes.flatMap { ae => ae.managers }.distinct
-
-          // use the most recent (i.e. highest snapshot value) to populate the definition
-          val latestSnapshot = aes.maxBy(_.snapshotId.getOrElse(Int.MinValue))
-          MethodDefinition(latestSnapshot, managers, isPublic, numConfigurations, numSnapshots)
-        }.toSeq
-      }
+    // group/count config snapshots by methodId
+    val configCounts: Map[Option[ObjectId], Int] = configSnapshots.groupBy(_.methodId) map {
+      case (objectIdOption, agoraEntities) => objectIdOption -> agoraEntities.size
     }
+
+    val publicAliasesSet = aliasesOwnersPermissions.collect({
+      case (alias, owner, permissions)
+        if owner == AccessControl.publicUser && permissions > AgoraPermissions.Nothing =>
+        alias
+    }).toSet
+    // apply public status
+
+    val snapshotsWithPublic = methodSnapshots.map { snap =>
+      val snapshotAlias = permissionsDataSource.dataAccess.aePerms.alias(snap)
+      snap.copy(public = Option(publicAliasesSet.contains(snapshotAlias)))
+    }
+
+    val ownersAndAliases = aliasesOwnersPermissions.collect({
+      case (alias, owner, permissions) if permissions.hasPermission(AgoraPermissions.Manage) => (alias, owner)
+    })
+
+    // In Scala 2.13 this can be replaced with a .groupMap()
+    val ownersAndAliasesMap = ownersAndAliases.groupBy(_._1).mapValues(_.map(_._2))
+
+    val annotatedSnapshots = snapshotsWithPublic.map { snap =>
+      val snapshotAlias = permissionsDataSource.dataAccess.aePerms.alias(snap)
+      val owners = ownersAndAliasesMap.getOrElse(snapshotAlias, Nil)
+      snap.addManagers(owners)
+    }
+
+    // group method snapshots by namespace/name; count method snapshots and sum config counts
+    val groupedMethods = annotatedSnapshots.groupBy(ae => (ae.namespace, ae.name))
+
+    groupedMethods.values.map { aes: Seq[AgoraEntity] =>
+      val numSnapshots: Int = aes.size
+      val numConfigurations: Int = aes.map { ae => configCounts.getOrElse(ae.id, 0) }.sum
+      val isPublic = aes.exists(_.public.contains(true))
+      val managers = aes.flatMap { ae => ae.managers }.distinct
+
+      // use the most recent (i.e. highest snapshot value) to populate the definition
+      val latestSnapshot = aes.maxBy(_.snapshotId.getOrElse(Int.MinValue))
+      MethodDefinition(latestSnapshot, managers, isPublic, numConfigurations, numSnapshots)
+    }.toSeq
   }
 
   def listAssociatedConfigurations(namespace: String, name: String, username: String)
@@ -455,140 +461,20 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLo
     }
   }
 
+  /** Queries mongo for all potential entities matching the user's search criteria, then queries mysql to filters those
+   * potential entities down to just those that the user has permissions to read.
+   *
+   * @param agoraSearch     user-supplied criteria for searching entities
+   * @param agoraProjection the list of fields to return from mongo
+   * @param entityTypes     entity types to search for
+   * @param username        user performing the search
+   * @return Future containing entity search results.
+   */
   private def findWithIds(agoraSearch: AgoraEntity,
-                               agoraProjection: Option[AgoraEntityProjection],
-                               entityTypes: Seq[AgoraEntityType.EntityType],
-                               username: String)
+                          agoraProjection: Option[AgoraEntityProjection],
+                          entityTypes: Seq[AgoraEntityType.EntityType],
+                          username: String)
                          (implicit executionContext: ExecutionContext): Future[Seq[AgoraEntity]] = {
-
-    //noinspection ScalaUnusedSymbol
-    /*
-      inspects the agoraSearch criteria used when querying Mongo.
-
-      if that criteria is specific enough that we expect to find fewer mongo entities
-      than mysql entities, query by mongo first. This will create a more efficient mongo
-      query while the mysql query remains the same.
-
-      if the criteria is too broad and we expect to find more (possibly many more) mongo
-      entities than mysql entities, query by mysql first. This will prevent us from retrieving
-      and discarding useless data out of mongo.
-
-      Currently, we use very basic criteria: if the user specified any search parameters
-      other than entityType, we'll query mongo first. We exclude entityType because it is too
-      broad. The list of parameters below matches what we document in swagger  (minus entityType).
-    */
-    // def isCriteriaSpecific(agoraSearch: AgoraEntity): Boolean = {
-    //   agoraSearch.namespace.nonEmpty ||
-    //     agoraSearch.name.nonEmpty ||
-    //     agoraSearch.snapshotId.nonEmpty ||
-    //     agoraSearch.snapshotComment.nonEmpty ||
-    //     agoraSearch.synopsis.nonEmpty ||
-    //     agoraSearch.documentation.nonEmpty ||
-    //     agoraSearch.owner.nonEmpty ||
-    //     agoraSearch.payload.nonEmpty
-    // }
-
-    // TODO: temporarily sending all queries through findByMongoFirst while resolving performance issues
-    // if (isCriteriaSpecific(agoraSearch)) {
-    //if (true) {
-      findByMongoFirst(agoraSearch, agoraProjection, entityTypes, username)
-    //} else {
-    //  findByMySqlFirst(agoraSearch, agoraProjection, entityTypes, username)
-    //}
-  }
-
-  /*  Implementation, called by findWithIds, that queries mysql to list all entities the user can read,
-    * then queries mongo using that list of entities to get all the entity details.
-    *
-    * @param agoraSearch user-supplied criteria for searching entities
-    * @param agoraProjection the list of fields to return from mongo
-    * @param entityTypes entity types to search for
-    * @param username user performing the search
-    * @return Future containing entity search results.
-    */
-  /*
-  private def findByMySqlFirst(agoraSearch: AgoraEntity,
-                               agoraProjection: Option[AgoraEntityProjection],
-                               entityTypes: Seq[AgoraEntityType.EntityType],
-                               username: String)
-                              (implicit executionContext: ExecutionContext): Future[Seq[AgoraEntity]] = {
-
-    // query mysql for the list of entity aliases to which the user has permissions
-    val aliasesFuture = permissionsDataSource.inTransaction {
-      _.aePerms.listReadableEntities(username)
-    }
-
-    // materialize the aliases result
-    aliasesFuture.map { aliases =>
-
-      // for debugging/instrumentation purposes only.
-      // we expect an entity alias have either 1 part (it's a namespace) or 3 parts (it's namespace.name.snapshotId).
-      // but we know that the prod env has some aliases with other sizes, before validation was enabled.
-      // how often are these unexpected aliases encountered in actuality?
-      if (logger.underlying.isInfoEnabled) {
-        val badAliases = aliases.filter { x =>
-          val numParts = x.split('.')
-          numParts.length != 3 && numParts.length != 1
-        }
-        if (badAliases.nonEmpty) {
-          logger.info(s"found some bad aliases: ${badAliases.length} with lengths: ${badAliases.map(_.split('.').length)}")
-        }
-      }
-
-      // The maximum number of entity aliases we would send to Mongo for an "IN" clause.
-      val mongoBatchSize = AgoraConfig.mongoAliasBatchSize // defaults to 5000
-
-      // execute multiple queries to Mongo, each limited to ${mongoBatchSize}. This prevents
-      // the Mongo "IN" clause (actually a $where evaluation) from being too large and slow.
-      // it also keeps the query request document below Mongo's limit of 16MB
-      val distinctAliases = aliases.distinct
-      val batchedAliases = distinctAliases.grouped(mongoBatchSize).toSeq // toSeq materializes the iterator
-
-      metricsClient.recordMetric("mongo", JsObject(
-        "numBatches" -> JsNumber(batchedAliases.size),
-        "batchSize" -> JsNumber(mongoBatchSize),
-        "numAliases" -> JsNumber(distinctAliases.size)
-      ))
-
-      val entityResults = batchedAliases.flatMap { batch =>
-        AgoraDao.createAgoraDao(entityTypes)
-          .findByAliases(batch.toList, agoraSearch, agoraProjection)
-      }
-
-      val rawCount = aliases.length
-      val filteredCount = entityResults.length
-      val efficiency:Float = filteredCount.toFloat/rawCount.toFloat
-
-      metricsClient.recordMetric("queryEfficiency", JsObject(
-        "caller" -> JsString(s"findByMySqlFirst(${entityTypes.sorted.mkString(",")})"),
-        "method" -> JsString("findByMySqlFirst"),
-        "efficiency" -> JsNumber(efficiency.toDouble),
-        "filtered" -> JsNumber(filteredCount.toDouble),
-        "raw" -> JsNumber(rawCount)
-      ))
-
-      entityResults
-    }
-
-  }
-  */
-
-  /** Implementation, called by findWithIds, that queries mongo for all potential entities matching
-    * the user's search criteria, then queries mysql to filters those potential entities down to
-    * just those that the user has permissions to read.
-    *
-    * @param agoraSearch user-supplied criteria for searching entities
-    * @param agoraProjection the list of fields to return from mongo
-    * @param entityTypes entity types to search for
-    * @param username user performing the search
-    * @return Future containing entity search results.
-    */
-  private def findByMongoFirst(agoraSearch: AgoraEntity,
-                               agoraProjection: Option[AgoraEntityProjection],
-                               entityTypes: Seq[AgoraEntityType.EntityType],
-                               username: String)
-                              (implicit executionContext: ExecutionContext): Future[Seq[AgoraEntity]] = {
-
     // Start looking up entities with an eager Future.
     val entitiesFuture = Future(AgoraDao.createAgoraDao(entityTypes).find(agoraSearch, agoraProjection))
 
@@ -596,7 +482,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLo
       for {
         _ <- db.aePerms.addUserIfNotInDatabase(username)
         entities <- DBIO.from(entitiesFuture)
-        entity <- db.aePerms.filterEntityByRead(entities, username, s"findByMongoFirst(${entityTypes.sorted.mkString(",")})")
+        entity <- db.aePerms.filterEntityByRead(entities, username, s"findWithIds(${entityTypes.sorted.mkString(",")})")
       } yield entity
     }
   }

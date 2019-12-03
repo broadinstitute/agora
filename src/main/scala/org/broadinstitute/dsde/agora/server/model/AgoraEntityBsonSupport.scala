@@ -16,14 +16,14 @@ object AgoraEntityBsonSupport {
       snapshotComment = stringOrNone(obj, "snapshotComment"),
       synopsis        = stringOrNone(obj, "synopsis"),
       documentation   = stringOrNone(obj, "documentation"),
-      owner           = stringOrNone(obj, "owner"), // Not in DB but checked by tests? Hmm.
+      owner           = None, // Not in DB
       createDate      = dateOrNone(obj, "createDate"),
       payload         = stringOrNone(obj, "payload"),
       payloadObject   = None, // Not in DB
       url             = None, // Not in DB
       entityType      = entityType(obj),
       id              = Option(new ObjectId(obj.get("_id").toString)),
-      methodId        = idOrNone(obj, "methodId"), // Not in DB
+      methodId        = idOrNone(obj, "methodId"), // Configs only
       method          = None, // Not in DB
       managers        = Seq.empty, // Not in DB
       public          = None, // Not in DB

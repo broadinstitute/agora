@@ -379,6 +379,10 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
 
   def sqlDBStatus()(implicit executionContext: ExecutionContext): ReadAction[Unit] = {
     //noinspection SqlDialectInspection
-    sql"select version();".as[String].map(_ => ())
+    for {
+      _ <- DBIO.successful(logger.info("Checking database version"))
+      _ <- sql"select version();".as[String]
+      _ <- DBIO.successful(logger.info("Checked database version"))
+    } yield ()
   }
 }

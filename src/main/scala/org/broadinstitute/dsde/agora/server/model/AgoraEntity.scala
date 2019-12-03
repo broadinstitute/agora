@@ -133,6 +133,12 @@ case class AgoraEntity(namespace: Option[String] = None,
                        managers: Seq[String] = Seq(),
                        public: Option[Boolean] = None) {
 
+  lazy val entityAlias: String =
+    namespace.get + "." + name.get + "." + snapshotId.get
+
+  lazy val namespaceAlias: String =
+    namespace.get
+
   def agoraUrl: String = {
     AgoraConfig.urlFromType(entityType) + namespace.get + "/" + name.get + "/" + snapshotId.get
   }

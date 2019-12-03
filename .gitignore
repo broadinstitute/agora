@@ -9,3 +9,4 @@ native
 configure.rb
 agora.jar
 .docker-rsync-local.pid
+*-service-account.json

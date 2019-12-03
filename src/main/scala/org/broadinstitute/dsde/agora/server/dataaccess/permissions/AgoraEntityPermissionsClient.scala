@@ -9,7 +9,7 @@ import scala.concurrent.ExecutionContext
 class AgoraEntityPermissionsClient(profile: JdbcProfile) extends PermissionsClient(profile) {
 
   def alias(entity: AgoraEntity): String =
-    entity.namespace.get + "." + entity.name.get + "." + entity.snapshotId.get
+    entity.entityAlias
 
   def getEntityPermission(entity: AgoraEntity, userEmail: String)
                          (implicit executionContext: ExecutionContext): ReadWriteAction[AgoraPermissions] =

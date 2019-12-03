@@ -9,7 +9,7 @@ import scala.concurrent.ExecutionContext
 class NamespacePermissionsClient(profile: JdbcProfile) extends PermissionsClient(profile) {
 
   def alias(entity: AgoraEntity): String =
-    entity.namespace.get
+    entity.namespaceAlias
 
   def getNamespacePermission(entity: AgoraEntity, userEmail: String)
                             (implicit executionContext: ExecutionContext): ReadWriteAction[AgoraPermissions] =

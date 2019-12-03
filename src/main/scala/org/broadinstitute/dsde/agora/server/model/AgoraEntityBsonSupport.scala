@@ -23,11 +23,15 @@ object AgoraEntityBsonSupport {
       url             = None, // Not in DB
       entityType      = entityType(obj),
       id              = Option(new ObjectId(obj.get("_id").toString)),
-      methodId        = None, // Not in DB
+      methodId        = idOrNone(obj, "methodId"), // Not in DB
       method          = None, // Not in DB
       managers        = Seq.empty, // Not in DB
       public          = None, // Not in DB
     )
+
+  private def idOrNone(obj: DBObject, key: String): Option[ObjectId] = {
+    if (obj.containsField(key)) Option(new ObjectId(obj.get(key).toString)) else None
+  }
 
   private def stringOrNone(obj: DBObject, key: String): Option[String] = {
     if (obj.containsField(key)) Option(obj.get(key).asInstanceOf[String]) else None

@@ -38,7 +38,10 @@ class ServerInitializer extends LazyLogging {
   // create these outside of the startAllServices def, so we have global access to their vals
   private val dbStatus = new AgoraDBStatus(permsDataSource)
   val healthMonitor: ActorRef = actorSystem.actorOf(HealthMonitor.props(Set(Database, Mongo))({ () =>
-    Map(Database -> dbStatus.mysqlStatus(), Mongo -> dbStatus.mongoStatus())
+    Map(
+      Database -> dbStatus.mysqlStatus()(healthMonitorDispatcher),
+      Mongo -> dbStatus.mongoStatus()(healthMonitorDispatcher)
+    )
   }).withDispatcher(healthMonitorDispatcherName), "health-monitor")
   private var healthMonitorSchedule: Cancellable = _
   private var adminGroupPollerSchedule: Cancellable = _

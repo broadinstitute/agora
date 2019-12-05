@@ -1,9 +1,8 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
-import akka.actor.ActorSystem
+import akka.{actor => classic}
 import akka.http.scaladsl.model.ContentTypes
 import akka.http.scaladsl.model.StatusCodes._
-import akka.stream.ActorMaterializer
 import org.broadinstitute.dsde.agora.server.AgoraTestData.mockServerPort
 import org.broadinstitute.dsde.agora.server.exceptions.DockerImageNotFoundException
 import org.broadinstitute.dsde.agora.server.webservice.util.DockerHubJsonSupport._
@@ -14,14 +13,13 @@ import org.mockserver.model.HttpRequest.request
 import org.scalatest._
 import spray.json._
 
-import scala.concurrent.{Await, ExecutionContext}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContext}
 
 @DoNotDiscover
 class DockerHubClientSpec extends AsyncFreeSpec with Matchers with BeforeAndAfterAll with DockerHubClient {
 
-  override implicit def actorSystem: ActorSystem = ActorSystem("agoraHttpClient")
-  override implicit def materializer: ActorMaterializer = ActorMaterializer()
+  override implicit def actorSystem: classic.ActorSystem = classic.ActorSystem("agoraHttpClient")
   override implicit def executionContext: ExecutionContext = super[DockerHubClient].executionContext
 
   var mockServer: ClientAndServer = _

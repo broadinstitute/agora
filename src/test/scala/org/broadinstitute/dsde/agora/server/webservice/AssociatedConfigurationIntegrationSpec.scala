@@ -1,6 +1,5 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
-import akka.actor.ActorSystem
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server.directives.ExecutionDirectives
@@ -16,18 +15,18 @@ import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpec}
 
 import scala.concurrent.duration._
 
+//noinspection ZeroIndexToHead
 @DoNotDiscover
 class AssociatedConfigurationIntegrationSpec extends FlatSpec with ExecutionDirectives
   with ScalatestRouteTest with BeforeAndAfterAll with AgoraTestFixture {
 
-  implicit val routeTestTimeout = RouteTestTimeout(20.seconds)
+  private implicit val routeTestTimeout: RouteTestTimeout = RouteTestTimeout(20.seconds)
 
-  trait ActorRefFactoryContext {
-    def actorRefFactory: ActorSystem = system
-  }
+  private val payload_name = "AssociatedConfigurationIntegrationSpec-config-payload-name"
+  private val payload_namespace = "AssociatedConfigurationIntegrationSpec-config-payload-namespace"
 
-  val methodsService = new MethodsService(permsDataSource) with ActorRefFactoryContext
-  val testRoutes = ApiService.handleExceptionsAndRejections (methodsService.queryAssociatedConfigurationsRoute)
+  val methodsService = new MethodsService(permsDataSource)
+  private val testRoutes = ApiService.handleExceptionsAndRejections(methodsService.queryAssociatedConfigurationsRoute)
 
   override def beforeAll(): Unit = {
     ensureDatabasesAreRunning()
@@ -35,20 +34,20 @@ class AssociatedConfigurationIntegrationSpec extends FlatSpec with ExecutionDire
 
     // create a few unique methods, each with multiple snapshots
     patiently(agoraBusiness.insert(testMethod("one"), mockAuthenticatedOwner.get, mockAccessToken))
-    for (x <- 1 to 2)
+    for (_ <- 1 to 2)
       patiently(agoraBusiness.insert(testMethod("two"), mockAuthenticatedOwner.get, mockAccessToken))
-    for (x <- 1 to 3)
+    for (_ <- 1 to 3)
       patiently(agoraBusiness.insert(testMethod("three"), mockAuthenticatedOwner.get, mockAccessToken))
     // this one will have a redacted snapshot
-    for (x <- 1 to 4)
+    for (_ <- 1 to 4)
       patiently(agoraBusiness.insert(testMethod("redacts"), mockAuthenticatedOwner.get, mockAccessToken))
     // this will have a snapshot owned by someone else
-    for (x <- 1 to 5)
+    for (_ <- 1 to 5)
       patiently(agoraBusiness.insert(testMethod("otherowner"), mockAuthenticatedOwner.get, mockAccessToken))
 
     // create some configs
     // method 2 has 2 configs, both pointing at snapshot 1
-    for (x <- 1 to 2)
+    for (_ <- 1 to 2)
       patiently(agoraBusiness.insert(testConfig("two",1), mockAuthenticatedOwner.get, mockAccessToken))
     // method 3 has 2 configs, pointing at snapshots 2 and 3
     patiently(agoraBusiness.insert(testConfig("three",2), mockAuthenticatedOwner.get, mockAccessToken))
@@ -204,6 +203,7 @@ class AssociatedConfigurationIntegrationSpec extends FlatSpec with ExecutionDire
     testMethod(s"AssociatedConfigurationIntegrationSpec-ns-$label",
       s"AssociatedConfigurationIntegrationSpec-name-$label")
 
+  //noinspection SameParameterValue
   private def testMethod(namespace:String, name:String): AgoraEntity =
     testIntegrationEntity.copy(namespace=Some(namespace),
       name=Some(name))
@@ -215,9 +215,6 @@ class AssociatedConfigurationIntegrationSpec extends FlatSpec with ExecutionDire
       payload=Some(testConfigPayload(label, methodSnapshotId))
     )
   }
-
-  private val payload_name = "AssociatedConfigurationIntegrationSpec-config-payload-name"
-  private val payload_namespace = "AssociatedConfigurationIntegrationSpec-config-payload-namespace"
 
   private def testConfigPayload(label:String, methodSnapshotId:Int): String =
      s"""{

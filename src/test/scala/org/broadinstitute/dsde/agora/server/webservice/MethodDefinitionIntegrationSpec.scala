@@ -1,6 +1,5 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
-import akka.actor.ActorSystem
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.testkit.{RouteTest, RouteTestTimeout, ScalatestRouteTest}
@@ -19,13 +18,9 @@ import scala.concurrent.duration._
 @DoNotDiscover
 class MethodDefinitionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRouteTest with BeforeAndAfterAll with AgoraTestFixture {
 
-  implicit val routeTestTimeout = RouteTestTimeout(20.seconds)
+  implicit val routeTestTimeout: RouteTestTimeout = RouteTestTimeout(20.seconds)
 
-  trait ActorRefFactoryContext {
-    def actorRefFactory: ActorSystem = system
-  }
-
-  val methodsService = new MethodsService(permsDataSource) with ActorRefFactoryContext
+  val methodsService = new MethodsService(permsDataSource)
 
   override def beforeAll(): Unit = {
     ensureDatabasesAreRunning()
@@ -48,7 +43,7 @@ class MethodDefinitionIntegrationSpec extends FlatSpec with RouteTest with Scala
     // method 1 has 1 config
     patiently(agoraBusiness.insert(testConfig("one",1), mockAuthenticatedOwner.get, mockAccessToken))
     // method 2 has 2 configs, both pointing at snapshot 1
-    for (x <- 1 to 2)
+    for (_ <- 1 to 2)
       patiently(agoraBusiness.insert(testConfig("two",1), mockAuthenticatedOwner.get, mockAccessToken))
     // method 3 has 2 configs, pointing at snapshots 2 and 3
     patiently(agoraBusiness.insert(testConfig("three",2), mockAuthenticatedOwner.get, mockAccessToken))
@@ -272,6 +267,7 @@ class MethodDefinitionIntegrationSpec extends FlatSpec with RouteTest with Scala
       s"MethodDefinitionIntegrationSpec-name-$label",
       s"synopsis-$counter")
 
+  //noinspection SameParameterValue
   private def testMethod(namespace:String, name:String, synopsis:String): AgoraEntity =
     testIntegrationEntity.copy(namespace=Some(namespace),
       name=Some(name),

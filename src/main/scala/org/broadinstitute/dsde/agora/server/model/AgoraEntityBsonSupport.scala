@@ -29,7 +29,7 @@ object AgoraEntityBsonSupport {
     )
 
   private def getOrNone[A](obj: DBObject, key: String): Option[A] = {
-    Option(obj.get(key).asInstanceOf[A])
+    Option(obj.get(key)).map(_.asInstanceOf[A])
   }
 
   private def dateOrNone(obj: DBObject, key: String): Option[DateTime] = {

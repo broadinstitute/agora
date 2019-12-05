@@ -45,8 +45,9 @@ scalacOptions := Seq(
   "-Ywarn-unused:patvars"
 )
 
-lazy val akkaV = "2.5.11"
-lazy val akkaHttpV = "10.1.0"
+val akkaV = "2.5.11"
+val akkaHttpV = "10.1.0"
+val slickV = "3.3.2"
 
 val artifactory = "https://broadinstitute.jfrog.io/broadinstitute/"
 
@@ -70,8 +71,8 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-stream" % akkaV,
   "com.typesafe" % "config" % "1.3.3",
   "com.typesafe.scala-logging" %% "scala-logging" % "3.8.0",
-  "com.typesafe.slick" %% "slick" % "3.2.2",
-  "com.zaxxer" % "HikariCP" % "2.7.8",
+  "com.typesafe.slick" %% "slick" % slickV,
+  "com.typesafe.slick" %% "slick-hikaricp" % slickV,
   "mysql" % "mysql-connector-java" % "6.0.6",
   
   // ficus was being pulled in transitively from wdl-draft2 previously, now made explicit
@@ -90,7 +91,7 @@ libraryDependencies ++= Seq(
 
 //These can be overridden with system properties:
 // i.e: sbt -Dflyway.url=jdbc:mysql://DB_HOST:DB_PORT/DB_NAME -Dflyway.user=root -Dflyway.password=abc123
-flywayUrl := "jdbc:h2:file:local"
+flywayUrl := "jdbc:h2:file:./agora_db"
 
 flywayUser := "root"
 
@@ -102,7 +103,7 @@ shellPrompt := { state => "%s| %s> ".format(GitCommand.prompt.apply(state), vers
 
 // We need to fork the tests and provide the correct config so that users do not accidentally
 // provide a config that points to a real database.
-javaOptions in Test := Seq("-Dconfig.file=src/test/resources/reference.conf")
+javaOptions in Test := Seq("-Dconfig.file=src/test/resources/application.conf")
 fork in Test := true
 
 parallelExecution in Test := false
@@ -125,19 +126,19 @@ assemblyMergeStrategy in assembly := {
     xs map {
       _.toLowerCase
     } match {
-      case ("manifest.mf" :: Nil) | ("index.list" :: Nil) | ("dependencies" :: Nil) =>
+      case "manifest.mf" :: Nil | "index.list" :: Nil | "dependencies" :: Nil =>
         MergeStrategy.discard
-      case ps@(x :: strings) if ps.last.endsWith(".sf") || ps.last.endsWith(".dsa") =>
+      case ps@_ :: _ if ps.last.endsWith(".sf") || ps.last.endsWith(".dsa") =>
         MergeStrategy.discard
-      case "plexus" :: strings =>
+      case "plexus" :: _ =>
         MergeStrategy.discard
-      case "spring.tooling" :: strings =>
+      case "spring.tooling" :: _ =>
         MergeStrategy.discard
-      case "com.google.guava" :: strings =>
+      case "com.google.guava" :: _ =>
         MergeStrategy.discard
-      case "services" :: strings =>
+      case "services" :: _ =>
         MergeStrategy.filterDistinctLines
-      case ("spring.schemas" :: Nil) | ("spring.handlers" :: Nil) =>
+      case "spring.schemas" :: Nil | "spring.handlers" :: Nil =>
         MergeStrategy.filterDistinctLines
       case _ => MergeStrategy.deduplicate
     }

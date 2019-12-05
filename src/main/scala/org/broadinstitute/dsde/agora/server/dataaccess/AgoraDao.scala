@@ -25,8 +25,6 @@ object AgoraDao {
 trait AgoraDao {
   def insert(entity: AgoraEntity): AgoraEntity
 
-  def findByAliases(aliases: List[String], entity: AgoraEntity, projectionOpt: Option[AgoraEntityProjection]): Seq[AgoraEntity]
-
   def find(entity: AgoraEntity, agoraProjection: Option[AgoraEntityProjection] = None): Seq[AgoraEntity]
 
   def findSingle(entity: AgoraEntity): AgoraEntity

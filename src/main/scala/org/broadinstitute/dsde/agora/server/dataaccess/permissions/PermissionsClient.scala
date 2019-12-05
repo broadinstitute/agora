@@ -357,24 +357,17 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
     }
   }
 
-  def listPublicAliases(): ReadAction[Seq[String]] = {
-    val publicAliasQuery = for {
-      user <- users if user.email === AccessControl.publicUser
-      permission <- permissions if permission.userID === user.id && permission.roles > 0
-      entity <- entities if permission.entityID === entity.id
-    } yield entity.alias
-
-    publicAliasQuery.result
-  }
-
-  def listOwnersAndAliases(): ReadAction[Seq[(String,String)]] = {
-    val ownerAndAliasQuery = for {
+  def listAliasesOwnersPermissions: ReadAction[Seq[(String, String, Int)]] = {
+    val query = for {
       user <- users
-      permission <- permissions if permission.userID === user.id && (permission.roles === Manage || permission.roles === All)
-      entity <- entities if permission.entityID === entity.id
-    } yield (entity.alias, user.email)
+      permission <- permissions
+      if permission.userID === user.id
+      if permission.roles =!= AgoraPermissions.Nothing
+      entity <- entities
+      if permission.entityID === entity.id
+    } yield (entity.alias, user.email, permission.roles)
 
-    ownerAndAliasQuery.result
+    query.result
   }
 
   def sqlDBStatus()(implicit executionContext: ExecutionContext): ReadAction[Unit] = {

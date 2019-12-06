@@ -76,7 +76,7 @@ object AgoraMongoClient {
         )
         MongoClient(serverList, List(credentials))
       case _ =>
-        MongoClient()
+        MongoClient(serverList)
     }
 
   }

@@ -45,7 +45,7 @@ scalacOptions := Seq(
   "-Ywarn-unused:patvars"
 )
 
-val akkaV = "2.6.0"
+val akkaV = "2.6.1"
 val akkaHttpV = "10.1.11"
 val slickV = "3.3.2"
 

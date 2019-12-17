@@ -32,11 +32,12 @@ class AgoraTestSuite extends Suites(
   new Ga4ghModelTest,
   new SwaggerRoutesSpec,
   new AdminSweeperSpec)
-  with BeforeAndAfterAll with AgoraTestFixture {
+  with BeforeAndAfterAll with AgoraTestFixture with AgoraAkkaTest {
 
   val agora = new Agora()
 
   override def beforeAll(): Unit = {
+    super.beforeAll()
     startDatabases()
     println(s"Starting Agora web services ($suiteName)")
     agora.start()
@@ -46,5 +47,6 @@ class AgoraTestSuite extends Suites(
     stopDatabases()
     println(s"Stopping Agora web services ($suiteName)")
     agora.stop()
+    super.afterAll()
   }
 }

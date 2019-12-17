@@ -1,15 +1,14 @@
 package org.broadinstitute.dsde.agora.server.business
 
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
-import org.broadinstitute.dsde.agora.server.AgoraTestFixture
+import org.broadinstitute.dsde.agora.server.{AgoraAkkaTest, AgoraTestFixture}
 import org.broadinstitute.dsde.agora.server.exceptions.DockerImageNotFoundException
 import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpec}
 
-import scala.concurrent.ExecutionContext.Implicits.global
-
 @DoNotDiscover
-class AgoraBusinessIntegrationSpec extends FlatSpec with BeforeAndAfterAll with AgoraTestFixture  {
+class AgoraBusinessIntegrationSpec extends FlatSpec with BeforeAndAfterAll with AgoraTestFixture with AgoraAkkaTest {
   override protected def beforeAll(): Unit = {
+    super.beforeAll()
     ensureDatabasesAreRunning()
     startMockWaas()
   }
@@ -17,6 +16,7 @@ class AgoraBusinessIntegrationSpec extends FlatSpec with BeforeAndAfterAll with 
   override protected def afterAll(): Unit = {
     clearDatabases()
     stopMockWaas()
+    super.afterAll()
   }
 
   "Agora" should "be able to store a task configuration with a valid (extant) official docker image" in {

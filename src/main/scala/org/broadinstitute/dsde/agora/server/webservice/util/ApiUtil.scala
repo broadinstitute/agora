@@ -6,11 +6,13 @@ object ApiUtil {
   val Methods = new ServiceRoute(AgoraConfig.methodsRoute)
   val Configurations = new ServiceRoute(AgoraConfig.configurationsRoute)
 
-  val version = AgoraConfig.version
+  val version: String = AgoraConfig.version
 
   class ServiceRoute(val path: String) {
     def withLeadingVersion: String = {
       "/api/" + version + "/" + path
     }
   }
+
+  val AllowCacheParams = Seq("", "?allowCache=true", "?allowCache=false")
 }

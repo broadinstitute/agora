@@ -1,10 +1,8 @@
 package org.broadinstitute.dsde.agora.server.dataaccess.permissions
 
-import akka.actor.testkit.typed.scaladsl._
-import org.broadinstitute.dsde.agora.server.{AgoraTestData, AgoraTestFixture}
+import org.broadinstitute.dsde.agora.server.{AgoraAkkaTest, AgoraTestData, AgoraTestFixture}
 import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, Matchers, WordSpecLike}
 
-import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
 object AdminSweeperSpec {
@@ -14,26 +12,25 @@ object AdminSweeperSpec {
 }
 
 @DoNotDiscover
-class AdminSweeperSpec extends WordSpecLike with Matchers with BeforeAndAfterAll with AgoraTestFixture {
-
-  private implicit val testKit: ActorTestKit = ActorTestKit("AdminSweeperSpec")
-  private implicit val executionContext: ExecutionContext = testKit.system.executionContext
+class AdminSweeperSpec
+  extends WordSpecLike with Matchers with BeforeAndAfterAll with AgoraTestFixture with AgoraAkkaTest {
 
   override protected def beforeAll(): Unit = {
+    super.beforeAll()
   ensureDatabasesAreRunning()
   }
 
   override protected def afterAll(): Unit = {
   clearDatabases()
-    testKit.shutdownTestKit()
+    super.afterAll()
   }
 
   "Agora" should {
     "be able to synchronize it's list of admins via the AdminSweeper" in {
       addAdminUser()
 
-      testKit.spawn(AdminSweeper(AdminSweeperSpec.getMockAdminsList, permsDataSource, 5.seconds, 5.seconds))
-      val testProbe = testKit.createTestProbe("within-and-assert")
+      actorTestKit.spawn(AdminSweeper(AdminSweeperSpec.getMockAdminsList, permsDataSource, 5.seconds, 5.seconds))
+      val testProbe = actorTestKit.createTestProbe("within-and-assert")
       testProbe.within(30.seconds) {
         testProbe.awaitAssert {
           runInDB { db =>

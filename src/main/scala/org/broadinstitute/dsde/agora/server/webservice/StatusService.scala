@@ -2,14 +2,14 @@ package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.actor.typed.scaladsl.AskPattern._
 import akka.actor.typed.scaladsl.adapter._
-import akka.actor.typed.{ActorRef, Scheduler}
+import akka.actor.typed.{ActorRef, ActorSystem}
 import akka.http.scaladsl.model.StatusCodes.{InternalServerError, OK}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import net.ceedubs.ficus.Ficus._
-import org.broadinstitute.dsde.agora.server.AgoraGuardianActor
+import org.broadinstitute.dsde.agora.server.actor.AgoraGuardianActor
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
 import org.broadinstitute.dsde.workbench.util.health.{StatusCheckResponse, SubsystemStatus, Subsystems}
 
@@ -27,7 +27,7 @@ class StatusService(permissionsDataSource: PermissionsDataSource,
     get {
       extractActorSystem { implicit actorSystem =>
         implicit val timeout: Timeout = duration
-        implicit val scheduler: Scheduler = actorSystem.toTyped.scheduler
+        implicit val actorSystemTyped: ActorSystem[_] = actorSystem.toTyped
 
         val statusAttempt = agoraGuardian ? AgoraGuardianActor.GetCurrentStatus
 

@@ -5,10 +5,9 @@ import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessContro
 import org.broadinstitute.dsde.agora.server.ga4gh.Models._
 import org.broadinstitute.dsde.agora.server.ga4gh.{Ga4ghService, ModelSupport}
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
-import org.broadinstitute.dsde.agora.server.{AgoraConfig, AgoraTestFixture}
+import org.broadinstitute.dsde.agora.server.{AgoraConfig, AgoraRouteTest, AgoraTestFixture}
 import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FreeSpecLike}
 import spray.json._
-import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model.HttpMethods
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
@@ -16,9 +15,10 @@ import DefaultJsonProtocol._
 import akka.http.scaladsl.server.directives.ExecutionDirectives
 
 @DoNotDiscover
-class Ga4ghServiceSpec extends FreeSpecLike with ScalatestRouteTest with BeforeAndAfterAll with AgoraTestFixture with ExecutionDirectives {
+class Ga4ghServiceSpec extends FreeSpecLike with AgoraRouteTest with BeforeAndAfterAll with AgoraTestFixture
+  with ExecutionDirectives {
 
-  private val ga4ghService = new Ga4ghService(permsDataSource)
+  private lazy val ga4ghService = new Ga4ghService(permsDataSource, agoraGuardian)
 
   // these routes depend on the exception handler defined in ApiService, so
   // we have to add the exception handler back here.
@@ -33,6 +33,7 @@ class Ga4ghServiceSpec extends FreeSpecLike with ScalatestRouteTest with BeforeA
   private var redactedEntity: AgoraEntity = _
 
   override def beforeAll(): Unit = {
+    super.beforeAll()
     ensureDatabasesAreRunning()
     startMockWaas()
 
@@ -66,6 +67,7 @@ class Ga4ghServiceSpec extends FreeSpecLike with ScalatestRouteTest with BeforeA
   override def afterAll(): Unit = {
     clearDatabases()
     stopMockWaas()
+    super.afterAll()
   }
 
   "Agora's GA4GH API" - {

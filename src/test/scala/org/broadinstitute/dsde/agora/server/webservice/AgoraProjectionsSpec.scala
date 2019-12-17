@@ -23,7 +23,8 @@ class AgoraProjectionsSpec extends ApiServiceSpec with FlatSpecLike {
   var testEntity7WithId: AgoraEntity = _
   var testEntityToBeRedactedWithId: AgoraEntity = _
 
-  override def beforeAll() = {
+  override def beforeAll(): Unit = {
+    super.beforeAll()
     ensureDatabasesAreRunning()
     startMockWaas()
 
@@ -37,9 +38,10 @@ class AgoraProjectionsSpec extends ApiServiceSpec with FlatSpecLike {
     testEntityToBeRedactedWithId = patiently(agoraBusiness.insert(testEntityToBeRedacted, mockAuthenticatedOwner.get, mockAccessToken))
   }
 
-  override def afterAll() = {
+  override def afterAll(): Unit = {
     clearDatabases()
     stopMockWaas()
+    super.afterAll()
   }
 
   "Agora" should "return only included fields in the entity" in {

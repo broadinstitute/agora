@@ -1,21 +1,21 @@
 package org.broadinstitute.dsde.agora.server.dataaccess.permissions
 
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
-import org.broadinstitute.dsde.agora.server.AgoraTestFixture
+import org.broadinstitute.dsde.agora.server.{AgoraAkkaTest, AgoraTestFixture}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.exceptions.PermissionModificationException
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpec}
 
-import scala.concurrent.ExecutionContext.Implicits.global
-
 @DoNotDiscover
-class NamespacePermissionsClientSpec extends FlatSpec with ScalaFutures with BeforeAndAfterAll with AgoraTestFixture {
+class NamespacePermissionsClientSpec
+  extends FlatSpec with ScalaFutures with BeforeAndAfterAll with AgoraTestFixture with AgoraAkkaTest {
 
   var testBatchPermissionEntityWithId: AgoraEntity = _
 
   override def beforeAll(): Unit = {
+    super.beforeAll()
     ensureDatabasesAreRunning()
     startMockWaas()
 
@@ -28,6 +28,7 @@ class NamespacePermissionsClientSpec extends FlatSpec with ScalaFutures with Bef
   override def afterAll(): Unit = {
     clearDatabases()
     stopMockWaas()
+    super.afterAll()
   }
 
   "Agora" should "add namespace permissions." in {

@@ -8,6 +8,7 @@ import org.broadinstitute.dsde.agora.server.webservice.routes.{AgoraDirectives, 
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 
+import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
 
 object AgoraConfig {
@@ -19,10 +20,10 @@ object AgoraConfig {
 
   var authenticationDirectives: AgoraDirectives = _
   var usesEmbeddedMongo: Boolean = _
-  lazy val mockAuthenticatedUserEmail = config.as[Option[String]]("mockAuthenticatedUserEmail").getOrElse("noone@broadinstitute.org")
-  lazy val mockAccessToken = config.as[Option[String]]("mockAccessToken").getOrElse("ya.not.a.real.token")
+  lazy val mockAuthenticatedUserEmail: String = config.getOrElse("mockAuthenticatedUserEmail", "noone@broadinstitute.org")
+  lazy val mockAccessToken: String = config.getOrElse("mockAccessToken", "ya.not.a.real.token")
 
-  val environment = config.as[Option[String]]("environment")
+  val environment: Option[String] = config.getAs[String]("environment")
   environment match {
     case Some(env) if env == TestEnvironment =>
       authenticationDirectives = MockAgoraDirectives
@@ -33,68 +34,71 @@ object AgoraConfig {
   }
 
   // Agora
-  private lazy val embeddedUrlPort = config.as[Option[Int]]("embeddedUrl.port")
+  private lazy val embeddedUrlPort = config.getAs[Int]("embeddedUrl.port")
   private lazy val embeddedUrlPortStr = embeddedUrlPort match {
     case None => ""
     case x: Some[Int] => ":" + x.get
   }
   private lazy val baseUrl = scheme + "://" + host + embeddedUrlPortStr + "/" + "api" + "/" + version + "/"
-  private lazy val scheme = config.as[Option[String]]("webservice.scheme").getOrElse("http")
-  lazy val host = config.as[Option[String]]("webservice.host").getOrElse("localhost")
-  lazy val port = config.as[Option[Int]]("webservice.port").getOrElse(8000)
-  lazy val version = config.as[Option[String]]("webservice.version").getOrElse("v1")
-  lazy val methodsRoute = config.as[Option[String]]("methods.route").getOrElse("methods")
-  lazy val methodsUrl = baseUrl + methodsRoute + "/"
-  lazy val configurationsRoute = config.as[Option[String]]("configurations.route").getOrElse("configurations")
-  lazy val configurationsUrl = baseUrl + configurationsRoute + "/"
-  lazy val webserviceInterface = config.as[Option[String]]("webservice.interface").getOrElse("0.0.0.0")
-  lazy val supervisorLogging = config.as[Option[Boolean]]("supervisor.logging").getOrElse(true)
-  lazy val adminSweepInterval = config.as[Option[Int]]("admin.sweep.interval").getOrElse(15)
+  private lazy val scheme = config.getOrElse("webservice.scheme", "http")
+  lazy val host: String = config.getOrElse("webservice.host", "localhost")
+  lazy val port: Int = config.getOrElse("webservice.port", 8000)
+  lazy val version: String = config.getOrElse("webservice.version", "v1")
+  lazy val methodsRoute: String = config.getOrElse("methods.route", "methods")
+  lazy val methodsUrl: String = baseUrl + methodsRoute + "/"
+  lazy val configurationsRoute: String = config.getOrElse("configurations.route", "configurations")
+  lazy val configurationsUrl: String = baseUrl + configurationsRoute + "/"
+  lazy val webserviceInterface: String = config.getOrElse("webservice.interface", "0.0.0.0")
+  lazy val dataCacheDuration: Option[FiniteDuration] =
+    Option(config.getOrElse("data.cache-duration", 30.seconds)).filter(_ > 0.seconds)
+  lazy val adminSweepInterval: Int = config.getOrElse("admin.sweep.interval", 15)
+  // Derive timeouts from akka http's request timeout since there's no point in being higher than that
+  lazy val requestTimeout: FiniteDuration = config.as[FiniteDuration]("akka.http.server.request-timeout")
 
   // Mongo
-  lazy val mongoDbHosts = config.as[List[String]]("mongodb.hosts")
-  lazy val mongoDbPorts = config.as[List[Int]]("mongodb.ports")
-  lazy val mongoDbUser = config.as[Option[String]]("mongodb.user")
-  lazy val mongoDbPassword = config.as[Option[String]]("mongodb.password")
-  lazy val mongoDbDatabase = config.as[Option[String]]("mongodb.db").getOrElse("agora")
+  lazy val mongoDbHosts: List[String] = config.as[List[String]]("mongodb.hosts")
+  lazy val mongoDbPorts: List[Int] = config.as[List[Int]]("mongodb.ports")
+  lazy val mongoDbUser: Option[String] = config.getAs[String]("mongodb.user")
+  lazy val mongoDbPassword: Option[String] = config.getAs[String]("mongodb.password")
+  lazy val mongoDbDatabase: String = config.getOrElse("mongodb.db", "agora")
   // not part of the mongo connection, so kept in a separate config tree
-  lazy val mongoAliasBatchSize = config.as[Option[Int]]("mongo.aliasBatchSize").getOrElse(5000)
+  lazy val mongoAliasBatchSize: Int = config.getOrElse("mongo.aliasBatchSize", 5000)
 
   // Womtool-as-a-Service (Waas)
-  lazy val waasServer = config.as[Option[String]]("waas.server")
+  lazy val waasServer: Option[String] = config.getAs[String]("waas.server")
 
   // SQL
   lazy val sqlDatabase = DatabaseConfig.forConfig[JdbcProfile]("sqlDatabase")
   // not part of the SQL connection, so kept in a separate config tree
-  lazy val sqlAliasBatchSize = config.as[Option[Int]]("sql.aliasBatchSize").getOrElse(100)
+  lazy val sqlAliasBatchSize: Int = config.getOrElse("sql.aliasBatchSize", 100)
 
 
   // Google Credentials
-  lazy val gcsProjectId = config.as[String]("gcs.project.id")
-  lazy val gcsServiceAccountEmail = config.as[String]("gcs.service.account.email")
-  lazy val gcsServiceAccountPemFile = config.as[String]("gcs.service.account.pem.file")
-  lazy val gcsUserEmail = config.as[String]("gcs.user.email")
-  lazy val adminGoogleGroup = config.as[Option[String]]("admin.google.group")
+  lazy val gcsProjectId: String = config.as[String]("gcs.project.id")
+  lazy val gcsServiceAccountEmail: String = config.as[String]("gcs.service.account.email")
+  lazy val gcsServiceAccountPemFile: String = config.as[String]("gcs.service.account.pem.file")
+  lazy val gcsUserEmail: String = config.as[String]("gcs.user.email")
+  lazy val adminGoogleGroup: Option[String] = config.getAs[String]("admin.google.group")
 
   // sam
-  lazy val samUrl = config.as[String]("sam.url")
+  lazy val samUrl: String = config.as[String]("sam.url")
 
   //Config Settings
   object SwaggerConfig {
     private val swagger = config.getConfig("swagger")
-    lazy val apiVersion = swagger.getString("apiVersion")
-    lazy val swaggerVersion = swagger.getString("swaggerVersion")
-    lazy val info = swagger.getString("info")
-    lazy val description = swagger.getString("description")
-    lazy val termsOfServiceUrl = swagger.getString("termsOfServiceUrl")
-    lazy val contact = swagger.getString("contact")
-    lazy val license = swagger.getString("license")
-    lazy val licenseUrl = swagger.getString("licenseUrl")
-    lazy val baseUrl = swagger.getString("baseUrl")
-    lazy val apiDocs = swagger.getString("apiDocs")
-    lazy val clientId = swagger.as[Option[String]]("clientId").getOrElse("clientId")
-    lazy val realm = gcsProjectId
-    lazy val appName = gcsProjectId
+    lazy val apiVersion: String = swagger.getString("apiVersion")
+    lazy val swaggerVersion: String = swagger.getString("swaggerVersion")
+    lazy val info: String = swagger.getString("info")
+    lazy val description: String = swagger.getString("description")
+    lazy val termsOfServiceUrl: String = swagger.getString("termsOfServiceUrl")
+    lazy val contact: String = swagger.getString("contact")
+    lazy val license: String = swagger.getString("license")
+    lazy val licenseUrl: String = swagger.getString("licenseUrl")
+    lazy val baseUrl: String = swagger.getString("baseUrl")
+    lazy val apiDocs: String = swagger.getString("apiDocs")
+    lazy val clientId: String = swagger.as[Option[String]]("clientId").getOrElse("clientId")
+    lazy val realm: String = gcsProjectId
+    lazy val appName: String = gcsProjectId
   }
 
   // GA4GH

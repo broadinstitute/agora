@@ -2,8 +2,8 @@ package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes._
-import akka.http.scaladsl.testkit.{RouteTest, RouteTestTimeout, ScalatestRouteTest}
-import org.broadinstitute.dsde.agora.server.AgoraTestFixture
+import akka.http.scaladsl.testkit.{RouteTest, RouteTestTimeout}
+import org.broadinstitute.dsde.agora.server.{AgoraRouteTest, AgoraTestFixture}
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
@@ -15,24 +15,23 @@ import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpec}
 import scala.concurrent.duration._
 
 @DoNotDiscover
-class AgoraImportIntegrationSpec extends FlatSpec with RouteTest with ScalatestRouteTest with BeforeAndAfterAll with AgoraTestFixture {
+class AgoraImportIntegrationSpec extends FlatSpec with RouteTest with AgoraRouteTest with BeforeAndAfterAll
+  with AgoraTestFixture {
 
-  implicit val routeTestTimeout = RouteTestTimeout(20.seconds)
+  implicit val routeTestTimeout: RouteTestTimeout = RouteTestTimeout(20.seconds)
 
-  trait ActorRefFactoryContext {
-    def actorRefFactory = system
-  }
+  lazy val methodsService = new MethodsService(permsDataSource, agoraGuardian)
 
-  val methodsService = new MethodsService(permsDataSource) with ActorRefFactoryContext
-
-  override def beforeAll() = {
+  override def beforeAll(): Unit = {
+    super.beforeAll()
     ensureDatabasesAreRunning()
     startMockWaas()
   }
 
-  override def afterAll() = {
+  override def afterAll(): Unit = {
     clearDatabases()
     stopMockWaas()
+    super.afterAll()
   }
 
   "MethodsService" should "return a 201 when posting a WDL with a valid (extant) official docker image" in {

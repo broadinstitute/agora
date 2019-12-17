@@ -2,12 +2,12 @@ package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes._
-import akka.http.scaladsl.testkit.{RouteTest, RouteTestTimeout, ScalatestRouteTest}
+import akka.http.scaladsl.testkit.RouteTestTimeout
 import akka.http.scaladsl.model.HttpMethods
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.ExecutionDirectives
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
-import org.broadinstitute.dsde.agora.server.AgoraTestFixture
+import org.broadinstitute.dsde.agora.server.{AgoraRouteTest, AgoraTestFixture}
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
@@ -18,13 +18,13 @@ import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FreeSpec}
 import scala.concurrent.duration._
 
 @DoNotDiscover
-class CompatibleConfigurationIntegrationSpec extends FreeSpec with ExecutionDirectives with RouteTest
-  with ScalatestRouteTest with BeforeAndAfterAll with AgoraTestFixture {
+class CompatibleConfigurationIntegrationSpec extends FreeSpec with ExecutionDirectives
+  with AgoraRouteTest with BeforeAndAfterAll with AgoraTestFixture {
 
   implicit val routeTestTimeout: RouteTestTimeout = RouteTestTimeout(20.seconds)
 
-  val methodsService = new MethodsService(permsDataSource)
-  val testRoutes: Route = ApiService.handleExceptionsAndRejections (methodsService.queryCompatibleConfigurationsRoute)
+  lazy val methodsService = new MethodsService(permsDataSource, agoraGuardian)
+  lazy val testRoutes: Route = ApiService.handleExceptionsAndRejections (methodsService.queryCompatibleConfigurationsRoute)
 
   // The following methods create a method AgoraEntity while at the same time constructing the Mock Waas
   // describe response.  This test is more difficult than the others because it generates many unique
@@ -76,6 +76,7 @@ class CompatibleConfigurationIntegrationSpec extends FreeSpec with ExecutionDire
   }
 
   override def beforeAll(): Unit = {
+    super.beforeAll()
     ensureDatabasesAreRunning()
     startMockWaas()
 
@@ -150,6 +151,7 @@ class CompatibleConfigurationIntegrationSpec extends FreeSpec with ExecutionDire
   override def afterAll(): Unit = {
     clearDatabases()
     stopMockWaas()
+    super.afterAll()
   }
 
   "Agora's compatible configurations endpoint" - {

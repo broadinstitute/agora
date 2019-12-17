@@ -24,9 +24,10 @@ class EntityCopySpec extends ApiServiceSpec with FlatSpecLike {
   var testEntity1WithId: AgoraEntity = _
   var testEntityWithSnapshotComment: AgoraEntity = _
 
-  val testRoute = ApiUtil.Methods.withLeadingVersion + "/%s/%s/%s"
+  val testRoute: String = ApiUtil.Methods.withLeadingVersion + "/%s/%s/%s"
 
-  override def beforeAll() = {
+  override def beforeAll(): Unit = {
+    super.beforeAll()
     ensureDatabasesAreRunning()
     startMockWaas()
 
@@ -41,9 +42,10 @@ class EntityCopySpec extends ApiServiceSpec with FlatSpecLike {
     testEntityWithSnapshotComment = patiently(agoraBusiness.insert(testMethodWithSnapshotComment1, owner1.get, mockAccessToken))
   }
 
-  override def afterAll() = {
+  override def afterAll(): Unit = {
     clearDatabases()
     stopMockWaas()
+    super.afterAll()
   }
 
   behavior of "Agora, when creating/editing entities (methods and configs)"

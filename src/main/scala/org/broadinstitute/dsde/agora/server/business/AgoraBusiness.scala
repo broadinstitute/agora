@@ -1,13 +1,16 @@
 package org.broadinstitute.dsde.agora.server.business
 
+import akka.actor.typed.{ActorRef, ActorSystem}
+import akka.actor.typed.scaladsl.AskPattern._
 import akka.http.scaladsl.model.StatusCodes
-import com.typesafe.scalalogging.LazyLogging
+import akka.util.Timeout
+import com.typesafe.scalalogging.{LazyLogging, StrictLogging}
+import org.broadinstitute.dsde.agora.server.actor.AgoraGuardianActor
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
 import org.broadinstitute.dsde.agora.server.dataaccess._
 import org.broadinstitute.dsde.agora.server.exceptions._
 import org.broadinstitute.dsde.agora.server.model._
-import org.bson.types.ObjectId
 import slick.dbio.DBIO
 import spray.json._
 
@@ -15,14 +18,112 @@ import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
-object AgoraBusiness {
+/**
+ * Convenience wrapper around object methods.
+ *
+ * @param permissionsDataSource Source to directly retrieve data.
+ * @param agoraGuardian         An actor that caches data.
+ */
+class AgoraBusiness(permissionsDataSource: PermissionsDataSource,
+                    agoraGuardian: ActorRef[AgoraGuardianActor.Command]) extends LazyLogging {
+
+  def insert(agoraEntity: AgoraEntity,
+             username: String,
+             accessToken: String)
+            (implicit executionContext: ExecutionContext): Future[AgoraEntity] = {
+    AgoraBusiness.insert(permissionsDataSource, agoraEntity, username, accessToken)
+  }
+
+  def delete(agoraEntity: AgoraEntity, entityTypes: Seq[AgoraEntityType.EntityType], username: String)
+            (implicit executionContext: ExecutionContext): Future[Int] = {
+    AgoraBusiness.delete(permissionsDataSource, agoraEntity, entityTypes, username)
+  }
+
+  def copy(sourceArgs: AgoraEntity,
+           targetArgs: AgoraEntity,
+           redact: Boolean,
+           entityTypes: Seq[AgoraEntityType.EntityType],
+           username: String,
+           accessToken: String)
+          (implicit executionContext: ExecutionContext): Future[AgoraEntity] = {
+    AgoraBusiness.copy(permissionsDataSource, sourceArgs, targetArgs, redact, entityTypes, username, accessToken)
+  }
+
+  def listDefinitionsCached(username: String, allowCache: Boolean)
+                           (implicit
+                            executionContext: ExecutionContext,
+                            timeout: Timeout,
+                            actorSystem: ActorSystem[_],
+                           ): Future[Seq[MethodDefinition]] = {
+    if (allowCache) {
+      AgoraBusiness.listDefinitionsCached(permissionsDataSource, agoraGuardian, username)
+    } else {
+      AgoraBusiness.listDefinitions(permissionsDataSource, username)
+    }
+  }
+
+  def listAssociatedConfigurations(namespace: String, name: String, username: String)
+                                  (implicit executionContext: ExecutionContext): Future[Seq[AgoraEntity]] = {
+    AgoraBusiness.listAssociatedConfigurations(permissionsDataSource, namespace, name, username)
+  }
+
+  def listCompatibleConfigurations(namespace: String,
+                                   name: String,
+                                   snapshotId: Int,
+                                   username: String,
+                                   accessToken: String)
+                                  (implicit executionContext: ExecutionContext): Future[Seq[AgoraEntity]] = {
+    AgoraBusiness.listCompatibleConfigurations(
+      permissionsDataSource, namespace, name, snapshotId, username, accessToken
+    )
+  }
+
+  def find(agoraSearch: AgoraEntity,
+           agoraProjection: Option[AgoraEntityProjection],
+           entityTypes: Seq[AgoraEntityType.EntityType],
+           username: String)
+          (implicit executionContext: ExecutionContext): Future[Seq[AgoraEntity]] = {
+    AgoraBusiness.find(permissionsDataSource, agoraSearch, agoraProjection, entityTypes, username)
+  }
+
+  def findCached(agoraSearch: AgoraEntity,
+                 agoraProjection: Option[AgoraEntityProjection],
+                 entityTypes: Seq[AgoraEntityType.EntityType],
+                 username: String,
+                 allowCache: Boolean)
+                (implicit
+                 executionContext: ExecutionContext,
+                 timeout: Timeout,
+                 actorSystem: ActorSystem[_],
+                ): Future[Seq[AgoraEntity]] = {
+    if (allowCache) {
+      AgoraBusiness.findCached(permissionsDataSource, agoraGuardian, agoraSearch, agoraProjection, entityTypes, username)
+    } else {
+      AgoraBusiness.find(permissionsDataSource, agoraSearch, agoraProjection, entityTypes, username)
+    }
+  }
+
+  def findSingle(namespace: String,
+                 name: String,
+                 snapshotId: Int,
+                 entityTypes: Seq[AgoraEntityType.EntityType],
+                 username: String)
+                (implicit executionContext: ExecutionContext): Future[AgoraEntity] = {
+    AgoraBusiness.findSingle(permissionsDataSource, namespace, name, snapshotId, entityTypes, username)
+  }
+
+  def findSingle(entity: AgoraEntity,
+                 entityTypes: Seq[AgoraEntityType.EntityType],
+                 username: String)
+                (implicit executionContext: ExecutionContext): Future[AgoraEntity] = {
+    AgoraBusiness.findSingle(permissionsDataSource, entity, entityTypes, username)
+  }
+}
+
+object AgoraBusiness extends StrictLogging {
   private lazy val nameRegex = """[a-zA-Z0-9-_.]+""".r // Applies to entity names & namespaces
   private val errorMessagePrefix = "Invalid WDL:"
   private val configIdsProjection = Some(new AgoraEntityProjection(Seq[String]("id", "methodId"), Seq.empty[String]))
-}
-
-class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLogging {
-  import AgoraBusiness._
 
   lazy val metricsClient = new MetricsClient()
 
@@ -178,7 +279,10 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLo
     }
   }
 
-  def insert(agoraEntity: AgoraEntity, username: String, accessToken: String)
+  def insert(permissionsDataSource: PermissionsDataSource,
+             agoraEntity: AgoraEntity,
+             username: String,
+             accessToken: String)
             (implicit executionContext: ExecutionContext): Future[AgoraEntity] = {
     //these next two go to Mongo, so do them outside the permissions txn
     val configReferencedMethodOpt = agoraEntity.entityType.get match {
@@ -225,7 +329,10 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLo
     }
   }
 
-  def delete(agoraEntity: AgoraEntity, entityTypes: Seq[AgoraEntityType.EntityType], username: String)
+  def delete(permissionsDataSource: PermissionsDataSource,
+             agoraEntity: AgoraEntity,
+             entityTypes: Seq[AgoraEntityType.EntityType],
+             username: String)
             (implicit executionContext: ExecutionContext): Future[Int] = {
     //list of associated configurations. Goes to Mongo so we do it outside the sql txn
     val configurations = if (entityTypes equals AgoraEntityType.MethodTypes) {
@@ -246,7 +353,8 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLo
     }
   }
 
-  def copy(sourceArgs: AgoraEntity,
+  def copy(permissionsDataSource: PermissionsDataSource,
+           sourceArgs: AgoraEntity,
            targetArgs: AgoraEntity,
            redact: Boolean,
            entityTypes: Seq[AgoraEntityType.EntityType],
@@ -285,7 +393,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLo
       }
     } flatMap { first =>
       val redactAction = if (redact)
-        delete(sourceEntity, Seq(sourceEntity.entityType.get), username)
+        delete(permissionsDataSource, sourceEntity, Seq(sourceEntity.entityType.get), username)
       else
         Future.successful(0)
 
@@ -311,7 +419,8 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLo
     )
   }
 
-  def listDefinitions(username: String)
+  def listDefinitions(permissionsDataSource: PermissionsDataSource,
+                      username: String)
                      (implicit executionContext: ExecutionContext): Future[Seq[MethodDefinition]] = {
     // for this query, don't return heavy fields like the documentation or payload
     val projection = AgoraEntityProjection(
@@ -319,50 +428,60 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLo
       excludedFields = Seq.empty[String])
 
     // Eagerly start finding ids
-    val methodsAndConfigsFuture = findWithIds(AgoraEntity(), Some(projection), Seq(AgoraEntityType.Configuration, AgoraEntityType.Workflow), username)
+    val methodsAndConfigsFuture = for {
+      entities <- findWithIds(permissionsDataSource, AgoraEntity(), Some(projection), Seq(AgoraEntityType.Configuration, AgoraEntityType.Workflow), username)
+    } yield MethodsAndConfigs.from(entities)
     // Eagerly start finding public-ness
-    val aliasesOwnersPermissionsFuture = permissionsDataSource.inTransaction(_.aePerms.listAliasesOwnersPermissions)
+    val ownersAndAliasesFuture = for {
+      aliasesOwnersPermissions <- permissionsDataSource.inTransaction(_.aePerms.listAliasesOwnersPermissions)
+    } yield OwnersAndAliases.from(aliasesOwnersPermissions)
 
     // Both futures are already running, and when both IO operations complete, run the actual filtering
     for {
       methodsAndConfigs <- methodsAndConfigsFuture
-      aliasesOwnersPermissions <- aliasesOwnersPermissionsFuture
-    } yield filterByPermissions(methodsAndConfigs, aliasesOwnersPermissions)
+      ownersAndAliases <- ownersAndAliasesFuture
+    } yield filterByPermissions(permissionsDataSource, methodsAndConfigs, ownersAndAliases)
   }
 
-  private def filterByPermissions(methodsAndConfigsSnapshots: Seq[AgoraEntity],
-                                  aliasesOwnersPermissions: Seq[(String, String, Int)]): Seq[MethodDefinition] = {
+  def listDefinitionsCached(permissionsDataSource: PermissionsDataSource,
+                            agoraGuardian: ActorRef[AgoraGuardianActor.Command],
+                            username: String)
+                           (implicit
+                            executionContext: ExecutionContext,
+                            timeout: Timeout,
+                            actorSystem: ActorSystem[_],
+                           ): Future[Seq[MethodDefinition]] = {
 
-    val methodSnapshots = methodsAndConfigsSnapshots.filter(_.entityType.exists(_ == AgoraEntityType.Workflow))
-    val configSnapshots = methodsAndConfigsSnapshots.filter(_.entityType.exists(_ == AgoraEntityType.Configuration))
+    val agoraDataCacheFuture = agoraGuardian ? AgoraGuardianActor.GetDataCache
 
-    // group/count config snapshots by methodId
-    val configCounts: Map[Option[ObjectId], Int] = configSnapshots.groupBy(_.methodId) map {
-      case (objectIdOption, agoraEntities) => objectIdOption -> agoraEntities.size
-    }
+    val userMethodsAndConfigsFuture = for {
+      agoraDataCache <- agoraDataCacheFuture
+      result <- findUserSnapshots(permissionsDataSource, agoraDataCache.configurationWorkflowEntities, username)
+    } yield result
 
-    val publicAliasesSet = aliasesOwnersPermissions.collect({
-      case (alias, owner, permissions)
-        if owner == AccessControl.publicUser && permissions > AgoraPermissions.Nothing =>
-        alias
-    }).toSet
+    // Both futures are already running, and when both IO operations complete, run the actual filtering
+    for {
+      userMethodsAndConfigs <- userMethodsAndConfigsFuture
+      agoraDataCache <- agoraDataCacheFuture
+      publicMethodsAndConfigs = agoraDataCache.publicMethodsAndConfigs
+      ownersAndAliases = agoraDataCache.ownersAndAliases
+      methodsAndConfigs = MethodsAndConfigs.combine(userMethodsAndConfigs, publicMethodsAndConfigs)
+    } yield filterByPermissions(permissionsDataSource, methodsAndConfigs, ownersAndAliases)
+  }
+
+  private def filterByPermissions(permissionsDataSource: PermissionsDataSource,
+                                  methodsAndConfigsSnapshots: MethodsAndConfigs,
+                                  ownersAndAliases: OwnersAndAliases): Seq[MethodDefinition] = {
+
     // apply public status
-
-    val snapshotsWithPublic = methodSnapshots.map { snap =>
+    val snapshotsWithPublic = methodsAndConfigsSnapshots.methodSnapshots.map { snap =>
       val snapshotAlias = permissionsDataSource.dataAccess.aePerms.alias(snap)
-      snap.copy(public = Option(publicAliasesSet.contains(snapshotAlias)))
+      snap.copy(public = Option(ownersAndAliases.publicAliasesSet.contains(snapshotAlias)))
     }
-
-    val ownersAndAliases = aliasesOwnersPermissions.collect({
-      case (alias, owner, permissions) if permissions.hasPermission(AgoraPermissions.Manage) => (alias, owner)
-    })
-
-    // In Scala 2.13 this can be replaced with a .groupMap()
-    val ownersAndAliasesMap = ownersAndAliases.groupBy(_._1).mapValues(_.map(_._2))
 
     val annotatedSnapshots = snapshotsWithPublic.map { snap =>
       val snapshotAlias = permissionsDataSource.dataAccess.aePerms.alias(snap)
-      val owners = ownersAndAliasesMap.getOrElse(snapshotAlias, Nil)
+      val owners = ownersAndAliases.ownersAndAliasesMap.getOrElse(snapshotAlias, Nil)
       snap.addManagers(owners)
     }
 
@@ -371,7 +490,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLo
 
     groupedMethods.values.map { aes: Seq[AgoraEntity] =>
       val numSnapshots: Int = aes.size
-      val numConfigurations: Int = aes.map { ae => configCounts.getOrElse(ae.id, 0) }.sum
+      val numConfigurations: Int = aes.map { ae => methodsAndConfigsSnapshots.configCounts.getOrElse(ae.id, 0) }.sum
       val isPublic = aes.exists(_.public.contains(true))
       val managers = aes.flatMap { ae => ae.managers }.distinct
 
@@ -381,12 +500,16 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLo
     }.toSeq
   }
 
-  def listAssociatedConfigurations(namespace: String, name: String, username: String)
+  def listAssociatedConfigurations(permissionsDataSource: PermissionsDataSource,
+                                   namespace: String,
+                                   name: String,
+                                   username: String)
                                   (implicit executionContext: ExecutionContext): Future[Seq[AgoraEntity]] = {
     val methodCriteria = AgoraEntity(Some(namespace), Some(name))
 
     // get all method snapshots for the supplied namespace/name (that the user has permissions to)
-    val methodsFuture = findWithIds(methodCriteria, configIdsProjection, Seq(AgoraEntityType.Workflow), username)
+    val methodsFuture =
+      findWithIds(permissionsDataSource, methodCriteria, configIdsProjection, Seq(AgoraEntityType.Workflow), username)
 
     methodsFuture flatMap { methods =>
       // if we didn't find any methods, throw 404
@@ -409,7 +532,8 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLo
     }
   }
 
-  def listCompatibleConfigurations(namespace: String,
+  def listCompatibleConfigurations(permissionsDataSource: PermissionsDataSource,
+                                   namespace: String,
                                    name: String,
                                    snapshotId: Int,
                                    username: String,
@@ -417,9 +541,11 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLo
                                   (implicit executionContext: ExecutionContext): Future[Seq[AgoraEntity]] = {
 
     // get the specific method snapshot specified by the user (will throw error if not found)
-    findSingle(namespace, name, snapshotId, Seq(AgoraEntityType.Workflow), username) flatMap { methodSnapshot =>
+    val findFuture =
+      findSingle(permissionsDataSource, namespace, name, snapshotId, Seq(AgoraEntityType.Workflow), username)
+    findFuture flatMap { methodSnapshot =>
       // get all configs that reference any snapshot of this method
-      listAssociatedConfigurations(namespace, name, username) map { configs =>
+      listAssociatedConfigurations(permissionsDataSource, namespace, name, username) map { configs =>
         // short-circuit the WDL parsing: if we found no configs, return the empty seq
         if (configs.isEmpty) configs else {
           // from the method snapshot, get the WDL and parse it
@@ -470,7 +596,8 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLo
    * @param username        user performing the search
    * @return Future containing entity search results.
    */
-  private def findWithIds(agoraSearch: AgoraEntity,
+  private def findWithIds(permissionsDataSource: PermissionsDataSource,
+                          agoraSearch: AgoraEntity,
                           agoraProjection: Option[AgoraEntityProjection],
                           entityTypes: Seq[AgoraEntityType.EntityType],
                           username: String)
@@ -487,16 +614,117 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLo
     }
   }
 
-  def find(agoraSearch: AgoraEntity,
+  /** Queries a potentially cached mongo for all potential entities matching the user's search criteria, then queries
+   * mysql to filters those potential entities down to just those that the user has permissions to read.
+   *
+   * @param agoraSearch     user-supplied criteria for searching entities
+   * @param agoraProjection the list of fields to return from mongo
+   * @param entityTypes     entity types to search for
+   * @param username        user performing the search
+   * @return Future containing entity search results.
+   */
+  private def findWithIdsCached(permissionsDataSource: PermissionsDataSource,
+                                agoraGuardian: ActorRef[AgoraGuardianActor.Command],
+                                agoraSearch: AgoraEntity,
+                                agoraProjection: Option[AgoraEntityProjection],
+                                entityTypes: Seq[AgoraEntityType.EntityType],
+                                username: String)
+                               (implicit
+                                executionContext: ExecutionContext,
+                                timeout: Timeout,
+                                actorSystem: ActorSystem[_],
+                               ): Future[Seq[AgoraEntity]] = {
+
+    // Start looking up entities with an eager Future.
+    val entitiesFuture: Future[Seq[AgoraEntity]] = {
+      (entityTypes, agoraSearch, agoraProjection) match {
+
+        case (AgoraDataCache.TaskWorkflowEntityTypes, agoraEntity, None) if agoraEntity == AgoraEntity() =>
+          for {
+            agoraDataCache <- agoraGuardian ? AgoraGuardianActor.GetDataCache
+          } yield agoraDataCache.taskWorkflowEntities
+
+        case (AgoraDataCache.ConfigurationOnlyEntityTypes, agoraEntity, None) if agoraEntity == AgoraEntity() =>
+          for {
+            agoraDataCache <- agoraGuardian ? AgoraGuardianActor.GetDataCache
+          } yield agoraDataCache.configurationOnlyEntities
+
+        case _ =>
+          Future(AgoraDao.createAgoraDao(entityTypes).find(agoraSearch, agoraProjection))
+      }
+    }
+
+    val callerTag = s"findWithIds(${entityTypes.sorted.mkString(",")})"
+    filterEntityByRead(permissionsDataSource, entitiesFuture, username, callerTag)
+  }
+
+  private def filterEntityByRead(permissionsDataSource: PermissionsDataSource,
+                                 entitiesFuture: Future[Seq[AgoraEntity]],
+                                 username: String,
+                                 callerTag: String)
+                                (implicit executionContext: ExecutionContext): Future[Seq[AgoraEntity]] = {
+    permissionsDataSource.inTransaction { db =>
+      for {
+        _ <- db.aePerms.addUserIfNotInDatabase(username)
+        entities <- DBIO.from(entitiesFuture)
+        entity <- db.aePerms.filterEntityByRead(entities, username, callerTag)
+      } yield entity
+    }
+
+  }
+
+  def findUserSnapshots(permissionsDataSource: PermissionsDataSource, entities: Seq[AgoraEntity], username: String)
+                       (implicit executionContext: ExecutionContext): Future[MethodsAndConfigs] = {
+    val userEntitiesFuture = findUserEntitiesWithIds(permissionsDataSource, entities, username)
+    userEntitiesFuture.map(MethodsAndConfigs.from)
+  }
+
+  /** Queries mysql to filters those potential entities down to just those that the user has explicit permissions to read.
+   *
+   * @param entities entity types to search for
+   * @param username user performing the search
+   * @return Future containing entity search results.
+   */
+  private def findUserEntitiesWithIds(permissionsDataSource: PermissionsDataSource,
+                                      entities: Seq[AgoraEntity],
+                                      username: String)
+                                     (implicit executionContext: ExecutionContext): Future[Seq[AgoraEntity]] = {
+    permissionsDataSource.inTransaction { db =>
+      for {
+        _ <- db.aePerms.addUserIfNotInDatabase(username)
+        entity <- db.aePerms.filterEntityByReadUser(entities, username, "findUserEntitiesWithIds")
+      } yield entity
+    }
+  }
+
+  def find(permissionsDataSource: PermissionsDataSource,
+           agoraSearch: AgoraEntity,
            agoraProjection: Option[AgoraEntityProjection],
            entityTypes: Seq[AgoraEntityType.EntityType],
            username: String)
           (implicit executionContext: ExecutionContext): Future[Seq[AgoraEntity]] =
-    findWithIds(agoraSearch, agoraProjection, entityTypes, username).map { entities =>
+    findWithIds(permissionsDataSource, agoraSearch, agoraProjection, entityTypes, username).map { entities =>
       entities.map(_.addUrl().removeIds())
     }
 
-  def findSingle(namespace: String,
+  def findCached(permissionsDataSource: PermissionsDataSource,
+                 agoraGuardian: ActorRef[AgoraGuardianActor.Command],
+                 agoraSearch: AgoraEntity,
+                 agoraProjection: Option[AgoraEntityProjection],
+                 entityTypes: Seq[AgoraEntityType.EntityType],
+                 username: String)
+                (implicit
+                 executionContext: ExecutionContext,
+                 timeout: Timeout,
+                 actorSystem: ActorSystem[_],
+                ): Future[Seq[AgoraEntity]] = {
+    findWithIdsCached(permissionsDataSource, agoraGuardian, agoraSearch, agoraProjection, entityTypes, username).map {
+      _.map(_.addUrl().removeIds())
+    }
+  }
+
+  def findSingle(permissionsDataSource: PermissionsDataSource,
+                 namespace: String,
                  name: String,
                  snapshotId: Int,
                  entityTypes: Seq[AgoraEntityType.EntityType],
@@ -522,11 +750,19 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLo
     }
   }
 
-  def findSingle(entity: AgoraEntity,
+  def findSingle(permissionsDataSource: PermissionsDataSource,
+                 entity: AgoraEntity,
                  entityTypes: Seq[AgoraEntityType.EntityType],
                  username: String)
                 (implicit executionContext: ExecutionContext): Future[AgoraEntity] = {
-    findSingle(entity.namespace.get, entity.name.get, entity.snapshotId.get, entityTypes, username)
+    findSingle(
+      permissionsDataSource,
+      entity.namespace.get,
+      entity.name.get,
+      entity.snapshotId.get,
+      entityTypes,
+      username
+    )
   }
 
 //  private def validateDockerImage(task: Task) = {
@@ -570,4 +806,52 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLo
 //      Option(DockerImageReference(user, repo, tag))
 //    }
 //  }
+
+  /**
+   * Returns the data to be cached and returned by the agoraGuardian actor.
+   */
+  def getAgoraDataCache(permissionsDataSource: PermissionsDataSource)
+                       (implicit executionContext: ExecutionContext): Future[AgoraDataCache] = {
+
+    // Eagerly queue/run the futures to retrieve/transform the data for caching purposes.
+
+    // for this query, don't return heavy fields like the documentation or payload
+    val configurationWorkflowEntitiesFuture = Future(
+      AgoraDao
+        .createAgoraDao(AgoraDataCache.ConfigurationWorkflowEntityTypes)
+        .find(AgoraEntity(), Option(AgoraDataCache.ConfigurationWorkflowEntitiesProjection))
+    )
+
+    val publicMethodsAndConfigsFuture = for {
+      entities <- configurationWorkflowEntitiesFuture
+      snapshots <- AgoraBusiness.findUserSnapshots(permissionsDataSource, entities, AccessControl.publicUser)
+    } yield snapshots
+
+    val taskWorkflowEntitiesFuture = Future(
+      AgoraDao.createAgoraDao(AgoraDataCache.TaskWorkflowEntityTypes).find(AgoraEntity(), None)
+    )
+
+    val configurationOnlyEntitiesFuture = Future(
+      AgoraDao.createAgoraDao(AgoraDataCache.ConfigurationOnlyEntityTypes).find(AgoraEntity(), None)
+    )
+
+    val ownersAndAliasesFuture = for {
+      aliasesOwnersPermissions <- permissionsDataSource.inTransaction(_.aePerms.listAliasesOwnersPermissions)
+    } yield OwnersAndAliases.from(aliasesOwnersPermissions)
+
+    // Now that the futures are all queued/running, wait for them all to complete and then build the object.
+    for {
+      configurationWorkflowEntities <- configurationWorkflowEntitiesFuture
+      taskWorkflowEntities <- taskWorkflowEntitiesFuture
+      publicMethodsAndConfigs <- publicMethodsAndConfigsFuture
+      configurationOnlyEntities <- configurationOnlyEntitiesFuture
+      ownersAndAliases <- ownersAndAliasesFuture
+    } yield AgoraDataCache(
+      configurationWorkflowEntities,
+      taskWorkflowEntities,
+      configurationOnlyEntities,
+      publicMethodsAndConfigs,
+      ownersAndAliases
+    )
+  }
 }

@@ -2,8 +2,7 @@ package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.server.directives.ExecutionDirectives
-import akka.http.scaladsl.testkit.ScalatestRouteTest
-import org.broadinstitute.dsde.agora.server.AgoraTestFixture
+import org.broadinstitute.dsde.agora.server.{AgoraRouteTest, AgoraTestFixture}
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraPermissions, EntityAccessControl}
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
@@ -19,15 +18,15 @@ import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
 import org.broadinstitute.dsde.agora.server.webservice.routes.MockAgoraDirectives
 
 @DoNotDiscover
-class PermissionIntegrationSpec extends FlatSpec with ScalatestRouteTest with BeforeAndAfterAll
+class PermissionIntegrationSpec extends FlatSpec with AgoraRouteTest with BeforeAndAfterAll
   with AgoraTestFixture with ExecutionDirectives with SprayJsonSupport with DefaultJsonProtocol {
 
-  val namespacePermissionsService = new NamespacePermissionsService(permsDataSource)
-  val entityPermissionsService = new EntityPermissionsService(permsDataSource)
-  val multiEntityPermissionsService = new MultiEntityPermissionsService(permsDataSource)
-  val methodsService = new MethodsService(permsDataSource)
+  lazy val namespacePermissionsService = new NamespacePermissionsService(permsDataSource)
+  lazy val entityPermissionsService = new EntityPermissionsService(permsDataSource)
+  lazy val multiEntityPermissionsService = new MultiEntityPermissionsService(permsDataSource)
+  lazy val methodsService = new MethodsService(permsDataSource, agoraGuardian)
 
-  val routes: Route = ApiService.handleExceptionsAndRejections {
+  lazy val routes: Route = ApiService.handleExceptionsAndRejections {
     namespacePermissionsService.routes ~ entityPermissionsService.routes ~ multiEntityPermissionsService.routes ~
     methodsService.querySingleRoute
   }
@@ -38,6 +37,7 @@ class PermissionIntegrationSpec extends FlatSpec with ScalatestRouteTest with Be
   var redactedEntity: AgoraEntity = _
 
   override def beforeAll(): Unit = {
+    super.beforeAll()
     ensureDatabasesAreRunning()
     startMockWaas()
 
@@ -52,6 +52,7 @@ class PermissionIntegrationSpec extends FlatSpec with ScalatestRouteTest with Be
   override def afterAll(): Unit = {
     clearDatabases()
     stopMockWaas()
+    super.afterAll()
   }
 
   "Agora" should "return namespace permissions. list for authorized users" in {
@@ -550,7 +551,7 @@ class PermissionIntegrationSpec extends FlatSpec with ScalatestRouteTest with Be
 object AgoraApiJsonSupportWithManagerAndPublicRead extends DefaultJsonProtocol {
 
   implicit object AgoraEntityFormatWithManagerAndPublicRead extends RootJsonFormat[AgoraEntity] {
-    override def write(entity: AgoraEntity) = AgoraEntityFormat.write(entity)
+    override def write(entity: AgoraEntity): JsValue = AgoraEntityFormat.write(entity)
 
     override def read(json: JsValue): AgoraEntity = {
       val entityWithoutManagers = AgoraEntityFormat.read(json)

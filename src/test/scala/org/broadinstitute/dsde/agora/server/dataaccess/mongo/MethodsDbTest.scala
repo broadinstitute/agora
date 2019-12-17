@@ -1,23 +1,26 @@
 package org.broadinstitute.dsde.agora.server.dataaccess.mongo
 
+import com.mongodb.casbah.MongoCollection
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
-import org.broadinstitute.dsde.agora.server.AgoraTestFixture
+import org.broadinstitute.dsde.agora.server.{AgoraAkkaTest, AgoraTestFixture}
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
 import org.broadinstitute.dsde.agora.server.exceptions.AgoraEntityNotFoundException
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
 import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpec}
 
 @DoNotDiscover
-class MethodsDbTest extends FlatSpec with BeforeAndAfterAll with AgoraTestFixture {
-  val mongoTestCollection = AgoraMongoClient.getCollection("test")
-  val agoraDao = AgoraDao.createAgoraDao(mongoTestCollection)
+class MethodsDbTest extends FlatSpec with BeforeAndAfterAll with AgoraTestFixture with AgoraAkkaTest {
+  val mongoTestCollection: MongoCollection = AgoraMongoClient.getCollection("test")
+  val agoraDao: AgoraDao = AgoraDao.createAgoraDao(mongoTestCollection)
 
-  override protected def beforeAll() = {
+  override protected def beforeAll(): Unit = {
+    super.beforeAll()
     ensureMongoDatabaseIsRunning()
   }
 
-  override protected def afterAll() = {
+  override protected def afterAll(): Unit = {
     clearMongoCollections(Seq(mongoTestCollection))
+    super.afterAll()
   }
 
   "Agora" should "be able to store a method" in {

@@ -4,7 +4,7 @@ package org.broadinstitute.dsde.agora.server.webservice
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.server.ValidationRejection
+import akka.http.scaladsl.server.{Route, ValidationRejection}
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
@@ -24,13 +24,14 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
   var testEntity7WithId: AgoraEntity = _
   var testEntityToBeRedactedWithId: AgoraEntity = _
 
-  val routes = ApiService.handleExceptionsAndRejections {
+  lazy val routes: Route = ApiService.handleExceptionsAndRejections {
     methodsService.postRoute ~ methodsService.querySingleRoute ~ methodsService.queryRoute
   }
 
   private val errorMessagePrefix = "Invalid WDL:"
 
-  override def beforeAll() = {
+  override def beforeAll(): Unit = {
+    super.beforeAll()
     ensureDatabasesAreRunning()
     startMockWaas()
 
@@ -42,14 +43,19 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
     testEntity6WithId = patiently(agoraBusiness.insert(testEntity6, mockAuthenticatedOwner.get, mockAccessToken))
     testEntity7WithId = patiently(agoraBusiness.insert(testEntity7, mockAuthenticatedOwner.get, mockAccessToken))
     testEntityToBeRedactedWithId = patiently(agoraBusiness.insert(testEntityToBeRedacted, mockAuthenticatedOwner.get, mockAccessToken))
+
+    flushAgoraDataCache()
   }
 
-  override def afterAll() = {
+  override def afterAll(): Unit = {
     clearDatabases()
     stopMockWaas()
+    super.afterAll()
   }
 
-  "Agora" should "return information about a method, including metadata " in {
+  behavior of "Agora"
+
+  it should "return information about a method, including metadata " in {
     Get(ApiUtil.Methods.withLeadingVersion + "/" + namespace1.get + "/" + name1.get + "/"
       + testEntity1WithId.snapshotId.get) ~> addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
       assert(responseAs[AgoraEntity] == testEntity1WithId)
@@ -57,7 +63,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
     }
   }
 
-  "Agora" should "return only payload in plain/text when parameter is set " in {
+  it should "return only payload in plain/text when parameter is set " in {
     Get(ApiUtil.Methods.withLeadingVersion + "/" + namespace1.get + "/" + name1.get + "/"
       + testEntity1WithId.snapshotId.get + "?onlyPayload=true") ~> addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~>
       check {
@@ -66,14 +72,14 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
       }
   }
 
-  "Agora" should "return status 404, mediaType json when nothing matches query by namespace, name, snapshotId" in {
+  it should "return status 404, mediaType json when nothing matches query by namespace, name, snapshotId" in {
     Get(ApiUtil.Methods.withLeadingVersion + "/foofoofoofoo/foofoofoo/99999"
     ) ~> addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
       assert(status == NotFound)
     }
   }
 
-  "Agora" should "return methods matching query by namespace and name" in {
+  it should "return methods matching query by namespace and name" in {
     Get(ApiUtil.Methods.withLeadingVersion + "?namespace=" + namespace1.get + "&name=" + name2.get) ~>
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
         val entities = responseAs[Seq[AgoraEntity]]
@@ -82,7 +88,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
       }
   }
 
-  "Agora" should "return methods matching query by synopsis and documentation" in {
+  it should "return methods matching query by synopsis and documentation" in {
     Get(ApiUtil.Methods.withLeadingVersion + "?synopsis=" + uriEncode(synopsis1.get) + "&documentation=" +
       uriEncode(documentation1.get)) ~>
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
@@ -92,7 +98,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
       }
   }
 
-  "Agora" should "return methods matching query by owner and payload" in {
+  it should "return methods matching query by owner and payload" in {
     Get(ApiUtil.Methods.withLeadingVersion + "?owner=" + owner1.get + "&payload=" + uriEncode(payload1.get)) ~>
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
       val entities = responseAs[Seq[AgoraEntity]]
@@ -100,7 +106,19 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
     }
   }
 
-  "Agora" should "create a method and return with a status of 201" in {
+  ApiUtil.AllowCacheParams foreach { allowCacheParam =>
+    it should s"return the expected data for ${ApiUtil.Methods.withLeadingVersion}$allowCacheParam" in {
+      Get(ApiUtil.Methods.withLeadingVersion + allowCacheParam) ~>
+        addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
+        assert(status == OK)
+        val agoraEntities = responseAs[Seq[AgoraEntity]]
+        assertResult(8)(agoraEntities.size)
+        assertResult(18)(agoraEntities.map(_.snapshotId.getOrElse(0)).sum)
+      }
+    }
+  }
+
+  it should "create a method and return with a status of 201" in {
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity) ~>
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
         val entity = responseAs[AgoraEntity]
@@ -117,14 +135,14 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
       }
   }
 
-  "Agora" should "create a method and return with a status of 201 with a WDL1.0 Payload" in {
+  it should "create a method and return with a status of 201 with a WDL1.0 Payload" in {
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity(payloadWdl10)) ~>
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
       assert(status == Created)
     }
   }
 
-  "Agora" should "return a 400 bad request when posting with a bad version in the Payload" in {
+  it should "return a 400 bad request when posting with a bad version in the Payload" in {
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity(payloadWdlBadVersion)) ~>
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
       assert(status == BadRequest)
@@ -132,7 +150,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
     }
   }
 
-  "Agora" should "return a 400 bad request when posting a malformed payload" in {
+  it should "return a 400 bad request when posting a malformed payload" in {
     Post(ApiUtil.Methods.withLeadingVersion, testBadAgoraEntity) ~>
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
       assert(status === BadRequest)
@@ -140,7 +158,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
     }
   }
 
-  "Agora" should "reject the request with validation errors when metadata is invalid" in {
+  it should "reject the request with validation errors when metadata is invalid" in {
     val entity = new AgoraEntity(namespace= Option(" "), name= Option(" ") , synopsis= Option(" "), payload= Option(" "), entityType= Option(AgoraEntityType.Task))
 
     Post(ApiUtil.Methods.withLeadingVersion, entity) ~>
@@ -150,7 +168,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
     }
   }
 
-  "Agora" should "reject the request when posting with a payload of None" in {
+  it should "reject the request when posting with a payload of None" in {
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(payload = None)) ~>
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
       assert(!handled)
@@ -158,7 +176,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
     }
   }
 
-  "Agora" should "reject the request when posting with a payload of whitespace only" in {
+  it should "reject the request when posting with a payload of whitespace only" in {
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(payload = Some(" "))) ~>
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
       assert(!handled)
@@ -166,7 +184,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
     }
   }
 
-  "Agora" should "reject the request when posting with a snapshotId" in {
+  it should "reject the request when posting with a snapshotId" in {
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(snapshotId = Some(123))) ~>
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
       assert(!handled)
@@ -174,7 +192,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
     }
   }
 
-  "Agora" should "reject the request when posting with a namespace of None" in {
+  it should "reject the request when posting with a namespace of None" in {
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(namespace = None)) ~>
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
       assert(!handled)
@@ -182,7 +200,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
     }
   }
 
-  "Agora" should "reject the request when posting with a namespace of whitespace only" in {
+  it should "reject the request when posting with a namespace of whitespace only" in {
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(namespace = Some(" "))) ~>
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
       assert(!handled)
@@ -190,7 +208,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
     }
   }
 
-  "Agora" should "reject the request when posting with a name of None" in {
+  it should "reject the request when posting with a name of None" in {
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(name = None)) ~>
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
       assert(!handled)
@@ -198,7 +216,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
     }
   }
 
-  "Agora" should "reject the request when posting with a name of whitespace only" in {
+  it should "reject the request when posting with a name of whitespace only" in {
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(name = Some(" "))) ~>
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
       assert(!handled)
@@ -206,7 +224,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
     }
   }
 
-  "Agora" should "reject the request when posting with a synopsis of 81 characters" in {
+  it should "reject the request when posting with a synopsis of 81 characters" in {
     val testSynopsis = Some(fillerText.take(81))
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(synopsis = testSynopsis)) ~>
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
@@ -216,7 +234,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
   }
 
   Seq(80, 79, 74) foreach { n =>
-    "Agora" should s"return a Created success code when posting with a synopsis of $n characters" in {
+    it should s"return a Created success code when posting with a synopsis of $n characters" in {
       val testSynopsis = Some(fillerText.take(80))
       Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(synopsis = testSynopsis)) ~>
         addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
@@ -226,7 +244,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
     }
   }
 
-  "Agora" should "reject the request when posting with a documentation of 10001 chars" in {
+  it should "reject the request when posting with a documentation of 10001 chars" in {
     val testDocumentation = Some("x" * 10001)
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity.copy(documentation = testDocumentation)) ~>
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
@@ -235,7 +253,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
     }
   }
 
-  "Agora" should "reject 10kb of github markdown as method documentation" in {
+  it should "reject 10kb of github markdown as method documentation" in {
     val entityJSON = s"""{
                         | "namespace": "$namespace1",
                         | "name": "$name1",
@@ -255,14 +273,14 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
     }
   }
 
-  "Agora" should "not allow you to post a new configuration to the methods route" in {
+  it should "not allow you to post a new configuration to the methods route" in {
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraConfigurationEntity) ~>
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
       rejection.isInstanceOf[ValidationRejection]
     }
   }
 
-  "Agora" should "allow method redaction" in {
+  it should "allow method redaction" in {
     Delete(ApiUtil.Methods.withLeadingVersion + "/" + testEntityToBeRedactedWithId.namespace.get + "/" +
       testEntityToBeRedactedWithId.name.get + "/" + testEntityToBeRedactedWithId.snapshotId.get) ~>
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
@@ -270,7 +288,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
     }
   }
 
-  "Agora" should "not allow redacted methods to be queried" in {
+  it should "not allow redacted methods to be queried" in {
     Get(ApiUtil.Methods.withLeadingVersion + "/" + testEntityToBeRedactedWithId.namespace.get + "/" +
       testEntityToBeRedactedWithId.name.get + "/" + testEntityToBeRedactedWithId.snapshotId.get) ~>
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
@@ -278,7 +296,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
     }
   }
 
-  "Agora" should "not let you specify a deserialized payload on the methods route" in {
+  it should "not let you specify a deserialized payload on the methods route" in {
     Get(ApiUtil.Methods.withLeadingVersion + "/" + testMethodWithSnapshot1.namespace.get + "/" +
       testMethodWithSnapshot1.name.get + "/" + testMethodWithSnapshot1.snapshotId.get + "?payloadAsObject=true") ~>
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
@@ -287,7 +305,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
     }
   }
 
-  "Agora" should "accept and record a snapshot comment when creating the initial snapshot of a method" in {
+  it should "accept and record a snapshot comment when creating the initial snapshot of a method" in {
     Post(ApiUtil.Methods.withLeadingVersion, testMethodWithSnapshotComment1.copy(snapshotId = None)) ~>
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
       assert(status == Created)
@@ -296,7 +314,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
     }
   }
 
-  "Agora" should "apply a new snapshot comment when creating a new method snapshot" in {
+  it should "apply a new snapshot comment when creating a new method snapshot" in {
     Post(ApiUtil.Methods.withLeadingVersion, testMethodWithSnapshotComment1.copy(snapshotId = None, snapshotComment = snapshotComment2)) ~>
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
       assert(status == Created)
@@ -305,7 +323,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with FlatSpecLike {
     }
   }
 
-  "Agora" should "record no snapshot comment for a new method snapshot if none is provided" in {
+  it should "record no snapshot comment for a new method snapshot if none is provided" in {
     Post(ApiUtil.Methods.withLeadingVersion, testMethodWithSnapshotComment1.copy(snapshotId = None, snapshotComment = None)) ~>
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
       assert(status == Created)

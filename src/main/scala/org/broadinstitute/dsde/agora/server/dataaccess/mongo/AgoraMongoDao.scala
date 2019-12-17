@@ -8,9 +8,9 @@ import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb.casbah.query.Imports
 import com.mongodb.util.JSON
 import com.typesafe.scalalogging.LazyLogging
+import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.AgoraMongoClient._
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.AgoraMongoDao._
-import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
 import org.broadinstitute.dsde.agora.server.exceptions.AgoraEntityNotFoundException
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntityProjection._
@@ -22,7 +22,8 @@ object AgoraMongoDao {
   val MongoDbIdField = "_id"
   val CounterSequenceField = "seq"
   val KeySeparator = ":"
-  val DefaultFindProjection = Option(new AgoraEntityProjection(Seq.empty[String], Seq[String]("payload", "documentation")))
+  val DefaultFindProjection: Option[AgoraEntityProjection] =
+    Option(new AgoraEntityProjection(Seq.empty[String], Seq[String]("payload", "documentation")))
 
   def EntityToMongoDbObject(entity: AgoraEntity): DBObject = {
     //we need to remove url if it exists since we don't store it in the document
@@ -71,7 +72,7 @@ class AgoraMongoDao(collections: Seq[MongoCollection]) extends AgoraDao with Laz
       case 1 =>
         val foundEntity = entityVector.head
         addMethodRef(Seq(foundEntity), None).head
-      case 0 => throw new AgoraEntityNotFoundException(entity)
+      case 0 => throw AgoraEntityNotFoundException(entity)
       case _ => throw new Exception("Found > 1 documents matching: " + entity.toString)
     }
   }
@@ -87,24 +88,27 @@ class AgoraMongoDao(collections: Seq[MongoCollection]) extends AgoraDao with Laz
   }
 
   def findById(ids: Seq[ObjectId], entityCollections: Seq[MongoCollection], projection: Option[AgoraEntityProjection]): Seq[AgoraEntity] = {
-    val dbQuery = (MongoDbIdField $in ids)
-    val entities = entityCollections.flatMap {
-      collection =>
-        collection.find(dbQuery, projectionToDBProjections(projection)).map {
-          dbObject => MongoDbObjectToEntity(dbObject)
-        }
-    }
-    entities
+    val dbQuery = MongoDbIdField $in ids
+    find(dbQuery, projection, entityCollections)
+  }
+
+  private def find(dbQuery: Imports.DBObject,
+                   projection: Option[AgoraEntityProjection],
+                   entityCollections: Seq[MongoCollection]): Seq[AgoraEntity] = {
+    for {
+      collection <- entityCollections
+      dbObject <- collection.find(dbQuery, projectionToDBProjections(projection))
+    } yield MongoDbObjectToEntity(dbObject)
   }
 
   // Find all configurations that have specified method id.
-  override def findConfigurations(id: ObjectId) = {
+  override def findConfigurations(id: ObjectId): Seq[AgoraEntity] = {
     val dbQuery = "methodId" $eq id
     queryToEntities(dbQuery)
   }
 
   // Find all configurations that have one of the specified method ids.
-  override def findConfigurations(ids: Seq[ObjectId]) = {
+  override def findConfigurations(ids: Seq[ObjectId]): Seq[AgoraEntity] = {
     val dbQuery = "methodId" $in ids
     queryToEntities(dbQuery)
   }
@@ -145,14 +149,8 @@ class AgoraMongoDao(collections: Seq[MongoCollection]) extends AgoraDao with Laz
     currentCount.get(CounterSequenceField).asInstanceOf[Int]
   }
 
-  def find(query: Imports.DBObject, projection: Option[AgoraEntityProjection]) = {
-    collections.flatMap {
-      collection =>
-        collection.find(query, projectionToDBProjections(projection)).map {
-          dbObject =>
-            MongoDbObjectToEntity(dbObject)
-        }
-    }
+  def find(query: Imports.DBObject, projection: Option[AgoraEntityProjection]): Seq[AgoraEntity] = {
+    find(query, projection, collections)
   }
 
   def projectionToDBProjections(projectionOpt: Option[AgoraEntityProjection]): Imports.DBObject = {
@@ -185,12 +183,18 @@ class AgoraMongoDao(collections: Seq[MongoCollection]) extends AgoraDao with Laz
     val methods = findById(methodRefs, methodCollections, projection)
     val methodsMap = idToEntityMap(methods, methodCollections)
 
-    // Populate method field if methodId has a value
+    // Populate method field if methodId has a value and that method is in the methodsMap
     val entitiesWithRefs = entities.map {
       entity =>
         if (entity.methodId.nonEmpty) {
           val method = methodsMap.get(entity.methodId.get)
-          entity.addMethod(Option(method.get.addUrl().removeIds()))
+          /*
+          NOTE: There exists a known race condition where the cache actor may try to load entities when the methods
+          haven't fully populated. In this case, the entity will have a methodId, but the method will be None.
+
+          So far this condition has only been seen during caching and clears up with the next refresh of the cache.
+           */
+          entity.addMethod(method.map(_.addUrl().removeIds()))
         }
         else {
           entity

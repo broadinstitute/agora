@@ -9,12 +9,14 @@ import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpecLike}
 @DoNotDiscover
 class AgoraPermissionsSpec extends ApiServiceSpec with BeforeAndAfterAll with AgoraTestFixture with FlatSpecLike {
 
-  override protected def beforeAll() = {
+  override protected def beforeAll(): Unit = {
+    super.beforeAll()
     ensureDatabasesAreRunning()
   }
 
-  override protected def afterAll() = {
+  override protected def afterAll(): Unit = {
     clearDatabases()
+    super.afterAll()
   }
 
   "Agora" should "return true if someone has read access and we ask if they have read access " in {
@@ -81,12 +83,12 @@ class AgoraPermissionsSpec extends ApiServiceSpec with BeforeAndAfterAll with Ag
     val adminUser = AgoraTestData.adminUser.get
 
     // Set adminUsers's admin status false
-    runInDB { db => db.admPerms.updateAdmin(adminUser, false) }
+    runInDB { db => db.admPerms.updateAdmin(adminUser, adminStatus = false) }
     val noAdminUsers = runInDB { db => db.admPerms.listAdminUsers }
     assert(noAdminUsers.isEmpty)
 
     // Set adminUsers's admin status true
-    runInDB { db => db.admPerms.updateAdmin(adminUser, true) }
+    runInDB { db => db.admPerms.updateAdmin(adminUser, adminStatus = true) }
     val someAdminUsers = runInDB { db => db.admPerms.listAdminUsers }
     assert(someAdminUsers.length == 1)
   }

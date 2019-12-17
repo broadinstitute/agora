@@ -34,6 +34,7 @@ class DockerHubClientSpec extends AsyncFreeSpec with Matchers with BeforeAndAfte
     DockerTagInfo(pk = 3, id = "three"))
 
   override protected def beforeAll(): Unit = {
+    super.beforeAll()
     mockServer = startClientAndServer(mockServerPort)
     mockServer.when(
       request()
@@ -74,6 +75,7 @@ class DockerHubClientSpec extends AsyncFreeSpec with Matchers with BeforeAndAfte
   override protected def afterAll(): Unit = {
     if (mockServer.isRunning) { mockServer.stop() }
     Await.result(actorSystem.terminate(), 30.seconds)
+    super.afterAll()
   }
 
   // We need to point all docker requests to local

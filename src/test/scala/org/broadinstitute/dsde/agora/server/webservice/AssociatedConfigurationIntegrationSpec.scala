@@ -3,9 +3,9 @@ package org.broadinstitute.dsde.agora.server.webservice
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server.directives.ExecutionDirectives
-import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
+import akka.http.scaladsl.testkit.RouteTestTimeout
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
-import org.broadinstitute.dsde.agora.server.AgoraTestFixture
+import org.broadinstitute.dsde.agora.server.{AgoraRouteTest, AgoraTestFixture}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraPermissions}
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
@@ -17,18 +17,19 @@ import scala.concurrent.duration._
 
 //noinspection ZeroIndexToHead
 @DoNotDiscover
-class AssociatedConfigurationIntegrationSpec extends FlatSpec with ExecutionDirectives
-  with ScalatestRouteTest with BeforeAndAfterAll with AgoraTestFixture {
+class AssociatedConfigurationIntegrationSpec extends FlatSpec with ExecutionDirectives with AgoraRouteTest
+  with BeforeAndAfterAll with AgoraTestFixture {
 
   private implicit val routeTestTimeout: RouteTestTimeout = RouteTestTimeout(20.seconds)
 
   private val payload_name = "AssociatedConfigurationIntegrationSpec-config-payload-name"
   private val payload_namespace = "AssociatedConfigurationIntegrationSpec-config-payload-namespace"
 
-  val methodsService = new MethodsService(permsDataSource)
-  private val testRoutes = ApiService.handleExceptionsAndRejections(methodsService.queryAssociatedConfigurationsRoute)
+  lazy val methodsService = new MethodsService(permsDataSource, agoraGuardian)
+  private lazy val testRoutes = ApiService.handleExceptionsAndRejections(methodsService.queryAssociatedConfigurationsRoute)
 
   override def beforeAll(): Unit = {
+    super.beforeAll()
     ensureDatabasesAreRunning()
     startMockWaas()
 
@@ -105,6 +106,7 @@ class AssociatedConfigurationIntegrationSpec extends FlatSpec with ExecutionDire
   override def afterAll(): Unit = {
     clearDatabases()
     stopMockWaas()
+    super.afterAll()
   }
 
   behavior of "Agora associated configurations dlisting"

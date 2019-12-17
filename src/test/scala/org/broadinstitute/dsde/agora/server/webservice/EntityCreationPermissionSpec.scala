@@ -6,7 +6,7 @@ import java.util.UUID
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCode
 import akka.http.scaladsl.model.StatusCodes._
-
+import akka.http.scaladsl.server.Route
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions.All
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraPermissions}
@@ -14,7 +14,6 @@ import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
 import org.broadinstitute.dsde.agora.server.webservice.routes.MockAgoraDirectives
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
-
 import org.scalatest.{DoNotDiscover, FlatSpecLike}
 
 @DoNotDiscover
@@ -29,11 +28,12 @@ class EntityCreationPermissionSpec extends ApiServiceSpec with FlatSpecLike {
   var testEntity7WithId: AgoraEntity = _
   var testEntityToBeRedactedWithId: AgoraEntity = _
 
-  val routes = ApiService.handleExceptionsAndRejections {
+  val routes: Route = ApiService.handleExceptionsAndRejections {
     methodsService.postRoute
   }
 
-  override def beforeAll() = {
+  override def beforeAll(): Unit = {
+    super.beforeAll()
     ensureDatabasesAreRunning()
     startMockWaas()
 
@@ -47,9 +47,10 @@ class EntityCreationPermissionSpec extends ApiServiceSpec with FlatSpecLike {
     patiently(permissionBusiness.insertNamespacePermission(AgoraEntity(testEntity2.namespace), owner2.get, AccessControl(owner3.get, AgoraPermissions(All))))
   }
 
-  override def afterAll() = {
+  override def afterAll(): Unit = {
     clearDatabases()
     stopMockWaas()
+    super.afterAll()
   }
 
   behavior of "Agora, when creating/editing entities (methods and configs)"
@@ -206,6 +207,7 @@ class EntityCreationPermissionSpec extends ApiServiceSpec with FlatSpecLike {
       }
   }
 
+  //noinspection SameParameterValue
   private def redact(namespace:String, name:String, snapshotId: Int, caller: String) = {
     val ent = AgoraEntity(Some(namespace), Some(name), Some(snapshotId))
     patiently(agoraBusiness.delete(ent, Seq(AgoraEntityType.Workflow), caller))

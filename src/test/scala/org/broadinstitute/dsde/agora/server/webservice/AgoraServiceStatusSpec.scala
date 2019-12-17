@@ -1,13 +1,13 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
-import akka.actor.testkit.typed.scaladsl._
-import akka.actor.typed.Scheduler
+import akka.actor.typed.{ActorRef, DispatcherSelector}
 import akka.actor.typed.scaladsl.AskPattern._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.testkit.RouteTest
 import akka.util.Timeout
-import org.broadinstitute.dsde.agora.server.AgoraGuardianActor
+import org.broadinstitute.dsde.agora.server.actor
+import org.broadinstitute.dsde.agora.server.actor.AgoraGuardianActor
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDBStatus
 import org.broadinstitute.dsde.agora.server.dataaccess.health.AgoraHealthMonitorSubsystems._
 import org.broadinstitute.dsde.agora.server.dataaccess.health.HealthMonitorSubsystems
@@ -28,16 +28,19 @@ class AgoraServiceUnhealthyStatusSpec extends ApiServiceSpec with Matchers with 
   // this health monitor uses the same SQL check as our runtime mysql, which calls VERSION() in the db.
   // H2 does not support VERSION(), so we expect this health monitor to show as unhealthy.
   private lazy val dbStatus = new AgoraDBStatus(permsDataSource)
-  private lazy val testKit = ActorTestKit("AgoraServiceUnhealthyStatusSpec")
-  private lazy val agoraGuardian = testKit.spawn(AgoraGuardianActor(permsDataSource, dbStatus.toHealthMonitorSubsystems))
+  override lazy val agoraGuardian: ActorRef[AgoraGuardianActor.Command] = actorTestKit.spawn(actor.AgoraGuardianActor(
+    permsDataSource,
+    dbStatus.toHealthMonitorSubsystems,
+    DispatcherSelector.sameAsParent()
+  ))
   private lazy val apiStatusService = new StatusService(permsDataSource, agoraGuardian)
 
   override def beforeAll: Unit = {
+    super.beforeAll()
     implicit val askTimeout:Timeout = Timeout(1.minute) // timeout for the ask to healthMonitor for GetCurrentStatus
     ensureDatabasesAreRunning()
     // tell the health monitor to perform a check, then wait until checks have returned
-    val testProbe = testKit.createTestProbe()
-    implicit val scheduler: Scheduler = testKit.scheduler
+    val testProbe = actorTestKit.createTestProbe()
     testProbe.awaitAssert(
       {
         val result = Await.result(agoraGuardian.ask(AgoraGuardianActor.GetCurrentStatus), askTimeout.duration)
@@ -51,7 +54,7 @@ class AgoraServiceUnhealthyStatusSpec extends ApiServiceSpec with Matchers with 
 
   override def afterAll(): Unit = {
     clearDatabases()
-    testKit.shutdownTestKit()
+    super.afterAll()
   }
 
 
@@ -80,22 +83,22 @@ class AgoraServiceHealthyStatusSpec extends ApiServiceSpec with Matchers with Fl
   // this health monitor uses the unit-test-only UnitTestAgoraDBStatus, which should work in H2.
   // therefore, we expect this health monitor to show as healthy.
   private lazy val dbStatus = new UnitTestAgoraDBStatus(permsDataSource)
-  private lazy val testKit = ActorTestKit("AgoraServiceHealthyStatusSpec")
-  private lazy val agoraGuardian = testKit.spawn(AgoraGuardianActor(
+  override lazy val agoraGuardian: ActorRef[AgoraGuardianActor.Command] = actorTestKit.spawn(actor.AgoraGuardianActor(
     permsDataSource,
     new HealthMonitorSubsystems(Map(
       Database -> (_ => dbStatus.h2Status),
       Mongo -> (executionContext => dbStatus.mongoStatus()(executionContext))
-    ))
+    )),
+    DispatcherSelector.sameAsParent()
   ))
   private lazy val apiStatusService = new StatusService(permsDataSource, agoraGuardian)
 
   override def beforeAll: Unit = {
+    super.beforeAll()
     implicit val askTimeout:Timeout = Timeout(1.minute) // timeout for the ask to healthMonitor for GetCurrentStatus
     ensureDatabasesAreRunning()
     // tell the health monitor to perform a check, then wait until checks have returned
-    val testProbe = testKit.createTestProbe()
-    implicit val scheduler: Scheduler = testKit.scheduler
+    val testProbe = actorTestKit.createTestProbe()
     testProbe.awaitAssert(
       {
         val result = Await.result(agoraGuardian.ask(AgoraGuardianActor.GetCurrentStatus), askTimeout.duration)
@@ -109,7 +112,7 @@ class AgoraServiceHealthyStatusSpec extends ApiServiceSpec with Matchers with Fl
 
   override def afterAll: Unit = {
     clearDatabases()
-    testKit.shutdownTestKit()
+    super.afterAll()
   }
 
   it should "run and connect to DBs" in {

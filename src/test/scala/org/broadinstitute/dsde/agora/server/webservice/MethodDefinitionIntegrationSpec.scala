@@ -2,27 +2,28 @@ package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes._
-import akka.http.scaladsl.testkit.{RouteTest, RouteTestTimeout, ScalatestRouteTest}
-
-import org.broadinstitute.dsde.agora.server.AgoraTestFixture
+import akka.http.scaladsl.testkit.{RouteTest, RouteTestTimeout}
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraPermissions}
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType, MethodDefinition}
-import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
-import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpec}
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
+import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
+import org.broadinstitute.dsde.agora.server.{AgoraRouteTest, AgoraTestFixture}
+import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpec}
 
 import scala.concurrent.duration._
 
 @DoNotDiscover
-class MethodDefinitionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRouteTest with BeforeAndAfterAll with AgoraTestFixture {
+class MethodDefinitionIntegrationSpec extends FlatSpec with RouteTest with AgoraRouteTest with BeforeAndAfterAll
+  with AgoraTestFixture {
 
   implicit val routeTestTimeout: RouteTestTimeout = RouteTestTimeout(20.seconds)
 
-  val methodsService = new MethodsService(permsDataSource)
+  lazy val methodsService = new MethodsService(permsDataSource, agoraGuardian)
 
   override def beforeAll(): Unit = {
+    super.beforeAll()
     ensureDatabasesAreRunning()
     startMockWaas()
 
@@ -96,11 +97,13 @@ class MethodDefinitionIntegrationSpec extends FlatSpec with RouteTest with Scala
     patiently(permissionBusiness.insertEntityPermission(testMethod("redacts").copy(snapshotId = Some(4)), mockAuthenticatedOwner.get,
       AccessControl(AccessControl.publicUser, AgoraPermissions(AgoraPermissions.Read))))
 
+    flushAgoraDataCache()
   }
 
   override def afterAll(): Unit = {
     clearDatabases()
     stopMockWaas()
+    super.afterAll()
   }
 
   behavior of "Agora method definitions listing"
@@ -110,6 +113,19 @@ class MethodDefinitionIntegrationSpec extends FlatSpec with RouteTest with Scala
       methodsService.queryMethodDefinitionsRoute ~>
       check {
         assert(status == OK)
+    }
+  }
+
+  ApiUtil.AllowCacheParams foreach { allowCacheParam =>
+    it should s"return the expected data for ${ApiUtil.Methods.withLeadingVersion}/definitions$allowCacheParam" in {
+      Get(ApiUtil.Methods.withLeadingVersion + "/definitions" + allowCacheParam) ~>
+        methodsService.queryMethodDefinitionsRoute ~>
+        check {
+          assert(status == OK)
+          val methodDefinitions = responseAs[Seq[MethodDefinition]]
+          assertResult(5)(methodDefinitions.size)
+          assertResult(13)(methodDefinitions.map(_.numSnapshots).sum)
+        }
     }
   }
 

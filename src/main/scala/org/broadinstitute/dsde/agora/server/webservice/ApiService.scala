@@ -13,7 +13,8 @@ import akka.http.scaladsl.server.directives.{DebuggingDirectives, LogEntry, Logg
 import akka.stream.Materializer
 import akka.stream.scaladsl.Sink
 import com.typesafe.scalalogging.LazyLogging
-import org.broadinstitute.dsde.agora.server.{AgoraGuardianActor, SwaggerRoutes, errorReportSource}
+import org.broadinstitute.dsde.agora.server.actor.AgoraGuardianActor
+import org.broadinstitute.dsde.agora.server.{SwaggerRoutes, errorReportSource}
 import org.broadinstitute.dsde.agora.server.business.AgoraBusinessExecutionContext
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
 import org.broadinstitute.dsde.agora.server.exceptions._
@@ -76,9 +77,9 @@ class ApiService(permissionsDataSource: PermissionsDataSource, agoraGuardian: Ac
   extends LazyLogging with SwaggerRoutes {
 
   val statusService = new StatusService(permissionsDataSource, agoraGuardian)
-  val ga4ghService = new Ga4ghService(permissionsDataSource)
-  val methodsService = new MethodsService(permissionsDataSource)
-  val configurationsService = new ConfigurationsService(permissionsDataSource)
+  val ga4ghService = new Ga4ghService(permissionsDataSource, agoraGuardian)
+  val methodsService = new MethodsService(permissionsDataSource, agoraGuardian)
+  val configurationsService = new ConfigurationsService(permissionsDataSource, agoraGuardian)
   val namespacePermissionsService = new NamespacePermissionsService(permissionsDataSource)
   val entityPermissionsService = new EntityPermissionsService(permissionsDataSource)
   val multiEntityPermissionsService = new MultiEntityPermissionsService(permissionsDataSource)

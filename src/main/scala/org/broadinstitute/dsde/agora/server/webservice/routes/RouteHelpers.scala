@@ -2,7 +2,7 @@ package org.broadinstitute.dsde.agora.server.webservice.routes
 
 import akka.http.scaladsl.marshalling.ToResponseMarshallable
 import akka.http.scaladsl.server._
-import org.broadinstitute.dsde.agora.server.AgoraConfig.{authenticationDirectives, version}
+import org.broadinstitute.dsde.agora.server.AgoraConfig.{authenticationDirectives, dataCacheDuration, version}
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityProjection, AgoraEntityType}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -28,10 +28,11 @@ trait BaseRoute extends RouteUtil  {
 }
 
 trait QueryRouteHelper extends BaseRoute {
-  def matchQuerySingleRoute(_path: String)(implicit ec: ExecutionContext) =
+  def matchQuerySingleRoute(_path: String)
+                           (implicit ec: ExecutionContext): Directive[(String, String, Int, String, String)] =
     versionedPath(_path / Segment / Segment / IntNumber) & authenticationDirectives.usernameFromRequest(()) & authenticationDirectives.tokenFromRequest()
   
-  def matchQueryRoute(_path: String)(implicit ec: ExecutionContext) =
+  def matchQueryRoute(_path: String)(implicit ec: ExecutionContext): Directive1[String] =
     get & versionedPath(_path) & authenticationDirectives.usernameFromRequest(())
 
   def entityFromParams(params: Map[String, List[String]]): AgoraEntity = AgoraEntity(
@@ -46,6 +47,10 @@ trait QueryRouteHelper extends BaseRoute {
     url             = params.getOrElse("url", Nil).headOption,
     entityType      = params.getOrElse("entityType", Nil).headOption.toAgoraEntityOption
   )
+
+  def allowCacheFromParams(params: Map[String, List[String]]): Boolean = {
+    dataCacheDuration.isDefined && params.getOrElse("allowCache", Nil).headOption.toBooleanOption.getOrElse(true)
+  }
 
   def validateEntityType(params: Map[String, List[String]], path: String): Directive0 = {
     val _type = params.getOrElse("entityType", Nil).headOption.toAgoraEntityOption
@@ -64,7 +69,7 @@ trait QueryRouteHelper extends BaseRoute {
 }
 
 trait AddRouteHelper extends BaseRoute {
-  def postPath(_path: String)(implicit ec: ExecutionContext) = {
+  def postPath(_path: String)(implicit ec: ExecutionContext): Directive[(String, String)] = {
     post & versionedPath(_path) & authenticationDirectives.usernameFromRequest(()) & authenticationDirectives.tokenFromRequest()
   }
 
@@ -75,7 +80,10 @@ trait AddRouteHelper extends BaseRoute {
     validate(entity.synopsis.isEmpty || entity.synopsis.get.length <= 80, "Synopsis must be less than 80 chars" ) &
     validate(entity.namespace.nonEmpty && entity.namespace.get.trim.nonEmpty, "Namespace cannot be empty") &
     validate(entity.name.nonEmpty && entity.name.get.trim.nonEmpty, "Name cannot be empty") &
-    validate(entity.documentation.isEmpty || entity.documentation.get.getBytes.size <= 10000, "Documentation must be less than 10kb")
+    validate(
+      entity.documentation.isEmpty || entity.documentation.get.getBytes.length <= 10000,
+      "Documentation must be less than 10kb"
+    )
   }
 }
 
@@ -102,6 +110,13 @@ trait RouteUtil extends Directives {
     def toIntOption: Option[Int] = x match {
       case Some(str) => Try(Option(str.toInt)).getOrElse(None)
       case None => None
+    }
+
+    def toBooleanOption: Option[Boolean] = {
+      x match {
+        case Some(str) => Try(Option(str.toBoolean)).getOrElse(None)
+        case None => None
+      }
     }
 
     def toAgoraEntityOption: Option[AgoraEntityType.EntityType] = x match {

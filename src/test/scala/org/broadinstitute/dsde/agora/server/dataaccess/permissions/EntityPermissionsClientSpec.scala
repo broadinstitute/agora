@@ -1,17 +1,16 @@
 package org.broadinstitute.dsde.agora.server.dataaccess.permissions
 
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
-import org.broadinstitute.dsde.agora.server.AgoraTestFixture
+import org.broadinstitute.dsde.agora.server.{AgoraAkkaTest, AgoraTestFixture}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.exceptions.PermissionModificationException
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpec}
 
-import scala.concurrent.ExecutionContext.Implicits.global
-
 @DoNotDiscover
-class EntityPermissionsClientSpec extends FlatSpec with ScalaFutures with BeforeAndAfterAll with AgoraTestFixture {
+class EntityPermissionsClientSpec
+  extends FlatSpec with ScalaFutures with BeforeAndAfterAll with AgoraTestFixture with AgoraAkkaTest {
 
   var foundTestEntity1: AgoraEntity = _
   var foundTestEntity2: AgoraEntity = _
@@ -20,6 +19,7 @@ class EntityPermissionsClientSpec extends FlatSpec with ScalaFutures with Before
 
 
   override def beforeAll(): Unit = {
+    super.beforeAll()
     ensureDatabasesAreRunning()
     startMockWaas()
 
@@ -38,6 +38,7 @@ class EntityPermissionsClientSpec extends FlatSpec with ScalaFutures with Before
   override def afterAll(): Unit = {
     clearDatabases()
     stopMockWaas()
+    super.afterAll()
   }
 
   "Agora" should "add entity permissions." in {

@@ -1,11 +1,12 @@
 
 package org.broadinstitute.dsde.agora.server.webservice
 
+import akka.actor.typed.ActorRef
+import akka.actor.typed.scaladsl.adapter._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import akka.http.scaladsl.model.StatusCodes.{BadRequest, Created}
 import akka.http.scaladsl.model.HttpMethods.{DELETE, GET}
+import akka.http.scaladsl.model.StatusCodes.{BadRequest, Created}
 import akka.http.scaladsl.server.{MethodRejection, PathMatcher, Route}
-import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.AgoraConfig.authenticationDirectives
 import org.broadinstitute.dsde.agora.server.business.{AgoraBusiness, AgoraBusinessExecutionContext}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
@@ -13,20 +14,22 @@ import org.broadinstitute.dsde.agora.server.exceptions.AgoraEntityNotFoundExcept
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
 import org.broadinstitute.dsde.agora.server.webservice.routes.RouteHelpers
-
-import scala.util.{Failure, Success, Try}
+import org.broadinstitute.dsde.agora.server.AgoraConfig
+import org.broadinstitute.dsde.agora.server.actor.AgoraGuardianActor
 import scalaz.{Failure => FailureZ, Success => SuccessZ}
 
 import scala.concurrent.ExecutionContext
+import scala.util.{Failure, Success, Try}
 
 /**
  * AgoraService defines routes for ApiServiceActor.
  *
  * Concrete implementations are MethodsService and ConfigurationsService.
  */
-abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extends RouteHelpers {
+abstract class AgoraService(permissionsDataSource: PermissionsDataSource,
+                            agoraGuardian: ActorRef[AgoraGuardianActor.Command]) extends RouteHelpers {
 
-  private val agoraBusiness = new AgoraBusiness(permissionsDataSource)
+  private val agoraBusiness = new AgoraBusiness(permissionsDataSource, agoraGuardian)
 
   def path: String
 
@@ -34,7 +37,7 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
              executionContext: ExecutionContext,
              agoraBusinessExecutionContext: AgoraBusinessExecutionContext): Route =
     queryAssociatedConfigurationsRoute ~ queryCompatibleConfigurationsRoute ~ querySingleRoute ~
-    queryMethodDefinitionsRoute ~ queryRoute ~ postRoute
+      queryMethodDefinitionsRoute ~ queryRoute ~ postRoute
 
   // GET http://root.com/methods/<namespace>/<name>/<snapshotId>?onlyPayload=true
   // GET http://root.com/configurations/<namespace>/<name>/<snapshotId>
@@ -99,9 +102,14 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
                                   agoraBusinessExecutionContext: AgoraBusinessExecutionContext): Route =
     (versionedPath(PathMatcher("methods" / "definitions")) & get &
       authenticationDirectives.usernameFromRequest(())) { username =>
-        complete(agoraBusiness.listDefinitions(username)(
-          agoraBusinessExecutionContext.executionContext
-        ))
+      parameterMultiMap { params =>
+        val allowCache = allowCacheFromParams(params)
+        extractActorSystem { actorSystem =>
+          complete(agoraBusiness.listDefinitionsCached(username, allowCache)(
+            agoraBusinessExecutionContext.executionContext, AgoraConfig.requestTimeout, actorSystem.toTyped
+          ))
+        }
+      }
     }
 
   // all configurations that reference any snapshot of the supplied method
@@ -137,11 +145,14 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
         validateEntityType(params, path) {
           val entity = entityFromParams(params)
           val projection = projectionFromParams(params)
+          val allowCache = allowCacheFromParams(params)
           val entityTypes = AgoraEntityType.byPath(path)
 
-          complete(agoraBusiness.find(entity, projection, entityTypes, username)(
-            agoraBusinessExecutionContext.executionContext
-          ))
+          extractActorSystem { actorSystem =>
+            complete(agoraBusiness.findCached(entity, projection, entityTypes, username, allowCache)(
+              agoraBusinessExecutionContext.executionContext, AgoraConfig.requestTimeout, actorSystem.toTyped
+            ))
+          }
         }
       }
     }

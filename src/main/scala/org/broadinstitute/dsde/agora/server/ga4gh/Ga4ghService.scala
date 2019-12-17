@@ -1,10 +1,12 @@
 package org.broadinstitute.dsde.agora.server.ga4gh
 
+import akka.actor.typed.ActorRef
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import com.typesafe.scalalogging.LazyLogging
+import org.broadinstitute.dsde.agora.server.actor.AgoraGuardianActor
 import org.broadinstitute.dsde.agora.server.business.AgoraBusinessExecutionContext
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
 import org.broadinstitute.dsde.agora.server.ga4gh.Models._
@@ -15,10 +17,9 @@ import scala.util.Failure
 import scala.util.Success
 import scala.concurrent.{ExecutionContext, Future}
 
-class Ga4ghService(permissionsDataSource: PermissionsDataSource) extends Ga4ghQueryHandler with Ga4ghServiceSupport with SprayJsonSupport with DefaultJsonProtocol with LazyLogging {
-
-  // dataSource required for Ga4ghQueryHandler
-  implicit val dataSource: PermissionsDataSource = permissionsDataSource
+class Ga4ghService(override val dataSource: PermissionsDataSource,
+                   override val agoraGuardian: ActorRef[AgoraGuardianActor.Command])
+  extends Ga4ghQueryHandler with Ga4ghServiceSupport with SprayJsonSupport with DefaultJsonProtocol with LazyLogging {
 
   def routes(implicit
              executionContext: ExecutionContext,

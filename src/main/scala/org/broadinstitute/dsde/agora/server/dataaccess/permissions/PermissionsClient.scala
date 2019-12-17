@@ -292,6 +292,28 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
       entity <- entities if permission.entityID === entity.id
     } yield entity.alias
 
+    filterEntityAliases(entityAliases, aliasQuery)
+  }
+
+  /** The list of entity aliases this user has at-least read access to, not including public entities.
+   *
+   * @param userEmail     the user for which to query
+   * @param entityAliases the list of entity aliases to consider for the query
+   * @return entity aliases
+   */
+  def listUserEntities(userEmail: String, entityAliases: Option[Seq[String]]): ReadAction[Seq[String]] = {
+    val aliasQuery = for {
+      user <- users if user.email === userEmail
+      // see AgoraPermissions; roles will always be odd if the user has read perms, because bitmasks.
+      permission <- permissions if permission.userID === user.id && permission.roles.%(2) === 1
+      entity <- entities if permission.entityID === entity.id
+    } yield entity.alias
+
+    filterEntityAliases(entityAliases, aliasQuery)
+  }
+
+  private def filterEntityAliases(entityAliases: Option[Seq[String]],
+                                  aliasQuery: Query[Rep[String], String, Seq]): ReadAction[Seq[String]] = {
     val filteredQuery = entityAliases match {
       case Some(aliases) =>
         metricsClient.recordMetric("mysql", JsObject(
@@ -333,7 +355,36 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
         None
       }
 
-      listReadableEntities(userEmail, entityAliases) map { aliasedAgoraEntitiesWithReadPermissions =>
+      filterEntityByReadFunction(agoraEntities, userEmail, entityAliases, listReadableEntities, callerTag)
+    }
+  }
+
+  // be careful with this method. Many previous callers of this method were very inefficient, retrieving entire
+  // collections from Mongo and then filtering out 90%+ of those documents, leading to scale issues.
+  // We are not deprecating or removing this method because it is appropriate for certain use cases.
+  def filterEntityByReadUser(agoraEntities: Seq[AgoraEntity], userEmail: String, callerTag: String)
+                            (implicit executionContext: ExecutionContext): ReadAction[Seq[AgoraEntity]] = {
+    filterEntityByReadFunction(agoraEntities, userEmail, None, listUserEntities, callerTag)
+  }
+
+  // be careful with this method. Many previous callers of this method were very inefficient, retrieving entire
+  // collections from Mongo and then filtering out 90%+ of those documents, leading to scale issues.
+  // We are not deprecating or removing this method because it is appropriate for certain use cases.
+  private def filterEntityByReadFunction(agoraEntities: Seq[AgoraEntity],
+                                         userEmail: String,
+                                         entityAliases: Option[Seq[String]],
+                                         listEntitiesFunction: (String, Option[Seq[String]]) => ReadAction[Seq[String]],
+                                         callerTag: String)
+                                        (implicit executionContext: ExecutionContext): ReadAction[Seq[AgoraEntity]] = {
+
+    if (agoraEntities.isEmpty) {
+      // short-circuit: if we're asked to filter the empty set, don't go to mysql. Just return the empty set.
+      DBIO.successful(Seq.empty[AgoraEntity])
+
+    } else {
+
+      val listEntitiesAction: ReadAction[Seq[String]] = listEntitiesFunction(userEmail, entityAliases)
+      listEntitiesAction map { aliasedAgoraEntitiesWithReadPermissions =>
         val aliasedAgoraEntitiesWithReadPermissionsSet = aliasedAgoraEntitiesWithReadPermissions.toSet
         val filteredEntities = agoraEntities.filter(agoraEntity =>
           aliasedAgoraEntitiesWithReadPermissionsSet.contains(alias(agoraEntity))

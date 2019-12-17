@@ -1,7 +1,7 @@
 package org.broadinstitute.dsde.agora.server.business
 
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
-import org.broadinstitute.dsde.agora.server.AgoraTestFixture
+import org.broadinstitute.dsde.agora.server.{AgoraAkkaTest, AgoraTestFixture}
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions.Read
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraPermissions}
@@ -10,14 +10,13 @@ import org.broadinstitute.dsde.agora.server.model.AgoraEntityType
 import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpec, Matchers}
 import slick.dbio.DBIOAction
 
-import scala.concurrent.ExecutionContext.Implicits.global
-
 @DoNotDiscover
-class AgoraBusinessTest extends FlatSpec with Matchers with BeforeAndAfterAll with AgoraTestFixture {
+class AgoraBusinessTest extends FlatSpec with Matchers with BeforeAndAfterAll with AgoraTestFixture with AgoraAkkaTest {
 
 //  val methodImportResolver = new MethodImportResolver(agoraTestOwner.get, agoraBusiness)
 
   override protected def beforeAll(): Unit = {
+    super.beforeAll()
     ensureDatabasesAreRunning()
     startMockWaas()
 
@@ -27,6 +26,7 @@ class AgoraBusinessTest extends FlatSpec with Matchers with BeforeAndAfterAll wi
   override protected def afterAll(): Unit = {
     clearDatabases()
     stopMockWaas()
+    super.afterAll()
   }
 
 //  "Agora" should "not find a method payload when resolving a WDL import statement if the method has not been added" in {

@@ -7,6 +7,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.RoutingLog
 import akka.{actor => classic}
 import com.typesafe.scalalogging.LazyLogging
+import org.broadinstitute.dsde.agora.server.actor.AgoraGuardianActor
 import org.broadinstitute.dsde.agora.server.business.AgoraBusinessExecutionContext
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDBStatus
 import org.broadinstitute.dsde.agora.server.dataaccess.health.AgoraHealthMonitorSubsystems._
@@ -20,12 +21,14 @@ import scala.concurrent.{Await, ExecutionContext}
 class ServerInitializer extends LazyLogging {
   private val permsDataSource = new PermissionsDataSource(AgoraConfig.sqlDatabase)
 
+  private val ioDispatcherName = "dispatchers.io-dispatcher"
+  private val ioDispatcherSelector = DispatcherSelector.fromConfig(ioDispatcherName)
+
   private val dbStatus = new AgoraDBStatus(permsDataSource)
   private implicit val actorSystem: ActorSystem[AgoraGuardianActor.Command] =
-    ActorSystem(AgoraGuardianActor(permsDataSource, dbStatus.toHealthMonitorSubsystems), "agora")
+    ActorSystem(AgoraGuardianActor(permsDataSource, dbStatus.toHealthMonitorSubsystems, ioDispatcherSelector), "agora")
 
-  private val ioDispatcherName = "dispatchers.io-dispatcher"
-  private val ioDispatcher = actorSystem.dispatchers.lookup(DispatcherSelector.fromConfig(ioDispatcherName))
+  private val ioDispatcher = actorSystem.dispatchers.lookup(ioDispatcherSelector)
 
   // DANGER: Only pass this execution context explicitly! If the actor system's execution context accidentally ends up
   // being used implicitly in the wrong place it can cause timeouts that currently only appear in production.

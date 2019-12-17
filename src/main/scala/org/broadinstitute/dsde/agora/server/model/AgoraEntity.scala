@@ -1,11 +1,9 @@
-
 package org.broadinstitute.dsde.agora.server.model
 
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.exceptions.AgoraException
 import org.bson.types.ObjectId
 import org.joda.time.DateTime
-
 import scalaz.Scalaz._
 import scalaz._
 import org.broadinstitute.dsde.rawls.model.MethodConfiguration
@@ -14,18 +12,16 @@ import spray.json._
 import org.broadinstitute.dsde.rawls.model.JsonSupport
 import spray.json.JsonParser.ParsingException
 
-
-
 object AgoraEntityType extends Enumeration {
   def byPath(path: String): Seq[EntityType] = path match {
-    case AgoraConfig.methodsRoute => Seq(Task, Workflow)
+    case AgoraConfig.methodsRoute        => Seq(Task, Workflow)
     case AgoraConfig.configurationsRoute => Seq(Configuration)
   }
 
   type EntityType = Value
-  val Task = Value("Task")
-  val Workflow = Value("Workflow")
-  val Configuration = Value("Configuration")
+  val Task: EntityType = Value("Task")
+  val Workflow: EntityType = Value("Workflow")
+  val Configuration: EntityType = Value("Configuration")
   val MethodTypes = Seq(Task, Workflow)
 }
 
@@ -65,7 +61,7 @@ object AgoraEntity extends JsonSupport {
     }
 
     def validateDocumentation(doc: String): ValidationNel[String, String] = {
-      if (doc.getBytes.size <= 10000) doc.successNel[String]
+      if (doc.getBytes.length <= 10000) doc.successNel[String]
       else "Documentation must be less than 10kb".failureNel[String]
     }
 
@@ -110,7 +106,9 @@ object AgoraEntity extends JsonSupport {
 
     // The |@| operator is a combinator that combines the validations into a single object
     // This allows all of the errors to be returned at once!
-    (namespace |@| name |@| _id |@| synopsis |@| doc) {(namespace, name, _id, synopsis, doc) => doNothing }
+    (namespace |@| name |@| _id |@| synopsis |@| doc) { (_, _, _, _, _) =>
+      doNothing()
+    }
   }
 
 }
@@ -132,6 +130,19 @@ case class AgoraEntity(namespace: Option[String] = None,
                        method: Option[AgoraEntity] = None,
                        managers: Seq[String] = Seq(),
                        public: Option[Boolean] = None) {
+
+  /**
+    * Slightly faster hash code for collections that contain lots of entities.
+    */
+  override def hashCode(): Int = {
+    id match {
+      // If we have an object id then just use that as the hashcode
+      case Some(objectId) => objectId.##
+      // Otherwise, hash by the entity alias.
+      // NOTE: this means that entities created for searching all end up with the same hashCode.
+      case None => (namespace, name, snapshotId).##
+    }
+  }
 
   lazy val entityAlias: String =
     namespace.get + "." + name.get + "." + snapshotId.get
@@ -163,7 +174,8 @@ case class AgoraEntity(namespace: Option[String] = None,
     copy(id = None, methodId = None)
   }
 
-  def addEntityType(entityType: Option[AgoraEntityType.EntityType]): AgoraEntity = {
+  def addEntityType(
+      entityType: Option[AgoraEntityType.EntityType]): AgoraEntity = {
     copy(entityType = entityType)
   }
 
@@ -182,7 +194,9 @@ case class AgoraEntity(namespace: Option[String] = None,
   }
 
   def withDeserializedPayload: AgoraEntity = {
-    if (!canDeserializePayload) throw AgoraException(s"Entity type $entityType does not support payload deserialization")
+    if (!canDeserializePayload)
+      throw AgoraException(
+        s"Entity type $entityType does not support payload deserialization")
 
     payload match {
       case Some(pl: String) =>
@@ -197,9 +211,11 @@ case class AgoraEntity(namespace: Option[String] = None,
 
         } catch {
           case parseFail: ParsingException =>
-            throw AgoraException(s"Payload for $toShortString could not be deserialized: ${parseFail.summary}")
+            throw AgoraException(
+              s"Payload for $toShortString could not be deserialized: ${parseFail.summary}")
           case deserializeFail: DeserializationException =>
-            throw AgoraException(s"Payload for $toShortString is valid JSON but mapping to object model failed: ${deserializeFail.msg}")
+            throw AgoraException(
+              s"Payload for $toShortString is valid JSON but mapping to object model failed: ${deserializeFail.msg}")
         }
       case _ => this
     }
@@ -207,23 +223,27 @@ case class AgoraEntity(namespace: Option[String] = None,
 }
 
 object MethodDefinition {
-  def apply(ae:AgoraEntity, managers: Seq[String], isPublic: Boolean, numConfigurations: Int, numSnapshots: Int): MethodDefinition =
+  def apply(ae: AgoraEntity,
+            managers: Seq[String],
+            isPublic: Boolean,
+            numConfigurations: Int,
+            numSnapshots: Int): MethodDefinition =
     new MethodDefinition(ae.namespace,
-      ae.name,
-      ae.synopsis,
-      ae.entityType,
-      managers,
-      Some(isPublic),
-      numConfigurations,
-      numSnapshots)
+                         ae.name,
+                         ae.synopsis,
+                         ae.entityType,
+                         managers,
+                         Some(isPublic),
+                         numConfigurations,
+                         numSnapshots)
 }
 
 case class MethodDefinition(namespace: Option[String] = None,
-                       name: Option[String] = None,
-                       synopsis: Option[String] = None,
-                       entityType: Option[AgoraEntityType.EntityType] = None,
-                       managers: Seq[String] = Seq(),
-                       public: Option[Boolean] = None,
-                       numConfigurations: Int,
-                       numSnapshots: Int)
-
+                            name: Option[String] = None,
+                            synopsis: Option[String] = None,
+                            entityType: Option[AgoraEntityType.EntityType] =
+                              None,
+                            managers: Seq[String] = Seq(),
+                            public: Option[Boolean] = None,
+                            numConfigurations: Int,
+                            numSnapshots: Int)

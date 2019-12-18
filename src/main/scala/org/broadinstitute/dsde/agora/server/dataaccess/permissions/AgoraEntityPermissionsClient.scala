@@ -9,7 +9,7 @@ import scala.concurrent.ExecutionContext
 class AgoraEntityPermissionsClient(profile: JdbcProfile) extends PermissionsClient(profile) {
 
   def alias(entity: AgoraEntity): String =
-    entity.entityAlias
+    AgoraEntityPermissionsClient.alias(entity)
 
   def getEntityPermission(entity: AgoraEntity, userEmail: String)
                          (implicit executionContext: ExecutionContext): ReadWriteAction[AgoraPermissions] =
@@ -31,4 +31,9 @@ class AgoraEntityPermissionsClient(profile: JdbcProfile) extends PermissionsClie
                             (implicit executionContext: ExecutionContext): ReadWriteAction[Int] =
     deletePermission(entity, userEmail)
 
+}
+
+object AgoraEntityPermissionsClient {
+  def alias(entity: AgoraEntity): String =
+    entity.entityAlias
 }

@@ -16,9 +16,8 @@ case class MethodsAndConfigs(methodSnapshots: Seq[AgoraEntity], configSnapshots:
 
 object MethodsAndConfigs {
   def from(methodsAndConfigsSnapshots: Seq[AgoraEntity]): MethodsAndConfigs = {
-    val methodsAndConfigsDistinct = methodsAndConfigsSnapshots.distinct
-    val methodSnapshots = methodsAndConfigsDistinct.filter(_.entityType.exists(_ == AgoraEntityType.Workflow))
-    val configSnapshots = methodsAndConfigsDistinct.filter(_.entityType.exists(_ == AgoraEntityType.Configuration))
+    val methodSnapshots = methodsAndConfigsSnapshots.filter(_.entityType.exists(_ == AgoraEntityType.Workflow))
+    val configSnapshots = methodsAndConfigsSnapshots.filter(_.entityType.exists(_ == AgoraEntityType.Configuration))
 
     MethodsAndConfigs(methodSnapshots, configSnapshots)
   }

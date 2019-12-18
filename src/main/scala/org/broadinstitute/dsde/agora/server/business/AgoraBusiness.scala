@@ -523,11 +523,10 @@ object AgoraBusiness extends StrictLogging {
         .findConfigurations(methodIds)
         .map(_.addUrl().removeIds().withDeserializedPayload)
 
-      permissionsDataSource.inTransaction { db =>
-        for {
-          _ <- db.aePerms.addUserIfNotInDatabase(username)
-          entity <- db.aePerms.filterEntityByRead(configs, username, "listAssociatedConfigurations")
-        } yield entity
+      val future = listEntityRead(permissionsDataSource, configs, username)
+
+      future map {
+        filterEntityByReadFunction(configs, _, "listAssociatedConfigurations")
       }
     }
   }
@@ -602,16 +601,10 @@ object AgoraBusiness extends StrictLogging {
                           entityTypes: Seq[AgoraEntityType.EntityType],
                           username: String)
                          (implicit executionContext: ExecutionContext): Future[Seq[AgoraEntity]] = {
-    // Start looking up entities with an eager Future.
-    val entitiesFuture = Future(AgoraDao.createAgoraDao(entityTypes).find(agoraSearch, agoraProjection))
-
-    permissionsDataSource.inTransaction { db =>
-      for {
-        _ <- db.aePerms.addUserIfNotInDatabase(username)
-        entities <- DBIO.from(entitiesFuture)
-        entity <- db.aePerms.filterEntityByRead(entities, username, s"findWithIds(${entityTypes.sorted.mkString(",")})")
-      } yield entity
-    }
+    for {
+      entities <- Future(AgoraDao.createAgoraDao(entityTypes).find(agoraSearch, agoraProjection))
+      entity <- listEntityRead(permissionsDataSource, entities, username)
+    } yield filterEntityByReadFunction(entities, entity, s"findWithIds(${entityTypes.sorted.mkString(",")}")
   }
 
   /** Queries a potentially cached mongo for all potential entities matching the user's search criteria, then queries
@@ -654,23 +647,24 @@ object AgoraBusiness extends StrictLogging {
       }
     }
 
-    val callerTag = s"findWithIds(${entityTypes.sorted.mkString(",")})"
-    filterEntityByRead(permissionsDataSource, entitiesFuture, username, callerTag)
+    for {
+      entities <- entitiesFuture
+      // TODO: Here (and elsewhere!!! change all of them), "entity" is a terrible name for "the list of aliases from the entities that the username has access to"
+      entity <- listEntityRead(permissionsDataSource, entities, username)
+    } yield
+      filterEntityByReadFunction(entities, entity, s"findWithIds(${entityTypes.sorted.mkString(",")})")
   }
 
-  private def filterEntityByRead(permissionsDataSource: PermissionsDataSource,
-                                 entitiesFuture: Future[Seq[AgoraEntity]],
-                                 username: String,
-                                 callerTag: String)
-                                (implicit executionContext: ExecutionContext): Future[Seq[AgoraEntity]] = {
+  private def listEntityRead(permissionsDataSource: PermissionsDataSource,
+                             entities: Seq[AgoraEntity],
+                             username: String)
+                            (implicit executionContext: ExecutionContext): Future[Seq[String]] = {
     permissionsDataSource.inTransaction { db =>
       for {
         _ <- db.aePerms.addUserIfNotInDatabase(username)
-        entities <- DBIO.from(entitiesFuture)
-        entity <- db.aePerms.filterEntityByRead(entities, username, callerTag)
+        entity <- db.aePerms.filterEntityByRead(entities, username)
       } yield entity
     }
-
   }
 
   def findUserSnapshots(permissionsDataSource: PermissionsDataSource, entities: Seq[AgoraEntity], username: String)
@@ -689,11 +683,15 @@ object AgoraBusiness extends StrictLogging {
                                       entities: Seq[AgoraEntity],
                                       username: String)
                                      (implicit executionContext: ExecutionContext): Future[Seq[AgoraEntity]] = {
-    permissionsDataSource.inTransaction { db =>
+    val aliasesWithPermissionFuture = permissionsDataSource.inTransaction { db =>
       for {
         _ <- db.aePerms.addUserIfNotInDatabase(username)
-        entity <- db.aePerms.filterEntityByReadUser(entities, username, "findUserEntitiesWithIds")
-      } yield entity
+        aliasesWithPermission <- db.aePerms.listUserEntities(username)
+      } yield aliasesWithPermission
+    }
+
+    aliasesWithPermissionFuture map { aliasesWithPermission =>
+      filterEntityByReadFunction(entities, aliasesWithPermission, "findUserEntitiesWithIds")
     }
   }
 
@@ -733,20 +731,22 @@ object AgoraBusiness extends StrictLogging {
     // Start looking for the entity with an eager Future.
     val foundEntityFuture = Future(AgoraDao.createAgoraDao(entityTypes).findSingle(namespace, name, snapshotId))
 
-    permissionsDataSource.inTransaction { db =>
+    val future = permissionsDataSource.inTransaction { db =>
       for {
         _ <- db.aePerms.addUserIfNotInDatabase(username)
         foundEntity <- DBIO.from(foundEntityFuture)
-        agoraEntities <- db.aePerms.filterEntityByRead(Seq(foundEntity), username, "findSingle")
-        agoraEntityResult <- agoraEntities match {
-          case Seq(agoraEntity: AgoraEntity) =>
-            for {
-              owners <- db.aePerms.listOwners(foundEntity)
-              perms <- db.aePerms.getEntityPermission(foundEntity, AccessControl.publicUser)
-            } yield agoraEntity.addUrl().removeIds().addManagers(owners).addIsPublic(perms.canRead)
-          case _ => DBIO.failed(AgoraEntityNotFoundException(foundEntity))
-        }
-      } yield agoraEntityResult
+        agoraEntitiesAliases <- db.aePerms.filterEntityByRead(Seq(foundEntity), username)
+        owners <- db.aePerms.listOwners(foundEntity)
+        perms <- db.aePerms.getEntityPermission(foundEntity, AccessControl.publicUser)
+      } yield (foundEntity, agoraEntitiesAliases, owners, perms)
+    }
+
+    future map { case (foundEntity, agoraEntitiesAliases, owners, perms) =>
+      filterEntityByReadFunction(Seq(foundEntity), agoraEntitiesAliases, "findSingle") match {
+        case Seq(agoraEntity: AgoraEntity) =>
+          agoraEntity.addUrl().removeIds().addManagers(owners).addIsPublic(perms.canRead)
+        case _ => throw AgoraEntityNotFoundException(foundEntity)
+      }
     }
   }
 
@@ -806,6 +806,41 @@ object AgoraBusiness extends StrictLogging {
 //      Option(DockerImageReference(user, repo, tag))
 //    }
 //  }
+
+  // be careful with this method. Many previous callers of this method were very inefficient, retrieving entire
+  // collections from Mongo and then filtering out 90%+ of those documents, leading to scale issues.
+  // We are not deprecating or removing this method because it is appropriate for certain use cases.
+  private def filterEntityByReadFunction(agoraEntities: Seq[AgoraEntity],
+                                         aliasedAgoraEntitiesWithReadPermissions: Seq[String],
+                                         callerTag: String): Seq[AgoraEntity] = {
+
+    if (agoraEntities.isEmpty || aliasedAgoraEntitiesWithReadPermissions.isEmpty) {
+      // short-circuit: if we're asked to filter the empty set, don't go to mysql. Just return the empty set.
+      Seq.empty[AgoraEntity]
+
+    } else {
+
+      val aliasedAgoraEntitiesWithReadPermissionsSet = aliasedAgoraEntitiesWithReadPermissions.toSet
+      val filteredEntities = agoraEntities.filter(agoraEntity =>
+        aliasedAgoraEntitiesWithReadPermissionsSet.contains(AgoraEntityPermissionsClient.alias(agoraEntity))
+      )
+
+      // metrics on how efficient this operation is: of all the Mongo entities supplied in arguments,
+      // how many are filtered out due to permissions?
+      val rawCount = agoraEntities.size
+      val filteredCount = filteredEntities.size
+      val efficiency: Float = filteredCount.toFloat / rawCount.toFloat
+      metricsClient.recordMetric("queryEfficiency", JsObject(
+        "caller" -> JsString(s"$callerTag"),
+        "method" -> JsString("filterEntityByRead"),
+        "efficiency" -> JsNumber(efficiency.toDouble),
+        "filtered" -> JsNumber(filteredCount.toDouble),
+        "raw" -> JsNumber(rawCount)
+      ))
+
+      filteredEntities
+    }
+  }
 
   /**
    * Returns the data to be cached and returned by the agoraGuardian actor.

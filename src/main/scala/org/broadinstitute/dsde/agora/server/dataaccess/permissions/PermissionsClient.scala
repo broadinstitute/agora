@@ -377,14 +377,23 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
                                          callerTag: String)
                                         (implicit executionContext: ExecutionContext): ReadAction[Seq[AgoraEntity]] = {
 
+    val listEntitiesAction: ReadAction[Seq[String]] = listEntitiesFunction(userEmail, entityAliases)
+    listEntitiesAction map { filterEntityByReadFunction(agoraEntities, _, callerTag) }
+  }
+
+  // be careful with this method. Many previous callers of this method were very inefficient, retrieving entire
+  // collections from Mongo and then filtering out 90%+ of those documents, leading to scale issues.
+  // We are not deprecating or removing this method because it is appropriate for certain use cases.
+  private def filterEntityByReadFunction(agoraEntities: Seq[AgoraEntity],
+                                         aliasedAgoraEntitiesWithReadPermissions: Seq[String],
+                                         callerTag: String): Seq[AgoraEntity] = {
+
     if (agoraEntities.isEmpty) {
       // short-circuit: if we're asked to filter the empty set, don't go to mysql. Just return the empty set.
-      DBIO.successful(Seq.empty[AgoraEntity])
+      Seq.empty[AgoraEntity]
 
     } else {
 
-      val listEntitiesAction: ReadAction[Seq[String]] = listEntitiesFunction(userEmail, entityAliases)
-      listEntitiesAction map { aliasedAgoraEntitiesWithReadPermissions =>
         val aliasedAgoraEntitiesWithReadPermissionsSet = aliasedAgoraEntitiesWithReadPermissions.toSet
         val filteredEntities = agoraEntities.filter(agoraEntity =>
           aliasedAgoraEntitiesWithReadPermissionsSet.contains(alias(agoraEntity))
@@ -404,7 +413,6 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
         ))
 
         filteredEntities
-      }
     }
   }
 

@@ -12,6 +12,9 @@ import scala.concurrent.duration._
  * Top level typed guardian actor for the Agora actor system.
  *
  * Run the health monitor and optionally the admin sweeper.
+ *
+ * For more info on the single guardian actor in Akka Typed see the Akka documentation, including:
+ * https://doc.akka.io/docs/akka/current/typed/from-classic.html#actorsystem
  */
 object AgoraGuardianActor {
 

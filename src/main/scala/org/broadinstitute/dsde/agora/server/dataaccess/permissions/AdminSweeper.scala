@@ -19,9 +19,6 @@ object AdminSweeper {
   sealed trait Command
   private case object Sweep extends Command
   private case object Swept extends Command
-
-  private case object SweepSingleTimer
-  private case object SweepRateTimer
   //@formatter:on
 
   /**
@@ -41,14 +38,15 @@ object AdminSweeper {
 
   def apply(pollAdmins: () => List[String],
             permissionsDataSource: PermissionsDataSource,
-            initialDelay: FiniteDuration,
+            restartDelay: FiniteDuration,
             fixedRate: FiniteDuration): Behavior[Command] = {
     Behaviors.setup { _ =>
-      Behaviors.withTimers { timers =>
-        timers.startSingleTimer(SweepSingleTimer, Sweep, initialDelay)
-        timers.startTimerAtFixedRate(SweepRateTimer, Sweep, fixedRate)
-        run(pollAdmins, permissionsDataSource)
-      }
+      Behaviors.supervise[Command] {
+        Behaviors.withTimers { timers =>
+          timers.startTimerAtFixedRate(Sweep, fixedRate)
+          run(pollAdmins, permissionsDataSource)
+        }
+      }.onFailure[Exception](SupervisorStrategy.restartWithBackoff(restartDelay, restartDelay, 0))
     }
   }
 
@@ -95,9 +93,9 @@ object AdminSweeper {
         _ <- Future.successful(log.info(s"Beginning poll for admins"))
         polled <- Future(pollAdmins())
         _ <- Future.successful(log.info(s"Retrieved admins: ${polled.size}"))
-        synchronized <- synchronizeTrueAdmins(polled)
-        _ <- Future.successful(log.info(s"Synchronization adjusted admins: ${synchronized.sum}"))
-      } yield synchronized
+        synchronizedAdmins <- synchronizeTrueAdmins(polled)
+        _ <- Future.successful(log.info(s"Synchronization adjusted admins: ${synchronizedAdmins.sum}"))
+      } yield synchronizedAdmins
     }
 
     def synchronizeTrueAdmins(trueAdmins: List[String])

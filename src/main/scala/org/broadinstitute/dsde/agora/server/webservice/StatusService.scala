@@ -39,9 +39,12 @@ class StatusService(permissionsDataSource: PermissionsDataSource,
             val httpCode = if (status.ok) OK else InternalServerError
             complete(httpCode, status)
           case Failure(NonFatal(nonFatal)) =>
-            val agoraStatus =
-              SubsystemStatus(ok = false, Option(List(s"Unable to gather subsystem status: ${nonFatal.getMessage}")))
-            complete(InternalServerError, StatusCheckResponse(ok = false, Map(Subsystems.Agora -> agoraStatus)))
+            val errorMessage = s"Unable to gather subsystem status: ${nonFatal.getMessage}"
+            val agoraStatus = SubsystemStatus(ok = false, Option(List(errorMessage)))
+            extractLog { logger =>
+              logger.error(nonFatal, errorMessage)
+              complete(InternalServerError, StatusCheckResponse(ok = false, Map(Subsystems.Agora -> agoraStatus)))
+            }
           case Failure(throwable) => throw throwable
         }
       }

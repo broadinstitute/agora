@@ -18,16 +18,14 @@ object TypedHealthMonitor {
   sealed trait Command
   private case object Check extends Command
   case class GetCurrentStatus(replyTo: ActorRef[StatusCheckResponse]) extends Command
-
-  private case object CheckSingleTimer
-  private case object CheckRateTimer
   //@formatter:on
 
   def apply(healthMonitorSubsystems: HealthMonitorSubsystems,
-            initialDelay: FiniteDuration,
+            restartDelay: FiniteDuration,
             fixedRate: FiniteDuration,
             dispatcherName: String): Behavior[Command] = {
     Behaviors.setup { context =>
+      Behaviors.supervise[Command] {
       Behaviors.withTimers { timers =>
         implicit val executionContext: ExecutionContext = context.executionContext
         val healthMonitor = context.actorOf(
@@ -36,8 +34,8 @@ object TypedHealthMonitor {
             .withDispatcher(dispatcherName)
         )
 
-        timers.startSingleTimer(CheckSingleTimer, Check, initialDelay)
-        timers.startTimerAtFixedRate(CheckRateTimer, Check, fixedRate)
+        healthMonitor ! HealthMonitor.CheckAll
+        timers.startTimerWithFixedDelay(Check, fixedRate)
 
         Behaviors.receiveMessage {
           case Check =>
@@ -48,6 +46,7 @@ object TypedHealthMonitor {
             Behaviors.same
         }
       }
+      }.onFailure[Exception](SupervisorStrategy.restartWithBackoff(restartDelay, restartDelay, 0))
     }
   }
 }

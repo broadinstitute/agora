@@ -1,5 +1,5 @@
-[![Build Status](https://travis-ci.org/broadinstitute/agora.svg?branch=master)](https://travis-ci.org/broadinstitute/agora?branch=master)
-[![Coverage Status](https://coveralls.io/repos/broadinstitute/agora/badge.svg?branch=master)](https://coveralls.io/r/broadinstitute/agora?branch=master)
+[![Build Status](https://img.shields.io/travis/com/broadinstitute/agora)](https://travis-ci.com/broadinstitute/agora?branch=master)
+[![Coverage Status](https://img.shields.io/codecov/c/gh/broadinstitute/agora)](https://codecov.io/gh/broadinstitute/agora)
 
 
 Agora

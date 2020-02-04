@@ -26,26 +26,26 @@ object TypedHealthMonitor {
             dispatcherName: String): Behavior[Command] = {
     Behaviors.setup { context =>
       Behaviors.supervise[Command] {
-      Behaviors.withTimers { timers =>
-        implicit val executionContext: ExecutionContext = context.executionContext
-        val healthMonitor = context.actorOf(
-          HealthMonitor
-            .props(healthMonitorSubsystems.subsystems)(healthMonitorSubsystems.checkHealth)
-            .withDispatcher(dispatcherName)
-        )
+        Behaviors.withTimers { timers =>
+          implicit val executionContext: ExecutionContext = context.executionContext
+          val healthMonitor = context.actorOf(
+            HealthMonitor
+              .props(healthMonitorSubsystems.subsystems)(healthMonitorSubsystems.checkHealth)
+              .withDispatcher(dispatcherName)
+          )
 
-        healthMonitor ! HealthMonitor.CheckAll
-        timers.startTimerWithFixedDelay(Check, fixedRate)
+          healthMonitor ! HealthMonitor.CheckAll
+          timers.startTimerWithFixedDelay(Check, fixedRate)
 
-        Behaviors.receiveMessage {
-          case Check =>
-            healthMonitor ! HealthMonitor.CheckAll
-            Behaviors.same
-          case GetCurrentStatus(replyTo) =>
-            healthMonitor.tell(HealthMonitor.GetCurrentStatus, replyTo.toClassic)
-            Behaviors.same
+          Behaviors.receiveMessage {
+            case Check =>
+              healthMonitor ! HealthMonitor.CheckAll
+              Behaviors.same
+            case GetCurrentStatus(replyTo) =>
+              healthMonitor.tell(HealthMonitor.GetCurrentStatus, replyTo.toClassic)
+              Behaviors.same
+          }
         }
-      }
       }.onFailure[Exception](SupervisorStrategy.restartWithBackoff(restartDelay, restartDelay, 0))
     }
   }

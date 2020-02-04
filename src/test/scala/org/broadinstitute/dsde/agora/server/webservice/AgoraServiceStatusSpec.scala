@@ -1,49 +1,57 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
-import akka.actor.ActorSystem
+import akka.actor.testkit.typed.scaladsl._
+import akka.actor.typed.Scheduler
+import akka.actor.typed.scaladsl.AskPattern._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.testkit.RouteTest
-import akka.pattern._
-import akka.testkit.TestKitBase
 import akka.util.Timeout
+import org.broadinstitute.dsde.agora.server.AgoraGuardianActor
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDBStatus
+import org.broadinstitute.dsde.agora.server.dataaccess.health.AgoraHealthMonitorSubsystems._
+import org.broadinstitute.dsde.agora.server.dataaccess.health.HealthMonitorSubsystems
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
 import org.broadinstitute.dsde.workbench.util.health.HealthMonitor._
-import org.broadinstitute.dsde.workbench.util.health.{HealthMonitor, StatusCheckResponse, SubsystemStatus}
 import org.broadinstitute.dsde.workbench.util.health.StatusJsonSupport.StatusCheckResponseFormat
 import org.broadinstitute.dsde.workbench.util.health.Subsystems.{Database, Mongo}
-import org.scalatest.{DoNotDiscover, FlatSpecLike}
+import org.broadinstitute.dsde.workbench.util.health.{HealthMonitor, StatusCheckResponse, SubsystemStatus}
+import org.scalatest.{DoNotDiscover, FlatSpecLike, Matchers}
 
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success}
 
 
 @DoNotDiscover
-class AgoraServiceUnhealthyStatusSpec extends ApiServiceSpec with TestKitBase with FlatSpecLike with RouteTest {
-  implicit val unitTestActorSystem = ActorSystem("AgoraServiceUnhealthyStatusSpec")
+class AgoraServiceUnhealthyStatusSpec extends ApiServiceSpec with Matchers with FlatSpecLike with RouteTest {
   // this health monitor uses the same SQL check as our runtime mysql, which calls VERSION() in the db.
   // H2 does not support VERSION(), so we expect this health monitor to show as unhealthy.
-  val dbStatus = new AgoraDBStatus(permsDataSource)
-  val healthMonitor = unitTestActorSystem.actorOf(HealthMonitor.props(Set(Database, Mongo)) { () =>
-    Map(Database -> dbStatus.mysqlStatus, Mongo -> dbStatus.mongoStatus)
-  }, "health-monitor")
-  val apiStatusService = new StatusService(permsDataSource, healthMonitor) with ActorRefFactoryContext
+  private lazy val dbStatus = new AgoraDBStatus(permsDataSource)
+  private lazy val testKit = ActorTestKit("AgoraServiceUnhealthyStatusSpec")
+  private lazy val agoraGuardian = testKit.spawn(AgoraGuardianActor(permsDataSource, dbStatus.toHealthMonitorSubsystems))
+  private lazy val apiStatusService = new StatusService(permsDataSource, agoraGuardian)
 
   override def beforeAll: Unit = {
     implicit val askTimeout:Timeout = Timeout(1.minute) // timeout for the ask to healthMonitor for GetCurrentStatus
     ensureDatabasesAreRunning()
     // tell the health monitor to perform a check, then wait until checks have returned
-    healthMonitor ! CheckAll
-    awaitCond(
-      {Await.result(ask(healthMonitor, GetCurrentStatus).mapTo[StatusCheckResponse], Duration.Inf)
-        .systems.values.collect { case UnknownStatus => true }.isEmpty}
-      , 5.seconds, 200.milliseconds)
+    val testProbe = testKit.createTestProbe()
+    implicit val scheduler: Scheduler = testKit.scheduler
+    testProbe.awaitAssert(
+      {
+        val result = Await.result(agoraGuardian.ask(AgoraGuardianActor.GetCurrentStatus), askTimeout.duration)
+        val filtered = result.systems.values.collect { case UnknownStatus => true }
+        filtered should be(empty)
+      },
+      5.seconds,
+      200.milliseconds
+    )
   }
 
-  override def afterAll() = {
+  override def afterAll(): Unit = {
     clearDatabases()
+    testKit.shutdownTestKit()
   }
 
 
@@ -68,29 +76,40 @@ class AgoraServiceUnhealthyStatusSpec extends ApiServiceSpec with TestKitBase wi
 }
 
 @DoNotDiscover
-class AgoraServiceHealthyStatusSpec extends ApiServiceSpec with TestKitBase with FlatSpecLike {
-  implicit val unitTestActorSystem = ActorSystem("AgoraServiceHealthyStatusSpec")
+class AgoraServiceHealthyStatusSpec extends ApiServiceSpec with Matchers with FlatSpecLike {
   // this health monitor uses the unit-test-only UnitTestAgoraDBStatus, which should work in H2.
   // therefore, we expect this health monitor to show as healthy.
-  val dbStatus = new UnitTestAgoraDBStatus(permsDataSource)
-  val healthMonitor = unitTestActorSystem.actorOf(HealthMonitor.props(Set(Database, Mongo)) { () =>
-    Map(Database -> dbStatus.h2Status, Mongo -> dbStatus.mongoStatus)
-  }, "health-monitor")
-  val apiStatusService = new StatusService(permsDataSource, healthMonitor) with ActorRefFactoryContext
+  private lazy val dbStatus = new UnitTestAgoraDBStatus(permsDataSource)
+  private lazy val testKit = ActorTestKit("AgoraServiceHealthyStatusSpec")
+  private lazy val agoraGuardian = testKit.spawn(AgoraGuardianActor(
+    permsDataSource,
+    new HealthMonitorSubsystems(Map(
+      Database -> (_ => dbStatus.h2Status),
+      Mongo -> (executionContext => dbStatus.mongoStatus()(executionContext))
+    ))
+  ))
+  private lazy val apiStatusService = new StatusService(permsDataSource, agoraGuardian)
 
   override def beforeAll: Unit = {
     implicit val askTimeout:Timeout = Timeout(1.minute) // timeout for the ask to healthMonitor for GetCurrentStatus
     ensureDatabasesAreRunning()
     // tell the health monitor to perform a check, then wait until checks have returned
-    healthMonitor ! CheckAll
-    awaitCond(
-      {Await.result(ask(healthMonitor, GetCurrentStatus).mapTo[StatusCheckResponse], Duration.Inf)
-          .systems.values.collect { case UnknownStatus => true }.isEmpty}
-      , 5.seconds, 200.milliseconds)
+    val testProbe = testKit.createTestProbe()
+    implicit val scheduler: Scheduler = testKit.scheduler
+    testProbe.awaitAssert(
+      {
+        val result = Await.result(agoraGuardian.ask(AgoraGuardianActor.GetCurrentStatus), askTimeout.duration)
+        val filtered = result.systems.values.collect { case UnknownStatus => true }
+        filtered should be(empty)
+      },
+      5.seconds,
+      200.milliseconds
+    )
   }
 
   override def afterAll: Unit = {
     clearDatabases()
+    testKit.shutdownTestKit()
   }
 
   it should "run and connect to DBs" in {

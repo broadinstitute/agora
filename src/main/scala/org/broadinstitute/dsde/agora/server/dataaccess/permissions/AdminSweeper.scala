@@ -1,21 +1,25 @@
 package org.broadinstitute.dsde.agora.server.dataaccess.permissions
 
-import akka.actor.{Actor, Props}
+import akka.actor.typed._
+import akka.actor.typed.scaladsl._
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.webservice.util.GoogleApiUtils
+import org.slf4j.Logger
 import slick.dbio.DBIOAction
 
 import scala.collection.JavaConverters._
+import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.control.NonFatal
+import scala.util.{Failure, Success}
 
 object AdminSweeper {
-  def props(pollFunction: () => List[String], permissionsDataSource: PermissionsDataSource): Props = {
-    Props(new AdminSweeper(pollFunction, permissionsDataSource))
-  }
 
-  case object Sweep
-
-  case object Swept
+  //@formatter:off
+  sealed trait Command
+  private case object Sweep extends Command
+  private case object Swept extends Command
+  //@formatter:on
 
   /**
    * Function to poll for the member-emails of a config-defined google group.
@@ -31,54 +35,90 @@ object AdminSweeper {
       .map(_.getEmail)
       .toList
   }
-}
 
-/**
- * Poll for an updated list of admins, and update our user table to reflect this list.
- * Intended to be run via a scheduler from the parent actor
- * TODO- Implement bulk transactions for better scalability. Currently runs a DB transaction for each user whose admin status needs changing.
- */
-class AdminSweeper(pollAdmins: () => List[String], permissionsDataSource: PermissionsDataSource) extends Actor {
-
-  import AdminSweeper.{Sweep, Swept}
-  implicit val executionContext: ExecutionContext = context.dispatcher
-
-  override def receive: Receive = waiting
-
-  private def waiting: Receive = {
-    case Sweep =>
-      synchronizeAdmins andThen { case _ => self ! Swept }
-      context.become(sweeping)
-    case Swept => /* Unexpected... still ignore it. Maybe this actor restarted. */
-  }
-
-  private def sweeping: Receive = {
-    case Sweep => /* ignore, we're sweeping already */
-    case Swept => context.become(waiting)
-  }
-
-  def synchronizeAdmins: Future[List[Int]] = {
-    // get expected and observed admins lists
-    Future(pollAdmins()) flatMap synchronizeTrueAdmins
-  }
-
-  private def synchronizeTrueAdmins(trueAdmins: List[String]): Future[List[Int]] = {
-    permissionsDataSource.inTransaction { db =>
-      db.admPerms.listAdminUsers() flatMap { currentAdmins =>
-        // Difference the lists
-        val newAdmins = trueAdmins.filterNot(currentAdmins.toSet)
-        val adminsToDelete = currentAdmins.filterNot(trueAdmins.toSet)
-
-        // Update our user table to reflect list differences
-        val updateActions = newAdmins map { newAdmin =>
-          db.admPerms.updateAdmin(newAdmin, adminStatus = true)
+  def apply(pollAdmins: () => List[String],
+            permissionsDataSource: PermissionsDataSource,
+            restartDelay: FiniteDuration,
+            fixedRate: FiniteDuration): Behavior[Command] = {
+    Behaviors.setup { _ =>
+      Behaviors.supervise[Command] {
+        Behaviors.withTimers { timers =>
+          timers.startTimerAtFixedRate(Sweep, fixedRate)
+          run(pollAdmins, permissionsDataSource)
         }
-        val deleteActions = adminsToDelete map { adminToDelete =>
-          db.admPerms.updateAdmin(adminToDelete, adminStatus = false)
-        }
+      }.onFailure[Exception](SupervisorStrategy.restartWithBackoff(restartDelay, restartDelay, 0))
+    }
+  }
 
-        DBIOAction.sequence(updateActions ++ deleteActions)
+  /**
+   * Poll for an updated list of admins, and update our user table to reflect this list.
+   * Intended to be run via a scheduler from the parent actor
+   * TODO- Implement bulk transactions for better scalability. Currently runs a DB transaction for each user whose admin status needs changing.
+   */
+  private def run(pollAdmins: () => List[String], permissionsDataSource: PermissionsDataSource): Behavior[Command] = {
+
+    def waiting(): Behavior[Command] = {
+      Behaviors.receive { (context, message) =>
+        message match {
+          case Sweep =>
+            val log: Logger = context.log
+            context.pipeToSelf(synchronizeAdmins(log)(context.executionContext)) {
+              case Failure(NonFatal(nonFatal)) =>
+                log.error(s"Error synchronizing admins: ${nonFatal.getMessage}", nonFatal)
+                Swept
+              case Failure(throwable) =>
+                log.error(s"Fatal error synchronizing admins: ${throwable.getMessage}", throwable)
+                throw throwable
+              case Success(_) => Swept
+            }
+            sweeping()
+          case Swept =>
+            Behaviors.same
+        }
       }
     }
+
+    def sweeping(): Behavior[Command] = {
+      Behaviors.receiveMessage {
+        case Sweep =>
+          Behaviors.same
+        case Swept =>
+          waiting()
+      }
+    }
+
+    def synchronizeAdmins(log: Logger)(implicit executionContext: ExecutionContext): Future[List[Int]] = {
+      // get expected and observed admins lists
+      for {
+        _ <- Future.successful(log.info(s"Beginning poll for admins"))
+        polled <- Future(pollAdmins())
+        _ <- Future.successful(log.info(s"Retrieved admins: ${polled.size}"))
+        synchronizedAdmins <- synchronizeTrueAdmins(polled)
+        _ <- Future.successful(log.info(s"Synchronization adjusted admins: ${synchronizedAdmins.sum}"))
+      } yield synchronizedAdmins
+    }
+
+    def synchronizeTrueAdmins(trueAdmins: List[String])
+                             (implicit executionContext: ExecutionContext): Future[List[Int]] = {
+      permissionsDataSource.inTransaction { db =>
+        db.admPerms.listAdminUsers() flatMap { currentAdmins =>
+          // Difference the lists
+          val newAdmins = trueAdmins.filterNot(currentAdmins.toSet)
+          val adminsToDelete = currentAdmins.filterNot(trueAdmins.toSet)
+
+          // Update our user table to reflect list differences
+          val updateActions = newAdmins map { newAdmin =>
+            db.admPerms.updateAdmin(newAdmin, adminStatus = true)
+          }
+          val deleteActions = adminsToDelete map { adminToDelete =>
+            db.admPerms.updateAdmin(adminToDelete, adminStatus = false)
+          }
+
+          DBIOAction.sequence(updateActions ++ deleteActions)
+        }
+      }
+    }
+
+    waiting()
   }
 }

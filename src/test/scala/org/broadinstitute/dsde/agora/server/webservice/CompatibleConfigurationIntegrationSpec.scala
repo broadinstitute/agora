@@ -1,10 +1,10 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
-import akka.actor.ActorSystem
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.testkit.{RouteTest, RouteTestTimeout, ScalatestRouteTest}
 import akka.http.scaladsl.model.HttpMethods
+import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.ExecutionDirectives
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.AgoraTestFixture
@@ -21,14 +21,10 @@ import scala.concurrent.duration._
 class CompatibleConfigurationIntegrationSpec extends FreeSpec with ExecutionDirectives with RouteTest
   with ScalatestRouteTest with BeforeAndAfterAll with AgoraTestFixture {
 
-  implicit val routeTestTimeout = RouteTestTimeout(20.seconds)
+  implicit val routeTestTimeout: RouteTestTimeout = RouteTestTimeout(20.seconds)
 
-  trait ActorRefFactoryContext {
-    def actorRefFactory: ActorSystem = system
-  }
-
-  val methodsService = new MethodsService(permsDataSource) with ActorRefFactoryContext
-  val testRoutes = ApiService.handleExceptionsAndRejections (methodsService.queryCompatibleConfigurationsRoute)
+  val methodsService = new MethodsService(permsDataSource)
+  val testRoutes: Route = ApiService.handleExceptionsAndRejections (methodsService.queryCompatibleConfigurationsRoute)
 
   // The following methods create a method AgoraEntity while at the same time constructing the Mock Waas
   // describe response.  This test is more difficult than the others because it generates many unique
@@ -41,15 +37,15 @@ class CompatibleConfigurationIntegrationSpec extends FreeSpec with ExecutionDire
   }
 
   private def waasResponse(inputs:Seq[String], outputs:Seq[String], optionalInputs:Seq[String]) = {
-    val requiredInputStanzas = (inputs map (x => generateInputStanza(x)))
-    val optionalInputStanzas = (optionalInputs map (x => generateInputStanza(x, true)))
+    val requiredInputStanzas = inputs map (generateInputStanza(_))
+    val optionalInputStanzas = optionalInputs map (generateInputStanza(_, optional = true))
     val inputString = (requiredInputStanzas ++ optionalInputStanzas).mkString(",")
     val outputString = (outputs map (x => generateOutputStanza(x))).mkString(",")
 
     s"""
        | {"valid":true,"errors":[],"validWorkflow":true,"name":"TheWorkflow",
-       |  "inputs":[${inputString}],
-       |  "outputs":[${outputString}],
+       |  "inputs":[$inputString],
+       |  "outputs":[$outputString],
        |"images":[],
        |"submittedDescriptorType":{"descriptorType":"WDL","descriptorTypeVersion":"draft-2"},
        |"importedDescriptorTypes":[],
@@ -63,13 +59,19 @@ class CompatibleConfigurationIntegrationSpec extends FreeSpec with ExecutionDire
   private def generateInputStanza(name : String, optional : Boolean = false) = {
     val optionalSuffix = if (optional) "?" else ""
     s"""
-       |{"name":"TheTask.${name}","valueType":{"typeName":"File"},"typeDisplayName":"File${optionalSuffix}","optional":${optional},"default":null}
+       |{
+       |  "name":"TheTask.$name",
+       |  "valueType":{"typeName":"File"},
+       |  "typeDisplayName":"File$optionalSuffix",
+       |  "optional":$optional,
+       |  "default":null
+       |}
      """.stripMargin
   }
 
   private def generateOutputStanza(name : String) = {
     s"""
-       |{"name":"TheTask.${name}","valueType":{"typeName":"File"},"typeDisplayName":"File"}
+       |{"name":"TheTask.$name","valueType":{"typeName":"File"},"typeDisplayName":"File"}
      """.stripMargin
   }
 

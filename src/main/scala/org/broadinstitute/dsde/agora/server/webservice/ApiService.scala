@@ -1,6 +1,6 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
-import akka.actor.ActorRef
+import akka.actor.typed.ActorRef
 import akka.event.{Logging, LoggingAdapter}
 import akka.event.Logging.LogLevel
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
@@ -13,7 +13,7 @@ import akka.http.scaladsl.server.directives.{DebuggingDirectives, LogEntry, Logg
 import akka.stream.Materializer
 import akka.stream.scaladsl.Sink
 import com.typesafe.scalalogging.LazyLogging
-import org.broadinstitute.dsde.agora.server.SwaggerRoutes
+import org.broadinstitute.dsde.agora.server.{AgoraGuardianActor, SwaggerRoutes, errorReportSource}
 import org.broadinstitute.dsde.agora.server.business.AgoraBusinessExecutionContext
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
 import org.broadinstitute.dsde.agora.server.exceptions._
@@ -22,7 +22,6 @@ import org.broadinstitute.dsde.agora.server.webservice.configurations.Configurat
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
 import org.broadinstitute.dsde.agora.server.webservice.permissions.{EntityPermissionsService, MultiEntityPermissionsService, NamespacePermissionsService}
 import org.broadinstitute.dsde.workbench.model.{ErrorReport, WorkbenchException, WorkbenchExceptionWithErrorReport}
-import org.broadinstitute.dsde.agora.server.errorReportSource
 import spray.json.DefaultJsonProtocol
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -68,7 +67,7 @@ object ApiService extends LazyLogging with SprayJsonSupport with DefaultJsonProt
 
 }
 
-class ApiService(permissionsDataSource: PermissionsDataSource, healthMonitor: ActorRef)
+class ApiService(permissionsDataSource: PermissionsDataSource, agoraGuardian: ActorRef[AgoraGuardianActor.Command])
                 (implicit
                  ec: ExecutionContext,
                  materializer: Materializer,
@@ -76,7 +75,7 @@ class ApiService(permissionsDataSource: PermissionsDataSource, healthMonitor: Ac
                 )
   extends LazyLogging with SwaggerRoutes {
 
-  val statusService = new StatusService(permissionsDataSource, healthMonitor)
+  val statusService = new StatusService(permissionsDataSource, agoraGuardian)
   val ga4ghService = new Ga4ghService(permissionsDataSource)
   val methodsService = new MethodsService(permissionsDataSource)
   val configurationsService = new ConfigurationsService(permissionsDataSource)

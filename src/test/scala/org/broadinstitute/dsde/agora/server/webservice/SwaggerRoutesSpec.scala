@@ -7,7 +7,7 @@ import org.scalatest.{DoNotDiscover, FlatSpecLike}
 class SwaggerRoutesSpec extends ApiServiceSpec with FlatSpecLike with SwaggerRoutes  {
 
   // these are defined as exact-match
-  Seq("/agora.yaml", "/o2c.html", "/swagger-ui.js") foreach { path =>
+  Seq("/agora.yaml") foreach { path =>
     s"Swagger exact-match routing for $path" should "be handled by SwaggerRoutes" in {
       Get(path) ~> swaggerRoutes ~> check {
         assert(handled)
@@ -15,9 +15,9 @@ class SwaggerRoutesSpec extends ApiServiceSpec with FlatSpecLike with SwaggerRou
     }
   }
 
-  // for these tests, make sure the path being tested exists in META-INF/resources/webjars/swagger-ui/2.2.10-1,
+  // for these tests, make sure the path being tested exists in META-INF/resources/webjars/swagger-ui/*,
   // otherwise the route won't be handled!
-  Seq("/images/logo_small.png", "/lib/marked.js", "/css/reset.css") foreach { path =>
+  Seq("/oauth2-redirect.html", "/swagger-ui.js") foreach { path =>
     s"Swagger path-prefix routing for $path" should "be handled by SwaggerRoutes" in {
       Get(path) ~> swaggerRoutes ~> check {
         assert(handled)

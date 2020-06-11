@@ -1,12 +1,10 @@
-swagger: '2.0'
+openapi: 3.0.1
 info:
   title: Agora API
   description: All of the Green
   version: 1.0.0
-produces:
-  - application/json
-  - text/plain
-basePath: /
+servers:
+  - url: /
 security:
   - authorization:
       - openid
@@ -15,19 +13,20 @@ security:
 paths:
   /status:
     get:
-      produces:
-      - application/json
-      summary: Returns status code for connection to database
-      responses:
-        '200':
-          description: OK
-        '500':
-          description: Internal server error
       tags:
         - Status
-      security: []
+      summary: Returns status code for connection to database
+      responses:
+        200:
+          description: OK
+          content: {}
+        500:
+          description: Internal server error
+          content: {}
   /api/v1/methods:
     get:
+      tags:
+        - Methods
       summary: List methods
       description: |
         The Methods endpoint returns all methods the requester
@@ -36,130 +35,152 @@ paths:
         - name: namespace
           in: query
           description: Namespace of method.
-          required: false
-          type: string
+          schema:
+            type: string
         - name: name
           in: query
           description: Name of method.
-          required: false
-          type: string
+          schema:
+            type: string
         - name: snapshotId
           in: query
           description: Snapshot ID of method.
-          required: false
-          type: number
+          schema:
+            type: number
         - name: snapshotComment
           in: query
           description: Snapshot comment of method.
-          required: false
-          type: string
+          schema:
+            type: string
         - name: synopsis
           in: query
           description: Synopsis of method.
-          required: false
-          type: string
+          schema:
+            type: string
         - name: documentation
           in: query
           description: Documentation of method.
-          required: false
-          type: string
+          schema:
+            type: string
         - name: owner
           in: query
           description: Owner of method.
-          required: false
-          type: string
+          schema:
+            type: string
         - name: payload
           in: query
           description: Payload of method in WDL.
-          required: false
-          type: string
+          schema:
+            type: string
         - name: entityType
           in: query
           description: Type of Method - Task or Workflow
-          required: false
-          type: string
+          schema:
+            type: string
         - name: excludedFields
           in: query
           description: Fields to exclude in JSON response.
-          required: false
-          type: string
+          schema:
+            type: string
         - name: includedFields
           in: query
           description: Fields to include in JSON response
-          required: false
-          type: string
-      tags:
-        - Methods
-      responses:
-        '200':
-          description: An array of methods.
           schema:
-            type: array
-            items:
-              $ref: '#/definitions/MethodResponse'
+            type: string
+      responses:
+        200:
+          description: An array of methods.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MethodResponse'
+            text/plain:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MethodResponse'
         default:
           description: Unexpected error
-          schema:
-            type: object
-            $ref: '#/definitions/Error'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Error'
     post:
+      tags:
+        - Methods
       summary: Add a Method.
       description: |
         Inserts a method into the method repository and
         gives the owner full access permissions. Must supply a namespace
         name, payload, and entityType. Cannot supply a snapshotId
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      parameters:
-        - name: body
-          in: body
-          description: Agora Entity
-          required: false
-          schema:
-            type: object
-            $ref: '#/definitions/MethodQuery'
-      tags:
-        - Methods
+      requestBody:
+        description: Agora Entity
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MethodQuery'
+        required: false
       responses:
-        '201':
+        201:
           description: Method successfully added.
-          schema:
-            type: object
-            $ref: '#/definitions/MethodResponse'
-        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MethodResponse'
+        400:
           description: Malformed input.
-          schema:
-            type: object
-            $ref: '#/definitions/BadRequest'
-        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+        500:
           description: Internal error.
-          schema:
-            type: object
-            $ref: '#/definitions/Error'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-codegen-request-body-name: body
   /api/v1/methods/definitions:
     get:
+      tags:
+        - Methods
       summary: List method definitions
       description: |
         List method definitions - i.e. unique namespace/name pairs - with counts
         of snapshots and associated configurations
-      tags:
-        - Methods
       responses:
-        '200':
+        200:
           description: An array of method definitions.
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/MethodDefinition'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MethodDefinition'
+            text/plain:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MethodDefinition'
         default:
           description: Unexpected error
-          schema:
-            type: object
-            $ref: '#/definitions/Error'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Error'
   /api/v1/methods/{namespace}/{name}/configurations:
     get:
+      tags:
+        - Methods
+        - Configurations
       summary: List configurations associated with a method
       description: |
         Given the namespace/name of a method, returns all configurations
@@ -169,34 +190,50 @@ paths:
           in: path
           description: Namespace of method.
           required: true
-          type: string
+          schema:
+            type: string
         - name: name
           in: path
           description: Name of method.
           required: true
-          type: string
-      tags:
-        - Methods
-        - Configurations
+          schema:
+            type: string
       responses:
-        '200':
+        200:
           description: An array of configurations.
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/ConfigurationResponseWithPayloadObject'
-        '404':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ConfigurationResponseWithPayloadObject'
+            text/plain:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ConfigurationResponseWithPayloadObject'
+        404:
           description: Method not found.
-          schema:
-            type: object
-            $ref: '#/definitions/NotFound'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/NotFound'
         default:
           description: Unexpected error
-          schema:
-            type: object
-            $ref: '#/definitions/Error'
-  '/api/v1/methods/{namespace}/{name}/{snapshotId}':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/methods/{namespace}/{name}/{snapshotId}:
     get:
+      tags:
+        - Methods
       summary: Find a single method.
       description: |
         Returns one method that matches the namespace,
@@ -206,37 +243,146 @@ paths:
           in: path
           description: Namespace of method.
           required: true
-          type: string
+          schema:
+            type: string
         - name: name
           in: path
           description: Name of method.
           required: true
-          type: string
+          schema:
+            type: string
         - name: snapshotId
           in: path
           description: Snapshot ID of method.
           required: true
-          type: number
+          schema:
+            type: number
         - name: onlyPayload
           in: query
           description: Boolean to return only the payload of the method.
-          required: false
-          type: boolean
-          default: false
-      tags:
-        - Methods
-      responses:
-        '200':
-          description: A single method.
           schema:
-            type: object
-            $ref: '#/definitions/MethodResponse'
+            type: boolean
+            default: false
+      responses:
+        200:
+          description: A single method.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MethodResponse'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/MethodResponse'
         default:
           description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      tags:
+        - Methods
+      summary: Create a new snapshot of an existing Method.
+      description: |
+        Inserts a new snapshot of the method into the method repository and
+        copies access permissions from previous snapshot, optionally redacting
+        the source snapshot. Documentation, synopsis, snapshot comment, and
+        payload are the only arguments considered for the new snapshot;
+        everything else is copied from the source.
+      parameters:
+        - name: namespace
+          in: path
+          description: Namespace of source method.
+          required: true
           schema:
-            type: object
-            $ref: '#/definitions/Error'
+            type: string
+        - name: name
+          in: path
+          description: Name of source method.
+          required: true
+          schema:
+            type: string
+        - name: snapshotId
+          in: path
+          description: Snapshot ID of source method.
+          required: true
+          schema:
+            type: number
+        - name: redact
+          in: query
+          description: Should the source method be redacted?
+          schema:
+            type: boolean
+            default: false
+      requestBody:
+        description: Agora Entity
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MethodQuery'
+        required: false
+      responses:
+        200:
+          description: Method successfully copied.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MethodResponse'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/MethodResponse'
+        206:
+          description: Method successfully copied, but error while redacting.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MethodResponse'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/MethodResponse'
+        400:
+          description: Malformed input.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+        403:
+          description: Forbidden to create copy.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Error'
+        404:
+          description: Source snapshot not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Internal error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-codegen-request-body-name: body
     delete:
+      tags:
+        - Methods
       summary: Redact a single method.
       description: |
         Redacts a method and all of its associated configurations
@@ -245,106 +391,45 @@ paths:
           in: path
           description: Namespace of method.
           required: true
-          type: string
+          schema:
+            type: string
         - name: name
           in: path
           description: Name of method.
           required: true
-          type: string
+          schema:
+            type: string
         - name: snapshotId
           in: path
           description: Snapshot ID of method.
           required: true
-          type: number
-      tags:
-        - Methods
-      responses:
-        '200':
-          description: An integer showing how many methods were deleted. Should be 1.
           schema:
-            $ref: '#/definitions/Number'
+            type: number
+      responses:
+        200:
+          description: An integer showing how many methods were deleted. Should be
+            1.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Number'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Number'
         default:
           description: Error upon redaction
-          schema:
-            type: object
-            $ref: '#/definitions/Error'
-    post:
-      summary: Create a new snapshot of an existing Method.
-      description: |
-        Inserts a new snapshot of the method into the method repository and
-        copies access permissions from previous snapshot, optionally redacting
-        the source snapshot. Documentation, synopsis, snapshot comment, and
-        payload are the only arguments considered for the new snapshot;
-        everything else is copied from the source.
-      consumes:
-        - application/json
-      produces:
-        - application/json
-        - text/plain
-      parameters:
-        - name: namespace
-          in: path
-          description: Namespace of source method.
-          required: true
-          type: string
-        - name: name
-          in: path
-          description: Name of source method.
-          required: true
-          type: string
-        - name: snapshotId
-          in: path
-          description: Snapshot ID of source method.
-          required: true
-          type: number
-        - name: redact
-          in: query
-          description: Should the source method be redacted?
-          required: false
-          type: boolean
-          default: false
-        - name: body
-          in: body
-          description: Agora Entity
-          required: false
-          schema:
-            type: object
-            $ref: '#/definitions/MethodQuery'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/methods/{namespace}/{name}/{snapshotId}/configurations:
+    get:
       tags:
         - Methods
-      responses:
-        '200':
-          description: Method successfully copied.
-          schema:
-            type: object
-            $ref: '#/definitions/MethodResponse'
-        '206':
-          description: Method successfully copied, but error while redacting.
-          schema:
-            type: object
-            $ref: '#/definitions/MethodResponse'
-        '400':
-          description: Malformed input.
-          schema:
-            type: object
-            $ref: '#/definitions/BadRequest'
-        '403':
-          description: Forbidden to create copy.
-          schema:
-            type: object
-            $ref: '#/definitions/Error'
-        '404':
-          description: Source snapshot not found.
-          schema:
-            type: object
-            $ref: '#/definitions/Error'
-        '500':
-          description: Internal error.
-          schema:
-            type: object
-            $ref: '#/definitions/Error'
-  '/api/v1/methods/{namespace}/{name}/{snapshotId}/configurations':
-    get:
+        - Configurations
       summary: List compatible configurations for this method snapshot
       description: |
         Returns all configurations that 1. have the exact same input and output
@@ -355,39 +440,56 @@ paths:
           in: path
           description: Namespace of method.
           required: true
-          type: string
+          schema:
+            type: string
         - name: name
           in: path
           description: Name of method.
           required: true
-          type: string
+          schema:
+            type: string
         - name: snapshotId
           in: path
           description: Snapshot ID of method.
           required: true
-          type: number
-      tags:
-        - Methods
-        - Configurations
+          schema:
+            type: number
       responses:
-        '200':
+        200:
           description: An array of configurations.
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/ConfigurationResponseWithPayloadObject'
-        '404':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ConfigurationResponseWithPayloadObject'
+            text/plain:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ConfigurationResponseWithPayloadObject'
+        404:
           description: Method not found.
-          schema:
-            type: object
-            $ref: '#/definitions/NotFound'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/NotFound'
         default:
           description: Unexpected error
-          schema:
-            type: object
-            $ref: '#/definitions/Error'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Error'
   /api/v1/configurations:
     get:
+      tags:
+        - Configurations
       summary: List configurations
       description: |
         The configurations endpoint returns all configurations the requester
@@ -396,115 +498,126 @@ paths:
         - name: namespace
           in: query
           description: Namespace of configuration.
-          required: false
-          type: string
+          schema:
+            type: string
         - name: name
           in: query
           description: Name of configuration.
-          required: false
-          type: string
+          schema:
+            type: string
         - name: snapshotId
           in: query
           description: Snapshot ID of configuration.
-          required: false
-          type: number
+          schema:
+            type: number
         - name: snapshotComment
           in: query
           description: Snapshot comment of AgoraEntity
-          required: false
-          type: string
+          schema:
+            type: string
         - name: synopsis
           in: query
           description: Synopsis of configuration.
-          required: false
-          type: string
+          schema:
+            type: string
         - name: documentation
           in: query
           description: Documentation of configuration.
-          required: false
-          type: string
+          schema:
+            type: string
         - name: owner
           in: query
           description: Owner of configuration.
-          required: false
-          type: string
+          schema:
+            type: string
         - name: payload
           in: query
           description: Payload of config (i.e. a method) as JSON string.
-          required: false
-          type: string
+          schema:
+            type: string
         - name: entityType
           in: query
           description: The only supported value is "Configuration"
-          required: false
-          type: string
+          schema:
+            type: string
         - name: excludedFields
           in: query
           description: Fields to exclude in JSON response.
-          required: false
-          type: string
+          schema:
+            type: string
         - name: includedFields
           in: query
           description: Fields to include in JSON response
-          required: false
-          type: string
-      tags:
-        - Configurations
-      responses:
-        '200':
-          description: An array of configurations.
           schema:
-            type: array
-            items:
-              $ref: '#/definitions/ConfigurationResponse'
+            type: string
+      responses:
+        200:
+          description: An array of configurations.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ConfigurationResponse'
+            text/plain:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ConfigurationResponse'
         default:
           description: Unexpected error
-          schema:
-            type: object
-            $ref: '#/definitions/Error'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Error'
     post:
+      tags:
+        - Configurations
       summary: Add a Configuration.
       description: |
         Inserts a method into the method repository and
         gives the owner full access permissions. Must supply a namespace
         name, payload, and entityType. Cannot supply a snapshotId
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      parameters:
-        - name: body
-          in: body
-          description: Agora Entity
-          required: false
-          schema:
-            type: object
-            $ref: '#/definitions/ConfigurationQuery'
-      tags:
-        - Configurations
+      requestBody:
+        description: Agora Entity
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfigurationQuery'
+        required: false
       responses:
-        '201':
+        201:
           description: Configuration successfully added.
-          schema:
-            type: object
-            $ref: '#/definitions/ConfigurationResponse'
-        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigurationResponse'
+        400:
           description: Malformed input.
-          schema:
-            type: object
-            $ref: '#/definitions/BadRequest'
-        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+        500:
           description: Internal error.
-          schema:
-            type: object
-            $ref: '#/definitions/Error'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         default:
           description: Unexpected error
-          schema:
-            type: object
-            $ref: '#/definitions/Error'
-  '/api/v1/configurations/{namespace}/{name}/{snapshotId}':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-codegen-request-body-name: body
+  /api/v1/configurations/{namespace}/{name}/{snapshotId}:
     get:
+      tags:
+        - Configurations
       summary: Find a single method configuration.
       description: |
         Returns one method that matches the namespace,
@@ -514,37 +627,49 @@ paths:
           in: path
           description: Namespace of method.
           required: true
-          type: string
+          schema:
+            type: string
         - name: name
           in: path
           description: Name of method.
           required: true
-          type: string
+          schema:
+            type: string
         - name: snapshotId
           in: path
           description: Snapshot ID of method.
           required: true
-          type: number
+          schema:
+            type: number
         - name: payloadAsObject
           in: query
-          description: Instead of returning a string under key payload, return a JSON object under key payloadObject
-          required: false
-          type: boolean
-          default: false
-      tags:
-        - Configurations
-      responses:
-        '200':
-          description: An array of configurations.
+          description: Instead of returning a string under key payload, return a JSON
+            object under key payloadObject
           schema:
-            type: object
-            $ref: '#/definitions/ConfigurationResponse'
+            type: boolean
+            default: false
+      responses:
+        200:
+          description: An array of configurations.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigurationResponse'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/ConfigurationResponse'
         default:
           description: Unexpected error
-          schema:
-            type: object
-            $ref: '#/definitions/Error'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Error'
     delete:
+      tags:
+        - Configurations
       summary: Redact a single configuration.
       description: |
         Redacts a configuration
@@ -553,31 +678,44 @@ paths:
           in: path
           description: Namespace of config.
           required: true
-          type: string
+          schema:
+            type: string
         - name: name
           in: path
           description: Name of config.
           required: true
-          type: string
+          schema:
+            type: string
         - name: snapshotId
           in: path
           description: Snapshot ID of config.
           required: true
-          type: number
-      tags:
-        - Configurations
-      responses:
-        '200':
-          description: An integer showing how many configurations were deleted. Should be 1.
           schema:
-            $ref: '#/definitions/Number'
+            type: number
+      responses:
+        200:
+          description: An integer showing how many configurations were deleted. Should
+            be 1.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Number'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Number'
         default:
           description: Error upon redaction
-          schema:
-            type: object
-            $ref: '#/definitions/Error'
-  '/api/v1/methods/{namespace}/permissions':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/methods/{namespace}/permissions:
     get:
+      tags:
+        - NamespacePermissions
       summary: List permissions on namespace.
       description: |
         List permissions on namespace.
@@ -586,74 +724,34 @@ paths:
           in: path
           description: Namespace
           required: true
-          type: string
-      tags:
-        - NamespacePermissions
+          schema:
+            type: string
       responses:
-        '200':
+        200:
           description: An array of permissions.
-          schema:
-            type: array
-            items:
-              type: object
-              $ref: '#/definitions/AccessControl'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AccessControl'
+            text/plain:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AccessControl'
         default:
           description: Unexpected error
-          schema:
-            type: object
-            $ref: '#/definitions/Error'
-    post:
-      summary: Add a permissions on namespace.
-      description: >
-        Add a permissions on namespace. Will edit if user already has some
-        permission on namespace. Can accept a batch. Either url params or
-        a body is required. If both are provdided, the body will override
-        the url params.
-      parameters:
-        - name: namespace
-          in: path
-          description: Namespace
-          required: true
-          type: string
-        - name: user
-          in: query
-          description: "User's email or 'public'."
-          required: false
-          type: string
-        - name: roles
-          in: query
-          description: 'List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.'
-          required: false
-          type: string
-        - name: list of permissions
-          in: body
-          description: |
-            List of access control objects (user, roles). Can edit or delete (with 'Nothing')
-            permissions using this path as well.
-          required: false
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/AccessControl'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
       tags:
         - NamespacePermissions
-      responses:
-        '200':
-          description: Access control modified or list of access controls.
-          schema:
-            type: object
-            $ref: '#/definitions/AccessControl'
-        '400':
-          description: Bad Request.
-          schema:
-            type: object
-            $ref: '#/definitions/BadRequest'
-        default:
-          description: Unexpected error
-          schema:
-            type: object
-            $ref: '#/definitions/Error'
-    put:
       summary: Edit a permissions on namespace.
       description: |
         Edit a permissions on namespace.
@@ -662,36 +760,116 @@ paths:
           in: path
           description: Namespace
           required: true
-          type: string
+          schema:
+            type: string
         - name: user
           in: query
-          description: "User's email or 'public'."
+          description: User's email or 'public'.
           required: true
-          type: string
+          schema:
+            type: string
         - name: roles
           in: query
-          description: 'List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.'
+          description: List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage
+            or "All" or "Nothing". NO SPACES.
           required: true
-          type: string
-      tags:
-        - NamespacePermissions
+          schema:
+            type: string
       responses:
-        '200':
+        200:
           description: Access control modified.
-          schema:
-            type: object
-            $ref: '#/definitions/AccessControl'
-        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessControl'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/AccessControl'
+        400:
           description: Bad Request.
-          schema:
-            type: object
-            $ref: '#/definitions/BadRequest'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
         default:
           description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      tags:
+        - NamespacePermissions
+      summary: Add a permissions on namespace.
+      description: |
+        Add a permissions on namespace. Will edit if user already has some permission on namespace. Can accept a batch. Either url params or a body is required. If both are provdided, the body will override the url params.
+      parameters:
+        - name: namespace
+          in: path
+          description: Namespace
+          required: true
           schema:
-            type: object
-            $ref: '#/definitions/Error'
+            type: string
+        - name: user
+          in: query
+          description: User's email or 'public'.
+          schema:
+            type: string
+        - name: roles
+          in: query
+          description: List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage
+            or "All" or "Nothing". NO SPACES.
+          schema:
+            type: string
+      requestBody:
+        description: |
+          List of access control objects (user, roles). Can edit or delete (with 'Nothing')
+          permissions using this path as well.
+        content:
+          '*/*':
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/AccessControl'
+        required: false
+      responses:
+        200:
+          description: Access control modified or list of access controls.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessControl'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/AccessControl'
+        400:
+          description: Bad Request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-codegen-request-body-name: list of permissions
     delete:
+      tags:
+        - NamespacePermissions
       summary: Delete a permission on namespace.
       description: |
         Delete a permission on namespace.
@@ -700,87 +878,125 @@ paths:
           in: path
           description: Namespace
           required: true
-          type: string
+          schema:
+            type: string
         - name: user
           in: query
-          description: "User's email or 'public'."
+          description: User's email or 'public'.
           required: true
-          type: string
-      tags:
-        - NamespacePermissions
+          schema:
+            type: string
       responses:
-        '200':
+        200:
           description: Access control modified.
-          schema:
-            type: object
-            $ref: '#/definitions/AccessControl'
-        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessControl'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/AccessControl'
+        400:
           description: Bad Request.
-          schema:
-            type: object
-            $ref: '#/definitions/BadRequest'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
         default:
           description: Unexpected error
-          schema:
-            type: object
-            $ref: '#/definitions/Error'
-  '/api/v1/methods/permissions':
-    post:
-      summary: List permissions for multiple methods.
-      description: |
-        List permissions for multiple methods.
-      parameters:
-        - name: methods
-          in: body
-          description: methods for which to retrieve permissions
-          required: true
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/EntityId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/methods/permissions:
+    put:
       tags:
         - Permissions
-      responses:
-        '200':
-          description: An array of entity -> permissions pairs.
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/AccessControlPair'
-        default:
-          description: Unexpected error
-          schema:
-            type: object
-            $ref: '#/definitions/Error'
-    put:
       summary: Upsert permissions for multiple methods.
       description: |
         Insert or update permissions for multiple methods.
-      parameters:
-        - name: methods
-          in: body
-          description: array of entity -> permissions pairs to upsert
-          required: true
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/AccessControlPair'
-      tags:
-        - Permissions
+      requestBody:
+        description: array of entity -> permissions pairs to upsert
+        content:
+          '*/*':
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/AccessControlPair'
+        required: true
       responses:
-        '200':
+        200:
           description: An array of entity -> permissions pairs.
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/AccessControlPair'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AccessControlPair'
+            text/plain:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AccessControlPair'
         default:
           description: Unexpected error
-          schema:
-            type: object
-            $ref: '#/definitions/Error'
-  '/api/v1/methods/{namespace}/{name}/{snapshotId}/permissions':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-codegen-request-body-name: methods
+    post:
+      tags:
+        - Permissions
+      summary: List permissions for multiple methods.
+      description: |
+        List permissions for multiple methods.
+      requestBody:
+        description: methods for which to retrieve permissions
+        content:
+          '*/*':
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/EntityId'
+        required: true
+      responses:
+        200:
+          description: An array of entity -> permissions pairs.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AccessControlPair'
+            text/plain:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AccessControlPair'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-codegen-request-body-name: methods
+  /api/v1/methods/{namespace}/{name}/{snapshotId}/permissions:
     get:
+      tags:
+        - Permissions
       summary: List permissions on a specific method.
       description: |
         List permissions on a specific method.
@@ -789,91 +1005,46 @@ paths:
           in: path
           description: Namespace
           required: true
-          type: string
+          schema:
+            type: string
         - name: name
           in: path
           description: Name
           required: true
-          type: string
+          schema:
+            type: string
         - name: snapshotId
           in: path
           description: SnapshotId
           required: true
-          type: number
-      tags:
-        - Permissions
+          schema:
+            type: number
       responses:
-        '200':
+        200:
           description: An array of permissions.
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/AccessControl'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AccessControl'
+            text/plain:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AccessControl'
         default:
           description: Unexpected error
-          schema:
-            type: object
-            $ref: '#/definitions/Error'
-    post:
-      summary: Add a permissions on a specific method.
-      description: >
-        Add a permissions on a specific method. Will edit if user already has
-        some permission on a specific method.
-      parameters:
-        - name: namespace
-          in: path
-          description: Namespace
-          required: true
-          type: string
-        - name: name
-          in: path
-          description: Name
-          required: true
-          type: string
-        - name: snapshotId
-          in: path
-          description: SnapshotId
-          required: true
-          type: number
-        - name: user
-          in: query
-          description: "User's email or 'public'."
-          required: false
-          type: string
-        - name: roles
-          in: query
-          description: 'List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.'
-          required: false
-          type: string
-        - name: list of permissions
-          in: body
-          description: |
-            List of access control objects (user, roles). Can edit or delete (with 'Nothing')
-            permissions using this path as well.
-          required: false
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/AccessControl'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
       tags:
         - Permissions
-      responses:
-        '200':
-          description: Access control modified.
-          schema:
-            type: object
-            $ref: '#/definitions/AccessControl'
-        '400':
-          description: Bad Request.
-          schema:
-            type: object
-            $ref: '#/definitions/BadRequest'
-        default:
-          description: Unexpected error
-          schema:
-            type: object
-            $ref: '#/definitions/Error'
-    put:
       summary: Edit a permissions on a specific method.
       description: |
         Edit a permissions on a specific method.
@@ -882,46 +1053,140 @@ paths:
           in: path
           description: Namespace
           required: true
-          type: string
+          schema:
+            type: string
         - name: name
           in: path
           description: Name
           required: true
-          type: string
+          schema:
+            type: string
         - name: snapshotId
           in: path
           description: SnapshotId
           required: true
-          type: number
+          schema:
+            type: number
         - name: user
           in: query
-          description: "User's email or 'public'."
+          description: User's email or 'public'.
           required: true
-          type: string
+          schema:
+            type: string
         - name: roles
           in: query
-          description: 'List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.'
+          description: List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage
+            or "All" or "Nothing". NO SPACES.
           required: true
-          type: string
-      tags:
-        - Permissions
+          schema:
+            type: string
       responses:
-        '200':
+        200:
           description: Access control modified.
-          schema:
-            type: object
-            $ref: '#/definitions/AccessControl'
-        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessControl'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/AccessControl'
+        400:
           description: Bad Request.
-          schema:
-            type: object
-            $ref: '#/definitions/BadRequest'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
         default:
           description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      tags:
+        - Permissions
+      summary: Add a permissions on a specific method.
+      description: |
+        Add a permissions on a specific method. Will edit if user already has some permission on a specific method.
+      parameters:
+        - name: namespace
+          in: path
+          description: Namespace
+          required: true
           schema:
-            type: object
-            $ref: '#/definitions/Error'
+            type: string
+        - name: name
+          in: path
+          description: Name
+          required: true
+          schema:
+            type: string
+        - name: snapshotId
+          in: path
+          description: SnapshotId
+          required: true
+          schema:
+            type: number
+        - name: user
+          in: query
+          description: User's email or 'public'.
+          schema:
+            type: string
+        - name: roles
+          in: query
+          description: List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage
+            or "All" or "Nothing". NO SPACES.
+          schema:
+            type: string
+      requestBody:
+        description: |
+          List of access control objects (user, roles). Can edit or delete (with 'Nothing')
+          permissions using this path as well.
+        content:
+          '*/*':
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/AccessControl'
+        required: false
+      responses:
+        200:
+          description: Access control modified.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessControl'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/AccessControl'
+        400:
+          description: Bad Request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-codegen-request-body-name: list of permissions
     delete:
+      tags:
+        - Permissions
       summary: Delete a permission on a specific method.
       description: |
         Delete a permission on a specific method.
@@ -930,42 +1195,58 @@ paths:
           in: path
           description: Namespace
           required: true
-          type: string
+          schema:
+            type: string
         - name: name
           in: path
           description: Name
           required: true
-          type: string
+          schema:
+            type: string
         - name: snapshotId
           in: path
           description: SnapshotId
           required: true
-          type: number
+          schema:
+            type: number
         - name: user
           in: query
-          description: "User's email or 'public'."
+          description: User's email or 'public'.
           required: true
-          type: string
-      tags:
-        - Permissions
+          schema:
+            type: string
       responses:
-        '200':
+        200:
           description: Access control modified.
-          schema:
-            type: object
-            $ref: '#/definitions/AccessControl'
-        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessControl'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/AccessControl'
+        400:
           description: Bad Request.
-          schema:
-            type: object
-            $ref: '#/definitions/BadRequest'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
         default:
           description: Unexpected error
-          schema:
-            type: object
-            $ref: '#/definitions/Error'
-  '/api/v1/configurations/{namespace}/permissions':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/configurations/{namespace}/permissions:
     get:
+      tags:
+        - NamespacePermissions
       summary: List permissions on namespace.
       description: |
         List permissions on namespace.
@@ -974,71 +1255,34 @@ paths:
           in: path
           description: Namespace
           required: true
-          type: string
-      tags:
-        - NamespacePermissions
+          schema:
+            type: string
       responses:
-        '200':
+        200:
           description: An array of permissions.
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/AccessControl'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AccessControl'
+            text/plain:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AccessControl'
         default:
           description: Unexpected error
-          schema:
-            type: object
-            $ref: '#/definitions/Error'
-    post:
-      summary: Add a permissions on namespace.
-      description: >
-        Add a permissions on namespace. Will edit if user already has some
-        permission on namespace.
-      parameters:
-        - name: namespace
-          in: path
-          description: Namespace
-          required: true
-          type: string
-        - name: user
-          in: query
-          description: "User's email or 'public'."
-          required: false
-          type: string
-        - name: roles
-          in: query
-          description: 'List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.'
-          required: false
-          type: string
-        - name: list of permissions
-          in: body
-          description: |
-            List of access control objects (user, roles). Can edit or delete (with 'Nothing')
-            permissions using this path as well.
-          required: false
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/AccessControl'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
       tags:
         - NamespacePermissions
-      responses:
-        '200':
-          description: Access control modified.
-          schema:
-            type: object
-            $ref: '#/definitions/AccessControl'
-        '400':
-          description: Bad Request.
-          schema:
-            type: object
-            $ref: '#/definitions/BadRequest'
-        default:
-          description: Unexpected error
-          schema:
-            type: object
-            $ref: '#/definitions/Error'
-    put:
       summary: Edit a permissions on namespace.
       description: |
         Edit a permissions on namespace.
@@ -1047,36 +1291,116 @@ paths:
           in: path
           description: Namespace
           required: true
-          type: string
+          schema:
+            type: string
         - name: user
           in: query
-          description: "User's email or 'public'."
+          description: User's email or 'public'.
           required: true
-          type: string
+          schema:
+            type: string
         - name: roles
           in: query
-          description: 'List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.'
+          description: List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage
+            or "All" or "Nothing". NO SPACES.
           required: true
-          type: string
-      tags:
-        - NamespacePermissions
+          schema:
+            type: string
       responses:
-        '200':
+        200:
           description: Access control modified.
-          schema:
-            type: object
-            $ref: '#/definitions/AccessControl'
-        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessControl'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/AccessControl'
+        400:
           description: Bad Request.
-          schema:
-            type: object
-            $ref: '#/definitions/BadRequest'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
         default:
           description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      tags:
+        - NamespacePermissions
+      summary: Add a permissions on namespace.
+      description: |
+        Add a permissions on namespace. Will edit if user already has some permission on namespace.
+      parameters:
+        - name: namespace
+          in: path
+          description: Namespace
+          required: true
           schema:
-            type: object
-            $ref: '#/definitions/Error'
+            type: string
+        - name: user
+          in: query
+          description: User's email or 'public'.
+          schema:
+            type: string
+        - name: roles
+          in: query
+          description: List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage
+            or "All" or "Nothing". NO SPACES.
+          schema:
+            type: string
+      requestBody:
+        description: |
+          List of access control objects (user, roles). Can edit or delete (with 'Nothing')
+          permissions using this path as well.
+        content:
+          '*/*':
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/AccessControl'
+        required: false
+      responses:
+        200:
+          description: Access control modified.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessControl'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/AccessControl'
+        400:
+          description: Bad Request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-codegen-request-body-name: list of permissions
     delete:
+      tags:
+        - NamespacePermissions
       summary: Delete a permission on namespace.
       description: |
         Delete a permission on namespace.
@@ -1085,32 +1409,46 @@ paths:
           in: path
           description: Namespace
           required: true
-          type: string
+          schema:
+            type: string
         - name: user
           in: query
-          description: "User's email or 'public'."
+          description: User's email or 'public'.
           required: true
-          type: string
-      tags:
-        - NamespacePermissions
+          schema:
+            type: string
       responses:
-        '200':
+        200:
           description: Access control modified.
-          schema:
-            type: object
-            $ref: '#/definitions/AccessControl'
-        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessControl'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/AccessControl'
+        400:
           description: Bad Request.
-          schema:
-            type: object
-            $ref: '#/definitions/BadRequest'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
         default:
           description: Unexpected error
-          schema:
-            type: object
-            $ref: '#/definitions/Error'
-  '/api/v1/configurations/{namespace}/{name}/{snapshotId}/permissions':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/configurations/{namespace}/{name}/{snapshotId}/permissions:
     get:
+      tags:
+        - Permissions
       summary: List permissions on a specific method.
       description: |
         List permissions on a specific method.
@@ -1119,91 +1457,46 @@ paths:
           in: path
           description: Namespace
           required: true
-          type: string
+          schema:
+            type: string
         - name: name
           in: path
           description: Name
           required: true
-          type: string
+          schema:
+            type: string
         - name: snapshotId
           in: path
           description: SnapshotId
           required: true
-          type: number
-      tags:
-        - Permissions
+          schema:
+            type: number
       responses:
-        '200':
+        200:
           description: An array of permissions.
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/AccessControl'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AccessControl'
+            text/plain:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AccessControl'
         default:
           description: Unexpected error
-          schema:
-            type: object
-            $ref: '#/definitions/Error'
-    post:
-      summary: Add a permissions on a specific method.
-      description: >
-        Add a permissions on a specific method. Will edit if user already has
-        some permission on a specific method.
-      parameters:
-        - name: namespace
-          in: path
-          description: Namespace
-          required: true
-          type: string
-        - name: name
-          in: path
-          description: Name
-          required: true
-          type: string
-        - name: snapshotId
-          in: path
-          description: SnapshotId
-          required: true
-          type: number
-        - name: user
-          in: query
-          description: "User's email or 'public'."
-          required: false
-          type: string
-        - name: roles
-          in: query
-          description: 'List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.'
-          required: false
-          type: string
-        - name: list of permissions
-          in: body
-          description: |
-            List of access control objects (user, roles). Can edit or delete (with 'Nothing')
-            permissions using this path as well.
-          required: false
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/AccessControl'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
       tags:
         - Permissions
-      responses:
-        '200':
-          description: Access control modified.
-          schema:
-            type: object
-            $ref: '#/definitions/AccessControl'
-        '400':
-          description: Bad Request.
-          schema:
-            type: object
-            $ref: '#/definitions/BadRequest'
-        default:
-          description: Unexpected error
-          schema:
-            type: object
-            $ref: '#/definitions/Error'
-    put:
       summary: Edit a permissions on a specific method.
       description: |
         Edit a permissions on a specific method.
@@ -1212,46 +1505,140 @@ paths:
           in: path
           description: Namespace
           required: true
-          type: string
+          schema:
+            type: string
         - name: name
           in: path
           description: Name
           required: true
-          type: string
+          schema:
+            type: string
         - name: snapshotId
           in: path
           description: SnapshotId
           required: true
-          type: number
+          schema:
+            type: number
         - name: user
           in: query
-          description: "User's email or 'public'."
+          description: User's email or 'public'.
           required: true
-          type: string
+          schema:
+            type: string
         - name: roles
           in: query
-          description: 'List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage or "All" or "Nothing". NO SPACES.'
+          description: List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage
+            or "All" or "Nothing". NO SPACES.
           required: true
-          type: string
-      tags:
-        - Permissions
+          schema:
+            type: string
       responses:
-        '200':
+        200:
           description: Access control modified.
-          schema:
-            type: object
-            $ref: '#/definitions/AccessControl'
-        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessControl'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/AccessControl'
+        400:
           description: Bad Request.
-          schema:
-            type: object
-            $ref: '#/definitions/BadRequest'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
         default:
           description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      tags:
+        - Permissions
+      summary: Add a permissions on a specific method.
+      description: |
+        Add a permissions on a specific method. Will edit if user already has some permission on a specific method.
+      parameters:
+        - name: namespace
+          in: path
+          description: Namespace
+          required: true
           schema:
-            type: object
-            $ref: '#/definitions/Error'
+            type: string
+        - name: name
+          in: path
+          description: Name
+          required: true
+          schema:
+            type: string
+        - name: snapshotId
+          in: path
+          description: SnapshotId
+          required: true
+          schema:
+            type: number
+        - name: user
+          in: query
+          description: User's email or 'public'.
+          schema:
+            type: string
+        - name: roles
+          in: query
+          description: List of comma seperated roles -- i.e. Read,Write,Create,Redact,Manage
+            or "All" or "Nothing". NO SPACES.
+          schema:
+            type: string
+      requestBody:
+        description: |
+          List of access control objects (user, roles). Can edit or delete (with 'Nothing')
+          permissions using this path as well.
+        content:
+          '*/*':
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/AccessControl'
+        required: false
+      responses:
+        200:
+          description: Access control modified.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessControl'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/AccessControl'
+        400:
+          description: Bad Request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-codegen-request-body-name: list of permissions
     delete:
+      tags:
+        - Permissions
       summary: Delete a permission on a specific method.
       description: |
         Delete a permission on a specific method.
@@ -1260,756 +1647,834 @@ paths:
           in: path
           description: Namespace
           required: true
-          type: string
+          schema:
+            type: string
         - name: name
           in: path
           description: Name
           required: true
-          type: string
+          schema:
+            type: string
         - name: snapshotId
           in: path
           description: SnapshotId
           required: true
-          type: number
+          schema:
+            type: number
         - name: user
           in: query
-          description: "User's email or 'public'."
+          description: User's email or 'public'.
           required: true
-          type: string
-      tags:
-        - Permissions
+          schema:
+            type: string
       responses:
-        '200':
+        200:
           description: Access control modified.
-          schema:
-            type: object
-            $ref: '#/definitions/AccessControl'
-        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessControl'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/AccessControl'
+        400:
           description: Bad Request.
-          schema:
-            type: object
-            $ref: '#/definitions/BadRequest'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
         default:
           description: Unexpected error
-          schema:
-            type: object
-            $ref: '#/definitions/Error'
-  '/api/v1/configurations/permissions':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/configurations/permissions:
     post:
+      tags:
+        - Permissions
       summary: List permissions for multiple configurations.
       description: |
         List permissions for multiple configurations.
-      parameters:
-        - name: configurations
-          in: body
-          description: configurations for which to retrieve permissions
-          required: true
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/EntityId'
-      tags:
-        - Permissions
+      requestBody:
+        description: configurations for which to retrieve permissions
+        content:
+          '*/*':
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/EntityId'
+        required: true
       responses:
-        '200':
+        200:
           description: An array of entity -> permissions pairs.
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/AccessControlPair'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AccessControlPair'
+            text/plain:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AccessControlPair'
         default:
           description: Unexpected error
-          schema:
-            type: object
-            $ref: '#/definitions/Error'
-
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-codegen-request-body-name: configurations
   /ga4gh/v1/tools/{id}:
     get:
-      summary: List one specific tool, acts as an anchor for self references
-      description: This endpoint returns one specific tool (which has ToolVersions nested inside it)
       tags:
         - GA4GH
+      summary: List one specific tool, acts as an anchor for self references
+      description: This endpoint returns one specific tool (which has ToolVersions
+        nested inside it)
       parameters:
         - name: id
           in: path
+          description: A unique identifier of the tool, scoped to this registry, for
+            example `123456`
           required: true
-          type: string
-          description: A unique identifier of the tool, scoped to this registry, for example `123456`
-      responses:
-        '200':
-          description: A tool.
           schema:
-              $ref: '#/definitions/Tool'
-      security: []
-
+            type: string
+      responses:
+        200:
+          description: A tool.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tool'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Tool'
   /ga4gh/v1/tools/{id}/versions:
     get:
+      tags:
+        - GA4GH
       summary: List versions of a tool
       description: Returns all versions of the specified tool
-      tags:
-        - GA4GH
       parameters:
         - name: id
           in: path
+          description: A unique identifier of the tool, scoped to this registry, for
+            example `123456`
           required: true
-          type: string
-          description: A unique identifier of the tool, scoped to this registry, for example `123456`
-      responses:
-        '200':
-          description: An array of tool versions
           schema:
-            type: array
-            items:
-              $ref: '#/definitions/ToolVersion'
-      security: []
-
+            type: string
+      responses:
+        200:
+          description: An array of tool versions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ToolVersion'
+            text/plain:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ToolVersion'
   /ga4gh/v1/tools/{id}/versions/{version-id}:
     get:
+      tags:
+        - GA4GH
       summary: List one specific tool version, acts as an anchor for self references
       description: This endpoint returns one specific tool version
-      tags:
-        - GA4GH
       parameters:
         - name: id
           in: path
+          description: A unique identifier of the tool, scoped to this registry, for
+            example `123456`
           required: true
-          type: string
-          description: A unique identifier of the tool, scoped to this registry, for example `123456`
+          schema:
+            type: string
         - name: version-id
           in: path
+          description: An identifier of the tool version, scoped to this registry, for
+            example `v1`
           required: true
-          type: string
-          description: An identifier of the tool version, scoped to this registry, for example `v1`
-      responses:
-        '200':
-          description: A tool version.
           schema:
-              $ref: '#/definitions/ToolVersion'
-      security: []
-
+            type: string
+      responses:
+        200:
+          description: A tool version.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolVersion'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/ToolVersion'
   /ga4gh/v1/tools:
     get:
-      summary: List all tools
-      description: >
-        This endpoint returns all tools available.
       tags:
         - GA4GH
+      summary: List all tools
+      description: |
+        This endpoint returns all tools available.
       responses:
-        '200':
+        200:
           description: An array of Tools that match the filter.
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/Tool'
-      security: []
-
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tool'
+            text/plain:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tool'
   /ga4gh/v1/tools/{id}/versions/{version-id}/{type}/descriptor:
     get:
-      summary: Get the tool descriptor (WDL) for the specified tool.
-      description: Returns the WDL descriptor for the specified tool.
       tags:
         - GA4GH
+      summary: Get the tool descriptor (WDL) for the specified tool.
+      description: Returns the WDL descriptor for the specified tool.
       parameters:
         - name: type
-          required: true
           in: path
-          description: >
-            The output type of the descriptor. If not specified it is up to the underlying
-            implementation to determine which output type to return. Plain types return the
-            bare descriptor while the "non-plain" types return a descriptor wrapped
-            with metadata. Choose "Response Content Type: application/json" for WDL and
-            "Response Content Type: text/plain" for plain-WDL
-          type: string
-          enum:
-            - WDL
-            - plain-WDL
+          description: |
+            The output type of the descriptor. If not specified it is up to the underlying implementation to determine which output type to return. Plain types return the bare descriptor while the "non-plain" types return a descriptor wrapped with metadata. Choose "Response Content Type: application/json" for WDL and "Response Content Type: text/plain" for plain-WDL
+          required: true
+          schema:
+            type: string
+            enum:
+              - WDL
+              - plain-WDL
         - name: id
           in: path
-          description: >
+          description: |
             A unique identifier of the tool, scoped to this registry, for example `123456`.
 
               *In Agora, this must be a namespace + ":" + name. For instance, if your namespace
               is 'foo' and name is 'bar', this must be 'foo:bar'.*
           required: true
-          type: string
+          schema:
+            type: string
         - name: version-id
           in: path
-          required: true
-          type: string
-          description: >
+          description: |
             An identifier of the tool version for this particular tool registry, for example `v1`.
 
               *In Agora, this must be an integer representing the Agora snapshot id.*
-      produces:
-        - application/json
-        - text/plain
+          required: true
+          schema:
+            type: string
       responses:
-        '200':
+        200:
           description: The tool descriptor.
-          schema:
-            $ref: '#/definitions/ToolDescriptor'
-        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolDescriptor'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/ToolDescriptor'
+        404:
           description: The tool can not be output in the specified type.
-          schema:
-            $ref: '#/definitions/Error'
-      security: []
-
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Error'
   /ga4gh/v1/metadata:
     get:
+      tags:
+        - GA4GH
       summary: Return some metadata that is useful for describing this registry
       description: Return some metadata that is useful for describing this registry
-      tags:
-        - GA4GH
       responses:
-        '200':
+        200:
           description: A Metadata object describing this service.
-          schema:
-              $ref: '#/definitions/Metadata'
-      security: []
-
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Metadata'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Metadata'
   /ga4gh/v1/tool-classes:
     get:
-      summary: List all tool types
-      description: >
-        This endpoint returns all tool-classes available
       tags:
         - GA4GH
+      summary: List all tool types
+      description: |
+        This endpoint returns all tool-classes available
       responses:
-        '200':
+        200:
           description: An array of methods that match the filter.
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/ToolClass'
-      security: []
-
-securityDefinitions:
-  authorization:
-    type: oauth2
-    authorizationUrl: 'https://accounts.google.com/o/oauth2/auth'
-    flow: implicit
-    scopes:
-      openid: open id authorization
-      email: email authorization
-      profile: profile authorization
-
-definitions:
-  EntityId:
-    type: object
-    properties:
-      namespace:
-        type: string
-        description: Namespace which contains AgoraEntity.
-      name:
-        type: string
-        description: Name of the AgoraEntity.
-      snapshotId:
-        type: integer
-        description: SnapshotId of AgoraEntity.
-  EntityShort:
-    type: object
-    properties:
-      namespace:
-        type: string
-        description: Namespace which contains AgoraEntity.
-      name:
-        type: string
-        description: Name of the AgoraEntity.
-      snapshotId:
-        type: integer
-        description: SnapshotId of AgoraEntity.
-      managers:
-        type: array
-        items:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ToolClass'
+            text/plain:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ToolClass'
+components:
+  schemas:
+    EntityId:
+      type: object
+      properties:
+        namespace:
           type: string
-        description: List of users with the Manage permission
-      public:
-        type: boolean
-        description: If this AgoraEntity is publicly readable.
-  MethodQuery:
-    type: object
-    properties:
-      namespace:
-        type: string
-        description: Namespace which contains AgoraEntity.
-        default: YOUR_NAMESPACE
-      name:
-        type: string
-        description: Name of the AgoraEntity.
-        default: BWA
-      synopsis:
-        type: string
-        description: Synopsis which contains AgoraEntity.
-        default: Quickly aligns short nucleotide sequences.
-      snapshotComment:
-        type: string
-        description: Snapshot comment of AgoraEntity
-        default: Improved spline reticulation
-      documentation:
-        type: string
-        description: Documentation of the AgoraEntity.
-        default: |
-          BWA is a software package for mapping low-divergent sequences
-          against a large reference genome, such as the human genome.
-          It consists of three algorithms: BWA-backtrack, BWA-SW and BWA-MEM.
-      payload:
-        type: string
-        description: Payload of method -- must be in WDL format
-        default: >
-          task wc {File in_file command { cat ${in_file} | wc -l } output { Int
-          count = read_int(stdout()) }}
-      entityType:
-        type: string
-        description: Type of the AgoraEntity -- Task or Workflow.
-        default: Task
-  ConfigurationQuery:
-    type: object
-    properties:
-      namespace:
-        type: string
-        description: Namespace which contains Configuration.
-        default: YOUR_NAMESPACE
-      name:
-        type: string
-        description: Name of the Configuration.
-        default: quick-BWA-config
-      synopsis:
-        type: string
-        description: Synopsis which contains Configuration.
-        default: Quick synopsis of configuration.
-      snapshotComment:
-        type: string
-        description: Snapshot comment of AgoraEntity
-        default: Improved spline reticulation
-      documentation:
-        type: string
-        description: Documentation of the Configuration.
-        default: |
-          Example configuraion with an associated method.
-      payload:
-        type: string
-        description: Payload of method -- must be in WDL format
-        default: >
-          { "methodRepoMethod": { "methodNamespace": "YOUR_NAMESPACE",
-          "methodName": "BWA", "methodVersion": 1}}
-      entityType:
-        type: string
-        description: Can only be Configuration.
-        default: Configuration
-  ConfigurationResponse:
-    type: object
-    properties:
-      managers:
-        type: array
-        items:
+          description: Namespace which contains AgoraEntity.
+        name:
           type: string
-        description: List of users with the Manage permission
-      method:
-        type: object
-      namespace:
-        type: string
-        description: Namespace which contains AgoraEntity.
-        default: YOUR_NAMESPACE
-      name:
-        type: string
-        description: Name of the AgoraEntity.
-        default: BWA
-      snapshotId:
-        type: integer
-        description: SnapshotId of AgoraEntity
-      snapshotComment:
-        type: string
-        description: Snapshot comment of AgoraEntity
-        default: Improved spline reticulation
-      synopsis:
-        type: string
-        description: Synopsis which contains AgoraEntity.
-        default: Quickly aligns short nucleotide sequences.
-      documentation:
-        type: string
-        description: Documentation of the AgoraEntity. MUST BE REQUESTED EXPLICITLY.
-        default: |
-          BWA is a software package for mapping low-divergent sequences
-          against a large reference genome, such as the human genome.
-          It consists of three algorithms: BWA-backtrack, BWA-SW and BWA-MEM.
-      createDate:
-        type: string
-        description: Timestamp of creation
-      url:
-        type: string
-        description: URL where resource can be accessed.
-      payload:
-        type: string
-        description: Payload of configuration. MUST BE REQUESTED EXPLICITLY.
-        default: >
-          { "methodRepoMethod": { "methodNamespace": "YOUR_NAMESPACE",
-          "methodName": "BWA", "methodVersion": 1}}
-      entityType:
-        type: string
-        description: Type of the AgoraEntity -- Task or Workflow.
-        default: Task
-      public:
-        type: boolean
-        description: Is this configuration publicly readable?
-  ConfigurationResponseWithPayloadObject:
-    type: object
-    properties:
-      namespace:
-        type: string
-        description: Namespace which contains AgoraEntity.
-        default: YOUR_NAMESPACE
-      name:
-        type: string
-        description: Name of the AgoraEntity.
-        default: BWA
-      snapshotId:
-        type: integer
-        description: SnapshotId of AgoraEntity
-      synopsis:
-        type: string
-        description: Synopsis which contains AgoraEntity.
-        default: Quickly aligns short nucleotide sequences.
-      snapshotComment:
-        type: string
-        description: Snapshot comment of AgoraEntity
-        default: Improved spline reticulation
-      documentation:
-        type: string
-        description: Documentation of the AgoraEntity. MUST BE REQUESTED EXPLICITLY.
-        default: |
-          BWA is a software package for mapping low-divergent sequences
-          against a large reference genome, such as the human genome.
-          It consists of three algorithms: BWA-backtrack, BWA-SW and BWA-MEM.
-      createDate:
-        type: string
-        description: Timestamp of creation
-      url:
-        type: string
-        description: URL where resource can be accessed.
-      payloadObject:
-        $ref: '#/definitions/ConfigurationPayload'
-      entityType:
-        type: string
-        description: Type of the AgoraEntity -- Task or Workflow.
-        default: Task
-  MethodDefinition:
-    type: object
-    properties:
-      namespace:
-        type: string
-        description: Namespace which contains the method.
-      name:
-        type: string
-        description: Name of the method.
-      synopsis:
-        type: string
-        description: Synopsis of the method
-      managers:
-        type: array
-        items:
+          description: Name of the AgoraEntity.
+        snapshotId:
+          type: integer
+          description: SnapshotId of AgoraEntity.
+    EntityShort:
+      type: object
+      properties:
+        namespace:
           type: string
-        description: List of users with the Manage permission
-      public:
-        type: boolean
-        description: true if the method is publicly readable
-      numConfigurations:
-        type: number
-        description: count of configurations associated with this method
-      numSnapshots:
-        type: number
-        description: count of snapshots of this method
-      entityType:
-        type: string
-        description: always "Workflow".
-        default: Workflow
-  MethodResponse:
-    type: object
-    properties:
-      managers:
-        type: array
-        items:
+          description: Namespace which contains AgoraEntity.
+        name:
           type: string
-        description: List of users with the Manage permission
-      namespace:
-        type: string
-        description: Namespace which contains AgoraEntity.
-        default: YOUR_NAMESPACE
-      name:
-        type: string
-        description: Name of the AgoraEntity.
-        default: BWA
-      snapshotId:
-        type: integer
-        description: SnapshotId of AgoraEntity
-      snapshotComment:
-        type: string
-        description: Snapshot comment of AgoraEntity
-        default: Improved spline reticulation
-      synopsis:
-        type: string
-        description: Synopsis which contains AgoraEntity.
-        default: Quickly aligns short nucleotide sequences.
-      documentation:
-        type: string
-        description: Documentation of the AgoraEntity. MUST BE REQUESTED EXPLICITLY.
-        default: |
-          BWA is a software package for mapping low-divergent sequences
-          against a large reference genome, such as the human genome.
-          It consists of three algorithms: BWA-backtrack, BWA-SW and BWA-MEM.
-      createDate:
-        type: string
-        description: Timestamp of creation
-      url:
-        type: string
-        description: URL where resource can be accessed.
-      payload:
-        type: string
-        description: Payload of method -- must be in WDL format. MUST BE REQUESTED EXPLICITLY.
-        default: >
-          task wc {File in_file command { cat ${in_file} | wc -l } output { Int
-          count = read_int(stdout()) }}
-      entityType:
-        type: string
-        description: Type of the AgoraEntity -- Task or Workflow.
-        default: Task
-      public:
-        type: boolean
-        description: Is this method publicly readable?
-  AccessControl:
-    type: object
-    properties:
-      user:
-        type: string
-        description: "A user's email or 'public' to give access to all users."
-        default: test-user@broadinstitute.org
-      roles:
-        type: array
-        description: The roles a user has on an entity.
-        items:
-          type: string
-        default:
-          - Read
-          - Write
-          - Create
-          - Redact
-          - Manage
-  AccessControlPair:
-    type: object
-    properties:
-      entity:
-        $ref: '#/definitions/EntityShort'
-      acls:
-        type: array
-        items:
-          $ref: '#/definitions/AccessControl'
-  ConfigurationPayload:
-    type: object
-    properties:
-      name:
-        type: string
-        description: Name of this config
-        default: cancer_exome_pipeline_v2
-      namespace:
-        type: string
-        description: Namespace of this config
-        default: broad-dsde-dev
-      methodRepoMethod:
-        type: object
-        properties:
-          methodName:
+          description: Name of the AgoraEntity.
+        snapshotId:
+          type: integer
+          description: SnapshotId of AgoraEntity.
+        managers:
+          type: array
+          description: List of users with the Manage permission
+          items:
             type: string
-            description: Name of referenced method
-            default: cancer_exome_pipeline_v2
-          methodNamespace:
+        public:
+          type: boolean
+          description: If this AgoraEntity is publicly readable.
+    MethodQuery:
+      type: object
+      properties:
+        namespace:
+          type: string
+          description: Namespace which contains AgoraEntity.
+          default: YOUR_NAMESPACE
+        name:
+          type: string
+          description: Name of the AgoraEntity.
+          default: BWA
+        synopsis:
+          type: string
+          description: Synopsis which contains AgoraEntity.
+          default: Quickly aligns short nucleotide sequences.
+        snapshotComment:
+          type: string
+          description: Snapshot comment of AgoraEntity
+          default: Improved spline reticulation
+        documentation:
+          type: string
+          description: Documentation of the AgoraEntity.
+          default: |
+            BWA is a software package for mapping low-divergent sequences
+            against a large reference genome, such as the human genome.
+            It consists of three algorithms: BWA-backtrack, BWA-SW and BWA-MEM.
+        payload:
+          type: string
+          description: Payload of method -- must be in WDL format
+          default: |
+            task wc {File in_file command { cat ${in_file} | wc -l } output { Int count = read_int(stdout()) }}
+        entityType:
+          type: string
+          description: Type of the AgoraEntity -- Task or Workflow.
+          default: Task
+    ConfigurationQuery:
+      type: object
+      properties:
+        namespace:
+          type: string
+          description: Namespace which contains Configuration.
+          default: YOUR_NAMESPACE
+        name:
+          type: string
+          description: Name of the Configuration.
+          default: quick-BWA-config
+        synopsis:
+          type: string
+          description: Synopsis which contains Configuration.
+          default: Quick synopsis of configuration.
+        snapshotComment:
+          type: string
+          description: Snapshot comment of AgoraEntity
+          default: Improved spline reticulation
+        documentation:
+          type: string
+          description: Documentation of the Configuration.
+          default: |
+            Example configuraion with an associated method.
+        payload:
+          type: string
+          description: Payload of method -- must be in WDL format
+          default: |
+            { "methodRepoMethod": { "methodNamespace": "YOUR_NAMESPACE", "methodName": "BWA", "methodVersion": 1}}
+        entityType:
+          type: string
+          description: Can only be Configuration.
+          default: Configuration
+    ConfigurationResponse:
+      type: object
+      properties:
+        managers:
+          type: array
+          description: List of users with the Manage permission
+          items:
             type: string
-            description: Namespace of referenced method
-            default: broad-dsde-dev,
-          methodVersion:
-            type: integer
-            description: Snapshot ID of referenced method
-            default: 1
-      outputs:
-        type: object
-        description: Map[String, AttributeString] from method's WDL outputs to fields in the workspace data model
-      inputs:
-        type: object
-        description: Map[String, AttributeString] from method's WDL inputs to fields in the workspace data model
-      rootEntityType:
-        type: string
-        default: pair
-      prerequisites:
-        type: object
-        description: Map[String, AttributeString]
-        default: {}
-      methodConfigVersion:
-        type: integer
-        description: Snapshot ID of this config
-        default: 1
-      deleted:
-        type: boolean
-        description: Has this config been deleted?
-        default: false
-  BadRequest:
-    type: object
-    properties:
-      code:
-        type: integer
-        default: 400
-      message:
-        type: string
-        default: Bad Request
-  Error:
-    type: object
-    properties:
-      code:
-        type: integer
-        default: 500
-      message:
-        type: string
-        default: Internal Server Error
-  NotFound:
-    type: object
-    properties:
-      code:
-        type: integer
-        default: 404
-      message:
-        type: string
-        default: Not Found
-  ToolClass:
-    # thought. it would be nicer if ToolClasses are consistent across registries. How would we accomplish this? Operate a MIME-type like list?
-    description: Describes a class (type) of tool allowing us to categorize workflows, tools, and maybe even other entities (such as services) separately
-    properties:
-      id:
-        type: string
-        description: The unique identifier for the class
-      name:
-        type: string
-        description: A short friendly name for the class
-      description:
-        type: string
-        description: A longer explanation of what this class is and what it can accomplish
-  Tool:
-    description: A tool (or described tool) describes one pairing of a tool as described in a descriptor file (which potentially describes multiple tools) and a Docker image.
-    required:
-      - url
-      - id
-      - organization
-      - author
-      - meta-version
-      - toolclass
-      - versions
-    properties:
-      url:
-        type: string
-        description: The URL for this tool in this registry, for example `http://agora.broadinstitute.org/tools/123456`
-      id:
-        type: string
-        description: A unique identifier of the tool, scoped to this registry, for example `123456` or `123456_v1`
-      organization:
-        type: string
-        description: The organization that published the image.
-      toolname:
-        type: string
-        description: The name of the tool.
-      toolclass:
-        $ref: '#/definitions/ToolClass'
-      description:
-        type: string
-        description: The description of the tool.
-      author:
-        type: string
-        description: Contact information for the author of this tool entry in the registry. (More complex authorship information is handled by the descriptor)
-      meta-version:
-        type: string
-        description: 'The version of this tool in the registry. Iterates when fields like the description, author, etc. are updated.'
-      contains:
-        description: An array of IDs for the applications that are stored inside this tool (for example `https://bio.tools/tool/mytum.de/SNAP2/1`). This always returns an empty array.
-        type: array
-        items:
-           type: string
-      verified:
-        type: boolean
-        description: Reports whether this tool has been verified by a specific organization or individual.  This always returns false.
-      verified-source:
-        type: string
-        description: Source of metadata that can support a verified tool, such as an email or URL
-      signed:
-        type: boolean
-        description: Reports whether this tool has been signed.  This always returns false.
-      versions:
-        description: A list of versions for this tool
-        type: array
-        items:
-          $ref: '#/definitions/ToolVersion'
-  ToolVersion:
-    description: A tool version describes a particular iteration of a tool as described by a reference to a specific image and dockerfile.
-    required:
-      - url
-      - id
-      - meta-version
-    properties:
-      name:
-        type: string
-        description: The name of the version.
-      url:
-        type: string
-        description: The URL for this tool in this registry, for example `http://agora.broadinstitute.org/tools/123456/1`
-      id:
-        type: string
-        description: An identifier of the version of this tool for this particular tool registry, for example `v1`
-      image:
-        type: string
-        description: The docker path to the image (and version) for this tool. (e.g. quay.io/seqware/seqware_full/1.1). This always returns an empty string.
-      descriptor-type:
-        type: array
-        description: The type (or types) of descriptors available.
-        items:
+        method:
+          type: object
+          properties: {}
+        namespace:
+          type: string
+          description: Namespace which contains AgoraEntity.
+          default: YOUR_NAMESPACE
+        name:
+          type: string
+          description: Name of the AgoraEntity.
+          default: BWA
+        snapshotId:
+          type: integer
+          description: SnapshotId of AgoraEntity
+        snapshotComment:
+          type: string
+          description: Snapshot comment of AgoraEntity
+          default: Improved spline reticulation
+        synopsis:
+          type: string
+          description: Synopsis which contains AgoraEntity.
+          default: Quickly aligns short nucleotide sequences.
+        documentation:
+          type: string
+          description: Documentation of the AgoraEntity. MUST BE REQUESTED EXPLICITLY.
+          default: |
+            BWA is a software package for mapping low-divergent sequences
+            against a large reference genome, such as the human genome.
+            It consists of three algorithms: BWA-backtrack, BWA-SW and BWA-MEM.
+        createDate:
+          type: string
+          description: Timestamp of creation
+        url:
+          type: string
+          description: URL where resource can be accessed.
+        payload:
+          type: string
+          description: Payload of configuration. MUST BE REQUESTED EXPLICITLY.
+          default: |
+            { "methodRepoMethod": { "methodNamespace": "YOUR_NAMESPACE", "methodName": "BWA", "methodVersion": 1}}
+        entityType:
+          type: string
+          description: Type of the AgoraEntity -- Task or Workflow.
+          default: Task
+        public:
+          type: boolean
+          description: Is this configuration publicly readable?
+    ConfigurationResponseWithPayloadObject:
+      type: object
+      properties:
+        namespace:
+          type: string
+          description: Namespace which contains AgoraEntity.
+          default: YOUR_NAMESPACE
+        name:
+          type: string
+          description: Name of the AgoraEntity.
+          default: BWA
+        snapshotId:
+          type: integer
+          description: SnapshotId of AgoraEntity
+        synopsis:
+          type: string
+          description: Synopsis which contains AgoraEntity.
+          default: Quickly aligns short nucleotide sequences.
+        snapshotComment:
+          type: string
+          description: Snapshot comment of AgoraEntity
+          default: Improved spline reticulation
+        documentation:
+          type: string
+          description: Documentation of the AgoraEntity. MUST BE REQUESTED EXPLICITLY.
+          default: |
+            BWA is a software package for mapping low-divergent sequences
+            against a large reference genome, such as the human genome.
+            It consists of three algorithms: BWA-backtrack, BWA-SW and BWA-MEM.
+        createDate:
+          type: string
+          description: Timestamp of creation
+        url:
+          type: string
+          description: URL where resource can be accessed.
+        payloadObject:
+          $ref: '#/components/schemas/ConfigurationPayload'
+        entityType:
+          type: string
+          description: Type of the AgoraEntity -- Task or Workflow.
+          default: Task
+    MethodDefinition:
+      type: object
+      properties:
+        namespace:
+          type: string
+          description: Namespace which contains the method.
+        name:
+          type: string
+          description: Name of the method.
+        synopsis:
+          type: string
+          description: Synopsis of the method
+        managers:
+          type: array
+          description: List of users with the Manage permission
+          items:
+            type: string
+        public:
+          type: boolean
+          description: true if the method is publicly readable
+        numConfigurations:
+          type: number
+          description: count of configurations associated with this method
+        numSnapshots:
+          type: number
+          description: count of snapshots of this method
+        entityType:
+          type: string
+          description: always "Workflow".
+          default: Workflow
+    MethodResponse:
+      type: object
+      properties:
+        managers:
+          type: array
+          description: List of users with the Manage permission
+          items:
+            type: string
+        namespace:
+          type: string
+          description: Namespace which contains AgoraEntity.
+          default: YOUR_NAMESPACE
+        name:
+          type: string
+          description: Name of the AgoraEntity.
+          default: BWA
+        snapshotId:
+          type: integer
+          description: SnapshotId of AgoraEntity
+        snapshotComment:
+          type: string
+          description: Snapshot comment of AgoraEntity
+          default: Improved spline reticulation
+        synopsis:
+          type: string
+          description: Synopsis which contains AgoraEntity.
+          default: Quickly aligns short nucleotide sequences.
+        documentation:
+          type: string
+          description: Documentation of the AgoraEntity. MUST BE REQUESTED EXPLICITLY.
+          default: |
+            BWA is a software package for mapping low-divergent sequences
+            against a large reference genome, such as the human genome.
+            It consists of three algorithms: BWA-backtrack, BWA-SW and BWA-MEM.
+        createDate:
+          type: string
+          description: Timestamp of creation
+        url:
+          type: string
+          description: URL where resource can be accessed.
+        payload:
+          type: string
+          description: Payload of method -- must be in WDL format. MUST BE REQUESTED
+            EXPLICITLY.
+          default: |
+            task wc {File in_file command { cat ${in_file} | wc -l } output { Int count = read_int(stdout()) }}
+        entityType:
+          type: string
+          description: Type of the AgoraEntity -- Task or Workflow.
+          default: Task
+        public:
+          type: boolean
+          description: Is this method publicly readable?
+    AccessControl:
+      type: object
+      properties:
+        user:
+          type: string
+          description: A user's email or 'public' to give access to all users.
+          default: test-user@broadinstitute.org
+        roles:
+          type: array
+          description: The roles a user has on an entity.
+          items:
+            type: string
+    AccessControlPair:
+      type: object
+      properties:
+        entity:
+          $ref: '#/components/schemas/EntityShort'
+        acls:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccessControl'
+    ConfigurationPayload:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of this config
+          default: cancer_exome_pipeline_v2
+        namespace:
+          type: string
+          description: Namespace of this config
+          default: broad-dsde-dev
+        methodRepoMethod:
+          type: object
+          properties:
+            methodName:
+              type: string
+              description: Name of referenced method
+              default: cancer_exome_pipeline_v2
+            methodNamespace:
+              type: string
+              description: Namespace of referenced method
+              default: broad-dsde-dev,
+            methodVersion:
+              type: integer
+              description: Snapshot ID of referenced method
+        outputs:
+          type: object
+          properties: {}
+          description: Map[String, AttributeString] from method's WDL outputs to fields
+            in the workspace data model
+        inputs:
+          type: object
+          properties: {}
+          description: Map[String, AttributeString] from method's WDL inputs to fields
+            in the workspace data model
+        rootEntityType:
+          type: string
+          default: pair
+        prerequisites:
+          type: object
+          properties: {}
+          description: Map[String, AttributeString]
+        methodConfigVersion:
+          type: integer
+          description: Snapshot ID of this config
+        deleted:
+          type: boolean
+          description: Has this config been deleted?
+          default: false
+    BadRequest:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+          default: Bad Request
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+          default: Internal Server Error
+    NotFound:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+          default: Not Found
+    ToolClass:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier for the class
+        name:
+          type: string
+          description: A short friendly name for the class
+        description:
+          type: string
+          description: A longer explanation of what this class is and what it can
+            accomplish
+      description: Describes a class (type) of tool allowing us to categorize workflows,
+        tools, and maybe even other entities (such as services) separately
+    Tool:
+      required:
+        - author
+        - id
+        - meta-version
+        - organization
+        - toolclass
+        - url
+        - versions
+      type: object
+      properties:
+        url:
+          type: string
+          description: The URL for this tool in this registry, for example `http://agora.broadinstitute.org/tools/123456`
+        id:
+          type: string
+          description: A unique identifier of the tool, scoped to this registry, for
+            example `123456` or `123456_v1`
+        organization:
+          type: string
+          description: The organization that published the image.
+        toolname:
+          type: string
+          description: The name of the tool.
+        toolclass:
+          $ref: '#/components/schemas/ToolClass'
+        description:
+          type: string
+          description: The description of the tool.
+        author:
+          type: string
+          description: Contact information for the author of this tool entry in the
+            registry. (More complex authorship information is handled by the descriptor)
+        meta-version:
+          type: string
+          description: The version of this tool in the registry. Iterates when fields
+            like the description, author, etc. are updated.
+        contains:
+          type: array
+          description: An array of IDs for the applications that are stored inside
+            this tool (for example `https://bio.tools/tool/mytum.de/SNAP2/1`). This
+            always returns an empty array.
+          items:
+            type: string
+        verified:
+          type: boolean
+          description: Reports whether this tool has been verified by a specific organization
+            or individual.  This always returns false.
+        verified-source:
+          type: string
+          description: Source of metadata that can support a verified tool, such as
+            an email or URL
+        signed:
+          type: boolean
+          description: Reports whether this tool has been signed.  This always returns
+            false.
+        versions:
+          type: array
+          description: A list of versions for this tool
+          items:
+            $ref: '#/components/schemas/ToolVersion'
+      description: A tool (or described tool) describes one pairing of a tool as described
+        in a descriptor file (which potentially describes multiple tools) and a Docker
+        image.
+    ToolVersion:
+      required:
+        - id
+        - meta-version
+        - url
+      type: object
+      properties:
+        name:
+          type: string
+          description: The name of the version.
+        url:
+          type: string
+          description: The URL for this tool in this registry, for example `http://agora.broadinstitute.org/tools/123456/1`
+        id:
+          type: string
+          description: An identifier of the version of this tool for this particular
+            tool registry, for example `v1`
+        image:
+          type: string
+          description: The docker path to the image (and version) for this tool. (e.g.
+            quay.io/seqware/seqware_full/1.1). This always returns an empty string.
+        descriptor-type:
+          type: array
+          description: The type (or types) of descriptors available.
+          items:
+            type: string
+            enum:
+              - WDL
+        dockerfile:
+          type: boolean
+          description: Reports if this tool has a dockerfile available. This always
+            returns false.
+        meta-version:
+          type: string
+          description: The version of this tool version in the registry. Iterates
+            when fields like the description, author, etc. are updated.
+      description: A tool version describes a particular iteration of a tool as described
+        by a reference to a specific image and dockerfile.
+    ToolDescriptor:
+      required:
+        - descriptor
+        - type
+      type: object
+      properties:
+        type:
           type: string
           enum:
             - WDL
-      dockerfile:
-        type: boolean
-        description: Reports if this tool has a dockerfile available. This always returns false.
-      meta-version:
-        type: string
-        description: 'The version of this tool version in the registry. Iterates when fields like the description, author, etc. are updated.'
-  ToolDescriptor:
-    description: A tool descriptor is a metadata document that describes one or more tools.
-    required:
-      - type
-      - descriptor
-    properties:
-      type:
-        type: string
-        enum:
-          - WDL
-      descriptor:
-        type: string
-        description: The descriptor that represents this version of the tool. (WDL)
-      url:
-        type: string
-        description: 'Optional url to the tool descriptor used to build this image, should include version information, and can include a git hash (e.g. https://raw.githubusercontent.com/ICGC-TCGA-PanCancer/pcawg_delly_workflow/ea2a5db69bd20a42976838790bc29294df3af02b/delly_docker/Delly.cwl )'
-  Metadata:
-    description: Describes this registry to better allow for mirroring and indexing.
-    required:
-      - version
-      - api-version
-    properties:
-      version:
-        type: string
-        description: The version of this registry
-      api-version:
-        type: string
-        description: The version of the GA4GH tool-registry API supported by this registry
-      country:
-        type: string
-        description: A country code for the registry (ISO 3166-1 alpha-3)
-      friendly-name:
-        type: string
-        description: A friendly name that can be used in addition to the hostname to describe a registry
-
-  Number:
-    type: number
-    example: 1
-
+        descriptor:
+          type: string
+          description: The descriptor that represents this version of the tool. (WDL)
+        url:
+          type: string
+          description: Optional url to the tool descriptor used to build this image,
+            should include version information, and can include a git hash (e.g. https://raw.githubusercontent.com/ICGC-TCGA-PanCancer/pcawg_delly_workflow/ea2a5db69bd20a42976838790bc29294df3af02b/delly_docker/Delly.cwl
+            )
+      description: A tool descriptor is a metadata document that describes one or
+        more tools.
+    Metadata:
+      required:
+        - api-version
+        - version
+      type: object
+      properties:
+        version:
+          type: string
+          description: The version of this registry
+        api-version:
+          type: string
+          description: The version of the GA4GH tool-registry API supported by this
+            registry
+        country:
+          type: string
+          description: A country code for the registry (ISO 3166-1 alpha-3)
+        friendly-name:
+          type: string
+          description: A friendly name that can be used in addition to the hostname
+            to describe a registry
+      description: Describes this registry to better allow for mirroring and indexing.
+    Number:
+      type: number
+      example: 1
+  securitySchemes:
+    authorization:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: https://accounts.google.com/o/oauth2/auth
+          scopes:
+            openid: open id authorization
+            email: email authorization
+            profile: profile authorization

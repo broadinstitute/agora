@@ -832,7 +832,7 @@ paths:
           List of access control objects (user, roles). Can edit or delete (with 'Nothing')
           permissions using this path as well.
         content:
-          '*/*':
+          'application/json':
             schema:
               type: array
               items:
@@ -924,7 +924,7 @@ paths:
       requestBody:
         description: array of entity -> permissions pairs to upsert
         content:
-          '*/*':
+          'application/json':
             schema:
               type: array
               items:
@@ -963,7 +963,7 @@ paths:
       requestBody:
         description: methods for which to retrieve permissions
         content:
-          '*/*':
+          'application/json':
             schema:
               type: array
               items:
@@ -1149,7 +1149,7 @@ paths:
           List of access control objects (user, roles). Can edit or delete (with 'Nothing')
           permissions using this path as well.
         content:
-          '*/*':
+          'application/json':
             schema:
               type: array
               items:
@@ -1363,7 +1363,7 @@ paths:
           List of access control objects (user, roles). Can edit or delete (with 'Nothing')
           permissions using this path as well.
         content:
-          '*/*':
+          'application/json':
             schema:
               type: array
               items:
@@ -1601,7 +1601,7 @@ paths:
           List of access control objects (user, roles). Can edit or delete (with 'Nothing')
           permissions using this path as well.
         content:
-          '*/*':
+          'application/json':
             schema:
               type: array
               items:
@@ -1705,7 +1705,7 @@ paths:
       requestBody:
         description: configurations for which to retrieve permissions
         content:
-          '*/*':
+          'application/json':
             schema:
               type: array
               items:

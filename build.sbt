@@ -5,7 +5,7 @@ name := "Agora"
 
 organization := "org.broadinstitute"
 
-scalaVersion := "2.12.10"
+scalaVersion := "2.13.3"
 
 // Ported from Cromwell 2019-11-19
 // The disabled ones are not too crazy to get compliant with, but more work than I want to do just now (AEN)
@@ -70,21 +70,21 @@ libraryDependencies ++= Seq(
   // This will not add a direct dependency on akka-stream, but will force the revision to be akkaV.
   "com.typesafe.akka" %% "akka-stream-typed" % akkaV,
   "com.typesafe" % "config" % "1.3.3",
-  "com.typesafe.scala-logging" %% "scala-logging" % "3.8.0",
+  "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2",
   "com.typesafe.slick" %% "slick" % slickV,
   "com.typesafe.slick" %% "slick-hikaricp" % slickV,
   "mysql" % "mysql-connector-java" % "6.0.6",
   
   // ficus was being pulled in transitively from wdl-draft2 previously, now made explicit
-  "com.iheart" %% "ficus" % "1.4.6",
+  "com.iheart" %% "ficus" % "1.4.7",
   "org.broadinstitute.dsde.workbench" %% "workbench-util" % "0.3-0e9d080",
   "org.mongodb" %% "casbah" % "3.1.1",
-  "org.scalaz" %% "scalaz-core" % "7.2.20",
+  "org.scalaz" %% "scalaz-core" % "7.3.2",
   "org.webjars" % "swagger-ui"  % "3.25.0",
   //---------- Test libraries -------------------//
   "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaV % Test,
   "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpV % Test,
-  "org.scalatest" %% "scalatest" % "3.0.5" % Test,
+  "org.scalatest" %% "scalatest" % "3.2.0" % Test,
   "org.mock-server" % "mockserver-netty" % "5.6.0" % "test",
   "org.broadinstitute.dsde.workbench" %% "sam-client" % "0.1-f6bf0ec",
   "org.broadinstitute.cromwell" %% "cromwell-client" % "0.1-8b413b45f-SNAP"

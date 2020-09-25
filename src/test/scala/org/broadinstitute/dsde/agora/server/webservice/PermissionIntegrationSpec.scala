@@ -1,6 +1,9 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import akka.http.scaladsl.model.StatusCodes._
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.ExecutionDirectives
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import org.broadinstitute.dsde.agora.server.AgoraTestFixture
@@ -8,18 +11,16 @@ import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraPermissions, EntityAccessControl}
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
-import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
-import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpec}
-import org.broadinstitute.dsde.agora.server.webservice.permissions.{EntityPermissionsService, MultiEntityPermissionsService, NamespacePermissionsService}
-import spray.json.{DefaultJsonProtocol, JsArray, JsObject, JsValue, RootJsonFormat}
-import akka.http.scaladsl.model.StatusCodes._
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.Route
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
+import org.broadinstitute.dsde.agora.server.webservice.permissions.{EntityPermissionsService, MultiEntityPermissionsService, NamespacePermissionsService}
 import org.broadinstitute.dsde.agora.server.webservice.routes.MockAgoraDirectives
+import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.{BeforeAndAfterAll, DoNotDiscover}
+import spray.json.{DefaultJsonProtocol, JsArray, JsObject, JsValue, RootJsonFormat}
 
 @DoNotDiscover
-class PermissionIntegrationSpec extends FlatSpec with ScalatestRouteTest with BeforeAndAfterAll
+class PermissionIntegrationSpec extends AnyFlatSpec with ScalatestRouteTest with BeforeAndAfterAll
   with AgoraTestFixture with ExecutionDirectives with SprayJsonSupport with DefaultJsonProtocol {
 
   val namespacePermissionsService = new NamespacePermissionsService(permsDataSource)
@@ -550,7 +551,7 @@ class PermissionIntegrationSpec extends FlatSpec with ScalatestRouteTest with Be
 object AgoraApiJsonSupportWithManagerAndPublicRead extends DefaultJsonProtocol {
 
   implicit object AgoraEntityFormatWithManagerAndPublicRead extends RootJsonFormat[AgoraEntity] {
-    override def write(entity: AgoraEntity) = AgoraEntityFormat.write(entity)
+    override def write(entity: AgoraEntity): JsObject = AgoraEntityFormat.write(entity)
 
     override def read(json: JsValue): AgoraEntity = {
       val entityWithoutManagers = AgoraEntityFormat.read(json)

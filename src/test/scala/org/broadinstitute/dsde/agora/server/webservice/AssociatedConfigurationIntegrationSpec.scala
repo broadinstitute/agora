@@ -11,13 +11,14 @@ import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
-import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpec}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.{BeforeAndAfterAll, DoNotDiscover}
 
 import scala.concurrent.duration._
 
 //noinspection ZeroIndexToHead
 @DoNotDiscover
-class AssociatedConfigurationIntegrationSpec extends FlatSpec with ExecutionDirectives
+class AssociatedConfigurationIntegrationSpec extends AnyFlatSpec with ExecutionDirectives
   with ScalatestRouteTest with BeforeAndAfterAll with AgoraTestFixture {
 
   private implicit val routeTestTimeout: RouteTestTimeout = RouteTestTimeout(20.seconds)
@@ -192,7 +193,7 @@ class AssociatedConfigurationIntegrationSpec extends FlatSpec with ExecutionDire
         assert(configs.forall(_.name.get.contains("otherowner")))
       }
   }
-  
+
   // =========================================================
   // =================== helper methods
   // =========================================================

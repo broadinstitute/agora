@@ -2,8 +2,6 @@
 package org.broadinstitute.dsde.agora.server
 
 import akka.http.scaladsl.model.StatusCodes.OK
-import com.mongodb.casbah.MongoCollection
-import com.mongodb.casbah.commons.MongoDBObject
 import com.typesafe.scalalogging.LazyLogging
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.business.{AgoraBusiness, AgoraBusinessExecutionContext, PermissionBusiness}
@@ -13,7 +11,8 @@ import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
 import org.mockserver.integration.ClientAndServer
 import org.mockserver.integration.ClientAndServer.startClientAndServer
 import org.mockserver.model.HttpRequest.request
-import org.mockserver.model.{BodyWithContentType, StringBody}
+import org.mockserver.model.{BodyWithContentType, HttpRequest, StringBody}
+import org.mongodb.scala._
 import slick.dbio.DBIOAction
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.meta.MTable
@@ -27,20 +26,20 @@ trait AgoraTestFixture extends LazyLogging {
   implicit lazy val agoraBusinessExecutionContext: AgoraBusinessExecutionContext =
     new AgoraBusinessExecutionContext(scala.concurrent.ExecutionContext.Implicits.global)
 
-  val timeout = 10.seconds
+  val timeout: FiniteDuration = 10.seconds
   val db: Database = AgoraConfig.sqlDatabase.db
   val permsDataSource: PermissionsDataSource = new PermissionsDataSource(AgoraConfig.sqlDatabase)
   val agoraBusiness: AgoraBusiness = new AgoraBusiness(permsDataSource)
   val permissionBusiness: PermissionBusiness = new PermissionBusiness(permsDataSource)
 
   var waasMockServer: ClientAndServer = _
-  val waasRequest = request()
+  val waasRequest: HttpRequest = request()
     .withMethod("POST")
     .withPath("/api/womtool/v1/describe")
 
-  val mockAccessToken = AgoraConfig.mockAccessToken
+  val mockAccessToken: String = AgoraConfig.mockAccessToken
 
-  def startMockWaas() = {
+  def startMockWaas(): Unit = {
     waasMockServer = startClientAndServer(waasMockServerPort)
     addSubstringResponse(payload1.get, payload1DescribeResponse)
     addSubstringResponse(payload2.get, payload2DescribeResponse)
@@ -51,9 +50,9 @@ trait AgoraTestFixture extends LazyLogging {
     addSubstringResponse(payloadWdl10.get, goodWdlVersionDescribeResponse)
   }
 
-  def addSubstringResponse(payload : String, response : String) = {
+  def addSubstringResponse(payload : String, response : String): Unit = {
     // necessary to declare this here in order to disambiguate overloaded method
-    val p2 : BodyWithContentType[String] = new StringBody(payload, true)
+    val p2 : BodyWithContentType[String] = StringBody.subString(payload)
     waasMockServer.when(
       waasRequest
         .withBody(p2)
@@ -63,11 +62,11 @@ trait AgoraTestFixture extends LazyLogging {
 
   }
 
-  def stopMockWaas() = {
+  def stopMockWaas(): Unit = {
     waasMockServer.stop()
   }
 
-  def startDatabases() = {
+  def startDatabases(): Unit = {
     EmbeddedMongo.startMongo()
 
     clearDatabases()
@@ -78,26 +77,28 @@ trait AgoraTestFixture extends LazyLogging {
     logger.debug("Finished populating sql database.")
   }
 
-  def stopDatabases() = {
+  def stopDatabases(): Unit = {
     clearDatabases()
     EmbeddedMongo.stopMongo()
     logger.debug("Disconnecting from sql database.")
     db.close()
   }
 
-  def ensureMongoDatabaseIsRunning() = {
+  def ensureMongoDatabaseIsRunning(): Unit = {
     if (!EmbeddedMongo.isRunning) {
       startDatabases()
     }
   }
 
-  def clearMongoCollections(collections: Seq[MongoCollection] = Seq()) = {
+  def clearMongoCollections(collections: Seq[MongoCollection[Document]] = Seq()): Unit = {
     if (EmbeddedMongo.isRunning) {
       logger.debug("Clearing mongo database.")
       val allCollections = AgoraMongoClient.getAllCollections ++ collections
-      allCollections.foreach(collection => {
-        collection.remove(MongoDBObject.empty)
+      val deletes = allCollections.map(collection => {
+        collection.deleteMany(Document.empty).toFuture()
       })
+      Await.result(Future.sequence(deletes), 1.minute)
+      ()
     }
   }
 
@@ -118,6 +119,7 @@ trait AgoraTestFixture extends LazyLogging {
     val actions = tables map { table =>
       MTable.getTables(table.baseTableRow.tableName).flatMap { result =>
         if (result.nonEmpty) {
+          //noinspection SqlDialectInspection
           sqlu"delete from #${table.baseTableRow.tableName}"
         } else {
           DBIOAction.successful(())
@@ -127,29 +129,29 @@ trait AgoraTestFixture extends LazyLogging {
     db.run(DBIOAction.sequence(actions))
   }
 
-  def ensureSqlDatabaseIsRunning() = {
+  def ensureSqlDatabaseIsRunning(): Seq[Unit] = {
     logger.debug("Populating sql database.")
     Await.result(createTableIfNotExists(entities, users, permissions), timeout)
   }
 
-  def clearSqlDatabase() = {
+  def clearSqlDatabase(): Seq[AnyVal] = {
     logger.debug("Clearing sql database.")
     Await.result(deleteFromTableIfExists(permissions), timeout)
     Await.result(deleteFromTableIfExists(users), timeout)
     Await.result(deleteFromTableIfExists(entities), timeout)
   }
 
-  def ensureDatabasesAreRunning() = {
+  def ensureDatabasesAreRunning(): Seq[Unit] = {
     ensureMongoDatabaseIsRunning()
     ensureSqlDatabaseIsRunning()
   }
 
-  def clearDatabases() = {
+  def clearDatabases(): Seq[AnyVal] = {
     clearMongoCollections()
     clearSqlDatabase()
   }
 
-  def addAdminUser() = {
+  def addAdminUser(): Int = {
     Await.result(db.run(users += UserDao(adminUser.get, isAdmin = true)), timeout)
   }
 

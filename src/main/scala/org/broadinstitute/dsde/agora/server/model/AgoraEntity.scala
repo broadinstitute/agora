@@ -4,10 +4,11 @@ package org.broadinstitute.dsde.agora.server.model
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.exceptions.AgoraException
 import org.bson.types.ObjectId
-import org.joda.time.DateTime
-
-import scalaz.Scalaz._
-import scalaz._
+import java.time.OffsetDateTime
+import cats.data.Validated._
+import cats.data.ValidatedNel
+import cats.syntax.apply._
+import cats.syntax.validated._
 import org.broadinstitute.dsde.rawls.model.MethodConfiguration
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport.MethodConfigurationFormat
 import spray.json._
@@ -23,94 +24,94 @@ object AgoraEntityType extends Enumeration {
   }
 
   type EntityType = Value
-  val Task = Value("Task")
-  val Workflow = Value("Workflow")
-  val Configuration = Value("Configuration")
-  val MethodTypes = Seq(Task, Workflow)
+  val Task: EntityType = Value("Task")
+  val Workflow: EntityType = Value("Workflow")
+  val Configuration: EntityType = Value("Configuration")
+  val MethodTypes: Seq[EntityType] = Seq(Task, Workflow)
 }
 
 object AgoraEntity extends JsonSupport {
 
-  // ValidationNel is a Non-empty List (Nel) data structure. The left type
+  // ValidatedNel is a Non-empty List (Nel) data structure. The left type
   // is the failure type. The right type is the success type.
   //
-  // When completing a ValidationNel, both types must be provided.
+  // When completing a ValidatedNel, both types must be provided.
   //
-  // Examples to complete a ValidationNel[String, Int]:
-  // Obj[SuccessType].successNel[FailureType] = 1.successNel[String]
-  // Obj[FailureType].failureNel[SuccessType] = "fail".failureNel[Int]
+  // Examples to complete a ValidatedNel[String, Int]:
+  // Obj[SuccessType].validNel[FailureType] = 1.validNel[String]
+  // Obj[FailureType].invalidNel[SuccessType] = "fail".invalidNel[Int]
 
   // Note that newly-created entities are subject to stricter rules than these
   // See validateNamesForNewEntity(), GAWB-1614
-  def validate(entity: AgoraEntity, allowEmptyIdentifiers: Boolean = true): ValidationNel[String, Boolean] = {
+  def validate(entity: AgoraEntity, allowEmptyIdentifiers: Boolean = true): ValidatedNel[String, Boolean] = {
 
-    def validateNamespace(namespace: String): ValidationNel[String, String] = {
-      if (namespace.trim.nonEmpty) namespace.successNel[String]
-      else "Namespace cannot be empty".failureNel[String]
+    def validateNamespace(namespace: String): ValidatedNel[String, String] = {
+      if (namespace.trim.nonEmpty) namespace.validNel[String]
+      else "Namespace cannot be empty".invalidNel[String]
     }
 
-    def validateName(name: String): ValidationNel[String, String] = {
-      if (name.trim.nonEmpty) name.successNel[String]
-      else "Name cannot be empty".failureNel[String]
+    def validateName(name: String): ValidatedNel[String, String] = {
+      if (name.trim.nonEmpty) name.validNel[String]
+      else "Name cannot be empty".invalidNel[String]
     }
 
-    def validateSnapshotId(_id: Int): ValidationNel[String, Int] = {
-      if (_id > 0) _id.successNel[String]
-      else "SnapshotId must be greater than 0".failureNel[Int]
+    def validateSnapshotId(_id: Int): ValidatedNel[String, Int] = {
+      if (_id > 0) _id.validNel[String]
+      else "SnapshotId must be greater than 0".invalidNel[Int]
     }
 
-    def validateSynopsis(synopsis: String): ValidationNel[String, String] = {
-      if (synopsis.length <= 80) synopsis.successNel[String]
-      else "Synopsis must be less than 80 chars".failureNel[String]
+    def validateSynopsis(synopsis: String): ValidatedNel[String, String] = {
+      if (synopsis.length <= 80) synopsis.validNel[String]
+      else "Synopsis must be less than 80 chars".invalidNel[String]
     }
 
-    def validateDocumentation(doc: String): ValidationNel[String, String] = {
-      if (doc.getBytes.size <= 10000) doc.successNel[String]
-      else "Documentation must be less than 10kb".failureNel[String]
+    def validateDocumentation(doc: String): ValidatedNel[String, String] = {
+      if (doc.getBytes.length <= 10000) doc.validNel[String]
+      else "Documentation must be less than 10kb".invalidNel[String]
     }
 
     val namespace = entity.namespace match {
       case Some(n) => validateNamespace(n)
       case None =>
         if (allowEmptyIdentifiers)
-          None.successNel[String]
+          None.validNel[String]
         else
-          "Namespace must be supplied".failureNel[String]
+          "Namespace must be supplied".invalidNel[String]
     }
 
     val name = entity.name match {
       case Some(n) => validateName(n)
       case None =>
         if (allowEmptyIdentifiers)
-          None.successNel[String]
+          None.validNel[String]
         else
-          "Namespace must be supplied".failureNel[String]
+          "Namespace must be supplied".invalidNel[String]
     }
 
     val _id = entity.snapshotId match {
       case Some(snapShotId) => validateSnapshotId(snapShotId)
       case None =>
         if (allowEmptyIdentifiers)
-          None.successNel[String]
+          None.validNel[String]
         else
-          "SnapshotId must be supplied".failureNel[Int]
+          "SnapshotId must be supplied".invalidNel[Int]
     }
 
     val synopsis = entity.synopsis match {
       case Some(s) => validateSynopsis(s)
-      case None => None.successNel[String]
+      case None => None.validNel[String]
     }
 
     val doc = entity.documentation match {
       case Some(docs) => validateDocumentation(docs)
-      case None => None.successNel[String]
+      case None => None.validNel[String]
     }
 
     def doNothing() = true
 
-    // The |@| operator is a combinator that combines the validations into a single object
+    // The mapN operator is a combinator that combines the validations into a single object
     // This allows all of the errors to be returned at once!
-    (namespace |@| name |@| _id |@| synopsis |@| doc) {(namespace, name, _id, synopsis, doc) => doNothing }
+    (namespace, name, _id, synopsis, doc) mapN { (_, _, _, _, _) => doNothing() }
   }
 
 }
@@ -122,7 +123,7 @@ case class AgoraEntity(namespace: Option[String] = None,
                        synopsis: Option[String] = None,
                        documentation: Option[String] = None,
                        owner: Option[String] = None,
-                       createDate: Option[DateTime] = None,
+                       createDate: Option[OffsetDateTime] = None,
                        payload: Option[String] = None,
                        payloadObject: Option[MethodConfiguration] = None,
                        url: Option[String] = None,
@@ -148,9 +149,9 @@ case class AgoraEntity(namespace: Option[String] = None,
   }
 
   def addDate(): AgoraEntity = {
-    copy(createDate = Option(new DateTime()))
+    copy(createDate = Option(OffsetDateTime.now()))
   }
-  
+
   def addMethodId(methodId: String): AgoraEntity = {
     copy(methodId = Option(new ObjectId(methodId)))
   }
@@ -158,7 +159,7 @@ case class AgoraEntity(namespace: Option[String] = None,
   def addMethod(method: Option[AgoraEntity]): AgoraEntity = {
     copy(method = method)
   }
-  
+
   def removeIds(): AgoraEntity = {
     copy(id = None, methodId = None)
   }

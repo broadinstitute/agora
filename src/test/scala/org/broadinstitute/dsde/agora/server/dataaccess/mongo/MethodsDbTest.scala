@@ -1,57 +1,62 @@
 package org.broadinstitute.dsde.agora.server.dataaccess.mongo
 
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
-import org.broadinstitute.dsde.agora.server.AgoraTestFixture
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
 import org.broadinstitute.dsde.agora.server.exceptions.AgoraEntityNotFoundException
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
-import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpec}
+import org.broadinstitute.dsde.agora.server.{AgoraScalaFutures, AgoraTestFixture}
+import org.mongodb.scala.{Document, MongoCollection}
+import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.{BeforeAndAfterAll, DoNotDiscover}
 
 @DoNotDiscover
-class MethodsDbTest extends FlatSpec with BeforeAndAfterAll with AgoraTestFixture {
-  val mongoTestCollection = AgoraMongoClient.getCollection("test")
-  val agoraDao = AgoraDao.createAgoraDao(mongoTestCollection)
+class MethodsDbTest extends AnyFlatSpec with BeforeAndAfterAll with AgoraTestFixture with AgoraScalaFutures {
+  import scala.concurrent.ExecutionContext.Implicits.global
 
-  override protected def beforeAll() = {
+  val mongoTestCollection: MongoCollection[Document] = AgoraMongoClient.getCollection("test")
+  val agoraDao: AgoraDao = AgoraDao.createAgoraDao(mongoTestCollection)
+
+  override protected def beforeAll(): Unit = {
     ensureMongoDatabaseIsRunning()
   }
 
-  override protected def afterAll() = {
+  override protected def afterAll(): Unit = {
     clearMongoCollections(Seq(mongoTestCollection))
   }
 
   "Agora" should "be able to store a method" in {
-    val entityWithId = agoraDao.insert(testEntity1)
+    val entityWithId = agoraDao.insert(testEntity1).futureValue
 
-    val entity = agoraDao.findSingle(entityWithId)
+    val entity = agoraDao.findSingle(entityWithId).futureValue
 
     assert(entity == entityWithId)
   }
 
   "Agora" should "be able to query by namespace, name and snapshot id (version) and get back a single entity" in {
-    val entityWithId = agoraDao.insert(testEntity1)
+    val entityWithId = agoraDao.insert(testEntity1).futureValue
     val queryEntity = new AgoraEntity(namespace = namespace1, name = name1, snapshotId = entityWithId.snapshotId, entityType = Option(AgoraEntityType.Workflow))
 
-    val entity = agoraDao.findSingle(queryEntity)
+    val entity = agoraDao.findSingle(queryEntity).futureValue
 
     assert(entity == entityWithId)
   }
 
   "Agora" should "increment the snapshot id number if we insert the same namespace/name entity" in {
-    val entityWithId = agoraDao.insert(testEntity1)
-    val entityWithId2 = agoraDao.insert(testEntity1)
+    val entityWithId = agoraDao.insert(testEntity1).futureValue
+    val entityWithId2 = agoraDao.insert(testEntity1).futureValue
 
     val previousVersionEntity = entityWithId.copy(snapshotId = entityWithId2.snapshotId.map(id => id - 1))
 
-    val entity1 = agoraDao.findSingle(previousVersionEntity)
-    val entity2 = agoraDao.findSingle(entityWithId2)
+    val entity1 = agoraDao.findSingle(previousVersionEntity).futureValue
+    val entity2 = agoraDao.findSingle(entityWithId2).futureValue
 
     assert(entity1.snapshotId.get == entity2.snapshotId.get - 1)
   }
 
   "Agora" should "not find an entity if it doesn't exist" in {
     val thrown = intercept[AgoraEntityNotFoundException] {
-      agoraDao.findSingle(testAgoraEntityNonExistent)
+      ScalaFutures.whenReady(agoraDao.findSingle(testAgoraEntityNonExistent).failed)(throwable => throw throwable)
     }
     assert(thrown != null)
   }

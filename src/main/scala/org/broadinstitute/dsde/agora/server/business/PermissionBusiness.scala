@@ -9,7 +9,7 @@ import slick.dbio.DBIOAction
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
-import scalaz.{Failure => zFailure, Success => zSuccess}
+import cats.data.Validated._
 
 class PermissionBusiness(permissionsDataSource: PermissionsDataSource) {
 
@@ -72,8 +72,8 @@ class PermissionBusiness(permissionsDataSource: PermissionsDataSource) {
                            (implicit executionContext: ExecutionContext): Future[Seq[AccessControl]] = {
     // validate entity
     AgoraEntity.validate(entity, allowEmptyIdentifiers=false) match {
-      case zSuccess(_) => // noop
-      case zFailure(errors) =>
+      case Valid(_) => // noop
+      case Invalid(errors) =>
         throw ValidationException(s"Entity [${entity.toShortString}] is not valid: Errors: $errors")
     }
 

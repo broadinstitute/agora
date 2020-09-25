@@ -13,9 +13,9 @@ class AgoraDBStatus(dataSource: PermissionsDataSource) extends StrictLogging {
   def mongoStatus()(implicit executionContext: ExecutionContext): Future[SubsystemStatus] = {
     for {
       _ <- Future(logger.info("Retrieving Mongo status"))
-      status <- Future(getMongoDBStatus) map {
-        case Success(_) => HealthMonitor.OkStatus
-        case Failure(t) => HealthMonitor.failedStatus(t.getMessage)
+      status <- getMongoDBStatus transform {
+        case Success(_) => Success(HealthMonitor.OkStatus)
+        case Failure(t) => Success(HealthMonitor.failedStatus(t.getMessage))
       }
       _ <- Future(logger.info(s"Retrieved Mongo status: $status"))
     } yield status

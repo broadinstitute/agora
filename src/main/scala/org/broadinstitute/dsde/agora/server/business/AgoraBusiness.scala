@@ -187,9 +187,10 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLo
     }
     // find all previous snapshots. Use the dao directly, because we want to find
     // everything, including those snapshots the current user can't read
-    val snapshots = AgoraDao.createAgoraDao(agoraEntity.entityType)
+    val snapshotsFuture = AgoraDao.createAgoraDao(agoraEntity.entityType)
       .find(AgoraEntity(agoraEntity.namespace, agoraEntity.name), None)
 
+    snapshotsFuture.flatMap(snapshots =>
     permissionsDataSource.inTransaction { db =>
       db.aePerms.addUserIfNotInDatabase(username) flatMap { _ =>
         checkInsertPermission(db, agoraEntity, username, snapshots) {
@@ -198,19 +199,22 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLo
 
               //this silliness required to check whether the referenced method is readable if it's a config
               val entityToInsertAction = configReferencedMethodOpt match {
-                case Some(referencedMethod) =>
+                case Some(referencedMethodFuture) =>
+                  DBIO.from(referencedMethodFuture).flatMap(referencedMethod =>
                   checkEntityPermission(db, referencedMethod, username, AgoraPermissions(Read)) {
                     DBIO.successful(agoraEntity.addMethodId(referencedMethod.id.get.toHexString))
                   }
+                  )
                 case None => DBIO.successful(agoraEntity)
               }
 
               entityToInsertAction flatMap { entityToInsert =>
-                //this goes to mongo inside a SQL transaction :(
-                val entityWithId = AgoraDao.createAgoraDao(entityToInsert.entityType).insert(entityToInsert.addDate())
                 val userAccess = new AccessControl(username, AgoraPermissions(All))
 
                 for {
+                  entityWithId <-
+                    //this goes to mongo inside a SQL transaction :(
+                    DBIO.from(AgoraDao.createAgoraDao(entityToInsert.entityType).insert(entityToInsert.addDate()))
                   _ <- createNamespaceIfNonexistent(db, agoraEntity, entityWithId, userAccess)
                   _ <- db.aePerms.addEntity(entityWithId)
                   _ <- db.aePerms.insertEntityPermission(entityWithId, userAccess)
@@ -223,19 +227,23 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLo
         }
       }
     }
+    )
   }
 
   def delete(agoraEntity: AgoraEntity, entityTypes: Seq[AgoraEntityType.EntityType], username: String)
             (implicit executionContext: ExecutionContext): Future[Int] = {
     //list of associated configurations. Goes to Mongo so we do it outside the sql txn
-    val configurations = if (entityTypes equals AgoraEntityType.MethodTypes) {
+    val configurationsFuture = if (entityTypes equals AgoraEntityType.MethodTypes) {
       val dao = AgoraDao.createAgoraDao(entityTypes)
-      val entityWithId = dao.findSingle(agoraEntity.namespace.get, agoraEntity.name.get, agoraEntity.snapshotId.get)
-      dao.findConfigurations(entityWithId.id.get)
+      for {
+        entityWithId <- dao.findSingle(agoraEntity.namespace.get, agoraEntity.name.get, agoraEntity.snapshotId.get)
+        configurations <- dao.findConfigurations(entityWithId.id.get)
+      } yield configurations
     } else {
-      Seq()
+      Future.successful(Seq())
     }
 
+    configurationsFuture.flatMap(configurations =>
     permissionsDataSource.inTransaction { db =>
       db.aePerms.addUserIfNotInDatabase(username) flatMap { _ =>
         checkNamespacePermission(db, agoraEntity, username, AgoraPermissions(Redact)) {
@@ -244,12 +252,12 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLo
         }
       }
     }
+    )
   }
 
   def copy(sourceArgs: AgoraEntity,
            targetArgs: AgoraEntity,
            redact: Boolean,
-           entityTypes: Seq[AgoraEntityType.EntityType],
            username: String,
            accessToken: String)
           (implicit executionContext: ExecutionContext): Future[AgoraEntity] = {
@@ -257,7 +265,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLo
     val dao = AgoraDao.createAgoraDao(Some(AgoraEntityType.Workflow))
 
     // get source. will throw exception if source does not exist
-    val sourceEntity = dao.findSingle(sourceArgs)
+    dao.findSingle(sourceArgs).flatMap{sourceEntity =>
     // munge the object we're inserting to be a copy of the source plus overrides from the new
     val entityToInsert = copyWithOverrides(sourceEntity, targetArgs).addDate()
 
@@ -266,7 +274,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLo
       checkEntityPermission(db, sourceEntity, username, AgoraPermissions(Create)) {
         checkValidPayload(entityToInsert, accessToken) {
           // insert target
-          val targetEntity = dao.insert(entityToInsert)
+          DBIO.from(dao.insert(entityToInsert)).flatMap(targetEntity =>
 
           // get source permissions, copy to target
           (for {
@@ -281,6 +289,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLo
               throw new AgoraException("an unexpected error occurred during copy.", t)
             case None => DBIO.successful(targetEntity.removeIds())
           }
+          )
         }
       }
     } flatMap { first =>
@@ -295,7 +304,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLo
         )
       }
     }
-
+    }
   }
 
   private def copyWithOverrides(sourceEntity: AgoraEntity, newEntity: AgoraEntity): AgoraEntity = {
@@ -396,9 +405,9 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLo
       // get ids
       val methodIds = methods flatMap (_.id)
       // get configs that have that id
-      val configs = AgoraDao.createAgoraDao(Some(AgoraEntityType.Configuration))
+      AgoraDao.createAgoraDao(Some(AgoraEntityType.Configuration))
         .findConfigurations(methodIds)
-        .map(_.addUrl().removeIds().withDeserializedPayload)
+        .map(_.map(_.addUrl().removeIds().withDeserializedPayload)).flatMap(configs =>
 
       permissionsDataSource.inTransaction { db =>
         for {
@@ -406,6 +415,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLo
           entity <- db.aePerms.filterEntityByRead(configs, username, "listAssociatedConfigurations")
         } yield entity
       }
+      )
     }
   }
 
@@ -476,7 +486,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLo
                           username: String)
                          (implicit executionContext: ExecutionContext): Future[Seq[AgoraEntity]] = {
     // Start looking up entities with an eager Future.
-    val entitiesFuture = Future(AgoraDao.createAgoraDao(entityTypes).find(agoraSearch, agoraProjection))
+    val entitiesFuture = AgoraDao.createAgoraDao(entityTypes).find(agoraSearch, agoraProjection)
 
     permissionsDataSource.inTransaction { db =>
       for {
@@ -503,7 +513,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLo
                  username: String)
                 (implicit executionContext: ExecutionContext): Future[AgoraEntity] = {
     // Start looking for the entity with an eager Future.
-    val foundEntityFuture = Future(AgoraDao.createAgoraDao(entityTypes).findSingle(namespace, name, snapshotId))
+    val foundEntityFuture = AgoraDao.createAgoraDao(entityTypes).findSingle(namespace, name, snapshotId)
 
     permissionsDataSource.inTransaction { db =>
       for {
@@ -542,7 +552,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLo
 //    true
 //  }
 
-  private def resolveMethodRef(payload: String): AgoraEntity = {
+  private def resolveMethodRef(payload: String)(implicit executionContext: ExecutionContext): Future[AgoraEntity] = {
     val queryMethod = AgoraApiJsonSupport.methodRef(payload)
     AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(queryMethod)
   }

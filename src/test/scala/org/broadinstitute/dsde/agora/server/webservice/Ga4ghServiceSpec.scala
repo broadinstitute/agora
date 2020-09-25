@@ -1,22 +1,23 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.model.HttpMethods
+import akka.http.scaladsl.model.StatusCodes._
+import akka.http.scaladsl.server.directives.ExecutionDirectives
+import akka.http.scaladsl.testkit.ScalatestRouteTest
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraPermissions}
 import org.broadinstitute.dsde.agora.server.ga4gh.Models._
 import org.broadinstitute.dsde.agora.server.ga4gh.{Ga4ghService, ModelSupport}
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.{AgoraConfig, AgoraTestFixture}
-import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FreeSpecLike}
+import org.scalatest.freespec.AnyFreeSpecLike
+import org.scalatest.{BeforeAndAfterAll, DoNotDiscover}
+import spray.json.DefaultJsonProtocol._
 import spray.json._
-import akka.http.scaladsl.testkit.ScalatestRouteTest
-import akka.http.scaladsl.model.StatusCodes._
-import akka.http.scaladsl.model.HttpMethods
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import DefaultJsonProtocol._
-import akka.http.scaladsl.server.directives.ExecutionDirectives
 
 @DoNotDiscover
-class Ga4ghServiceSpec extends FreeSpecLike with ScalatestRouteTest with BeforeAndAfterAll with AgoraTestFixture with ExecutionDirectives {
+class Ga4ghServiceSpec extends AnyFreeSpecLike with ScalatestRouteTest with BeforeAndAfterAll with AgoraTestFixture with ExecutionDirectives {
 
   private val ga4ghService = new Ga4ghService(permsDataSource)
 

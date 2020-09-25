@@ -4,30 +4,31 @@ package org.broadinstitute.dsde.agora.server.webservice
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server._
-import org.broadinstitute.dsde.agora.server.AgoraConfig
+import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDao
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraPermissions}
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
-import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
-import org.scalatest.{DoNotDiscover, FlatSpecLike}
-import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.webservice.routes.MockAgoraDirectives
+import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
+import org.broadinstitute.dsde.agora.server.{AgoraConfig, AgoraScalaFutures}
 import org.broadinstitute.dsde.rawls.model.MethodConfiguration
+import org.scalatest.DoNotDiscover
+import org.scalatest.flatspec.AnyFlatSpecLike
 import spray.json.{DeserializationException, JsObject}
 
 @DoNotDiscover
-class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
+class AgoraConfigurationsSpec extends ApiServiceSpec with AnyFlatSpecLike with AgoraScalaFutures {
 
   var method1: AgoraEntity = _
   var testEntityToBeRedacted2WithId: AgoraEntity = _
   var testAgoraConfigurationToBeRedactedWithId: AgoraEntity = _
 
-  val routes = ApiService.handleExceptionsAndRejections {
+  val routes: Route = ApiService.handleExceptionsAndRejections {
     configurationsService.querySingleRoute ~ configurationsService.postRoute ~ methodsService.querySingleRoute
   }
 
-  override def beforeAll() = {
+  override def beforeAll(): Unit = {
     ensureDatabasesAreRunning()
     startMockWaas()
 
@@ -43,7 +44,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
     patiently(agoraBusiness.insert(testConfigWithSnapshot1, mockAuthenticatedOwner.get, mockAccessToken))
   }
 
-  override def afterAll() = {
+  override def afterAll(): Unit = {
     clearDatabases()
     stopMockWaas()
   }
@@ -78,7 +79,9 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
   "Agora" should "be able to store a task configuration" in {
     Post(ApiUtil.Configurations.withLeadingVersion, testAgoraConfigurationEntity3) ~>
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
-        val referencedMethod = AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(namespace1.get, name1.get, snapshotId1.get)
+        val referencedMethod = AgoraDao
+          .createAgoraDao(AgoraEntityType.MethodTypes).findSingle(namespace1.get, name1.get, snapshotId1.get)
+          .futureValue
 
         val entity = responseAs[AgoraEntity]
         assert(entity.namespace == namespace2)
@@ -105,16 +108,31 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
       configurationsService.queryRoute ~> check {
         val configs = responseAs[Seq[AgoraEntity]]
 
-        val method1 = AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(namespace1.get, name1.get, snapshotId1.get)
-        val method2 = AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(namespace2.get, name1.get, snapshotId1.get)
-        val method3 = AgoraDao.createAgoraDao(AgoraEntityType.MethodTypes).findSingle(namespace1.get, name1.get, snapshotId1.get)
+        val method1 = AgoraDao
+          .createAgoraDao(AgoraEntityType.MethodTypes)
+          .findSingle(namespace1.get, name1.get, snapshotId1.get)
+          .futureValue
+        val method2 = AgoraDao
+          .createAgoraDao(AgoraEntityType.MethodTypes)
+          .findSingle(namespace2.get, name1.get, snapshotId1.get)
+          .futureValue
+        val method3 = AgoraDao
+          .createAgoraDao(AgoraEntityType.MethodTypes)
+          .findSingle(namespace1.get, name1.get, snapshotId1.get)
+          .futureValue
 
-        val config1 = AgoraDao.createAgoraDao(Seq(AgoraEntityType.Configuration)).findSingle(
-          testAgoraConfigurationEntity.namespace.get, testAgoraConfigurationEntity.name.get, 2)
-        val config2 = AgoraDao.createAgoraDao(Seq(AgoraEntityType.Configuration)).findSingle(
-          testAgoraConfigurationEntity2.namespace.get, testAgoraConfigurationEntity2.name.get, 1)
-        val config3 = AgoraDao.createAgoraDao(Seq(AgoraEntityType.Configuration)).findSingle(
-          testAgoraConfigurationEntity3.namespace.get, testAgoraConfigurationEntity3.name.get, 2)
+        val config1 = AgoraDao
+          .createAgoraDao(Seq(AgoraEntityType.Configuration))
+          .findSingle(testAgoraConfigurationEntity.namespace.get, testAgoraConfigurationEntity.name.get, 2)
+          .futureValue
+        val config2 = AgoraDao
+          .createAgoraDao(Seq(AgoraEntityType.Configuration))
+          .findSingle(testAgoraConfigurationEntity2.namespace.get, testAgoraConfigurationEntity2.name.get, 1)
+          .futureValue
+        val config3 = AgoraDao
+          .createAgoraDao(Seq(AgoraEntityType.Configuration))
+          .findSingle(testAgoraConfigurationEntity3.namespace.get, testAgoraConfigurationEntity3.name.get, 2)
+          .futureValue
 
         val foundConfig1 = configs.find(config => namespaceNameIdMatch(config, config1)).get
         val foundConfig2 = configs.find(config => namespaceNameIdMatch(config, config2)).get
@@ -162,7 +180,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with FlatSpecLike {
     entity1.name == entity2.name &&
     entity1.snapshotId == entity2.snapshotId
   }
-  
+
   "Agora" should "not allow you to post a new task to the configurations route" in {
     Post(ApiUtil.Configurations.withLeadingVersion, testEntityTaskWc) ~>
     addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {

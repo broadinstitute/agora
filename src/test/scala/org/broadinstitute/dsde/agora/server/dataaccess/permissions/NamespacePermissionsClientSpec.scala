@@ -6,12 +6,13 @@ import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissi
 import org.broadinstitute.dsde.agora.server.exceptions.PermissionModificationException
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpec}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.{BeforeAndAfterAll, DoNotDiscover}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 @DoNotDiscover
-class NamespacePermissionsClientSpec extends FlatSpec with ScalaFutures with BeforeAndAfterAll with AgoraTestFixture {
+class NamespacePermissionsClientSpec extends AnyFlatSpec with ScalaFutures with BeforeAndAfterAll with AgoraTestFixture {
 
   var testBatchPermissionEntityWithId: AgoraEntity = _
 

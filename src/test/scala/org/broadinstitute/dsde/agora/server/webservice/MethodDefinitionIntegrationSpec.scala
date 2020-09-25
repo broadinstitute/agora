@@ -9,14 +9,15 @@ import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraPermissions}
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType, MethodDefinition}
-import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
-import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpec}
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
+import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.{BeforeAndAfterAll, DoNotDiscover}
 
 import scala.concurrent.duration._
 
 @DoNotDiscover
-class MethodDefinitionIntegrationSpec extends FlatSpec with RouteTest with ScalatestRouteTest with BeforeAndAfterAll with AgoraTestFixture {
+class MethodDefinitionIntegrationSpec extends AnyFlatSpec with RouteTest with ScalatestRouteTest with BeforeAndAfterAll with AgoraTestFixture {
 
   implicit val routeTestTimeout: RouteTestTimeout = RouteTestTimeout(20.seconds)
 

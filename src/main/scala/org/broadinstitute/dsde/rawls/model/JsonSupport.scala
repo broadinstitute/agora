@@ -1,8 +1,8 @@
 package org.broadinstitute.dsde.rawls.model
 
 import spray.json._
-import org.joda.time.DateTime
-import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
+import java.time.{OffsetDateTime, ZoneOffset}
+import java.time.format.DateTimeFormatter
 
 class JsonSupport {
 
@@ -13,22 +13,28 @@ class JsonSupport {
     override def write(obj: AttributeString): JsValue = JsString(obj.value)
     override def read(json: JsValue): AttributeString = json match {
       case JsString(s) => AttributeString(s)
-      case _ => throw new DeserializationException("unexpected json type")
+      case _ => throw DeserializationException("unexpected json type")
     }
   }
 
-  implicit object DateJsonFormat extends RootJsonFormat[DateTime] {
-    private val parserISO : DateTimeFormatter = {
-      ISODateTimeFormat.dateTime
+  implicit object DateJsonFormat extends RootJsonFormat[OffsetDateTime] {
+    /**
+     * Instead of "one of" the valid ISO-8601 formats, standardize on this one:
+     * https://github.com/openjdk/jdk/blob/jdk8-b120/jdk/src/share/classes/java/time/OffsetDateTime.java#L1886
+     */
+    private val Iso8601MillisecondsFormat = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss.SSSXXXXX")
+
+    private def utcWithMillis(offsetDateTime: OffsetDateTime): String = {
+      offsetDateTime.atZoneSameInstant(ZoneOffset.UTC).format(Iso8601MillisecondsFormat)
     }
 
-    override def write(obj: DateTime) = {
-      JsString(parserISO.print(obj))
+    override def write(offsetDateTime: OffsetDateTime): JsString = {
+      JsString(utcWithMillis(offsetDateTime))
     }
 
-    override def read(json: JsValue): DateTime = json match {
-      case JsString(s) => parserISO.parseDateTime(s)
-      case _ => throw new DeserializationException("only string supported")
+    override def read(json: JsValue): OffsetDateTime = json match {
+      case JsString(string) => OffsetDateTime.parse(string)
+      case _ => throw DeserializationException("only string supported")
     }
   }
 }

@@ -1,28 +1,29 @@
 
 package org.broadinstitute.dsde.agora.server.model
 
+
 import org.broadinstitute.dsde.agora.server.exceptions.AgoraException
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraPermissions, EntityAccessControl}
 import org.bson.types.ObjectId
-import org.joda.time.DateTime
-import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
-import spray.json.{JsArray, JsString, _}
+import java.time.{OffsetDateTime, ZoneOffset}
+import java.time.format.DateTimeFormatter
 
+import spray.json._
 import org.broadinstitute.dsde.rawls.model.MethodConfiguration
 import AgoraEntity.AttributeStringFormat
 import org.broadinstitute.dsde.rawls.model.WorkspaceJsonSupport.MethodStoreMethodFormat
-import org.broadinstitute.dsde.rawls.model.{MethodRepoMethod, AttributeString}
+import org.broadinstitute.dsde.rawls.model.{AttributeString, MethodRepoMethod}
 
 import scala.language.implicitConversions
 
 object AgoraApiJsonSupport extends DefaultJsonProtocol {
 
-  implicit def stringToDateTime(str: String): DateTime = parserISO.parseDateTime(str)
+  implicit def stringToDateTime(str: String): OffsetDateTime = OffsetDateTime.parse(str)
 
   implicit def stringToType(str: String): AgoraEntityType.EntityType = AgoraEntityType.withName(str)
 
   implicit object ObjectIdJsonFormat extends RootJsonFormat[ObjectId] {
-    override def write(obj: ObjectId) = {
+    override def write(obj: ObjectId): JsObject = {
       JsObject("$oid" -> JsString(obj.toHexString))
     }
 
@@ -30,15 +31,15 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
       new ObjectId(json.asJsObject.fields("$oid").convertTo[String])
     }
   }
-  
-  implicit object DateJsonFormat extends RootJsonFormat[DateTime] {
-    override def write(obj: DateTime) = {
-      JsString(parserISO.print(obj))
+
+  implicit object DateJsonFormat extends RootJsonFormat[OffsetDateTime] {
+    override def write(offsetDateTime: OffsetDateTime): JsString = {
+      JsString(utcNoMillis(offsetDateTime))
     }
 
-    override def read(json: JsValue): DateTime = json match {
-      case JsString(s) => parserISO.parseDateTime(s)
-      case _ => throw new DeserializationException("only string supported")
+    override def read(json: JsValue): OffsetDateTime = json match {
+      case JsString(string) => OffsetDateTime.parse(string)
+      case _ => throw DeserializationException("only string supported")
     }
   }
 
@@ -47,7 +48,7 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
 
     override def read(value: JsValue): AgoraEntityType.EntityType = value match {
       case JsString(name) => AgoraEntityType.withName(name)
-      case _ => throw new DeserializationException("only string supported")
+      case _ => throw DeserializationException("only string supported")
     }
   }
 
@@ -79,14 +80,14 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
 
         methodConfigVersion = fields.getOrElse("methodConfigVersion",JsNumber(1)).convertTo[Int],
         deleted = fields.getOrElse("deleted",JsBoolean(false)).convertTo[Boolean],
-        deletedDate = fields.get("deletedDate") map (_.convertTo[DateTime])
+        deletedDate = fields.get("deletedDate") map (_.convertTo[OffsetDateTime])
       )
     }
   }
 
   implicit object AgoraEntityFormat extends RootJsonFormat[AgoraEntity] {
-  
-    override def write(entity: AgoraEntity) = {
+
+    override def write(entity: AgoraEntity): JsObject = {
       var map = Map.empty[String, JsValue]
       if (entity.namespace.nonEmpty) map += ("namespace" -> JsString(entity.namespace.get))
       if (entity.name.nonEmpty) map += ("name" -> JsString(entity.name.get))
@@ -117,7 +118,7 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
       val synopsis = stringOrNone(jsObject, "synopsis")
       val documentation = stringOrNone(jsObject, "documentation")
       val owner = stringOrNone(jsObject, "owner")
-      val createDate = if (jsObject.getFields("createDate").nonEmpty) jsObject.fields("createDate").convertTo[Option[DateTime]] else None
+      val createDate = if (jsObject.getFields("createDate").nonEmpty) jsObject.fields("createDate").convertTo[Option[OffsetDateTime]] else None
       val payload = stringOrNone(jsObject, "payload")
       val payloadObject = if (jsObject.getFields("payloadObject").nonEmpty) jsObject.fields("payloadObject").convertTo[Option[MethodConfiguration]] else None
       val url = stringOrNone(jsObject, "url")
@@ -145,7 +146,7 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
     }
   }
 
-  implicit val MethodDefinitionProtocol = jsonFormat8(MethodDefinition.apply)
+  implicit val MethodDefinitionProtocol: RootJsonFormat[MethodDefinition] = jsonFormat8(MethodDefinition.apply)
 
   implicit object AgoraPermissionsFormat extends RootJsonFormat[AgoraPermissions] {
     override def write(obj: AgoraPermissions): JsArray =
@@ -155,7 +156,7 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
       case array: JsArray =>
         val listOfStrings = array.convertTo[Seq[String]]
         AgoraPermissions(listOfStrings)
-      case _ => throw new DeserializationException("unsupported AgoraPermission")
+      case _ => throw DeserializationException("unsupported AgoraPermission")
     }
   }
 
@@ -166,7 +167,7 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
       )
 
     override def read(json: JsValue): AgoraException = json match {
-      case _ => throw new DeserializationException("Cannot read AgoraExceptions in JSON")
+      case _ => throw DeserializationException("Cannot read AgoraExceptions in JSON")
     }
   }
 
@@ -182,15 +183,21 @@ object AgoraApiJsonSupport extends DefaultJsonProtocol {
   private def stringOrNone(json: JsObject, key: String): Option[String] = {
     if (json.getFields(key).nonEmpty) json.fields(key).convertTo[Option[String]] else None
   }
-  
-  private val parserISO: DateTimeFormatter = {
-    ISODateTimeFormat.dateTimeNoMillis()
+
+  /**
+   * Instead of "one of" the valid ISO-8601 formats, standardize on this one:
+   * https://github.com/openjdk/jdk/blob/jdk8-b120/jdk/src/share/classes/java/time/OffsetDateTime.java#L1885
+   */
+  private val Iso8601NoMillisecondsFormat = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ssXXXXX")
+
+  private def utcNoMillis(offsetDateTime: OffsetDateTime): String = {
+    offsetDateTime.atZoneSameInstant(ZoneOffset.UTC).format(Iso8601NoMillisecondsFormat)
   }
-  
-  implicit val AgoraEntityProjectionFormat = jsonFormat2(AgoraEntityProjection.apply)
 
-  implicit val AccessControlFormat = jsonFormat2(AccessControl.apply)
+  implicit val AgoraEntityProjectionFormat: RootJsonFormat[AgoraEntityProjection] = jsonFormat2(AgoraEntityProjection.apply)
 
-  implicit val AccessControlPairFormat = jsonFormat3(EntityAccessControl)
+  implicit val AccessControlFormat: RootJsonFormat[AccessControl] = jsonFormat2(AccessControl.apply)
+
+  implicit val AccessControlPairFormat: RootJsonFormat[EntityAccessControl] = jsonFormat3(EntityAccessControl)
 
 }

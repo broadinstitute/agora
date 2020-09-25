@@ -16,7 +16,9 @@ import org.broadinstitute.dsde.workbench.util.health.HealthMonitor._
 import org.broadinstitute.dsde.workbench.util.health.StatusJsonSupport.StatusCheckResponseFormat
 import org.broadinstitute.dsde.workbench.util.health.Subsystems.{Database, Mongo}
 import org.broadinstitute.dsde.workbench.util.health.{HealthMonitor, StatusCheckResponse, SubsystemStatus}
-import org.scalatest.{DoNotDiscover, FlatSpecLike, Matchers}
+import org.scalatest.DoNotDiscover
+import org.scalatest.flatspec.AnyFlatSpecLike
+import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -24,7 +26,7 @@ import scala.util.{Failure, Success}
 
 
 @DoNotDiscover
-class AgoraServiceUnhealthyStatusSpec extends ApiServiceSpec with Matchers with FlatSpecLike with RouteTest {
+class AgoraServiceUnhealthyStatusSpec extends ApiServiceSpec with Matchers with AnyFlatSpecLike with RouteTest {
   // this health monitor uses the same SQL check as our runtime mysql, which calls VERSION() in the db.
   // H2 does not support VERSION(), so we expect this health monitor to show as unhealthy.
   private lazy val dbStatus = new AgoraDBStatus(permsDataSource)
@@ -76,7 +78,7 @@ class AgoraServiceUnhealthyStatusSpec extends ApiServiceSpec with Matchers with 
 }
 
 @DoNotDiscover
-class AgoraServiceHealthyStatusSpec extends ApiServiceSpec with Matchers with FlatSpecLike {
+class AgoraServiceHealthyStatusSpec extends ApiServiceSpec with Matchers with AnyFlatSpecLike {
   // this health monitor uses the unit-test-only UnitTestAgoraDBStatus, which should work in H2.
   // therefore, we expect this health monitor to show as healthy.
   private lazy val dbStatus = new UnitTestAgoraDBStatus(permsDataSource)

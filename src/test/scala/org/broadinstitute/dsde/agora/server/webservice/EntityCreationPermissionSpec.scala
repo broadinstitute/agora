@@ -6,7 +6,7 @@ import java.util.UUID
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCode
 import akka.http.scaladsl.model.StatusCodes._
-
+import akka.http.scaladsl.server.Route
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions.All
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraPermissions}
@@ -14,11 +14,11 @@ import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
 import org.broadinstitute.dsde.agora.server.webservice.routes.MockAgoraDirectives
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
-
-import org.scalatest.{DoNotDiscover, FlatSpecLike}
+import org.scalatest.DoNotDiscover
+import org.scalatest.flatspec.AnyFlatSpecLike
 
 @DoNotDiscover
-class EntityCreationPermissionSpec extends ApiServiceSpec with FlatSpecLike {
+class EntityCreationPermissionSpec extends ApiServiceSpec with AnyFlatSpecLike {
 
   var testEntity1WithId: AgoraEntity = _
   var testEntity2WithId: AgoraEntity = _
@@ -29,11 +29,11 @@ class EntityCreationPermissionSpec extends ApiServiceSpec with FlatSpecLike {
   var testEntity7WithId: AgoraEntity = _
   var testEntityToBeRedactedWithId: AgoraEntity = _
 
-  val routes = ApiService.handleExceptionsAndRejections {
+  val routes: Route = ApiService.handleExceptionsAndRejections {
     methodsService.postRoute
   }
 
-  override def beforeAll() = {
+  override def beforeAll(): Unit = {
     ensureDatabasesAreRunning()
     startMockWaas()
 
@@ -47,7 +47,7 @@ class EntityCreationPermissionSpec extends ApiServiceSpec with FlatSpecLike {
     patiently(permissionBusiness.insertNamespacePermission(AgoraEntity(testEntity2.namespace), owner2.get, AccessControl(owner3.get, AgoraPermissions(All))))
   }
 
-  override def afterAll() = {
+  override def afterAll(): Unit = {
     clearDatabases()
     stopMockWaas()
   }
@@ -206,6 +206,7 @@ class EntityCreationPermissionSpec extends ApiServiceSpec with FlatSpecLike {
       }
   }
 
+  //noinspection SameParameterValue
   private def redact(namespace:String, name:String, snapshotId: Int, caller: String) = {
     val ent = AgoraEntity(Some(namespace), Some(name), Some(snapshotId))
     patiently(agoraBusiness.delete(ent, Seq(AgoraEntityType.Workflow), caller))

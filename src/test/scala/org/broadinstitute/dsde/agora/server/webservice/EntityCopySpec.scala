@@ -14,19 +14,20 @@ import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.routes.MockAgoraDirectives
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
-import org.scalatest.{DoNotDiscover, FlatSpecLike}
+import org.scalatest.DoNotDiscover
+import org.scalatest.flatspec.AnyFlatSpecLike
 
 import scala.concurrent.Future
 
 @DoNotDiscover
-class EntityCopySpec extends ApiServiceSpec with FlatSpecLike {
+class EntityCopySpec extends ApiServiceSpec with AnyFlatSpecLike {
 
   var testEntity1WithId: AgoraEntity = _
   var testEntityWithSnapshotComment: AgoraEntity = _
 
-  val testRoute = ApiUtil.Methods.withLeadingVersion + "/%s/%s/%s"
+  val testRoute: String = ApiUtil.Methods.withLeadingVersion + "/%s/%s/%s"
 
-  override def beforeAll() = {
+  override def beforeAll(): Unit = {
     ensureDatabasesAreRunning()
     startMockWaas()
 
@@ -41,7 +42,7 @@ class EntityCopySpec extends ApiServiceSpec with FlatSpecLike {
     testEntityWithSnapshotComment = patiently(agoraBusiness.insert(testMethodWithSnapshotComment1, owner1.get, mockAccessToken))
   }
 
-  override def afterAll() = {
+  override def afterAll(): Unit = {
     clearDatabases()
     stopMockWaas()
   }

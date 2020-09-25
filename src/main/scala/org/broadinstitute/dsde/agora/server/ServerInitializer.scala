@@ -4,8 +4,6 @@ import akka.actor.CoordinatedShutdown
 import akka.actor.typed._
 import akka.actor.typed.scaladsl.adapter._
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.server.RoutingLog
-import akka.{actor => classic}
 import com.typesafe.scalalogging.LazyLogging
 import org.broadinstitute.dsde.agora.server.business.AgoraBusinessExecutionContext
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDBStatus
@@ -53,24 +51,12 @@ class ServerInitializer extends LazyLogging {
   }
 
   private def startWebService() = {
-
-    /*
-    These two implicit definitions are required so that scalac does not get confused with Akka Http.
-    Otherwise, as of Akka 2.6.1 and Akka Http 10.1.10, multiple implicits handlers are discovered, and none are used.
-
-    For more info on Akka Typed and Akka Classic coexistence, see these examples:
-    - https://doc.akka.io/docs/akka/current/typed/coexisting.html
-    - https://doc.akka.io/docs/akka/current/typed/from-classic.html
-     */
-    implicit val classicActorRefFactory: classic.ActorRefFactory = actorSystem.toClassic
-    implicit val routingLog: RoutingLog = RoutingLog.fromActorSystem(actorSystem.toClassic)
     val apiService = new ApiService(permsDataSource, actorSystem)(
       executionContext,
       implicitly,
       agoraBusinessExecutionContext
     )
-    Http()(actorSystem.toClassic)
-      .bindAndHandle(apiService.route, AgoraConfig.webserviceInterface, AgoraConfig.port)
+    Http()(actorSystem).newServerAt(AgoraConfig.webserviceInterface, AgoraConfig.port).bind(apiService.route)
       .recover {
         case t: Throwable =>
           logger.error(s"Unable to bind to port ${AgoraConfig.port} on interface ${AgoraConfig.webserviceInterface}")

@@ -5,7 +5,7 @@ name := "Agora"
 
 organization := "org.broadinstitute"
 
-scalaVersion := "2.12.10"
+scalaVersion := "2.12.12"
 
 // Ported from Cromwell 2019-11-19
 // The disabled ones are not too crazy to get compliant with, but more work than I want to do just now (AEN)
@@ -45,9 +45,10 @@ scalacOptions := Seq(
   "-Ywarn-unused:patvars"
 )
 
-val akkaV = "2.6.3"
-val akkaHttpV = "10.1.11"
-val slickV = "3.3.2"
+val akkaV = "2.6.9"
+val akkaHttpV = "10.2.0"
+val jacksonV = "2.11.2"
+val slickV = "3.3.3"
 
 val artifactory = "https://broadinstitute.jfrog.io/broadinstitute/"
 
@@ -58,9 +59,10 @@ resolvers += "artifactory-snapshots" at artifactory + "libs-snapshot"
 libraryDependencies ++= Seq(
   "ch.qos.logback" % "logback-classic" % "1.2.3",
   "com.github.simplyscala" %% "scalatest-embedmongo" % "0.2.4",
-  "com.google.api-client" % "google-api-client" % "1.23.0" excludeAll ExclusionRule(organization = "com.google.guava"),
-  "com.google.apis" % "google-api-services-admin-directory" % "directory_v1-rev93-1.23.0" excludeAll ExclusionRule(organization = "com.google.guava"),
-  "com.h2database" % "h2" % "1.4.197",
+  "com.google.api-client" % "google-api-client" % "1.25.0" excludeAll ExclusionRule(organization = "com.google.guava"),
+  "com.google.apis" % "google-api-services-admin-directory" % "directory_v1-rev118-1.25.0" excludeAll
+    ExclusionRule(organization = "com.google.guava"),
+  "com.h2database" % "h2" % "1.4.200",
   "com.typesafe.akka" %% "akka-actor-typed" % akkaV,
   "com.typesafe.akka" %% "akka-http" % akkaHttpV,
   "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpV,
@@ -69,24 +71,28 @@ libraryDependencies ++= Seq(
   // "Akka version MUST be the same across all modules of Akka that you are using."
   // This will not add a direct dependency on akka-stream, but will force the revision to be akkaV.
   "com.typesafe.akka" %% "akka-stream-typed" % akkaV,
-  "com.typesafe" % "config" % "1.3.3",
-  "com.typesafe.scala-logging" %% "scala-logging" % "3.8.0",
+  "com.typesafe" % "config" % "1.4.0",
+  "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2",
   "com.typesafe.slick" %% "slick" % slickV,
   "com.typesafe.slick" %% "slick-hikaricp" % slickV,
-  "mysql" % "mysql-connector-java" % "6.0.6",
-  
+  "mysql" % "mysql-connector-java" % "8.0.21",
+
   // ficus was being pulled in transitively from wdl-draft2 previously, now made explicit
-  "com.iheart" %% "ficus" % "1.4.6",
-  "org.broadinstitute.dsde.workbench" %% "workbench-util" % "0.3-0e9d080",
-  "org.mongodb" %% "casbah" % "3.1.1",
-  "org.scalaz" %% "scalaz-core" % "7.2.20",
+  "com.iheart" %% "ficus" % "1.5.0",
+  "org.broadinstitute.dsde.workbench" %% "workbench-util" % "0.6-65bba14",
+  "org.mongodb.scala" %% "mongo-scala-driver" % "4.1.0",
   "org.webjars" % "swagger-ui"  % "3.25.0",
-  //---------- Test libraries -------------------//
+
+  // Not used directly, but keep Jackson up to date plus main+test synced for IntelliJ
+  "com.fasterxml.jackson.core" % "jackson-core" % jacksonV,
+  "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonV % Test,
+  "com.fasterxml.jackson.core" % "jackson-databind" % jacksonV % Test,
+
   "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaV % Test,
   "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpV % Test,
-  "org.scalatest" %% "scalatest" % "3.0.5" % Test,
-  "org.mock-server" % "mockserver-netty" % "5.6.0" % "test",
-  "org.broadinstitute.dsde.workbench" %% "sam-client" % "0.1-f6bf0ec",
+  "org.scalatest" %% "scalatest" % "3.2.2" % Test,
+  "org.mock-server" % "mockserver-netty" % "5.11.1" % Test,
+  "org.broadinstitute.dsde.workbench" %% "sam-client" % "0.1-9d0baea",
   "org.broadinstitute.cromwell" %% "cromwell-client" % "0.1-8b413b45f-SNAP"
 )
 

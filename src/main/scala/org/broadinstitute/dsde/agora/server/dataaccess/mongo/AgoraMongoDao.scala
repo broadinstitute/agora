@@ -1,12 +1,7 @@
 
 package org.broadinstitute.dsde.agora.server.dataaccess.mongo
 
-import com.mongodb.DBObject
-import com.mongodb.casbah.Imports._
-import com.mongodb.casbah.MongoCollection
-import com.mongodb.casbah.commons.MongoDBObject
-import com.mongodb.casbah.query.Imports
-import com.mongodb.util.JSON
+import com.mongodb.client.model.{Filters, Projections, Updates}
 import com.typesafe.scalalogging.LazyLogging
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.AgoraMongoClient._
 import org.broadinstitute.dsde.agora.server.dataaccess.mongo.AgoraMongoDao._
@@ -15,21 +10,29 @@ import org.broadinstitute.dsde.agora.server.exceptions.AgoraEntityNotFoundExcept
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntityProjection._
 import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityBsonSupport, AgoraEntityProjection, AgoraEntityType}
+import org.bson.conversions.Bson
 import org.bson.types.ObjectId
+import org.mongodb.scala._
+import org.mongodb.scala.bson._
+import org.mongodb.scala.bson.collection.immutable.Document
+import org.mongodb.scala.model._
 import spray.json._
+
+import scala.concurrent.{ExecutionContext, Future}
 
 object AgoraMongoDao {
   val MongoDbIdField = "_id"
   val CounterSequenceField = "seq"
   val KeySeparator = ":"
-  val DefaultFindProjection = Option(new AgoraEntityProjection(Seq.empty[String], Seq[String]("payload", "documentation")))
+  val DefaultFindProjection: Option[AgoraEntityProjection] =
+    Option(new AgoraEntityProjection(Seq.empty[String], Seq[String]("payload", "documentation")))
 
-  def EntityToMongoDbObject(entity: AgoraEntity): DBObject = {
+  def EntityToMongoDbObject(entity: AgoraEntity): Document = {
     //we need to remove url if it exists since we don't store it in the document
-    JSON.parse(entity.copy(url = None).toJson.toString()).asInstanceOf[DBObject]
+    Document(entity.copy(url = None).toJson.toString())
   }
 
-  def MongoDbObjectToEntity(mongoDBObject: DBObject): AgoraEntity = {
+  def MongoDbObjectToEntity(mongoDBObject: Document): AgoraEntity = {
     AgoraEntityBsonSupport.read(mongoDBObject)
   }
 }
@@ -39,154 +42,174 @@ object AgoraMongoDao {
  * collections. However, only a single collection is allowed for doing insert operations.
  * @param collections The collections to query. In order to insert a single colleciton must be specified.
  */
-class AgoraMongoDao(collections: Seq[MongoCollection]) extends AgoraDao with LazyLogging {
+class AgoraMongoDao(collections: Seq[MongoCollection[Document]]) extends AgoraDao with LazyLogging {
 
   /**
    * On insert we query for the given namespace/name if it exists we increment the snapshotId and store a new one.
    * @param entity The entity to store.
    * @return The entity that was stored.
    */
-  override def insert(entity: AgoraEntity): AgoraEntity = {
+  override def insert(entity: AgoraEntity)(implicit executionContext: ExecutionContext): Future[AgoraEntity] = {
     val collection = assureSingleCollection
-    //update the snapshotId
-    val id = getNextId(entity)
-    val entityWithId = entity.copy(snapshotId = Option(id))
+    for {
+      //update the snapshotId
+      id <- getNextId(entity)
+      entityWithId = entity.copy(snapshotId = Option(id))
 
-    //insert the entity
-    val dbEntityToInsert = EntityToMongoDbObject(entityWithId)
-    collection.insert(dbEntityToInsert)
-    val insertedEntity = findSingle(MongoDbObjectToEntity(dbEntityToInsert))
-    insertedEntity
+      //insert the entity
+      dbEntityToInsert = EntityToMongoDbObject(entityWithId)
+      _ <- collection.insertOne(dbEntityToInsert).head()
+      insertedEntity <- findSingle(MongoDbObjectToEntity(dbEntityToInsert))
+    } yield insertedEntity
   }
 
-  override def findSingle(namespace: String, name: String, snapshotId: Int): AgoraEntity = {
+  override def findSingle(namespace: String, name: String, snapshotId: Int)
+                         (implicit executionContext: ExecutionContext): Future[AgoraEntity] = {
     val entity = AgoraEntity(namespace = Option(namespace), name = Option(name), snapshotId = Option(snapshotId))
     findSingle(entity)
   }
 
-  override def findSingle(entity: AgoraEntity): AgoraEntity = {
+  override def findSingle(entity: AgoraEntity)(implicit executionContext: ExecutionContext): Future[AgoraEntity] = {
     val dbEntity = EntityToMongoDbObject(entity)
-    val entityVector = find(dbEntity, None)
-    entityVector.length match {
-      case 1 =>
-        val foundEntity = entityVector.head
-        addMethodRef(Seq(foundEntity), None).head
-      case 0 => throw new AgoraEntityNotFoundException(entity)
-      case _ => throw new Exception("Found > 1 documents matching: " + entity.toString)
+    val entityVectorFuture = find(dbEntity, None)
+    entityVectorFuture flatMap { entityVector =>
+      entityVector.length match {
+        case 1 =>
+          val foundEntity = entityVector.head
+          addMethodRef(Seq(foundEntity), None).map(_.head)
+        case 0 => Future.failed(AgoraEntityNotFoundException(entity))
+        case _ => Future.failed(new Exception("Found > 1 documents matching: " + entity.toString))
+      }
     }
   }
 
-  override def find(entity: AgoraEntity, projectionOpt: Option[AgoraEntityProjection]): Seq[AgoraEntity] = {
+  override def find(entity: AgoraEntity, projectionOpt: Option[AgoraEntityProjection])
+                   (implicit executionContext: ExecutionContext): Future[Seq[AgoraEntity]] = {
     val projection = projectionOpt match {
       case Some(_) => projectionOpt
       case None => DefaultFindProjection
     }
     val dbEntity = EntityToMongoDbObject(entity)
-    val entities = find(dbEntity, projection)
-    addMethodRef(entities, projection)
+    val entitiesFuture = find(dbEntity, projection)
+    entitiesFuture.flatMap(entities => addMethodRef(entities, projection))
   }
 
-  def findById(ids: Seq[ObjectId], entityCollections: Seq[MongoCollection], projection: Option[AgoraEntityProjection]): Seq[AgoraEntity] = {
-    val dbQuery = (MongoDbIdField $in ids)
-    val entities = entityCollections.flatMap {
+  def findById(ids: Seq[ObjectId],
+               entityCollections: Seq[MongoCollection[Document]],
+               projection: Option[AgoraEntityProjection]
+              )
+              (implicit executionContext: ExecutionContext): Future[Seq[AgoraEntity]] = {
+    val dbQuery = Filters.in(MongoDbIdField, ids:_*)
+    val entities = entityCollections.map {
       collection =>
-        collection.find(dbQuery, projectionToDBProjections(projection)).map {
+        collection.find(dbQuery).projection(projectionToDBProjections(projection).orNull).map {
           dbObject => MongoDbObjectToEntity(dbObject)
-        }
+        }.toFuture()
     }
-    entities
+    Future.sequence(entities).map(_.flatten)
   }
 
   // Find all configurations that have specified method id.
-  override def findConfigurations(id: ObjectId) = {
-    val dbQuery = "methodId" $eq id
+  override def findConfigurations(id: ObjectId)
+                                 (implicit executionContext: ExecutionContext): Future[Seq[AgoraEntity]] = {
+    val dbQuery = Filters.eq("methodId", id)
     queryToEntities(dbQuery)
   }
 
   // Find all configurations that have one of the specified method ids.
-  override def findConfigurations(ids: Seq[ObjectId]) = {
-    val dbQuery = "methodId" $in ids
+  override def findConfigurations(ids: Seq[ObjectId])
+                                 (implicit executionContext: ExecutionContext): Future[Seq[AgoraEntity]] = {
+    val dbQuery = Filters.in("methodId", ids: _*)
     queryToEntities(dbQuery)
   }
 
-  private def queryToEntities(dbQuery: DBObject) = {
+  private def queryToEntities(dbQuery: Bson)(implicit executionContext: ExecutionContext): Future[Seq[AgoraEntity]] = {
     val entityCollections = getCollectionsByEntityType(Option(AgoraEntityType.Configuration))
-    val entities = entityCollections.flatMap {
+    val entities = entityCollections.map {
       collection =>
         collection.find(dbQuery).map {
           dbObject => MongoDbObjectToEntity(dbObject)
-        }
+        }.toFuture()
     }
 
-    entities
+    Future.sequence(entities).map(_.flatten)
   }
 
-  def assureSingleCollection: MongoCollection = {
+  def assureSingleCollection: MongoCollection[Document] = {
     if (collections.size != 1) throw new IllegalArgumentException("Multiple collections defined. Only a single collection is supported for this operation")
     else collections.head
   }
 
-  def getNextId(entity: AgoraEntity): Int = {
+  def getNextId(entity: AgoraEntity)(implicit executionContext: ExecutionContext): Future[Int] = {
     //first check to see if we have a sequence
     val counterCollection = getCountersCollection
     val counterId: String = entity.namespace.get + KeySeparator + entity.name.get
-    val counterQuery = MongoDbIdField $eq counterId
+    val counterQuery = Filters.eq(MongoDbIdField, counterId)
 
-    //if we don't have a sequence create one
-    if (counterCollection.findOne(counterQuery).isEmpty) {
-      counterCollection.insert(MongoDBObject(MongoDbIdField -> counterId, CounterSequenceField -> 0))
-    }
-
-    //find and modify the sequence
-    val currentCount = counterCollection.findAndModify(query = counterQuery, update = $inc(CounterSequenceField -> 1), fields = null, sort = null,
-      remove = false, upsert = false, returnNew = true)
-
-    //return new sequence
-    currentCount.get(CounterSequenceField).asInstanceOf[Int]
+    for {
+      //if we don't have a sequence create one
+      maybeCounter <- counterCollection.find(counterQuery).first().headOption()
+      _ <- if (maybeCounter.isEmpty) {
+        counterCollection.insertOne(Document(MongoDbIdField -> counterId, CounterSequenceField -> 0)).toFuture()
+      } else {
+        Future.successful(())
+      }
+      //find and modify the sequence
+      currentCount <-
+        counterCollection
+          .findOneAndUpdate(
+            counterQuery,
+            Updates.inc(CounterSequenceField, 1),
+            FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER)
+          )
+          .toFuture()
+    } yield
+      //return new sequence
+      currentCount[BsonInt32](CounterSequenceField).getValue
   }
 
-  def find(query: Imports.DBObject, projection: Option[AgoraEntityProjection]) = {
-    collections.flatMap {
+  def find(query: Bson, projection: Option[AgoraEntityProjection])
+          (implicit executionContext: ExecutionContext): Future[Seq[AgoraEntity]] = {
+    val seqOfFutureSeq: Seq[Future[Seq[AgoraEntity]]] = collections.map {
       collection =>
-        collection.find(query, projectionToDBProjections(projection)).map {
+        collection.find(query).projection(projectionToDBProjections(projection).orNull).map {
           dbObject =>
             MongoDbObjectToEntity(dbObject)
-        }
+        }.toFuture()
     }
+
+    Future.sequence(seqOfFutureSeq).map(_.flatten)
   }
 
-  def projectionToDBProjections(projectionOpt: Option[AgoraEntityProjection]): Imports.DBObject = {
-    projectionOpt match {
-      case Some(projection) =>
-        val builder = MongoDBObject.newBuilder
-        projection.excludedFields.foreach(field => builder += field -> 0)
-
+  def projectionToDBProjections(projectionOpt: Option[AgoraEntityProjection]): Option[Bson] = {
+    projectionOpt map {
+      projection =>
         //we can't currently mix excluded and included fields This is a limitation of mongo.
         if (projection.excludedFields.isEmpty) {
-          projection.includedFields.foreach(field => builder += field -> 1)
-          RequiredProjectionFields.foreach(field => builder += field -> 1)
+          Projections.include(projection.includedFields ++ RequiredProjectionFields:_*)
+        } else {
+          Projections.exclude(projection.excludedFields:_*)
         }
-        builder.result()
-      case None => MongoDBObject()
     }
   }
 
   // Populate method field within configurations
-  def addMethodRef(entities: Seq[AgoraEntity], projection: Option[AgoraEntityProjection]): Seq[AgoraEntity] = {
+  def addMethodRef(entities: Seq[AgoraEntity], projection: Option[AgoraEntityProjection])
+                  (implicit executionContext: ExecutionContext): Future[Seq[AgoraEntity]] = {
     // Don't bother trying to populate method refs unless there are configs in the result set (only configs have embedded methods)
     val configCollection = getCollectionsByEntityType(Seq(AgoraEntityType.Configuration)).head
-    if (!collections.contains(configCollection)) {
-      return entities
+    if (!collections.map(_.namespace).contains(configCollection.namespace)) {
+      return Future.successful(entities)
     }
 
     // Get map of method ids to Methods
     val methodRefs = methodIds(entities)
     val methodCollections = getCollectionsByEntityType(AgoraEntityType.MethodTypes)
-    val methods = findById(methodRefs, methodCollections, projection)
-    val methodsMap = idToEntityMap(methods, methodCollections)
+    val methodsFuture = findById(methodRefs, methodCollections, projection)
+    val methodsMapFuture = methodsFuture.map(methods => idToEntityMap(methods))
 
     // Populate method field if methodId has a value
-    val entitiesWithRefs = entities.map {
+    val entitiesWithRefs = methodsMapFuture.map(methodsMap => entities.map {
       entity =>
         if (entity.methodId.nonEmpty) {
           val method = methodsMap.get(entity.methodId.get)
@@ -195,13 +218,13 @@ class AgoraMongoDao(collections: Seq[MongoCollection]) extends AgoraDao with Laz
         else {
           entity
         }
-    }
+    })
     entitiesWithRefs
   }
 
   def methodIds(entities: Seq[AgoraEntity]): Seq[ObjectId] = entities.flatMap { entity => entity.methodId }
 
-  def idToEntityMap(entities: Seq[AgoraEntity], entityCollections: Seq[MongoCollection]): Map[ObjectId, AgoraEntity] = {
+  def idToEntityMap(entities: Seq[AgoraEntity]): Map[ObjectId, AgoraEntity] = {
     entities.map { entity => entity.id.get -> entity }.toMap
   }
 }

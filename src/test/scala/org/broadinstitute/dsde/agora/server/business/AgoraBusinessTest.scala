@@ -7,13 +7,15 @@ import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissi
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.{AccessControl, AgoraPermissions}
 import org.broadinstitute.dsde.agora.server.exceptions.{NamespaceAuthorizationException, ValidationException}
 import org.broadinstitute.dsde.agora.server.model.AgoraEntityType
-import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.{BeforeAndAfterAll, DoNotDiscover}
 import slick.dbio.DBIOAction
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 @DoNotDiscover
-class AgoraBusinessTest extends FlatSpec with Matchers with BeforeAndAfterAll with AgoraTestFixture {
+class AgoraBusinessTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll with AgoraTestFixture {
 
 //  val methodImportResolver = new MethodImportResolver(agoraTestOwner.get, agoraBusiness)
 

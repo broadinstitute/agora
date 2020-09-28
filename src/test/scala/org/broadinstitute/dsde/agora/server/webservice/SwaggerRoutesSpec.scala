@@ -1,10 +1,11 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
 import org.broadinstitute.dsde.agora.server.SwaggerRoutes
-import org.scalatest.{DoNotDiscover, FlatSpecLike}
+import org.scalatest.DoNotDiscover
+import org.scalatest.flatspec.AnyFlatSpecLike
 
 @DoNotDiscover
-class SwaggerRoutesSpec extends ApiServiceSpec with FlatSpecLike with SwaggerRoutes  {
+class SwaggerRoutesSpec extends ApiServiceSpec with AnyFlatSpecLike with SwaggerRoutes  {
 
   // these are defined as exact-match
   Seq("/agora.yaml") foreach { path =>

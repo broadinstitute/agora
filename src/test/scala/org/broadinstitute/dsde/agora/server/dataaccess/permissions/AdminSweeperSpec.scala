@@ -2,7 +2,9 @@ package org.broadinstitute.dsde.agora.server.dataaccess.permissions
 
 import akka.actor.testkit.typed.scaladsl._
 import org.broadinstitute.dsde.agora.server.{AgoraTestData, AgoraTestFixture}
-import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, Matchers, WordSpecLike}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
+import org.scalatest.{BeforeAndAfterAll, DoNotDiscover}
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
@@ -14,7 +16,7 @@ object AdminSweeperSpec {
 }
 
 @DoNotDiscover
-class AdminSweeperSpec extends WordSpecLike with Matchers with BeforeAndAfterAll with AgoraTestFixture {
+class AdminSweeperSpec extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with AgoraTestFixture {
 
   private implicit val testKit: ActorTestKit = ActorTestKit("AdminSweeperSpec")
   private implicit val executionContext: ExecutionContext = testKit.system.executionContext

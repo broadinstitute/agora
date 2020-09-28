@@ -3,12 +3,13 @@ package org.broadinstitute.dsde.agora.server.business
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.AgoraTestFixture
 import org.broadinstitute.dsde.agora.server.exceptions.DockerImageNotFoundException
-import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpec}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.{BeforeAndAfterAll, DoNotDiscover}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 @DoNotDiscover
-class AgoraBusinessIntegrationSpec extends FlatSpec with BeforeAndAfterAll with AgoraTestFixture  {
+class AgoraBusinessIntegrationSpec extends AnyFlatSpec with BeforeAndAfterAll with AgoraTestFixture  {
   override protected def beforeAll(): Unit = {
     ensureDatabasesAreRunning()
     startMockWaas()

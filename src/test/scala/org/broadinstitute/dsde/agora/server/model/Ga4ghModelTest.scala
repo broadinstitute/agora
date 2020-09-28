@@ -2,10 +2,11 @@ package org.broadinstitute.dsde.agora.server.model
 
 import org.broadinstitute.dsde.agora.server.ga4gh.ModelSupport
 import org.broadinstitute.dsde.agora.server.ga4gh.Models._
-import org.scalatest.{DoNotDiscover, FreeSpec}
+import org.scalatest.DoNotDiscover
+import org.scalatest.freespec.AnyFreeSpec
 
 @DoNotDiscover
-class Ga4ghModelTest extends FreeSpec {
+class Ga4ghModelTest extends AnyFreeSpec {
 
   "GA4GH model classes" - {
 

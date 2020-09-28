@@ -1,11 +1,10 @@
 package org.broadinstitute.dsde.agora.server.webservice
-
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import akka.http.scaladsl.model.StatusCodes._
-import akka.http.scaladsl.testkit.{RouteTest, RouteTestTimeout, ScalatestRouteTest}
 import akka.http.scaladsl.model.HttpMethods
+import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.ExecutionDirectives
+import akka.http.scaladsl.testkit.{RouteTest, RouteTestTimeout, ScalatestRouteTest}
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.AgoraTestFixture
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
@@ -13,12 +12,13 @@ import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
 import org.broadinstitute.dsde.agora.server.webservice.routes.MockAgoraDirectives
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
-import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FreeSpec}
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.{BeforeAndAfterAll, DoNotDiscover}
 
 import scala.concurrent.duration._
 
 @DoNotDiscover
-class CompatibleConfigurationIntegrationSpec extends FreeSpec with ExecutionDirectives with RouteTest
+class CompatibleConfigurationIntegrationSpec extends AnyFreeSpec with ExecutionDirectives with RouteTest
   with ScalatestRouteTest with BeforeAndAfterAll with AgoraTestFixture {
 
   implicit val routeTestTimeout: RouteTestTimeout = RouteTestTimeout(20.seconds)

@@ -15,7 +15,7 @@ import org.broadinstitute.dsde.agora.server.model.{AgoraEntity, AgoraEntityType}
 import org.broadinstitute.dsde.agora.server.webservice.routes.RouteHelpers
 
 import scala.util.{Failure, Success, Try}
-import scalaz.{Failure => FailureZ, Success => SuccessZ}
+import cats.data.Validated._
 
 import scala.concurrent.ExecutionContext
 
@@ -80,11 +80,11 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
               } else {
                 entity(as[AgoraEntity]) { newEntity =>
                   AgoraEntity.validate(newEntity) match {
-                    case SuccessZ(_) => //noop
-                    case FailureZ(errors) => throw new IllegalArgumentException(s"Method is invalid: Errors: $errors")
+                    case Valid(_) => //noop
+                    case Invalid(errors) => throw new IllegalArgumentException(s"Method is invalid: Errors: $errors")
                   }
                   parameters("redact".as[Boolean] ? false) { redact =>
-                    complete(agoraBusiness.copy(targetEntity, newEntity, redact, entityTypes, username, accessToken)(
+                    complete(agoraBusiness.copy(targetEntity, newEntity, redact, username, accessToken)(
                       agoraBusinessExecutionContext.executionContext
                     ))
                   }

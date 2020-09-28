@@ -4,16 +4,17 @@ package org.broadinstitute.dsde.agora.server.dataaccess.permissions
 import org.broadinstitute.dsde.agora.server.{AgoraTestData, AgoraTestFixture}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.webservice.ApiServiceSpec
-import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FlatSpecLike}
+import org.scalatest.flatspec.AnyFlatSpecLike
+import org.scalatest.{BeforeAndAfterAll, DoNotDiscover}
 
 @DoNotDiscover
-class AgoraPermissionsSpec extends ApiServiceSpec with BeforeAndAfterAll with AgoraTestFixture with FlatSpecLike {
+class AgoraPermissionsSpec extends ApiServiceSpec with BeforeAndAfterAll with AgoraTestFixture with AnyFlatSpecLike {
 
-  override protected def beforeAll() = {
+  override protected def beforeAll(): Unit = {
     ensureDatabasesAreRunning()
   }
 
-  override protected def afterAll() = {
+  override protected def afterAll(): Unit = {
     clearDatabases()
   }
 

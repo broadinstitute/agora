@@ -1,6 +1,8 @@
 package org.broadinstitute.dsde.rawls.model
 
-import org.joda.time.DateTime
+import java.time.OffsetDateTime
+
+import spray.json.RootJsonFormat
 
 case class MethodRepoMethod(
                    methodNamespace: String,
@@ -18,21 +20,21 @@ case class MethodConfiguration(
                    methodRepoMethod: MethodRepoMethod,
                    methodConfigVersion: Int = 1,
                    deleted: Boolean = false,
-                   deletedDate: Option[DateTime] = None
+                   deletedDate: Option[OffsetDateTime] = None
                    ) {
 }
 
 sealed trait Attribute
 sealed trait AttributeListElementable extends Attribute //terrible name for "this type can legally go in an attribute list"
 sealed trait AttributeValue extends AttributeListElementable
-case class AttributeString(val value: String) extends AttributeValue
+case class AttributeString(value: String) extends AttributeValue
 
 class WorkspaceJsonSupport extends JsonSupport {
   import spray.json.DefaultJsonProtocol._
 
-  implicit val MethodStoreMethodFormat = jsonFormat3(MethodRepoMethod)
+  implicit val MethodStoreMethodFormat: RootJsonFormat[MethodRepoMethod] = jsonFormat3(MethodRepoMethod)
 
-  implicit val MethodConfigurationFormat = jsonFormat10(MethodConfiguration)
+  implicit val MethodConfigurationFormat: RootJsonFormat[MethodConfiguration] = jsonFormat10(MethodConfiguration)
 }
 
 object WorkspaceJsonSupport extends WorkspaceJsonSupport

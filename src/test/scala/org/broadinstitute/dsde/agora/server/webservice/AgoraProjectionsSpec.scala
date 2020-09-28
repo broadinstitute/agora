@@ -8,11 +8,11 @@ import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.model.AgoraApiJsonSupport._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.broadinstitute.dsde.agora.server.webservice.util.ApiUtil
-
-import org.scalatest.{DoNotDiscover, FlatSpecLike}
+import org.scalatest.DoNotDiscover
+import org.scalatest.flatspec.AnyFlatSpecLike
 
 @DoNotDiscover
-class AgoraProjectionsSpec extends ApiServiceSpec with FlatSpecLike {
+class AgoraProjectionsSpec extends ApiServiceSpec with AnyFlatSpecLike {
 
   var testEntity1WithId: AgoraEntity = _
   var testEntity2WithId: AgoraEntity = _
@@ -23,7 +23,7 @@ class AgoraProjectionsSpec extends ApiServiceSpec with FlatSpecLike {
   var testEntity7WithId: AgoraEntity = _
   var testEntityToBeRedactedWithId: AgoraEntity = _
 
-  override def beforeAll() = {
+  override def beforeAll(): Unit = {
     ensureDatabasesAreRunning()
     startMockWaas()
 
@@ -37,7 +37,7 @@ class AgoraProjectionsSpec extends ApiServiceSpec with FlatSpecLike {
     testEntityToBeRedactedWithId = patiently(agoraBusiness.insert(testEntityToBeRedacted, mockAuthenticatedOwner.get, mockAccessToken))
   }
 
-  override def afterAll() = {
+  override def afterAll(): Unit = {
     clearDatabases()
     stopMockWaas()
   }

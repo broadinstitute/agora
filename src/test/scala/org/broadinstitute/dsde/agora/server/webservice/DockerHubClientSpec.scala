@@ -11,6 +11,8 @@ import org.mockserver.integration.ClientAndServer
 import org.mockserver.integration.ClientAndServer.startClientAndServer
 import org.mockserver.model.HttpRequest.request
 import org.scalatest._
+import org.scalatest.freespec.AsyncFreeSpec
+import org.scalatest.matchers.should.Matchers
 import spray.json._
 
 import scala.concurrent.duration._

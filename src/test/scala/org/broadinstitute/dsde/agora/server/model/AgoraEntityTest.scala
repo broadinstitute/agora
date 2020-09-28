@@ -2,12 +2,12 @@ package org.broadinstitute.dsde.agora.server.model
 
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
-import org.scalatest.{DoNotDiscover, FlatSpec}
-
-import scalaz.{Failure, Success}
+import org.scalatest.DoNotDiscover
+import org.scalatest.flatspec.AnyFlatSpec
+import cats.data.Validated._
 
 @DoNotDiscover
-class AgoraEntityTest extends FlatSpec {
+class AgoraEntityTest extends AnyFlatSpec {
 
   "Agora" should "create not throw exceptions on valid a valid entity" in {
     assert(AgoraEntity(namespace1, name1, snapshotId1, synopsis1) === AgoraEntity(namespace1, name1, snapshotId1, synopsis1))
@@ -71,8 +71,8 @@ class AgoraEntityTest extends FlatSpec {
 
   def getErrors(entity: AgoraEntity): Option[IllegalArgumentException] = {
     AgoraEntity.validate(entity) match {
-      case Success(_) => None
-      case Failure(errors) => throw new IllegalArgumentException(s"Entity is not valid: Errors: $errors")
+      case Valid(_) => None
+      case Invalid(errors) => throw new IllegalArgumentException(s"Entity is not valid: Errors: $errors")
     }
   }
 }

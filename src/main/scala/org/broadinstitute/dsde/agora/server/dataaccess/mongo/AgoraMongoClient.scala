@@ -1,12 +1,13 @@
 
 package org.broadinstitute.dsde.agora.server.dataaccess.mongo
 
-import com.mongodb.casbah.{MongoClient, MongoCollection}
 import com.mongodb.{MongoCredential, ServerAddress}
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.model.AgoraEntityType
+import org.mongodb.scala._
 
-import scala.util.Try
+import scala.collection.JavaConverters._
+import scala.concurrent.{ExecutionContext, Future}
 
 object AgoraMongoClient {
   private val mongoClient = getMongoClient
@@ -16,37 +17,37 @@ object AgoraMongoClient {
   val ConfigurationsCollection = "configurations"
   val CounterCollection = "counters"
 
-  def getCollection(collectionName: String): MongoCollection = {
-    mongoClient(AgoraConfig.mongoDbDatabase)(collectionName)
+  def getCollection(collectionName: String): MongoCollection[Document] = {
+    mongoClient.getDatabase(AgoraConfig.mongoDbDatabase).getCollection(collectionName)
   }
 
-  def getCountersCollection: MongoCollection = {
-    mongoClient(AgoraConfig.mongoDbDatabase)(CounterCollection)
+  def getCountersCollection: MongoCollection[Document] = {
+    mongoClient.getDatabase(AgoraConfig.mongoDbDatabase).getCollection(CounterCollection)
   }
 
-  def getAllCollections: Seq[MongoCollection] = {
+  def getAllCollections: Seq[MongoCollection[Document]] = {
     Seq(getTasksCollection, getWorkflowsCollection, getCountersCollection, getConfigurationsCollection)
   }
 
-  private def getTasksCollection: MongoCollection = {
-    mongoClient(AgoraConfig.mongoDbDatabase)(TasksCollection)
+  private def getTasksCollection: MongoCollection[Document] = {
+    mongoClient.getDatabase(AgoraConfig.mongoDbDatabase).getCollection(TasksCollection)
   }
 
-  private def getWorkflowsCollection: MongoCollection = {
-    mongoClient(AgoraConfig.mongoDbDatabase)(WorkflowsCollection)
+  private def getWorkflowsCollection: MongoCollection[Document] = {
+    mongoClient.getDatabase(AgoraConfig.mongoDbDatabase).getCollection(WorkflowsCollection)
   }
 
-  private def getConfigurationsCollection: MongoCollection = {
-    mongoClient(AgoraConfig.mongoDbDatabase)(ConfigurationsCollection)
+  private def getConfigurationsCollection: MongoCollection[Document] = {
+    mongoClient.getDatabase(AgoraConfig.mongoDbDatabase).getCollection(ConfigurationsCollection)
   }
 
-  def getCollectionsByEntityType(entityTypes: Seq[AgoraEntityType.EntityType]): Seq[MongoCollection] = {
+  def getCollectionsByEntityType(entityTypes: Seq[AgoraEntityType.EntityType]): Seq[MongoCollection[Document]] = {
     entityTypes.flatMap {
       entityType => getCollectionsByEntityType(Option(entityType))
     }
   }
 
-  def getCollectionsByEntityType(entityType: Option[AgoraEntityType.EntityType]): Seq[MongoCollection] = {
+  def getCollectionsByEntityType(entityType: Option[AgoraEntityType.EntityType]): Seq[MongoCollection[Document]] = {
     entityType match {
       case Some(AgoraEntityType.Task) =>
         Seq(getTasksCollection)
@@ -64,24 +65,26 @@ object AgoraMongoClient {
       new ServerAddress(host, port)
     }
 
-    val user: Option[String] = AgoraConfig.mongoDbUser
-    val password: Option[String] = AgoraConfig.mongoDbPassword
+    val credentialOption =
+      for {
+        user <- AgoraConfig.mongoDbUser
+        password <- AgoraConfig.mongoDbPassword
+      } yield
+        MongoCredential
+          .createScramSha1Credential(
+            user,
+            AgoraConfig.mongoDbDatabase,
+            password.toCharArray
+          )
 
-    (user, password) match {
-      case (Some(userName), Some(userPassword)) =>
-        val credentials = MongoCredential.createScramSha1Credential(
-          userName,
-          AgoraConfig.mongoDbDatabase,
-          userPassword.toCharArray
-        )
-        MongoClient(serverList, List(credentials))
-      case _ =>
-        MongoClient(serverList)
-    }
+    val mongoClientSettings = MongoClientSettings.builder()
+    mongoClientSettings.applyToClusterSettings(clusterSettings => clusterSettings.hosts(serverList.asJava))
+    credentialOption.foreach(mongoClientSettings.credential)
 
+    MongoClient(mongoClientSettings.build())
   }
 
-  def getMongoDBStatus: Try[Unit] = {
-    Try(mongoClient.getDB(AgoraConfig.mongoDbDatabase).getStats())
+  def getMongoDBStatus(implicit executionContext: ExecutionContext): Future[Unit] = {
+    mongoClient.getDatabase(AgoraConfig.mongoDbDatabase).runCommand(Document("dbstats" -> 1)).toFuture().map(_ => ())
   }
 }

@@ -6,27 +6,24 @@ import com.typesafe.scalalogging.LazyLogging
 import org.broadinstitute.dsde.agora.server.AgoraTestData._
 import org.broadinstitute.dsde.agora.server.business.{AgoraBusiness, AgoraBusinessExecutionContext, PermissionBusiness}
 import org.broadinstitute.dsde.agora.server.dataaccess.ReadWriteAction
-import org.broadinstitute.dsde.agora.server.dataaccess.mongo.{AgoraMongoClient, EmbeddedMongo}
+import org.broadinstitute.dsde.agora.server.dataaccess.mongo._
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions._
 import org.mockserver.integration.ClientAndServer
 import org.mockserver.integration.ClientAndServer.startClientAndServer
 import org.mockserver.model.HttpRequest.request
 import org.mockserver.model.{BodyWithContentType, HttpRequest, StringBody}
 import org.mongodb.scala._
-import slick.dbio.DBIOAction
-import slick.jdbc.MySQLProfile.api._
-import slick.jdbc.meta.MTable
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
 
 trait AgoraTestFixture extends LazyLogging {
-  import scala.concurrent.ExecutionContext.Implicits.global
   implicit lazy val agoraBusinessExecutionContext: AgoraBusinessExecutionContext =
     new AgoraBusinessExecutionContext(scala.concurrent.ExecutionContext.Implicits.global)
 
   val timeout: FiniteDuration = 10.seconds
+  import AgoraConfig.sqlDatabase.profile.api._
   val db: Database = AgoraConfig.sqlDatabase.db
   val permsDataSource: PermissionsDataSource = new PermissionsDataSource(AgoraConfig.sqlDatabase)
   val agoraBusiness: AgoraBusiness = new AgoraBusiness(permsDataSource)
@@ -67,86 +64,46 @@ trait AgoraTestFixture extends LazyLogging {
   }
 
   def startDatabases(): Unit = {
-    EmbeddedMongo.startMongo()
+    TestAgoraMongoClient.ensureRunning()
 
     clearDatabases()
-    val setupFuture = createTableIfNotExists(users, entities, permissions)
 
     logger.debug("Populating sql database.")
-    Await.result(setupFuture, timeout)
+    TestPermissionsClient.ensureRunning()
     logger.debug("Finished populating sql database.")
   }
 
   def stopDatabases(): Unit = {
     clearDatabases()
-    EmbeddedMongo.stopMongo()
     logger.debug("Disconnecting from sql database.")
     db.close()
   }
 
   def ensureMongoDatabaseIsRunning(): Unit = {
-    if (!EmbeddedMongo.isRunning) {
-      startDatabases()
-    }
+    TestAgoraMongoClient.ensureRunning()
   }
 
-  def clearMongoCollections(collections: Seq[MongoCollection[Document]] = Seq()): Unit = {
-    if (EmbeddedMongo.isRunning) {
-      logger.debug("Clearing mongo database.")
-      val allCollections = AgoraMongoClient.getAllCollections ++ collections
-      val deletes = allCollections.map(collection => {
-        collection.deleteMany(Document.empty).toFuture()
-      })
-      Await.result(Future.sequence(deletes), 1.minute)
-      ()
-    }
+  def clearMongoCollections(collections: Seq[MongoCollection[Document]] = AgoraMongoClient.getAllCollections): Unit = {
+    logger.debug(s"Clearing mongo collections (${collections.map(_.namespace.getCollectionName).mkString(", ")}).")
+    TestAgoraMongoClient.clean(collections)
   }
 
-  private def createTableIfNotExists(tables: TableQuery[_ <: Table[_]]*) = {
-    val actions = tables map { table =>
-      MTable.getTables(table.baseTableRow.tableName).flatMap { result =>
-        if (result.isEmpty) {
-          table.schema.create
-        } else {
-          DBIOAction.successful(())
-        }
-      }
-    }
-    db.run(DBIO.sequence(actions))
-  }
-
-  private def deleteFromTableIfExists(tables: TableQuery[_ <: Table[_]]*): Future[Seq[AnyVal]] = {
-    val actions = tables map { table =>
-      MTable.getTables(table.baseTableRow.tableName).flatMap { result =>
-        if (result.nonEmpty) {
-          //noinspection SqlDialectInspection
-          sqlu"delete from #${table.baseTableRow.tableName}"
-        } else {
-          DBIOAction.successful(())
-        }
-      }
-    }
-    db.run(DBIOAction.sequence(actions))
-  }
-
-  def ensureSqlDatabaseIsRunning(): Seq[Unit] = {
+  def ensureSqlDatabaseIsRunning(): Unit = {
     logger.debug("Populating sql database.")
-    Await.result(createTableIfNotExists(entities, users, permissions), timeout)
+    TestPermissionsClient.ensureRunning()
   }
 
-  def clearSqlDatabase(): Seq[AnyVal] = {
+  def clearSqlDatabase(): Unit = {
     logger.debug("Clearing sql database.")
-    Await.result(deleteFromTableIfExists(permissions), timeout)
-    Await.result(deleteFromTableIfExists(users), timeout)
-    Await.result(deleteFromTableIfExists(entities), timeout)
+    TestPermissionsClient.clean()
   }
 
-  def ensureDatabasesAreRunning(): Seq[Unit] = {
+  def ensureDatabasesAreRunning(): Unit = {
     ensureMongoDatabaseIsRunning()
     ensureSqlDatabaseIsRunning()
   }
 
-  def clearDatabases(): Seq[AnyVal] = {
+  def clearDatabases(): Unit = {
     clearMongoCollections()
     clearSqlDatabase()
   }

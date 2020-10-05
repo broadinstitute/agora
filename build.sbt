@@ -46,9 +46,10 @@ scalacOptions := Seq(
 )
 
 val akkaV = "2.6.9"
-val akkaHttpV = "10.2.0"
-val jacksonV = "2.11.2"
+val akkaHttpV = "10.2.1"
+val jacksonV = "2.11.3"
 val slickV = "3.3.3"
+val testcontainersScalaV = "0.38.4"
 
 val artifactory = "https://broadinstitute.jfrog.io/broadinstitute/"
 
@@ -58,11 +59,9 @@ resolvers += "artifactory-snapshots" at artifactory + "libs-snapshot"
 
 libraryDependencies ++= Seq(
   "ch.qos.logback" % "logback-classic" % "1.2.3",
-  "com.github.simplyscala" %% "scalatest-embedmongo" % "0.2.4",
   "com.google.api-client" % "google-api-client" % "1.25.0" excludeAll ExclusionRule(organization = "com.google.guava"),
   "com.google.apis" % "google-api-services-admin-directory" % "directory_v1-rev118-1.25.0" excludeAll
     ExclusionRule(organization = "com.google.guava"),
-  "com.h2database" % "h2" % "1.4.200",
   "com.typesafe.akka" %% "akka-actor-typed" % akkaV,
   "com.typesafe.akka" %% "akka-http" % akkaHttpV,
   "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpV,
@@ -92,15 +91,15 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpV % Test,
   "org.scalatest" %% "scalatest" % "3.2.2" % Test,
   "org.mock-server" % "mockserver-netty" % "5.11.1" % Test,
+  "com.dimafeng" %% "testcontainers-scala-mysql" % testcontainersScalaV % Test,
+  "com.dimafeng" %% "testcontainers-scala-mongodb" % testcontainersScalaV % Test,
+  "org.flywaydb" % "flyway-core" % "7.0.0" % Test,
   "org.broadinstitute.dsde.workbench" %% "sam-client" % "0.1-9d0baea",
   "org.broadinstitute.cromwell" %% "cromwell-client" % "0.1-8b413b45f-SNAP"
 )
 
-//These can be overridden with system properties:
+// Flyway may be run with system properties:
 // i.e: sbt -Dflyway.url=jdbc:mysql://DB_HOST:DB_PORT/DB_NAME -Dflyway.user=root -Dflyway.password=abc123
-flywayUrl := "jdbc:h2:file:./agora_db"
-
-flywayUser := "root"
 
 flywayCleanDisabled := true
 

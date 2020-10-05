@@ -8,7 +8,6 @@ import com.typesafe.scalalogging.LazyLogging
 import org.broadinstitute.dsde.agora.server.business.AgoraBusinessExecutionContext
 import org.broadinstitute.dsde.agora.server.dataaccess.AgoraDBStatus
 import org.broadinstitute.dsde.agora.server.dataaccess.health.AgoraHealthMonitorSubsystems._
-import org.broadinstitute.dsde.agora.server.dataaccess.mongo.EmbeddedMongo
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
 import org.broadinstitute.dsde.agora.server.webservice.ApiService
 
@@ -35,16 +34,12 @@ class ServerInitializer extends LazyLogging {
   CoordinatedShutdown(actorSystem.toClassic)
 
   def startAllServices(): Unit = {
-    if (AgoraConfig.usesEmbeddedMongo)
-      EmbeddedMongo.startMongo()
     startWebService()
   }
 
   def stopAllServices(): Unit = {
     logger.info("Closing all connections")
     Http()(actorSystem.toClassic).shutdownAllConnectionPools()
-    if (AgoraConfig.usesEmbeddedMongo)
-      EmbeddedMongo.stopMongo()
     permsDataSource.close()
     actorSystem.terminate()
     Await.result(actorSystem.whenTerminated, Duration.Inf)

@@ -57,22 +57,19 @@ class AgoraServiceUnhealthyStatusSpec extends ApiServiceSpec with Matchers with 
   }
 
 
-  // our test sql db is H2, which doesn't allow us to check for version
-  it should "not actually be able to test the sql db" in {
+  it should "be able to test the sql db" in {
     Get(s"/status") ~> apiStatusService.statusRoute ~>
       check {
-        assertResult(StatusCodes.InternalServerError) { status }
+        assertResult(StatusCodes.OK) { status }
         val statusResponse = responseAs[StatusCheckResponse] // will throw error and fail test if can't deserialize
-        assert( !statusResponse.ok )
+        assert( statusResponse.ok )
         assertResult(Set(Mongo,Database)) { statusResponse.systems.keySet }
 
         assert( statusResponse.systems(Mongo).ok )
         assert( statusResponse.systems(Mongo).messages.isEmpty )
 
-        assert( !statusResponse.systems(Database).ok )
-        assert( statusResponse.systems(Database).messages.nonEmpty )
-        assert( statusResponse.systems(Database).messages.getOrElse(List()).head.nonEmpty )
-        assert( statusResponse.systems(Database).messages.getOrElse(List()).head.contains("""Function "VERSION" not found""") )
+        assert( statusResponse.systems(Database).ok )
+        assert( statusResponse.systems(Database).messages.isEmpty )
       }
   }
 }

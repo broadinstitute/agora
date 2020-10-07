@@ -12,9 +12,6 @@ script:
     sbt clean coverage test coverageReport
 after_success: bash <(curl -s https://codecov.io/bash)
 before_install:
-  - openssl aes-256-cbc -K $encrypted_c3fdfb789575_key -iv $encrypted_c3fdfb789575_iv -in secrets.tar.enc -out secrets.tar -d
-  - tar xvf secrets.tar
-  - export TEST_CONFIG=application.conf
   - >-
     git clone https://github.com/awslabs/git-secrets.git git-secrets &&
     pushd git-secrets > /dev/null &&

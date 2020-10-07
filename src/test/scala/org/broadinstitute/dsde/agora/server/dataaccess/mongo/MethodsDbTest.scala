@@ -14,14 +14,20 @@ import org.scalatest.{BeforeAndAfterAll, DoNotDiscover}
 class MethodsDbTest extends AnyFlatSpec with BeforeAndAfterAll with AgoraTestFixture with AgoraScalaFutures {
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  val mongoTestCollection: MongoCollection[Document] = AgoraMongoClient.getCollection("test")
-  val agoraDao: AgoraDao = AgoraDao.createAgoraDao(mongoTestCollection)
+  /*
+  NOTE: This must be lazy! Due to a large number of Agora singletons including `object AgoraMongoClient` one must wait
+  for `beforeAll()` defined below to run before trying to access singleton methods. `ensureDatabasesAreRunning()` sets
+  an internal variable in the `object AgoraMongoClient` singleton that points to the correct TestContainer.
+   */
+  lazy val mongoTestCollection: MongoCollection[Document] = AgoraMongoClient.getCollection("test")
+  lazy val agoraDao: AgoraDao = AgoraDao.createAgoraDao(mongoTestCollection)
 
   override protected def beforeAll(): Unit = {
-    ensureMongoDatabaseIsRunning()
+    ensureDatabasesAreRunning()
   }
 
   override protected def afterAll(): Unit = {
+    clearDatabases()
     clearMongoCollections(Seq(mongoTestCollection))
   }
 

@@ -10,7 +10,7 @@ import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
 object AgoraMongoClient {
-  private val mongoClient = getMongoClient
+  private lazy val mongoClient = getMongoClient
 
   val TasksCollection = "tasks"
   val WorkflowsCollection = "workflows"
@@ -60,26 +60,51 @@ object AgoraMongoClient {
     }
   }
 
+  private[mongo] var mongoDbTestConnectionString: Option[ConnectionString] = None
+
   private def getMongoClient: MongoClient = {
-    val serverList = for{ (host, port) <- AgoraConfig.mongoDbHosts zip AgoraConfig.mongoDbPorts } yield {
-      new ServerAddress(host, port)
-    }
-
-    val credentialOption =
-      for {
-        user <- AgoraConfig.mongoDbUser
-        password <- AgoraConfig.mongoDbPassword
-      } yield
-        MongoCredential
-          .createScramSha1Credential(
-            user,
-            AgoraConfig.mongoDbDatabase,
-            password.toCharArray
-          )
-
     val mongoClientSettings = MongoClientSettings.builder()
-    mongoClientSettings.applyToClusterSettings(clusterSettings => clusterSettings.hosts(serverList.asJava))
-    credentialOption.foreach(mongoClientSettings.credential)
+
+    if (AgoraConfig.mongoDbTestContainerEnabled) {
+
+      mongoDbTestConnectionString match {
+        case Some(connectionString) =>
+          mongoClientSettings
+            .applyToClusterSettings(clusterSettings => clusterSettings.applyConnectionString(connectionString))
+
+        case None =>
+          sys.error(
+            "The test in this stack trace should be using a `lazy val` instead " +
+              "of a `val` to allow the TestContainer MongoDB to start first. " +
+              "See `lazy val MethodsDbTest.mongoTestCollection` for an example."
+          )
+      }
+
+    } else {
+
+      val serverList =
+        for {
+          (host, port) <- AgoraConfig.mongoDbHosts zip AgoraConfig.mongoDbPorts
+        } yield {
+          new ServerAddress(host, port)
+        }
+
+      val credentialOption =
+        for {
+          user <- AgoraConfig.mongoDbUser
+          password <- AgoraConfig.mongoDbPassword
+        } yield
+          MongoCredential
+            .createScramSha1Credential(
+              user,
+              AgoraConfig.mongoDbDatabase,
+              password.toCharArray
+            )
+
+      mongoClientSettings.applyToClusterSettings(clusterSettings => clusterSettings.hosts(serverList.asJava))
+      credentialOption.foreach(mongoClientSettings.credential)
+
+    }
 
     MongoClient(mongoClientSettings.build())
   }

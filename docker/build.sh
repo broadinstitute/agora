@@ -1,5 +1,6 @@
 #!/bin/bash
 
+SCRIPT_WORKING_DIR="$(dirname "${0}")"
 
 HELP_TEXT="$(cat <<EOF
  Build jar and docker images.
@@ -116,7 +117,33 @@ function docker_cmd()
 
             if [[ -n $GCR_REGISTRY ]]; then
                 docker tag $DOCKERHUB_REGISTRY:${HASH_TAG} $GCR_REGISTRY:${HASH_TAG}
-                gcloud docker -- push $GCR_REGISTRY:${HASH_TAG}
+                ## Next line replaced with DCT sign.sh command, below.
+                #gcloud docker -- push $GCR_REGISTRY:${HASH_TAG}
+
+                #DOCKER_NOTARY_VAULT_PATH="secret/dsp/docker_content_trust/notary"
+                #DOCKER_NOTARY_GCE_PROJ="broad-dsp-techops"
+                #DOCKER_NOTARY_GCE_ZONE="us-central1-a"
+                DOCKER_IMAGE_SIGNING_SCRIPT="${SCRIPT_WORKING_DIR:?}/docker-image-sign.sh"
+                if [[ -f ${DOCKER_IMAGE_SIGNING_SCRIPT:?} ]]; then
+                    "${DOCKER_IMAGE_SIGNING_SCRIPT:?}" \
+                        -s "${DOCKER_NOTARY_VAULT_PATH:?}" \
+                        -p "${DOCKER_NOTARY_GCE_PROJ:?}" \
+                        -z "${DOCKER_NOTARY_GCE_ZONE:?}" \
+                        -i "${GCR_REGISTRY:?}:${HASH_TAG:?}"
+                else
+                    printf '[%s]: %s %s: %s\n' \
+                        "$(date +'%Y%m%dT%H%M%S%z')" \
+                        "ERROR" \
+                        "FILE_NOT_FOUND" \
+                        "${DOCKER_IMAGE_SIGNING_SCRIPT:?}"
+                    printf '[%s]: %s %s: %s\n' \
+                        "$(date +'%Y%m%dT%H%M%S%z')" \
+                        "ERROR" \
+                        "PWD_AT_TIME_OF_ERROR" \
+                        "$(pwd)"
+                    exit 1
+                fi
+
             fi
         fi
     else

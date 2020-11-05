@@ -129,6 +129,7 @@ function docker_cmd()
                         -s "${DOCKER_NOTARY_VAULT_PATH:?}" \
                         -p "${DOCKER_NOTARY_GCE_PROJ:?}" \
                         -z "${DOCKER_NOTARY_GCE_ZONE:?}" \
+                        -k "${SERVICE_ACCT_KEY_FILE:?}" \
                         -i "${GCR_REGISTRY:?}:${HASH_TAG:?}"
                 else
                     printf '[%s]: %s %s: %s\n' \

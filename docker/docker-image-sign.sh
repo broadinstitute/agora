@@ -1,10 +1,46 @@
 #!/usr/bin/env bash
 
-# Parse args
+#
+# Functions
+#
 usage() {
   echo "Usage: ./sign.sh -s <SECRETS_PATH> -p <NOTARY_PROJECT> -z <NOTARY_ZONE> [-n <NOTARY_INSTANCE>] -i <DOCKER_IMAGE>"
   exit 1
 }
+
+vault_cmd() {
+
+    local _vault_token_file_test
+    local _vault_token_file_dsde
+    local _vault_token
+
+    #echo "${@}" >&2
+
+    # TODO: Remove the test token when this works. Happy, Denis?
+    #_vault_token_file_test="${HOME:?}/.vault-token"
+    #_vault_token_file_dsde="/etc/vault-token-dsde"
+
+    #if [[ -f ${_vault_token_file_test:?} ]]; then
+    #    _vault_token="$(cat "${_vault_token_file_test:?}")"
+    #elif [[ -f ${_vault_token_file_dsde:?} ]]; then
+    #    _vault_token="$(sudo bash -c "cat ${_vault_token_file_dsde:?}")"
+    #else
+    #    printf 'ERROR NO_VAULT_TOKEN_FILE_FOUND\n'
+    #    return 1
+    #fi
+
+    _vault_token="$(sudo bash -c "cat /etc/vault-token-dsde")"
+    echo "${_vault_token:?}" >&2
+
+    DOCKER_CONTENT_TRUST="" \
+        docker run \
+            --rm \
+            -e VAULT_TOKEN="${_vault_token:?}" \
+            -v "$(pwd)/.docker:/root/.docker" \
+            broadinstitute/dsde-toolbox vault "${@}"
+}
+
+# Parse args
 while getopts s:p:z:n:i:h flag; do
   case "${flag}" in
     s) export SECRETS_PATH=${OPTARG};;
@@ -15,6 +51,7 @@ while getopts s:p:z:n:i:h flag; do
     h|*) usage;;
   esac
 done
+
 if [ -z "${SECRETS_PATH}" ] || [ -z "${NOTARY_PROJECT}" ] || [ -z "${NOTARY_ZONE}" ] || [ -z "${DOCKER_IMAGE}" ]; then
   usage
 fi
@@ -46,26 +83,28 @@ trap 'kill "${TUNNEL_PID}"' SIGINT SIGTERM EXIT
 gen_pass() {
   head -c16 /dev/urandom | md5sum | awk '{ print $1 }'
 }
-if ! DOCKER_CONTENT_TRUST_ROOT_PASSPHRASE=$(vault kv get -field pass "${SECRETS_PATH}/root"); then
+
+if ! DOCKER_CONTENT_TRUST_ROOT_PASSPHRASE=$(vault_cmd read -field pass "${SECRETS_PATH}/root"); then
   DOCKER_CONTENT_TRUST_ROOT_PASSPHRASE=$(gen_pass)
 
-  vault write "${SECRETS_PATH}/root" pass="${DOCKER_CONTENT_TRUST_ROOT_PASSPHRASE}"
+  vault_cmd write "${SECRETS_PATH}/root" pass="${DOCKER_CONTENT_TRUST_ROOT_PASSPHRASE}"
 fi
+
 export DOCKER_CONTENT_TRUST_ROOT_PASSPHRASE
 
 # read/write repo passphrase
-if ! DOCKER_CONTENT_TRUST_REPOSITORY_PASSPHRASE=$(vault kv get -field pass "${SECRETS_PATH}/repo"); then
+if ! DOCKER_CONTENT_TRUST_REPOSITORY_PASSPHRASE=$(vault_cmd read -field pass "${SECRETS_PATH}/repo"); then
   DOCKER_CONTENT_TRUST_REPOSITORY_PASSPHRASE=$(gen_pass)
 
-  vault write "${SECRETS_PATH}/repo" pass="${DOCKER_CONTENT_TRUST_REPOSITORY_PASSPHRASE}"
+  vault_cmd write "${SECRETS_PATH}/repo" pass="${DOCKER_CONTENT_TRUST_REPOSITORY_PASSPHRASE}"
 fi
 export DOCKER_CONTENT_TRUST_REPOSITORY_PASSPHRASE
 
 # load all private keys from Vault into trust store
 KEYS_PATH="${HOME}/.docker/trust/private"
 mkdir -p "${KEYS_PATH}"
-for key in $(vault list -format json "${SECRETS_PATH}/keys" | jq -r '.[]'); do
-  vault kv get -field key "${SECRETS_PATH}/keys/${key}" > "${KEYS_PATH}/${key}"
+for key in $(vault_cmd list -format json "${SECRETS_PATH}/keys" | jq -r '.[]'); do
+    vault_cmd read -field key "${SECRETS_PATH}/keys/${key}" > "${KEYS_PATH}/${key}"
 done
 
 # wait for the IAP tunnel to be established
@@ -80,5 +119,8 @@ sign_mark=$(mktemp)
 docker trust sign "${DOCKER_IMAGE}"
 
 # store any new private keys back into Vault
-find "${KEYS_PATH}" -type f -newer "${sign_mark}" -exec \
-  sh -c 'vault write "${SECRETS_PATH}/keys/$(basename "$1")" key=@"$1"' _ {} \;
+while read -r _file
+do
+    vault_cmd write "${SECRETS_PATH}/keys/$(basename "${_file}")" key=@"${_file}"
+done < <(find "${KEYS_PATH}" -type f -newer "${sign_mark}")
+

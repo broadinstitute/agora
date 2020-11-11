@@ -96,7 +96,7 @@ docker_content_trust_sign_app_image() {
     if [[ -n ${1} ]]; then
         _image_uri="${1}"
     else
-        printf '[%s]: %s %s %s: %s\n' \
+        printf '[%s] %s %s %s: %s\n' \
             "$(date +'%Y-%m-%dT%H:%M:%S%z')" \
             "ERROR" \
             "Missing required param" \
@@ -105,7 +105,7 @@ docker_content_trust_sign_app_image() {
         return 1
     fi
 
-    printf '[%s]: %s %s: %s\n' \
+    printf '[%s] %s %s: %s\n' \
         "$(date +'%Y-%m-%dT%H:%M:%S%z')" \
         "INFO" \
         "Signing docker image" \
@@ -120,12 +120,12 @@ docker_content_trust_sign_app_image() {
             -i "${_image_uri:?}"
         return ${?}
     else
-        printf '[%s]: %s %s: %s\n' \
+        printf '[%s] %s %s: %s\n' \
             "$(date +'%Y-%m-%dT%H:%M:%S%z')" \
             "ERROR" \
             "FILE_NOT_FOUND" \
             "${DOCKER_IMAGE_SIGNING_SCRIPT:?}"
-        printf '[%s]: %s %s: %s\n' \
+        printf '[%s] %s %s: %s\n' \
             "$(date +'%Y-%m-%dT%H:%M:%S%z')" \
             "ERROR" \
             "PWD_AT_TIME_OF_ERROR" \

@@ -89,10 +89,13 @@ if [[ -n $SERVICE_ACCT_KEY_FILE ]]; then
   gcloud auth activate-service-account --key-file="${SERVICE_ACCT_KEY_FILE}"
 fi
 
+# The following function executes the Docker Content Trust signing
+# script. This function replaces the docker push -- gcr command in
+# the main section of this build script.
 docker_content_trust_sign_app_image() {
-
     local _image_uri
 
+    # Check for param 1: Docker image URI
     if [[ -n ${1} ]]; then
         _image_uri="${1}"
     else
@@ -111,6 +114,8 @@ docker_content_trust_sign_app_image() {
         "Signing docker image" \
         "${_image_uri:?}"
 
+    # Confirm the docker-image-sign.sh script exists,
+    # and execute it with the appropriate params.
     if [[ -f ${DOCKER_IMAGE_SIGNING_SCRIPT:?} ]]; then
         "${DOCKER_IMAGE_SIGNING_SCRIPT:?}" \
             -s "${DOCKER_NOTARY_VAULT_PATH:?}" \
@@ -167,6 +172,9 @@ function docker_cmd()
                 ## Next line replaced with docker_content_trust_sign_app_image.
                 #gcloud docker -- push $GCR_REGISTRY:${HASH_TAG}
 
+                # Define the docker image URI using previously-defined
+                # vars, and call the signing function to execute the
+                # docker-image-sign.sh script.
                 IMAGE_URI="${GCR_REGISTRY:?}:${IMAGE_TAG:?}"
                 if docker_content_trust_sign_app_image "${IMAGE_URI:?}"; then
                     return 0

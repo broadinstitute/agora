@@ -12,6 +12,8 @@ class HealthMonitorSubsystems(subsystemsToHealthCheck: Map[Subsystem, ExecutionC
   def subsystems: Set[Subsystem] = subsystemsToHealthCheck.keySet
 
   def checkHealth()(implicit executionContext: ExecutionContext): Map[Subsystem, Future[SubsystemStatus]] = {
-    subsystemsToHealthCheck.mapValues(_(executionContext))
+    subsystemsToHealthCheck.map {
+      case (k, v) => (k, v(executionContext))
+    }
   }
 }

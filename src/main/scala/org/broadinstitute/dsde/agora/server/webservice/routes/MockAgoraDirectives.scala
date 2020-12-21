@@ -16,7 +16,7 @@ trait MockAgoraDirectives extends AgoraDirectives {
     }
   }
 
-  override def tokenFromRequest = headerValueByName(MockAgoraDirectives.mockAccessToken)
+  override def tokenFromRequest() = headerValueByName(MockAgoraDirectives.mockAccessToken)
 }
 
 object MockAgoraDirectives extends MockAgoraDirectives {

@@ -34,7 +34,7 @@ class AgoraServiceUnhealthyStatusSpec extends ApiServiceSpec with Matchers with 
   private lazy val agoraGuardian = testKit.spawn(AgoraGuardianActor(permsDataSource, dbStatus.toHealthMonitorSubsystems))
   private lazy val apiStatusService = new StatusService(permsDataSource, agoraGuardian)
 
-  override def beforeAll: Unit = {
+  override def beforeAll(): Unit = {
     implicit val askTimeout:Timeout = Timeout(1.minute) // timeout for the ask to healthMonitor for GetCurrentStatus
     ensureDatabasesAreRunning()
     // tell the health monitor to perform a check, then wait until checks have returned
@@ -89,7 +89,7 @@ class AgoraServiceHealthyStatusSpec extends ApiServiceSpec with Matchers with An
   ))
   private lazy val apiStatusService = new StatusService(permsDataSource, agoraGuardian)
 
-  override def beforeAll: Unit = {
+  override def beforeAll(): Unit = {
     implicit val askTimeout:Timeout = Timeout(1.minute) // timeout for the ask to healthMonitor for GetCurrentStatus
     ensureDatabasesAreRunning()
     // tell the health monitor to perform a check, then wait until checks have returned
@@ -106,7 +106,7 @@ class AgoraServiceHealthyStatusSpec extends ApiServiceSpec with Matchers with An
     )
   }
 
-  override def afterAll: Unit = {
+  override def afterAll(): Unit = {
     clearDatabases()
     testKit.shutdownTestKit()
   }
@@ -135,7 +135,7 @@ class AgoraServiceHealthyStatusSpec extends ApiServiceSpec with Matchers with An
     // in order to unit-test a good status response.
     def h2Status: Future[SubsystemStatus] = {
       dataSource.inTransaction { db =>
-        db.admPerms.listAdminUsers.asTry map {
+        db.admPerms.listAdminUsers().asTry map {
           case Success(_) => HealthMonitor.OkStatus
           case Failure(t) => HealthMonitor.failedStatus(t.getMessage)
         }

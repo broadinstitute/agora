@@ -7,7 +7,7 @@ import org.broadinstitute.dsde.agora.server.webservice.util.GoogleApiUtils
 import org.slf4j.Logger
 import slick.dbio.DBIOAction
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal

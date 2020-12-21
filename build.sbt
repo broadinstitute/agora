@@ -5,7 +5,7 @@ name := "Agora"
 
 organization := "org.broadinstitute"
 
-scalaVersion := "2.12.12"
+scalaVersion := "2.13.4"
 
 // Ported from Cromwell 2019-11-19
 // The disabled ones are not too crazy to get compliant with, but more work than I want to do just now (AEN)
@@ -15,16 +15,16 @@ scalacOptions := Seq(
   "-feature",
   "-Xfatal-warnings",
   "-Ywarn-unused:imports",
-  "-Xfuture",
+//  "-Xfuture",
 //  "-Xlint:adapted-args",
-  "-Xlint:by-name-right-associative",
+//  "-Xlint:by-name-right-associative",
   "-Xlint:constant",
   "-Xlint:delayedinit-select",
   "-Xlint:doc-detached",
   "-Xlint:inaccessible",
   "-Xlint:infer-any",
 //  "-Xlint:missing-interpolator",
-  "-Xlint:nullary-override",
+//  "-Xlint:nullary-override",
   "-Xlint:nullary-unit",
   "-Xlint:option-implicit",
   "-Xlint:package-object-classes",
@@ -32,16 +32,16 @@ scalacOptions := Seq(
   "-Xlint:private-shadow",
   "-Xlint:stars-align",
   "-Xlint:type-parameter-shadow",
-  "-Xlint:unsound-match",
+//  "-Xlint:unsound-match",
 //  "-Yno-adapted-args",
   "-Ywarn-dead-code",
   "-Ywarn-numeric-widen",
 //  "-Ywarn-value-discard",
-  "-Ywarn-inaccessible",
+//  "-Ywarn-inaccessible",
   "-Ywarn-unused:implicits",
   "-Ywarn-unused:privates",
   "-Ywarn-unused:locals",
-  "-Ypartial-unification",
+//  "-Ypartial-unification",
   "-Ywarn-unused:patvars"
 )
 
@@ -94,8 +94,8 @@ libraryDependencies ++= Seq(
   "com.dimafeng" %% "testcontainers-scala-mysql" % testcontainersScalaV % Test,
   "com.dimafeng" %% "testcontainers-scala-mongodb" % testcontainersScalaV % Test,
   "org.flywaydb" % "flyway-core" % "7.0.0" % Test,
-  "org.broadinstitute.dsde.workbench" %% "sam-client" % "0.1-9d0baea",
-  "org.broadinstitute.cromwell" %% "cromwell-client" % "0.1-8b413b45f-SNAP"
+  "org.broadinstitute.dsde.workbench" % "sam-client_2.12" % "0.1-9d0baea",      // Should become available for 2.13 when a release happes ( https://github.com/broadinstitute/sam/pull/491 )
+  "org.broadinstitute.cromwell" % "cromwell-client_2.12" % "0.1-8b413b45f-SNAP" // Contains only Java, pinning on 2.12
 )
 
 // Flyway may be run with system properties:

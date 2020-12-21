@@ -13,3 +13,4 @@ agora.jar
 env.properties
 *~
 .DS_Store
+/.bsp/sbt.json

@@ -93,7 +93,7 @@ libraryDependencies ++= Seq(
   "org.mock-server" % "mockserver-netty" % "5.11.1" % Test,
   "com.dimafeng" %% "testcontainers-scala-mysql" % testcontainersScalaV % Test,
   "com.dimafeng" %% "testcontainers-scala-mongodb" % testcontainersScalaV % Test,
-  "org.flywaydb" % "flyway-core" % "7.0.0" % Test,
+  "org.flywaydb" % "flyway-core" % "7.3.2" % Test,
   "org.broadinstitute.dsde.workbench" % "sam-client_2.12" % "0.1-9d0baea",      // Should become available for 2.13 when a release happes ( https://github.com/broadinstitute/sam/pull/491 )
   "org.broadinstitute.cromwell" % "cromwell-client_2.12" % "0.1-8b413b45f-SNAP" // Contains only Java, pinning on 2.12
 )
@@ -102,10 +102,6 @@ libraryDependencies ++= Seq(
 // i.e: sbt -Dflyway.url=jdbc:mysql://DB_HOST:DB_PORT/DB_NAME -Dflyway.user=root -Dflyway.password=abc123
 
 flywayCleanDisabled := true
-
-releaseSettings
-
-shellPrompt := { state => "%s| %s> ".format(GitCommand.prompt.apply(state), version.value) }
 
 // We need to fork the tests and provide the correct config so that users do not accidentally
 // provide a config that points to a real database.

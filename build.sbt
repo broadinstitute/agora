@@ -36,7 +36,7 @@ scalacOptions := Seq(
   "-Ywarn-dead-code",
   "-Ywarn-numeric-widen",
 //  "-Ywarn-value-discard",
-//  "-Ywarn-inaccessible",
+  "-Xlint:inaccessible",
   "-Ywarn-unused:implicits",
   "-Ywarn-unused:privates",
   "-Ywarn-unused:locals",

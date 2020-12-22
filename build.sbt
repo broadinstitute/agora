@@ -1,5 +1,4 @@
 import sbtassembly.MergeStrategy
-import sbtrelease.ReleasePlugin._
 
 name := "Agora"
 
@@ -41,7 +40,6 @@ scalacOptions := Seq(
   "-Ywarn-unused:implicits",
   "-Ywarn-unused:privates",
   "-Ywarn-unused:locals",
-//  "-Ypartial-unification",
   "-Ywarn-unused:patvars"
 )
 

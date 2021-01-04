@@ -362,11 +362,11 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLo
       snap.copy(public = Option(publicAliasesSet.contains(snapshotAlias)))
     }
 
-    val ownersAndAliases = aliasesOwnersPermissions.collect({
+    val ownersAndAliases: Seq[(String, String)] = aliasesOwnersPermissions.collect({
       case (alias, owner, permissions) if permissions.hasPermission(AgoraPermissions.Manage) => (alias, owner)
     })
 
-    val ownersAndAliasesMap = ownersAndAliases.groupMap(_._1)(_._2)
+    val ownersAndAliasesMap: Map[String, Seq[String]] = ownersAndAliases.groupMap(_._1)(_._2)
 
     val annotatedSnapshots = snapshotsWithPublic.map { snap =>
       val snapshotAlias = permissionsDataSource.dataAccess.aePerms.alias(snap)

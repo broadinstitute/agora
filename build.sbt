@@ -1,11 +1,10 @@
 import sbtassembly.MergeStrategy
-import sbtrelease.ReleasePlugin._
 
 name := "Agora"
 
 organization := "org.broadinstitute"
 
-scalaVersion := "2.12.12"
+scalaVersion := "2.13.4"
 
 // Ported from Cromwell 2019-11-19
 // The disabled ones are not too crazy to get compliant with, but more work than I want to do just now (AEN)
@@ -15,16 +14,13 @@ scalacOptions := Seq(
   "-feature",
   "-Xfatal-warnings",
   "-Ywarn-unused:imports",
-  "-Xfuture",
 //  "-Xlint:adapted-args",
-  "-Xlint:by-name-right-associative",
   "-Xlint:constant",
   "-Xlint:delayedinit-select",
   "-Xlint:doc-detached",
   "-Xlint:inaccessible",
   "-Xlint:infer-any",
 //  "-Xlint:missing-interpolator",
-  "-Xlint:nullary-override",
   "-Xlint:nullary-unit",
   "-Xlint:option-implicit",
   "-Xlint:package-object-classes",
@@ -32,16 +28,14 @@ scalacOptions := Seq(
   "-Xlint:private-shadow",
   "-Xlint:stars-align",
   "-Xlint:type-parameter-shadow",
-  "-Xlint:unsound-match",
 //  "-Yno-adapted-args",
   "-Ywarn-dead-code",
   "-Ywarn-numeric-widen",
 //  "-Ywarn-value-discard",
-  "-Ywarn-inaccessible",
+  "-Xlint:inaccessible",
   "-Ywarn-unused:implicits",
   "-Ywarn-unused:privates",
   "-Ywarn-unused:locals",
-  "-Ypartial-unification",
   "-Ywarn-unused:patvars"
 )
 
@@ -93,19 +87,15 @@ libraryDependencies ++= Seq(
   "org.mock-server" % "mockserver-netty" % "5.11.1" % Test,
   "com.dimafeng" %% "testcontainers-scala-mysql" % testcontainersScalaV % Test,
   "com.dimafeng" %% "testcontainers-scala-mongodb" % testcontainersScalaV % Test,
-  "org.flywaydb" % "flyway-core" % "7.0.0" % Test,
-  "org.broadinstitute.dsde.workbench" %% "sam-client" % "0.1-9d0baea",
-  "org.broadinstitute.cromwell" %% "cromwell-client" % "0.1-8b413b45f-SNAP"
+  "org.flywaydb" % "flyway-core" % "7.3.2" % Test,
+  "org.broadinstitute.dsde.workbench" % "sam-client_2.12" % "0.1-9d0baea",      // Should become available for 2.13 once a release happens ( https://github.com/broadinstitute/sam/pull/491 )
+  "org.broadinstitute.cromwell" % "cromwell-client_2.12" % "0.1-8b413b45f-SNAP" // Contains only Java, pinning on 2.12
 )
 
 // Flyway may be run with system properties:
 // i.e: sbt -Dflyway.url=jdbc:mysql://DB_HOST:DB_PORT/DB_NAME -Dflyway.user=root -Dflyway.password=abc123
 
 flywayCleanDisabled := true
-
-releaseSettings
-
-shellPrompt := { state => "%s| %s> ".format(GitCommand.prompt.apply(state), version.value) }
 
 // We need to fork the tests and provide the correct config so that users do not accidentally
 // provide a config that points to a real database.

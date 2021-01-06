@@ -271,7 +271,7 @@ class PermissionBusiness(permissionsDataSource: PermissionsDataSource) {
         if (x.user.equalsIgnoreCase(newACL.user) && x.roles != newACL.roles) {
           throw PermissionModificationException()
         }
-      case _ => Unit
+      case _ => ()
     }
   }
 

@@ -24,7 +24,7 @@ object AgoraPermissions {
 
   // The roles String input is formatted like "read, write, manage"
   def fromParams(roles: String): AgoraPermissions = {
-    AgoraPermissions(roles.split(","))
+    AgoraPermissions(roles.split(",").toIndexedSeq)
   }
 
   def apply(roles: Seq[String]): AgoraPermissions = {
@@ -47,7 +47,7 @@ object AgoraPermissions {
 }
 
 case class AgoraPermissions(permissions: Int) {
-  def this(varPermissions: Int*) {
+  def this(varPermissions: Int*) = {
     this(varPermissions.foldLeft(0) { (perm1, perm2) => perm1 | perm2 })
   }
 

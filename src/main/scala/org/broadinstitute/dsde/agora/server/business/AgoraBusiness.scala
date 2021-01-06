@@ -11,7 +11,7 @@ import org.bson.types.ObjectId
 import slick.dbio.DBIO
 import spray.json._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
@@ -362,12 +362,11 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLo
       snap.copy(public = Option(publicAliasesSet.contains(snapshotAlias)))
     }
 
-    val ownersAndAliases = aliasesOwnersPermissions.collect({
+    val ownersAndAliases: Seq[(String, String)] = aliasesOwnersPermissions.collect({
       case (alias, owner, permissions) if permissions.hasPermission(AgoraPermissions.Manage) => (alias, owner)
     })
 
-    // In Scala 2.13 this can be replaced with a .groupMap()
-    val ownersAndAliasesMap = ownersAndAliases.groupBy(_._1).mapValues(_.map(_._2))
+    val ownersAndAliasesMap: Map[String, Seq[String]] = ownersAndAliases.groupMap(_._1)(_._2)
 
     val annotatedSnapshots = snapshotsWithPublic.map { snap =>
       val snapshotAlias = permissionsDataSource.dataAccess.aePerms.alias(snap)

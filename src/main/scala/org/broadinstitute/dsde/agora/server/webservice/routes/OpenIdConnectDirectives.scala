@@ -29,7 +29,7 @@ class OpenIdConnectDirectives extends AgoraDirectives {
     }
   }
 
-  override def tokenFromRequest = headerValueByName("OIDC_access_token")
+  override def tokenFromRequest() = headerValueByName("OIDC_access_token")
 
 }
 

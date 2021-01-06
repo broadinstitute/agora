@@ -1,7 +1,7 @@
 import sbt.Keys._
 import sbt._
 import complete.DefaultParsers._
-import sbt.ProcessLogger
+import scala.sys.process._
 
 object MinnieKenny {
   val minnieKenny = inputKey[Unit]("Run minnie-kenny.")
@@ -12,7 +12,7 @@ object MinnieKenny {
     private var resultOption: Option[Int] = None
 
     /** Run using the logger, throwing an exception only on the first failure. */
-    def runOnce(log: ProcessLogger, args: Seq[String]): Unit = {
+    def runOnce(log: Logger, args: Seq[String]): Unit = {
       mutex synchronized {
         if (resultOption.isEmpty) {
           log.info(s"Running minnie-kenny.sh${args.mkString(" ", " ", "")}")

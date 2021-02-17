@@ -4,7 +4,7 @@ dist: trusty
 scala:
   - 2.13.4
 jdk:
-  - oraclejdk8
+  - oraclejdk11
 script:
   - >-
     ./minnie-kenny.sh --force &&

@@ -7,7 +7,7 @@ FROM broadinstitute/scala-baseimage as builder
 ADD . /agora
 RUN ["/bin/bash", "-c", "/agora/docker/install.sh /agora"]
 
-FROM adoptopenjdk:8-hotspot
+FROM adoptopenjdk:11-hotspot
 
 # Expose the port used by Agora webservice
 EXPOSE 8000

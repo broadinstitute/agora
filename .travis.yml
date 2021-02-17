@@ -4,7 +4,7 @@ dist: trusty
 scala:
   - 2.13.4
 jdk:
-  - openjdk11
+  - adoptopenjdk11
 script:
   - >-
     ./minnie-kenny.sh --force &&

@@ -1,5 +1,8 @@
 name: dsp-appsec-trivy
-on: [pull_request]
+on:
+  pull_request:
+  schedule:
+    - cron: '0 14 * * 1' # each Monday at 9am EST
 
 jobs:
   appsec-trivy:

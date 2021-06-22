@@ -69,10 +69,10 @@ object AgoraConfig {
 
 
   // Google Credentials
-  lazy val gcsProjectId: String = config.as[String]("gcs.project.id")
-  lazy val gcsServiceAccountEmail: String = config.as[String]("gcs.service.account.email")
-  lazy val gcsServiceAccountPemFile: String = config.as[String]("gcs.service.account.pem.file")
-  lazy val gcsUserEmail: String = config.as[String]("gcs.user.email")
+  lazy val googleProjectId: String = config.as[String]("google.project.id")
+  lazy val googleServiceAccountEmail: String = config.as[String]("google.service.account.email")
+  lazy val googleServiceAccountPemFile: String = config.as[String]("google.service.account.pem.file")
+  lazy val googleUserEmail: String = config.as[String]("google.user.email")
   lazy val adminGoogleGroup: Option[String] = config.getAs[String]("admin.google.group")
 
   // sam
@@ -92,8 +92,8 @@ object AgoraConfig {
     lazy val baseUrl: String = swagger.getString("baseUrl")
     lazy val apiDocs: String = swagger.getString("apiDocs")
     lazy val clientId: String = swagger.getOrElse("clientId", "clientId")
-    lazy val realm: String = gcsProjectId
-    lazy val appName: String = gcsProjectId
+    lazy val realm: String = googleProjectId
+    lazy val appName: String = googleProjectId
   }
 
   // GA4GH

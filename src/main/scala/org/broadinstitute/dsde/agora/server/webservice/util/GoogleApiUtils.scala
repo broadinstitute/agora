@@ -12,7 +12,7 @@ import org.broadinstitute.dsde.agora.server.AgoraConfig
 
 
 object GoogleApiUtils {
-  val emailAddress = AgoraConfig.gcsServiceAccountEmail
+  val emailAddress = AgoraConfig.googleServiceAccountEmail
   val JSON_FACTORY = JacksonFactory.getDefaultInstance
   val httpTransport = GoogleNetHttpTransport.newTrustedTransport
   val directoryScopes = Collections.singleton(DirectoryScopes.ADMIN_DIRECTORY_GROUP_MEMBER_READONLY)
@@ -23,8 +23,8 @@ object GoogleApiUtils {
       .setJsonFactory(JSON_FACTORY)
       .setServiceAccountId(emailAddress)
       .setServiceAccountScopes(directoryScopes)
-      .setServiceAccountUser(AgoraConfig.gcsUserEmail)
-      .setServiceAccountPrivateKeyFromPemFile(new File(AgoraConfig.gcsServiceAccountPemFile))
+      .setServiceAccountUser(AgoraConfig.googleUserEmail)
+      .setServiceAccountPrivateKeyFromPemFile(new File(AgoraConfig.googleServiceAccountPemFile))
       .build()
   }
 

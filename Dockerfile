@@ -15,6 +15,6 @@ EXPOSE 8000
 COPY --from=builder /agora/agora.jar /agora/
 COPY --from=builder /agora/docker/run.sh /agora/docker/
 
-ARG version=0.0.1 # needed to re-trigger Notary check, will revert
+ARG version 0.0.1 # needed to re-trigger Notary check, will revert
 
 ENTRYPOINT ["/agora/docker/run.sh"]

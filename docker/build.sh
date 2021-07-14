@@ -116,27 +116,35 @@ docker_content_trust_sign_app_image() {
 
     # Confirm the docker-image-sign.sh script exists,
     # and execute it with the appropriate params.
-    if [[ -f ${DOCKER_IMAGE_SIGNING_SCRIPT:?} ]]; then
-        "${DOCKER_IMAGE_SIGNING_SCRIPT:?}" \
-            -s "${DOCKER_NOTARY_VAULT_PATH:?}" \
-            -p "${DOCKER_NOTARY_GCE_PROJ:?}" \
-            -z "${DOCKER_NOTARY_GCE_ZONE:?}" \
-            -k "${SERVICE_ACCT_KEY_FILE:?}" \
-            -i "${_image_uri:?}"
-        return ${?}
+    if [[ ${DOCKER_NOTARY_SIGNING_ENABLE} -eq 1 ]]; then
+        if [[ -f ${DOCKER_IMAGE_SIGNING_SCRIPT:?} ]]; then
+            "${DOCKER_IMAGE_SIGNING_SCRIPT:?}" \
+                -s "${DOCKER_NOTARY_VAULT_PATH:?}" \
+                -p "${DOCKER_NOTARY_GCE_PROJ:?}" \
+                -z "${DOCKER_NOTARY_GCE_ZONE:?}" \
+                -k "${SERVICE_ACCT_KEY_FILE:?}" \
+                -i "${_image_uri:?}"
+            return ${?}
+        else
+            printf '[%s] %s %s: %s\n' \
+                "$(date +'%Y-%m-%dT%H:%M:%S%z')" \
+                "ERROR" \
+                "FILE_NOT_FOUND" \
+                "${DOCKER_IMAGE_SIGNING_SCRIPT:?}"
+            printf '[%s] %s %s: %s\n' \
+                "$(date +'%Y-%m-%dT%H:%M:%S%z')" \
+                "ERROR" \
+                "PWD_AT_TIME_OF_ERROR" \
+                "$(pwd)"
+            return 1
+        fi
     else
         printf '[%s] %s %s: %s\n' \
             "$(date +'%Y-%m-%dT%H:%M:%S%z')" \
-            "ERROR" \
-            "FILE_NOT_FOUND" \
-            "${DOCKER_IMAGE_SIGNING_SCRIPT:?}"
-        printf '[%s] %s %s: %s\n' \
-            "$(date +'%Y-%m-%dT%H:%M:%S%z')" \
-            "ERROR" \
-            "PWD_AT_TIME_OF_ERROR" \
-            "$(pwd)"
-        return 1
-   fi
+            "INFO" \
+            "DOCKER_NOTARY_SIGNING_DISABLED" \
+            "Will not sign Docker image using Docker Notary service."
+    fi
 }
 
 function make_jar() {

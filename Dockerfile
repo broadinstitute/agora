@@ -14,4 +14,5 @@ EXPOSE 8000
 
 COPY --from=builder /agora/agora.jar /agora/
 COPY --from=builder /agora/docker/run.sh /agora/docker/
+
 ENTRYPOINT ["/agora/docker/run.sh"]

@@ -92,6 +92,11 @@ libraryDependencies ++= Seq(
   "org.broadinstitute.cromwell" % "cromwell-client_2.12" % "0.1-8b413b45f-SNAP" // Contains only Java, pinning on 2.12
 )
 
+dependencyOverrides ++= Seq(
+  "com.google.protobuf" % "protobuf-java" % "4.0.0-rc-2",
+  "org.slf4j" % "slf4j-api" % "2.0.0-alpha5"
+)
+
 // Flyway may be run with system properties:
 // i.e: sbt -Dflyway.url=jdbc:mysql://DB_HOST:DB_PORT/DB_NAME -Dflyway.user=root -Dflyway.password=abc123
 

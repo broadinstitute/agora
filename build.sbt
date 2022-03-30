@@ -40,7 +40,7 @@ scalacOptions := Seq(
 )
 
 val akkaV = "2.6.9"
-val akkaHttpV = "10.2.1"
+val akkaHttpV = "10.2.9"
 val jacksonV = "2.11.3"
 val slickV = "3.3.3"
 val testcontainersScalaV = "0.38.4"
@@ -52,7 +52,7 @@ resolvers += "artifactory-releases" at artifactory + "libs-release"
 resolvers += "artifactory-snapshots" at artifactory + "libs-snapshot"
 
 libraryDependencies ++= Seq(
-  "ch.qos.logback" % "logback-classic" % "1.2.3",
+  "ch.qos.logback" % "logback-classic" % "1.3.0-alpha14",
   "com.google.api-client" % "google-api-client" % "1.25.0" excludeAll ExclusionRule(organization = "com.google.guava"),
   "com.google.apis" % "google-api-services-admin-directory" % "directory_v1-rev118-1.25.0" excludeAll
     ExclusionRule(organization = "com.google.guava"),
@@ -68,13 +68,13 @@ libraryDependencies ++= Seq(
   "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2",
   "com.typesafe.slick" %% "slick" % slickV,
   "com.typesafe.slick" %% "slick-hikaricp" % slickV,
-  "mysql" % "mysql-connector-java" % "8.0.21",
+  "mysql" % "mysql-connector-java" % "8.0.28",
 
   // ficus was being pulled in transitively from wdl-draft2 previously, now made explicit
   "com.iheart" %% "ficus" % "1.5.0",
   "org.broadinstitute.dsde.workbench" %% "workbench-util" % "0.6-65bba14",
   "org.mongodb.scala" %% "mongo-scala-driver" % "4.1.0",
-  "org.webjars" % "swagger-ui"  % "3.25.0",
+  "org.webjars" % "swagger-ui"  % "4.5.2",
 
   // Not used directly, but keep Jackson up to date plus main+test synced for IntelliJ
   "com.fasterxml.jackson.core" % "jackson-core" % jacksonV,

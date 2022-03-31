@@ -40,7 +40,7 @@ scalacOptions := Seq(
 )
 
 val akkaV = "2.6.9"
-val akkaHttpV = "10.2.9"
+val akkaHttpV = "10.2.1"
 val jacksonV = "2.11.3"
 val slickV = "3.3.3"
 val testcontainersScalaV = "0.38.4"
@@ -52,7 +52,7 @@ resolvers += "artifactory-releases" at artifactory + "libs-release"
 resolvers += "artifactory-snapshots" at artifactory + "libs-snapshot"
 
 libraryDependencies ++= Seq(
-  "ch.qos.logback" % "logback-classic" % "1.3.0-alpha14",
+  "ch.qos.logback" % "logback-classic" % "1.2.3",
   "com.google.api-client" % "google-api-client" % "1.25.0" excludeAll ExclusionRule(organization = "com.google.guava"),
   "com.google.apis" % "google-api-services-admin-directory" % "directory_v1-rev118-1.25.0" excludeAll
     ExclusionRule(organization = "com.google.guava"),
@@ -68,7 +68,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2",
   "com.typesafe.slick" %% "slick" % slickV,
   "com.typesafe.slick" %% "slick-hikaricp" % slickV,
-  "mysql" % "mysql-connector-java" % "8.0.28",
+  "mysql" % "mysql-connector-java" % "8.0.21",
 
   // ficus was being pulled in transitively from wdl-draft2 previously, now made explicit
   "com.iheart" %% "ficus" % "1.5.0",
@@ -94,7 +94,7 @@ libraryDependencies ++= Seq(
 
 dependencyOverrides ++= Seq(
   "com.google.protobuf" % "protobuf-java" % "4.0.0-rc-2",
-  "org.slf4j" % "slf4j-api" % "2.0.0-alpha5"
+  // "org.slf4j" % "slf4j-api" % "2.0.0-alpha5"
 )
 
 // Flyway may be run with system properties:

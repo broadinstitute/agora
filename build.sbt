@@ -68,7 +68,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2",
   "com.typesafe.slick" %% "slick" % slickV,
   "com.typesafe.slick" %% "slick-hikaricp" % slickV,
-  "mysql" % "mysql-connector-java" % "8.0.21",
+  "mysql" % "mysql-connector-java" % "8.0.21" exclude("com.google.protobuf", "protobuf-java"),
 
   // ficus was being pulled in transitively from wdl-draft2 previously, now made explicit
   "com.iheart" %% "ficus" % "1.5.0",
@@ -90,11 +90,6 @@ libraryDependencies ++= Seq(
   "org.flywaydb" % "flyway-core" % "7.3.2" % Test,
   "org.broadinstitute.dsde.workbench" % "sam-client_2.12" % "0.1-9d0baea",      // Should become available for 2.13 once a release happens ( https://github.com/broadinstitute/sam/pull/491 )
   "org.broadinstitute.cromwell" % "cromwell-client_2.12" % "0.1-8b413b45f-SNAP" // Contains only Java, pinning on 2.12
-)
-
-dependencyOverrides ++= Seq(
-  "com.google.protobuf" % "protobuf-java" % "4.0.0-rc-2",
-  // "org.slf4j" % "slf4j-api" % "2.0.0-alpha5"
 )
 
 // Flyway may be run with system properties:

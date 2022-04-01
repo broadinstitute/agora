@@ -68,13 +68,13 @@ libraryDependencies ++= Seq(
   "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2",
   "com.typesafe.slick" %% "slick" % slickV,
   "com.typesafe.slick" %% "slick-hikaricp" % slickV,
-  "mysql" % "mysql-connector-java" % "8.0.21",
+  "mysql" % "mysql-connector-java" % "8.0.21" exclude("com.google.protobuf", "protobuf-java"),
 
   // ficus was being pulled in transitively from wdl-draft2 previously, now made explicit
   "com.iheart" %% "ficus" % "1.5.0",
   "org.broadinstitute.dsde.workbench" %% "workbench-util" % "0.6-65bba14",
   "org.mongodb.scala" %% "mongo-scala-driver" % "4.1.0",
-  "org.webjars" % "swagger-ui"  % "3.25.0",
+  "org.webjars" % "swagger-ui"  % "4.5.2",
 
   // Not used directly, but keep Jackson up to date plus main+test synced for IntelliJ
   "com.fasterxml.jackson.core" % "jackson-core" % jacksonV,

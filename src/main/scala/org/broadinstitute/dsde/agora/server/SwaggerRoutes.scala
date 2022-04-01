@@ -7,7 +7,7 @@ import akka.stream.scaladsl.Flow
 import akka.util.ByteString
 
 trait SwaggerRoutes {
-  private val swaggerUiPath = "META-INF/resources/webjars/swagger-ui/3.25.0"
+  private val swaggerUiPath = "META-INF/resources/webjars/swagger-ui/4.5.2"
 
   val swaggerRoutes: server.Route = {
     path("") {

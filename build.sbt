@@ -40,7 +40,7 @@ scalacOptions := Seq(
 )
 
 val akkaV = "2.6.9"
-val akkaHttpV = "10.2.1"
+val akkaHttpV = "10.2.9"
 val jacksonV = "2.11.3"
 val slickV = "3.3.3"
 val testcontainersScalaV = "0.38.4"

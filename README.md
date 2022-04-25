@@ -76,3 +76,5 @@ or, use the config script:
 ```
 
 The docker compose configuration is set to point to https://local.broadinstitute.org:30443/ (where the endpoints can be viewed via Swagger).
+
+test

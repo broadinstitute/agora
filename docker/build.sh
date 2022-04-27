@@ -89,64 +89,6 @@ if [[ -n $SERVICE_ACCT_KEY_FILE ]]; then
   gcloud auth activate-service-account --key-file="${SERVICE_ACCT_KEY_FILE}"
 fi
 
-# The following function executes the Docker Content Trust signing
-# script. This function replaces the docker push -- gcr command in
-# the main section of this build script.
-docker_content_trust_sign_app_image() {
-    local _image_uri
-
-    # Check for param 1: Docker image URI
-    if [[ -n ${1} ]]; then
-        _image_uri="${1}"
-    else
-        printf '[%s] %s %s %s: %s\n' \
-            "$(date +'%Y-%m-%dT%H:%M:%S%z')" \
-            "ERROR" \
-            "Missing required param" \
-            "1" \
-            "image_uri"
-        return 1
-    fi
-
-    printf '[%s] %s %s: %s\n' \
-        "$(date +'%Y-%m-%dT%H:%M:%S%z')" \
-        "INFO" \
-        "Signing docker image" \
-        "${_image_uri:?}"
-
-    # Confirm the docker-image-sign.sh script exists,
-    # and execute it with the appropriate params.
-    if [[ ${DOCKER_NOTARY_SIGNING_ENABLE} -eq 1 ]]; then
-        if [[ -f ${DOCKER_IMAGE_SIGNING_SCRIPT:?} ]]; then
-            "${DOCKER_IMAGE_SIGNING_SCRIPT:?}" \
-                -s "${DOCKER_NOTARY_VAULT_PATH:?}" \
-                -p "${DOCKER_NOTARY_GCE_PROJ:?}" \
-                -z "${DOCKER_NOTARY_GCE_ZONE:?}" \
-                -k "${SERVICE_ACCT_KEY_FILE:?}" \
-                -i "${_image_uri:?}"
-            return ${?}
-        else
-            printf '[%s] %s %s: %s\n' \
-                "$(date +'%Y-%m-%dT%H:%M:%S%z')" \
-                "ERROR" \
-                "FILE_NOT_FOUND" \
-                "${DOCKER_IMAGE_SIGNING_SCRIPT:?}"
-            printf '[%s] %s %s: %s\n' \
-                "$(date +'%Y-%m-%dT%H:%M:%S%z')" \
-                "ERROR" \
-                "PWD_AT_TIME_OF_ERROR" \
-                "$(pwd)"
-            return 1
-        fi
-    else
-        printf '[%s] %s %s: %s\n' \
-            "$(date +'%Y-%m-%dT%H:%M:%S%z')" \
-            "INFO" \
-            "DOCKER_NOTARY_SIGNING_DISABLED" \
-            "Will not sign Docker image using Docker Notary service."
-    fi
-}
-
 function make_jar() {
     echo "building jar..."
     docker run --rm -v $PWD:/working \
@@ -175,17 +117,7 @@ function docker_cmd()
             if [[ -n $GCR_REGISTRY ]]; then
                 docker tag $DOCKERHUB_REGISTRY:${HASH_TAG} $GCR_REGISTRY:${HASH_TAG}
                 ## Next line replaced with docker_content_trust_sign_app_image.
-                #gcloud docker -- push $GCR_REGISTRY:${HASH_TAG}
-
-                # Define the docker image URI using previously-defined
-                # vars, and call the signing function to execute the
-                # docker-image-sign.sh script.
-                IMAGE_URI="${GCR_REGISTRY:?}:${IMAGE_TAG:?}"
-                if docker_content_trust_sign_app_image "${IMAGE_URI:?}"; then
-                    return 0
-                else
-                    return 1
-                fi
+                gcloud docker -- push $GCR_REGISTRY:${HASH_TAG}
             fi
         fi
     else

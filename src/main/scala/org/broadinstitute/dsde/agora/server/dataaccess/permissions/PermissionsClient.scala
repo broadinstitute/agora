@@ -47,7 +47,7 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
     withPermissionNotFoundException() {
       val adminsQuery = for {
         user <- users if user.is_admin === true
-      } yield user.email
+      } yield user.email.toLowerCase
 
       adminsQuery.result
     }
@@ -137,7 +137,7 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
         entity <- entities if entity.alias === alias(agoraEntity)
         permission <- permissions if permission.entityID === entity.id && (permission.roles >= AgoraPermissions.Manage)
         user <- users if user.id === permission.userID
-      } yield user.email
+      } yield user.email.toLowerCase
 
       permissionsQuery.result
     }
@@ -151,7 +151,7 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
         entity <- entities if entity.alias === alias(agoraEntity)
         _permissions <- permissions if _permissions.entityID === entity.id
         user <- users if user.id === _permissions.userID
-      } yield (user.email, _permissions.roles)
+      } yield (user.email.toLowerCase, _permissions.roles)
 
       permissionsQuery.result map { accessObjects: Seq[(String, Int)] =>
          accessObjects.map(AccessControl.apply)
@@ -247,7 +247,7 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
           result <- permissions
             .filter(p => p.entityID === entity.id && p.userID === user.id)
             .delete
-          
+
         } yield result
 
         permissionsUpdateAction flatMap { rowsEdited =>
@@ -365,7 +365,7 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
       if permission.roles =!= AgoraPermissions.Nothing
       entity <- entities
       if permission.entityID === entity.id
-    } yield (entity.alias, user.email, permission.roles)
+    } yield (entity.alias, user.email.toLowerCase, permission.roles)
 
     query.result
   }

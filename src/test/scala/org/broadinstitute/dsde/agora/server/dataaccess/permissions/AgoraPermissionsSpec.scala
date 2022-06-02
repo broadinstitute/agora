@@ -5,9 +5,9 @@ import org.broadinstitute.dsde.agora.server.{AgoraTestData, AgoraTestFixture}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.webservice.ApiServiceSpec
 import org.scalatest.flatspec.AnyFlatSpecLike
-//import org.scalatest.{BeforeAndAfterAll, DoNotDiscover}
-import org.scalatest.BeforeAndAfterAll
+import org.scalatest.{BeforeAndAfterAll, DoNotDiscover}
 
+@DoNotDiscover
 class AgoraPermissionsSpec extends ApiServiceSpec with BeforeAndAfterAll with AgoraTestFixture with AnyFlatSpecLike {
 
   override protected def beforeAll(): Unit = {

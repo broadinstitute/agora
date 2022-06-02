@@ -7,11 +7,11 @@ import org.broadinstitute.dsde.agora.server.exceptions.PermissionModificationExc
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpec
-//import org.scalatest.{BeforeAndAfterAll, DoNotDiscover}
-import org.scalatest.BeforeAndAfterAll
+import org.scalatest.{BeforeAndAfterAll, DoNotDiscover}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
+@DoNotDiscover
 class EntityPermissionsClientSpec extends AnyFlatSpec with ScalaFutures with BeforeAndAfterAll with AgoraTestFixture {
 
   var foundTestEntity1: AgoraEntity = _

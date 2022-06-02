@@ -7,17 +7,18 @@ import org.broadinstitute.dsde.agora.server.exceptions.PermissionModificationExc
 import org.broadinstitute.dsde.agora.server.model.AgoraEntity
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.{BeforeAndAfterAll, DoNotDiscover}
+//import org.scalatest.{BeforeAndAfterAll, DoNotDiscover}
+import org.scalatest.BeforeAndAfterAll
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-@DoNotDiscover
 class EntityPermissionsClientSpec extends AnyFlatSpec with ScalaFutures with BeforeAndAfterAll with AgoraTestFixture {
 
   var foundTestEntity1: AgoraEntity = _
   var foundTestEntity2: AgoraEntity = _
   var testEntityWithPublicPermissionsWithId: AgoraEntity = _
   var testBatchPermissionEntity: AgoraEntity = _
+  var foundEntityWithMixedCaseOnwership: AgoraEntity = _
 
 
   override def beforeAll(): Unit = {
@@ -29,11 +30,13 @@ class EntityPermissionsClientSpec extends AnyFlatSpec with ScalaFutures with Bef
     patiently(agoraBusiness.insert(testEntityWithPublicPermissions, mockAuthenticatedOwner.get, mockAccessToken))
     patiently(agoraBusiness.insert(testEntity3, mockAuthenticatedOwner.get, mockAccessToken))
     patiently(agoraBusiness.insert(testEntity4, mockAuthenticatedOwner.get, mockAccessToken))
+    patiently(agoraBusiness.insert(testEntityWithMixedCaseOwnership, mockAuthenticatedOwner.get, mockAccessToken))
 
     testEntityWithPublicPermissionsWithId = patiently(agoraBusiness.find(testEntityWithPublicPermissions, None, Seq(testEntityWithPublicPermissions.entityType.get), mockAuthenticatedOwner.get)).head
     foundTestEntity1 = patiently(agoraBusiness.find(testEntity1, None, Seq(testEntity1.entityType.get), mockAuthenticatedOwner.get)).head
     foundTestEntity2 = patiently(agoraBusiness.find(testEntity2, None, Seq(testEntity2.entityType.get), mockAuthenticatedOwner.get)).head
     testBatchPermissionEntity = patiently(agoraBusiness.find(testEntity4, None, Seq(testEntity3.entityType.get), mockAuthenticatedOwner.get)).head
+    foundEntityWithMixedCaseOnwership = patiently(agoraBusiness.find(testEntityWithMixedCaseOwnership, None, Seq(testEntityWithMixedCaseOwnership.entityType.get), mockAuthenticatedOwner.get)).head
   }
 
   override def afterAll(): Unit = {
@@ -167,6 +170,22 @@ class EntityPermissionsClientSpec extends AnyFlatSpec with ScalaFutures with Bef
     intercept[PermissionModificationException] {
       patiently(permissionBusiness.deleteEntityPermission(testBatchPermissionEntity, mockAuthenticatedOwner.get, mockAuthenticatedOwner.get))
     }
+  }
+
+  "Agora" should "return lowercased email addresses when listing entity owners" in {
+
+    runInDB { db =>
+      db.aePerms.insertEntityPermission(foundEntityWithMixedCaseOnwership, AccessControl(uppercasedOwner.get, AgoraPermissions(All)))
+    }
+
+    val entityOwners = runInDB { db =>
+      db.aePerms.listOwners(foundEntityWithMixedCaseOnwership)
+    }
+
+    assert(entityOwners.size == 2)
+    // The returned owner list should all be lowercased:
+    assert(entityOwners.contains(uppercasedOwner.get.toLowerCase))
+    assert(entityOwners.contains(mockAuthenticatedOwner.get.toLowerCase))
   }
 
 }

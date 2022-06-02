@@ -19,6 +19,7 @@ object AgoraConfig {
 
   lazy val mockAuthenticatedUserEmail: String =
     config.getOrElse("mockAuthenticatedUserEmail", "noone@broadinstitute.org")
+  lazy val mockMixedCaseAuthenticatedUserEmail: String = "UPPER" + mockAuthenticatedUserEmail
   lazy val mockAccessToken: String = config.getOrElse("mockAccessToken", "ya.not.a.real.token")
 
   lazy val environment: Option[String] = config.getAs[String]("environment")

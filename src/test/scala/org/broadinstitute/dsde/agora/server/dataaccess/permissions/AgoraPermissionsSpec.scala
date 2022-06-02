@@ -5,9 +5,9 @@ import org.broadinstitute.dsde.agora.server.{AgoraTestData, AgoraTestFixture}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.webservice.ApiServiceSpec
 import org.scalatest.flatspec.AnyFlatSpecLike
-import org.scalatest.{BeforeAndAfterAll, DoNotDiscover}
+//import org.scalatest.{BeforeAndAfterAll, DoNotDiscover}
+import org.scalatest.BeforeAndAfterAll
 
-@DoNotDiscover
 class AgoraPermissionsSpec extends ApiServiceSpec with BeforeAndAfterAll with AgoraTestFixture with AnyFlatSpecLike {
 
   override protected def beforeAll(): Unit = {
@@ -78,11 +78,20 @@ class AgoraPermissionsSpec extends ApiServiceSpec with BeforeAndAfterAll with Ag
     assert(adminUsers.head == AgoraTestData.adminUser.get)
   }
 
-  "Agora" should "be able to update the admin status of a user" in {
+  "Agora" should "convert uppercase emails to lowercase when listing admins" in {
+    addUppercaseAdminUser()
+    val adminUsers = runInDB { db => db.admPerms.listAdminUsers() }
+    // Assert that the email is lowercased in the response:
+    assert(adminUsers.contains(AgoraTestData.uppercasedAdminUser.get.toLowerCase))
+  }
+
+  "Agora" should "be able to update the admin status of users" in {
     val adminUser = AgoraTestData.adminUser.get
+    val uppercasedAdminUser = AgoraTestData.uppercasedAdminUser.get
 
     // Set adminUsers's admin status false
     runInDB { db => db.admPerms.updateAdmin(adminUser, false) }
+    runInDB { db => db.admPerms.updateAdmin(uppercasedAdminUser, false) }
     val noAdminUsers = runInDB { db => db.admPerms.listAdminUsers() }
     assert(noAdminUsers.isEmpty)
 

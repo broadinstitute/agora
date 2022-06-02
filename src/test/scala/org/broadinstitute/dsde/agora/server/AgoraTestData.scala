@@ -24,6 +24,7 @@ object AgoraTestData {
   val name3 = Option("name3")
   val name4 = Option("name4")
   val name5 = Option("cancer_exome_pipeline_v2")
+  val name6 = Option("name6")
   val nameWithAllLegalChars = Option("abcdefghijklmnopqrstuvwxyz-ABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789.")
   val snapshotId1 = Option(1)
   val snapshotComment1 = Option("snapshot comment 1")
@@ -53,7 +54,9 @@ object AgoraTestData {
   val owner1 = Option("testowner1@broadinstitute.org")
   val owner2 = Option("testowner2@broadinstitute.org")
   val owner3 = Option("testowner3@broadinstitute.org")
+  val uppercasedOwner = Option("UPPERCASEDOWNER@BROADINSTITUTE.ORG")
   val adminUser = Option("admin@broadinstitute.org")
+  val uppercasedAdminUser = Option("UPPERCASEADMIN@BROADINSTITUTE.ORG")
   val mockAuthenticatedOwner = Option(AgoraConfig.mockAuthenticatedUserEmail)
 
   val fillerText = "activated charcoal palo santo, occupy listicle quinoa scenester next level kitsch gentrify XOXO tumeric everyday carry"
@@ -504,6 +507,16 @@ object AgoraTestData {
     payload = payload2,
     entityType = Option(AgoraEntityType.Task),
     snapshotComment = snapshotComment1
+  )
+
+  val testEntityWithMixedCaseOwnership = AgoraEntity(namespace = namespace1,
+    name = name6,
+    synopsis = synopsis1,
+    documentation = documentation1,
+    owner = uppercasedOwner,
+    payload = payload2,
+    entityType = Option(AgoraEntityType.Task),
+    snapshotComment = snapshotComment1,
   )
 
   val testEntityToBeRedacted = AgoraEntity(namespace = namespace1,

@@ -112,6 +112,10 @@ trait AgoraTestFixture extends LazyLogging {
     Await.result(db.run(users += UserDao(adminUser.get, isAdmin = true)), timeout)
   }
 
+  def addUppercaseAdminUser(): Int = {
+    Await.result(db.run(users += UserDao(uppercasedAdminUser.get.toUpperCase, isAdmin = true)), timeout)
+  }
+
   protected def patiently[R](op: => Future[R], duration: Duration = 1 minutes): R = {
     Await.result(op, duration)
   }

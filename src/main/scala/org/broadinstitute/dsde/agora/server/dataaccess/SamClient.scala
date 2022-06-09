@@ -18,9 +18,9 @@ object SamClient {
     new UsersApi(apiClient)
   }
 
-  def getUserEmail(token: String): Future[Option[String]] = {
+  def getSamUser(token: String): Future[Option[UserStatusInfo]] = {
     val api = samUserApi(token)
-    val promise = Promise[Option[String]]()
+    val promise = Promise[Option[UserStatusInfo]]()
     api.getUserStatusInfoAsync(new ApiCallback[UserStatusInfo] {
       override def onFailure(e: ApiException, statusCode: Int, responseHeaders: util.Map[String, util.List[String]]): Unit = {
         if (statusCode == StatusCodes.NotFound.intValue) {
@@ -31,7 +31,7 @@ object SamClient {
       }
 
       override def onSuccess(result: UserStatusInfo, statusCode: Int, responseHeaders: util.Map[String, util.List[String]]): Unit = {
-        promise.success(Option(result.getUserEmail))
+        promise.success(Option(result))
       }
 
       override def onUploadProgress(bytesWritten: Long, contentLength: Long, done: Boolean): Unit = ()

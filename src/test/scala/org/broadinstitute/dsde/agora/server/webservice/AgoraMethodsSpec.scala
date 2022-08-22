@@ -26,7 +26,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with AnyFlatSpecLike {
   var testEntityToBeRedactedWithId: AgoraEntity = _
 
   val routes: Route = ApiService.handleExceptionsAndRejections {
-    methodsService.postRoute ~ methodsService.querySingleRoute ~ methodsService.queryRoute
+    methodsService.routes
   }
 
   private val errorMessagePrefix = "Invalid WDL:"
@@ -55,6 +55,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with AnyFlatSpecLike {
       + testEntity1WithId.snapshotId.get) ~> addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
       assert(responseAs[AgoraEntity] == testEntity1WithId)
       assert(status == OK)
+      assert(header("Cache-Control").exists(_.value() == "no-cache"))
     }
   }
 
@@ -64,6 +65,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with AnyFlatSpecLike {
       check {
         assert(status == OK)
         assert(mediaType == MediaTypes.`text/plain`)
+        assert(header("Cache-Control").exists(_.value() == "no-cache"))
       }
   }
 
@@ -80,6 +82,9 @@ class AgoraMethodsSpec extends ApiServiceSpec with AnyFlatSpecLike {
         val entities = responseAs[Seq[AgoraEntity]]
         assert(entities.toSet == brief(Seq(testEntity3WithId, testEntity4WithId, testEntity5WithId, testEntity6WithId, testEntity7WithId)).toSet)
         assert(status == OK)
+        println(response.headers)
+        println(headers)
+        assert(header("Cache-Control").exists(_.value() == "no-cache"))
       }
   }
 
@@ -90,6 +95,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with AnyFlatSpecLike {
         val entities = responseAs[Seq[AgoraEntity]]
         assert(entities.toSet == brief(Seq(testEntity1WithId, testEntity2WithId, testEntity3WithId, testEntity6WithId, testEntity7WithId)).toSet)
         assert(status == OK)
+        assert(header("Cache-Control").exists(_.value() == "no-cache"))
       }
   }
 
@@ -98,6 +104,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with AnyFlatSpecLike {
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
       val entities = responseAs[Seq[AgoraEntity]]
       assert(entities.toSet == brief(Seq(testEntity1WithId, testEntity3WithId, testEntity4WithId, testEntity5WithId)).toSet)
+      assert(header("Cache-Control").exists(_.value() == "no-cache"))
     }
   }
 
@@ -115,6 +122,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with AnyFlatSpecLike {
         assert(entity.createDate.isDefined)
 
         assert(status == Created)
+        assert(header("Cache-Control").exists(_.value() == "no-cache"))
       }
   }
 
@@ -122,6 +130,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with AnyFlatSpecLike {
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity(payloadWdl10)) ~>
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
       assert(status == Created)
+      assert(header("Cache-Control").exists(_.value() == "no-cache"))
     }
   }
 
@@ -294,6 +303,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with AnyFlatSpecLike {
       assert(status == Created)
       assert(responseAs[AgoraEntity].snapshotComment == snapshotComment1)
       assert(responseAs[AgoraEntity].snapshotId.contains(1))
+      assert(header("Cache-Control").exists(_.value() == "no-cache"))
     }
   }
 
@@ -303,6 +313,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with AnyFlatSpecLike {
       assert(status == Created)
       assert(responseAs[AgoraEntity].snapshotComment == snapshotComment2)
       assert(responseAs[AgoraEntity].snapshotId.contains(2))
+      assert(header("Cache-Control").exists(_.value() == "no-cache"))
     }
   }
 
@@ -312,6 +323,7 @@ class AgoraMethodsSpec extends ApiServiceSpec with AnyFlatSpecLike {
       assert(status == Created)
       assert(responseAs[AgoraEntity].snapshotComment.isEmpty)
       assert(responseAs[AgoraEntity].snapshotId.contains(3))
+      assert(header("Cache-Control").exists(_.value() == "no-cache"))
     }
   }
 }

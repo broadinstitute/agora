@@ -25,7 +25,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with AnyFlatSpecLike with A
   var testAgoraConfigurationToBeRedactedWithId: AgoraEntity = _
 
   val routes: Route = ApiService.handleExceptionsAndRejections {
-    configurationsService.querySingleRoute ~ configurationsService.postRoute ~ methodsService.querySingleRoute
+    configurationsService.routes ~ methodsService.routes
   }
 
   override def beforeAll(): Unit = {
@@ -55,6 +55,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with AnyFlatSpecLike with A
       assert(status == Created)
       assert(responseAs[AgoraEntity].snapshotComment == snapshotComment1)
       assert(responseAs[AgoraEntity].snapshotId.contains(1))
+      assert(header("Cache-Control").exists(_.value() == "no-cache"))
     }
   }
 
@@ -64,6 +65,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with AnyFlatSpecLike with A
       assert(status == Created)
       assert(responseAs[AgoraEntity].snapshotComment == snapshotComment2)
       assert(responseAs[AgoraEntity].snapshotId.contains(2))
+      assert(header("Cache-Control").exists(_.value() == "no-cache"))
     }
   }
 
@@ -73,6 +75,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with AnyFlatSpecLike with A
       assert(status == Created)
       assert(responseAs[AgoraEntity].snapshotComment.isEmpty)
       assert(responseAs[AgoraEntity].snapshotId.contains(3))
+      assert(header("Cache-Control").exists(_.value() == "no-cache"))
     }
   }
 
@@ -100,12 +103,13 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with AnyFlatSpecLike with A
         assert(foundMethod.name == name1)
         assert(foundMethod.snapshotId == snapshotId1)
         assert(foundMethod.url.isDefined)
+        assert(header("Cache-Control").exists(_.value() == "no-cache"))
       }
   }
 
   "Agora" should "populate method references when returning configurations" in {
     Get(ApiUtil.Configurations.withLeadingVersion) ~>
-      configurationsService.queryRoute ~> check {
+      routes ~> check {
         val configs = responseAs[Seq[AgoraEntity]]
 
         val method1 = AgoraDao
@@ -161,6 +165,8 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with AnyFlatSpecLike with A
         assert(methodRef3.namespace == method3.namespace)
         assert(methodRef3.name == method3.name)
         assert(methodRef3.snapshotId == method3.snapshotId)
+
+        assert(header("Cache-Control").exists(_.value() == "no-cache"))
     }
   }
 
@@ -196,6 +202,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with AnyFlatSpecLike with A
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~>
     check {
       assert(responseAs[String] == "1")
+      assert(header("Cache-Control").exists(_.value() == "no-cache"))
     }
   }
 
@@ -228,6 +235,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with AnyFlatSpecLike with A
         assert(payloadObject.namespace == namespace1.get)
         assert(payloadObject.name == name5.get)
         assert(entity.payload.isEmpty)
+        assert(header("Cache-Control").exists(_.value() == "no-cache"))
       }
     }
 
@@ -238,6 +246,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with AnyFlatSpecLike with A
         val entity = responseAs[AgoraEntity]
         assert(entity.payloadObject.isEmpty)
         assert(entity.payload.get contains testConfigWithSnapshot1.payload.get)
+        assert(header("Cache-Control").exists(_.value() == "no-cache"))
       }
     }
 
@@ -245,6 +254,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with AnyFlatSpecLike with A
       Get(baseURL + "?payloadAsObject=true&onlyPayload=true") ~> addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
         assert(responseAs[String] contains "onlyPayload, payloadAsObject cannot be used together")
         assert(status == BadRequest)
+        assert(header("Cache-Control").exists(_.value() == "no-cache"))
       }
     }
 

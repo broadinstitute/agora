@@ -82,8 +82,6 @@ class AgoraMethodsSpec extends ApiServiceSpec with AnyFlatSpecLike {
         val entities = responseAs[Seq[AgoraEntity]]
         assert(entities.toSet == brief(Seq(testEntity3WithId, testEntity4WithId, testEntity5WithId, testEntity6WithId, testEntity7WithId)).toSet)
         assert(status == OK)
-        println(response.headers)
-        println(headers)
         assert(header("Cache-Control").exists(_.value() == "no-cache"))
       }
   }

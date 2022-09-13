@@ -1,0 +1,16 @@
+.idea
+target
+log
+*.log
+*.p12
+*.db
+native
+/config
+configure.rb
+agora.jar
+.docker-rsync-local.pid
+*-service-account.json
+env.properties
+*~
+.DS_Store
+/.bsp/sbt.json

@@ -1,0 +1,13 @@
+{
+  "valid":true,
+  "errors":[],
+  "validWorkflow":true,
+  "name":"test",
+  "inputs":[],
+  "outputs":[],
+  "images":[],
+  "submittedDescriptorType":{"descriptorType":"WDL","descriptorTypeVersion":"draft-2"},
+  "importedDescriptorTypes":[],
+  "meta":{},
+  "parameterMeta":{}
+}

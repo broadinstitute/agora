@@ -1,0 +1,13 @@
+{
+  "valid":true,
+  "errors":[],
+  "validWorkflow":true,
+  "name":"wf",
+  "inputs":[],
+  "outputs":[],
+  "images":[],
+  "submittedDescriptorType":{"descriptorType":"WDL","descriptorTypeVersion":"1.0"},
+  "importedDescriptorTypes":[],
+  "meta":{},
+  "parameterMeta":{}
+}

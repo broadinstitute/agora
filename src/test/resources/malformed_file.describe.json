@@ -1,0 +1,13 @@
+{
+  "valid":false,
+  "errors":["ERROR: No more tokens.  Expecting rbrace\n\ntask test {\n          ^\n     "],
+  "validWorkflow":false,
+  "name":"",
+  "inputs":[],
+  "outputs":[],
+  "images":[],
+  "submittedDescriptorType":{},
+  "importedDescriptorTypes":[],
+  "meta":{},
+  "parameterMeta":{}
+}

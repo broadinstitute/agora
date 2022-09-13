@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<configuration>
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <!-- See http://logback.qos.ch/manual/layouts.html -->
+            <!-- See http://doc.akka.io/docs/akka/2.0/scala/logging.html -->
+            <pattern>[%level] [%d{HH:mm:ss.SSS}] [%thread] %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>log/agora.log</file>
+        <append>true</append>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- daily rollover -->
+            <fileNamePattern>agora.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <!-- keep 30 days' worth of history -->
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <!-- encoders are assigned the type
+             ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
+        <encoder>
+            <pattern>[%level] [%d{HH:mm:ss.SSS}] [%thread] %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="SYSLOG" class="ch.qos.logback.classic.net.SyslogAppender">
+        <syslogHost>127.0.0.1</syslogHost>
+        <facility>AUDIT</facility>
+        <suffixPattern>[%level] [%d{HH:mm:ss.SSS}] [%thread] %logger{36} - %msg%n</suffixPattern>
+    </appender>
+
+    <logger name="org.mockserver.mock.HttpStateHandler" level="warn"/>
+
+    <!-- for debugging slick db calls / timing
+    <logger name="slick.jdbc.JdbcBackend.statement" level="DEBUG" additivity="false">
+        <appender-ref ref="file"/>
+        <appender-ref ref="console"/>
+    </logger>
+    <logger name="slick.jdbc.JdbcBackend.benchmark" level="DEBUG" additivity="false">
+        <appender-ref ref="file"/>
+        <appender-ref ref="console"/>
+    </logger>
+    -->
+
+    <!-- change this loglevel to see metrics output in unit tests -->
+    <logger name="org.broadinstitute.dsde.agora.server.dataaccess.MetricsClient" level="warn" additivity="false">
+        <appender-ref ref="file"/>
+        <appender-ref ref="console"/>
+        <appender-ref ref="SYSLOG"/>
+    </logger>
+
+    <logger name="org.broadinstitute.dsde" level="info" additivity="false">
+        <appender-ref ref="file"/>
+        <appender-ref ref="console"/>
+        <appender-ref ref="SYSLOG"/>
+    </logger>
+
+    <logger name="akka" level="info" additivity="false">
+        <appender-ref ref="file"/>
+        <appender-ref ref="console"/>
+        <appender-ref ref="SYSLOG"/>
+    </logger>
+
+    <root level="warn">
+        <appender-ref ref="file"/>
+        <appender-ref ref="console"/>
+        <appender-ref ref="SYSLOG"/>
+    </root>
+</configuration>

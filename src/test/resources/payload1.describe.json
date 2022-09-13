@@ -1,0 +1,67 @@
+{
+  "valid": true,
+  "errors": [],
+  "validWorkflow": true,
+  "name": "scatter_gather_grep_wc",
+  "inputs": [
+    {
+      "name": "grep.flags",
+      "valueType": {
+        "typeName": "Optional",
+        "optionalType": {
+          "typeName": "String"
+        }
+      },
+      "typeDisplayName": "String?",
+      "optional": true,
+      "default": null
+    },
+    {
+      "name": "grep.pattern",
+      "valueType": {
+        "typeName": "String"
+      },
+      "typeDisplayName": "String",
+      "optional": false,
+      "default": null
+    },
+    {
+      "name": "input_files",
+      "valueType": {
+        "typeName": "Array",
+        "arrayType": {
+          "typeName": "File"
+        }
+      },
+      "typeDisplayName": "Array[File]",
+      "optional": false,
+      "default": null
+    }
+  ],
+  "outputs": [
+    {
+      "name": "grep.out",
+      "valueType": {
+        "typeName": "Array",
+        "arrayType": {
+          "typeName": "File"
+        }
+      },
+      "typeDisplayName": "Array[File]"
+    },
+    {
+      "name": "wc.count",
+      "valueType": {
+        "typeName": "Int"
+      },
+      "typeDisplayName": "Int"
+    }
+  ],
+  "images": [],
+  "submittedDescriptorType": {
+    "descriptorType": "WDL",
+    "descriptorTypeVersion": "draft-2"
+  },
+  "importedDescriptorTypes": [],
+  "meta": {}
+}

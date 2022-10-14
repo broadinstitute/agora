@@ -119,7 +119,7 @@ function docker_cmd()
                 docker tag $DOCKERHUB_REGISTRY:${HASH_TAG} $GCR_REGISTRY:${HASH_TAG}
                 ## Next line replaced with docker_content_trust_sign_app_image.
                 gcloud docker -- push $GCR_REGISTRY:${HASH_TAG}
-                gcloud container images add-tag $GCR_REGISTRY:${HASH_TAG} $GCR_REGISTRY:${DOCKERTAG_SAFE_NAME}
+                gcloud container images add-tag $GCR_REGISTRY:${HASH_TAG} $GCR_REGISTRY:${BRANCH}
             fi
         fi
     else

@@ -4,7 +4,7 @@ name := "Agora"
 
 organization := "org.broadinstitute"
 
-scalaVersion := "2.13.4"
+scalaVersion := "2.13.9"
 
 // Ported from Cromwell 2019-11-19
 // The disabled ones are not too crazy to get compliant with, but more work than I want to do just now (AEN)
@@ -68,7 +68,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2",
   "com.typesafe.slick" %% "slick" % slickV,
   "com.typesafe.slick" %% "slick-hikaricp" % slickV,
-  "mysql" % "mysql-connector-java" % "8.0.21" exclude("com.google.protobuf", "protobuf-java"),
+  "mysql" % "mysql-connector-java" % "8.0.31" exclude("com.google.protobuf", "protobuf-java"),
 
   // ficus was being pulled in transitively from wdl-draft2 previously, now made explicit
   "com.iheart" %% "ficus" % "1.5.0",
@@ -88,8 +88,8 @@ libraryDependencies ++= Seq(
   "com.dimafeng" %% "testcontainers-scala-mysql" % testcontainersScalaV % Test,
   "com.dimafeng" %% "testcontainers-scala-mongodb" % testcontainersScalaV % Test,
   "org.flywaydb" % "flyway-core" % "7.3.2" % Test,
-  "org.broadinstitute.dsde.workbench" % "sam-client_2.12" % "0.1-61135c7",      // Should become available for 2.13 once a release happens ( https://github.com/broadinstitute/sam/pull/491 )
-  "org.broadinstitute.cromwell" % "cromwell-client_2.12" % "0.1-8b413b45f-SNAP" // Contains only Java, pinning on 2.12
+  "org.broadinstitute.dsde.workbench" % "sam-client_2.13" % "0.1-3d1bbd8-SNAP",
+  "org.broadinstitute.cromwell" % "cromwell-client_2.12" % "0.1-8b413b45f-SNAP"
 )
 
 // Flyway may be run with system properties:

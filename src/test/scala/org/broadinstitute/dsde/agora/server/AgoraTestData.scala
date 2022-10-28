@@ -160,7 +160,7 @@ object AgoraTestData {
                                                     |  }
                                                     |}
                                                     |
-                                                   |workflow scatter_gather_grep_wc {
+                                                    |workflow scatter_gather_grep_wc {
                                                     |  Array[File] input_files
                                                     |  scatter(f in input_files) {
                                                     |    call grep {

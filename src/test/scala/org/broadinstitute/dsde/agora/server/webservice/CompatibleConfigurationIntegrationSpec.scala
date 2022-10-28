@@ -50,7 +50,8 @@ class CompatibleConfigurationIntegrationSpec extends AnyFreeSpec with ExecutionD
        |"submittedDescriptorType":{"descriptorType":"WDL","descriptorTypeVersion":"draft-2"},
        |"importedDescriptorTypes":[],
        |"meta":{},
-       |"parameterMeta":{}
+       |"parameterMeta":{},
+       |"isRunnableWorkflow": true
        |}
        |
      """.stripMargin

@@ -134,7 +134,9 @@ class AgoraMethodsSpec extends ApiServiceSpec with AnyFlatSpecLike {
 
   "Agora" should "return a 400 bad request when posting with a bad version in the Payload" in {
     Post(ApiUtil.Methods.withLeadingVersion, testAgoraEntity(payloadWdlBadVersion)) ~>
-      addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
+    addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> 
+    routes ~> 
+    check {
       assert(status == BadRequest)
       assert(responseAs[String] contains "ERROR: Finished parsing without consuming all tokens")
     }

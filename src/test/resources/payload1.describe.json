@@ -63,5 +63,6 @@
     "descriptorTypeVersion": "draft-2"
   },
   "importedDescriptorTypes": [],
-  "meta": {}
+  "meta": {},
+  "isRunnableWorkflow": true
 }

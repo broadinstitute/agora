@@ -88,8 +88,8 @@ libraryDependencies ++= Seq(
   "com.dimafeng" %% "testcontainers-scala-mysql" % testcontainersScalaV % Test,
   "com.dimafeng" %% "testcontainers-scala-mongodb" % testcontainersScalaV % Test,
   "org.flywaydb" % "flyway-core" % "7.3.2" % Test,
-  "org.broadinstitute.dsde.workbench" % "sam-client_2.13" % "0.1-3d1bbd8-SNAP",
-  "org.broadinstitute.cromwell" % "cromwell-client_2.12" % "0.1-8b413b45f-SNAP"
+  "org.broadinstitute.dsde.workbench" % "sam-client_2.12" % "0.1-61135c7",      // Should become available for 2.13 once a release happens ( https://github.com/broadinstitute/sam/pull/491 )
+  "org.broadinstitute.cromwell" % "cromwell-client_2.12" % "0.1-8b413b45f-SNAP" // Contains only Java, pinning on 2.12
 )
 
 // Flyway may be run with system properties:

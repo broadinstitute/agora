@@ -4,7 +4,7 @@ name := "Agora"
 
 organization := "org.broadinstitute"
 
-scalaVersion := "2.13.4"
+scalaVersion := "2.13.9"
 
 // Ported from Cromwell 2019-11-19
 // The disabled ones are not too crazy to get compliant with, but more work than I want to do just now (AEN)
@@ -68,7 +68,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2",
   "com.typesafe.slick" %% "slick" % slickV,
   "com.typesafe.slick" %% "slick-hikaricp" % slickV,
-  "mysql" % "mysql-connector-java" % "8.0.21" exclude("com.google.protobuf", "protobuf-java"),
+  "mysql" % "mysql-connector-java" % "8.0.31" exclude("com.google.protobuf", "protobuf-java"),
 
   // ficus was being pulled in transitively from wdl-draft2 previously, now made explicit
   "com.iheart" %% "ficus" % "1.5.0",

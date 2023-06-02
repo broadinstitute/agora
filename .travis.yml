@@ -9,7 +9,8 @@ script:
   - >-
     ./minnie-kenny.sh --force &&
     git secrets --scan-history &&
-    sbt clean coverage test coverageReport
+    sbt clean coverage test coverageReport &&
+    ./docker/build.sh jar -d build
 after_success: bash <(curl -s https://codecov.io/bash)
 before_install:
   - >-

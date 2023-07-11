@@ -52,27 +52,25 @@ Go to the specified web address in your favorite browser to test that it is oper
 
 ## Running Your Own Agora Web Service Using Docker
 
-Generate Agora configurations using the configurations in FireCloud-Develop:
+### Requirements:
 
+* [Docker Desktop](https://www.docker.com/products/docker-desktop) (4GB+, 8GB recommended)
+* Broad internal internet connection (or VPN, non-split recommended)
+* Render the local configuration files. From the root of the Agora repo, run:
+```sh
+./local-dev/bin/render
 ```
-APP_NAME=agora \
-    ENV=dev \
-    RUN_CONTEXT=local \
-    INPUT_DIR=$PWD/../firecloud-develop \
-    OUTPUT_DIR=$PWD/config \
-    ../firecloud-develop/configure.rb
+### Running:
+
+After satisfying the above requirements, execute the following command from the root of the Agora repo:
+
+```sh
+./config/docker-rsync-local-agora.sh
 ```
 
-Launch the generated docker compose file:
+By default, this will set up an instance of rawls pointing to the database and Sam in dev. 
+It will also set up a process that will watch the local files for changes, and restart the service when source files change.
 
-```
-docker-compose -p agora -f config/docker-compose.yaml up
-```
-
-or, use the config script:
-
-```
-./config/docker-rsync-local-agora.sh 
-```
+See docker-rsync-local-rawls.sh for more configuration options.
 
 The docker compose configuration is set to point to https://local.broadinstitute.org:30443/ (where the endpoints can be viewed via Swagger).

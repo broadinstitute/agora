@@ -1,0 +1,2 @@
+# git-secrets errors on the string 'private key' even though it is not itself a secret
+local-dev/secrets.yaml:.*:.*private_key.*

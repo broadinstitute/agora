@@ -1,0 +1,62 @@
+{{- $agoraSecret := ( secret "secret/dsde/firecloud/dev/agora/secrets" ).Data -}}
+{{- $sqlAppSecret := ( secret "secret/dsde/firecloud/dev/agora/secrets/mysql/app_sql_user" ).Data -}}
+{{- $oauthCredSecret := ( secret "secret/dsde/firecloud/dev/common/refresh-token-oauth-client" ).Data -}}
+
+webservice.port = "8000"
+webservice.interface = "0.0.0.0"
+webservice.host = "local.broadinstitute.org"
+webservice.schema = "https"
+
+instance.name = "reference"
+mongodb.hosts = ["mongodb-0.mongodb-headless", "mongodb-1.mongodb-headless", "mongodb-2.mongodb-headless"]
+mongodb.ports = ["27017", "27017", "27017"]
+mongodb.user = "agora"
+mongodb.password = "{{ $agoraSecret.mongodb_password }}"
+mongodb.db = "agora"
+
+environment = "dev"
+mockAuthenticatedUserEmail = "broadprometheustest@gmail.com"
+
+waas {
+
+  server = "https://cromwell1.dsde-dev.broadinstitute.org:443"
+
+}
+
+swagger {
+  apiDocs = "api-docs"
+  apiVersion = "0.1"
+  baseUrl = "/"
+  contact = "dsde-engineering@broadinstitute.org"
+  description = "Agora stores methods along with metadata."
+  info = "Agora Methods Repository"
+  license = "BSD"
+  licenseUrl = "http://opensource.org/licenses/BSD-3-Clause"
+  swaggerVersion = "1.2"
+  termsOfServiceUrl = "http://www.github.com/broadinstitute/agora"
+  clientId = "{{ $oauthCredSecret.client_id }}"
+}
+
+google.project.id = "broad-dsde-dev"
+google.service.account.email = "agora-dev-service-account@broad-dsde-dev.iam.gserviceaccount.com"
+google.service.account.pem.file = "/etc/agora-account.pem"
+google.user.email = "google@dev.test.firecloud.org"
+admin.google.group = "fc-admins@dev.test.firecloud.org"
+sqlDatabase = {
+  profile = "slick.jdbc.MySQLProfile$"
+  db {
+    url = "jdbc:mysql://sqlproxy:3306/agora?requireSSL=false&useSSL=false"
+    driver = "com.mysql.jdbc.Driver"
+    user = "agora"
+    password = "{{ $sqlAppSecret.password }}"
+  }
+}
+
+sam {
+  url = "https://sam.dsde-dev.broadinstitute.org"
+}
+
+akka.http.server.idle-timeout = 95 s # Akka default is 60 s
+akka.http.server.request-timeout = 65 s # Akka default is 20 s
+akka.http.host-connection-pool.max-open-requests = 16384
+akka.http.host-connection-pool.max-connections = 2000

@@ -53,6 +53,7 @@ object AgoraTestData {
   val owner1 = Option("testowner1@broadinstitute.org")
   val owner2 = Option("testowner2@broadinstitute.org")
   val owner3 = Option("testowner3@broadinstitute.org")
+  val maliciousOwner = Option("mal%C4%B1c%C4%B1ous@broadinstitute.org")
   val adminUser = Option("admin@broadinstitute.org")
   val mockAuthenticatedOwner = Option(AgoraConfig.mockAuthenticatedUserEmail)
 

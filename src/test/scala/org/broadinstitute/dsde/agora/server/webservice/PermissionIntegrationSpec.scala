@@ -210,6 +210,16 @@ class PermissionIntegrationSpec extends AnyFlatSpec with ScalatestRouteTest with
       }
   }
 
+  "Agora" should "not allow users to insert permissions with non-latin characters." in {
+
+    Post(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity2.namespace.get + "/" + agoraEntity2.name.get +
+      "/" + agoraEntity2.snapshotId.get + "/" + "permissions" + s"?user=malıcıous@broadınstıtute.org&roles=All") ~>
+      routes ~>
+      check {
+        assert(status == BadRequest)
+      }
+  }
+
   "Agora" should "allow authorized users to edit an existing entity permissions." in {
 
     Put(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +

@@ -1,6 +1,7 @@
 package org.broadinstitute.dsde.agora.server.webservice
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
@@ -211,9 +212,13 @@ class PermissionIntegrationSpec extends AnyFlatSpec with ScalatestRouteTest with
   }
 
   "Agora" should "not allow users to insert permissions with non-latin characters." in {
-
+    val entityJSON = s"""{
+                        | "user": "malıcıous@broadınstıtute.org",
+                        | "roles": "All",
+                        |}""".stripMargin
     Post(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
-      "/" + agoraEntity1.snapshotId.get + "/" + "permissions" + "?user=mal%C4%B1c%C4%B1ous@broadinstitute.org&roles=All") ~>
+      "/" + agoraEntity1.snapshotId.get + "/" + "permissions", HttpEntity(contentType = ContentTypes.`application/json`,
+      string = entityJSON)) ~>
       routes ~>
       check {
         assert(status == BadRequest)

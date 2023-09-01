@@ -36,7 +36,6 @@ class PermissionIntegrationSpec extends AnyFlatSpec with ScalatestRouteTest with
   var agoraEntity1: AgoraEntity = _
   var agoraEntity2: AgoraEntity = _
   var agoraEntity3: AgoraEntity = _
-  var agoraEntity4: AgoraEntity = _
   var redactedEntity: AgoraEntity = _
 
   override def beforeAll(): Unit = {
@@ -46,7 +45,6 @@ class PermissionIntegrationSpec extends AnyFlatSpec with ScalatestRouteTest with
     agoraEntity1 = patiently(agoraBusiness.insert(testIntegrationEntity, mockAuthenticatedOwner.get, mockAccessToken))
     agoraEntity2 = patiently(agoraBusiness.insert(testIntegrationEntity2, owner2.get, mockAccessToken))
     agoraEntity3 = patiently(agoraBusiness.insert(testIntegrationEntity3, mockAuthenticatedOwner.get, mockAccessToken))
-    agoraEntity4 = patiently(agoraBusiness.insert(testMaliciousOwnerEntity, mockAuthenticatedOwner.get, mockAccessToken))
 
     redactedEntity = patiently(agoraBusiness.insert(testEntityToBeRedacted2, mockAuthenticatedOwner.get, mockAccessToken))
     patiently(agoraBusiness.delete(redactedEntity, Seq(redactedEntity.entityType.get), mockAuthenticatedOwner.get))
@@ -214,8 +212,8 @@ class PermissionIntegrationSpec extends AnyFlatSpec with ScalatestRouteTest with
 
   "Agora" should "not allow users to insert permissions with non-latin characters." in {
 
-    Post(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity4.namespace.get + "/" + agoraEntity4.name.get +
-      "/" + agoraEntity4.snapshotId.get + "/" + "permissions" + s"?user=$maliciousOwner&roles=All") ~>
+    Post(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
+      "/" + agoraEntity1.snapshotId.get + "/" + "permissions" + "?user=malıcıous@broadınstıtute.org&roles=All") ~>
       routes ~>
       check {
         assert(status == BadRequest)

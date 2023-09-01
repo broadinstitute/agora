@@ -53,7 +53,6 @@ object AgoraTestData {
   val owner1 = Option("testowner1@broadinstitute.org")
   val owner2 = Option("testowner2@broadinstitute.org")
   val owner3 = Option("testowner3@broadinstitute.org")
-  val maliciousOwner = Option("mal%C4%B1c%C4%B1ous@broadinstitute.org")
   val adminUser = Option("admin@broadinstitute.org")
   val mockAuthenticatedOwner = Option(AgoraConfig.mockAuthenticatedUserEmail)
 
@@ -700,13 +699,6 @@ object AgoraTestData {
     synopsis = synopsis3,
     documentation = documentation1,
     owner = owner3,
-    payload = payload1,
-    entityType = Option(AgoraEntityType.Workflow))
-
-  val testMaliciousOwnerEntity = AgoraEntity(namespace = Option("___test4"),
-    name = Option("testWorkflow4"),
-    documentation = documentation1,
-    owner = maliciousOwner,
     payload = payload1,
     entityType = Option(AgoraEntityType.Workflow))
 

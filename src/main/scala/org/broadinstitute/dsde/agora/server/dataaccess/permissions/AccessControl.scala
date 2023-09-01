@@ -7,10 +7,7 @@ object AccessControl {
   def apply(accessObject: Tuple2[String, Int]): AccessControl = {
     val user = accessObject._1
     val permission = AgoraPermissions(accessObject._2)
-    if ("""[a-zA-Z0-9-_\.@]*""".r.matches(user))
-      AccessControl(user, permission)
-    else
-      throw new IllegalArgumentException("User contains invalid characters.")
+    AccessControl(user, permission)
   }
 
   def fromParams(params: Map[String, String]): AccessControl = {
@@ -26,6 +23,8 @@ object AccessControl {
   final val publicUser:String = "public"
 }
 
-case class AccessControl(user: String, roles: AgoraPermissions)
+case class AccessControl(user: String, roles: AgoraPermissions) {
+  require("""[a-zA-Z0-9-_\.@]*""".r.matches(user), "User contains invalid characters.")
+}
 
 case class EntityAccessControl(entity: AgoraEntity, acls: Seq[AccessControl], message: Option[String] = None)

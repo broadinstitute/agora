@@ -77,7 +77,7 @@ class PermissionIntegrationSpec extends AnyFlatSpec with ScalatestRouteTest with
   "Agora" should "allow authorized users to insert multiple roles in a single namespace permissions." in {
 
     Post(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + "permissions" +
-      s"?user=${owner2.get}&roles=Read,Create,Manage") ~>
+      s"?user=$owner2&roles=Read,Create,Manage") ~>
       routes ~>
       check {
         assert(status == OK)
@@ -98,7 +98,7 @@ class PermissionIntegrationSpec extends AnyFlatSpec with ScalatestRouteTest with
   "Agora" should "not allow unauthorized users to insert a namespace permissions." in {
 
     Post(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity2.namespace.get + "/" + "permissions" +
-      s"?user=${owner2.get}&roles=All") ~>
+      s"?user=$owner2&roles=All") ~>
       routes ~>
       check {
         assert(status == Forbidden)
@@ -108,7 +108,7 @@ class PermissionIntegrationSpec extends AnyFlatSpec with ScalatestRouteTest with
   "Agora" should "only allow authorized users to overwrite existing permissions." in {
 
     Put(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + "permissions" +
-      s"?user=${owner2.get}&roles=Read") ~>
+      s"?user=$owner2&roles=Read") ~>
       routes ~>
       check {
         assert(status == OK)
@@ -129,7 +129,7 @@ class PermissionIntegrationSpec extends AnyFlatSpec with ScalatestRouteTest with
   "Agora" should "allow authorized users to delete an existing namespace permissions." in {
 
     Delete(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + "permissions" +
-      s"?user=${owner2.get}&roles=Read") ~>
+      s"?user=$owner2&roles=Read") ~>
       routes ~>
       check {
         assert(status == OK)
@@ -150,7 +150,7 @@ class PermissionIntegrationSpec extends AnyFlatSpec with ScalatestRouteTest with
   "Agora" should "not allow unauthorized users to delete an existing namespace permissions." in {
 
     Delete(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity2.namespace.get + "/" + "permissions" +
-      s"?user=${owner2.get}&roles=All") ~>
+      s"?user=$owner2&roles=All") ~>
       routes ~>
       check {
         assert(status == Forbidden)
@@ -182,7 +182,7 @@ class PermissionIntegrationSpec extends AnyFlatSpec with ScalatestRouteTest with
   "Agora" should "allow authorized users to insert a entity permissions." in {
 
     Post(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
-      "/" + agoraEntity1.snapshotId.get + "/" + "permissions" + s"?user=${owner2.get}&roles=All") ~>
+      "/" + agoraEntity1.snapshotId.get + "/" + "permissions" + s"?user=$owner2&roles=All") ~>
       routes ~>
       check {
         assert(status == OK)
@@ -213,7 +213,7 @@ class PermissionIntegrationSpec extends AnyFlatSpec with ScalatestRouteTest with
   "Agora" should "allow authorized users to edit an existing entity permissions." in {
 
     Put(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
-      "/" + agoraEntity1.snapshotId.get + "/" + "permissions" + s"?user=${owner2.get}&roles=Read") ~>
+      "/" + agoraEntity1.snapshotId.get + "/" + "permissions" + s"?user=$owner2&roles=Read") ~>
       routes ~>
       check {
         assert(status == OK)
@@ -234,7 +234,7 @@ class PermissionIntegrationSpec extends AnyFlatSpec with ScalatestRouteTest with
   "Agora" should "allow authorized users to delete an existing entity permissions." in {
 
     Delete(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity1.namespace.get + "/" + agoraEntity1.name.get +
-      "/" + agoraEntity1.snapshotId.get + "/" + "permissions" + s"?user=${owner2.get}&roles=All") ~>
+      "/" + agoraEntity1.snapshotId.get + "/" + "permissions" + s"?user=$owner2&roles=All") ~>
       routes ~>
       check {
         assert(status == OK)
@@ -255,7 +255,7 @@ class PermissionIntegrationSpec extends AnyFlatSpec with ScalatestRouteTest with
   "Agora" should "not allow unauthorized users to delete an existing entity permissions." in {
 
     Delete(ApiUtil.Methods.withLeadingVersion + "/" + agoraEntity2.namespace.get + "/" + agoraEntity2.name.get +
-      "/" + agoraEntity2.snapshotId.get + "/" + "permissions" + s"?user=${owner2.get}&roles=All") ~>
+      "/" + agoraEntity2.snapshotId.get + "/" + "permissions" + s"?user=$owner2&roles=All") ~>
       routes ~>
       check {
         assert(status == Forbidden)

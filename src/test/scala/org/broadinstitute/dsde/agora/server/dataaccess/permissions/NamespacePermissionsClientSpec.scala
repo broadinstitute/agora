@@ -106,21 +106,21 @@ class NamespacePermissionsClientSpec extends AnyFlatSpec with ScalaFutures with 
   }
 
   "Agora" should "allow batch permission edits" in {
-    val accessObject1 = new AccessControl(owner1.get, AgoraPermissions(AgoraPermissions.All))
-    val accessObject2 = new AccessControl(owner2.get, AgoraPermissions(AgoraPermissions.Nothing))
+    val accessObject1 = AccessControl(owner1.get, AgoraPermissions(AgoraPermissions.All))
+    val accessObject2 = AccessControl(owner2.get, AgoraPermissions(AgoraPermissions.Nothing))
     val rowsEditted = patiently(permissionBusiness.batchNamespacePermission(testBatchPermissionEntityWithId, mockAuthenticatedOwner.get, List(accessObject1, accessObject2)))
     assert(rowsEditted == 2)
   }
 
   "Agora" should "prevent a user from overwriting their own namespace permission" in {
-    val accessObject = new AccessControl(owner1.get, AgoraPermissions(AgoraPermissions.Nothing))
+    val accessObject = AccessControl(owner1.get, AgoraPermissions(AgoraPermissions.Nothing))
     intercept[PermissionModificationException] {
       patiently(permissionBusiness.insertNamespacePermission(testEntity1, owner1.get, accessObject))
     }
   }
 
   "Agora" should "prevent a user from modifying their own namespace permission" in {
-    val accessObject = new AccessControl(owner1.get, AgoraPermissions(AgoraPermissions.Nothing))
+    val accessObject = AccessControl(owner1.get, AgoraPermissions(AgoraPermissions.Nothing))
     intercept[PermissionModificationException] {
       patiently(permissionBusiness.editNamespacePermission(testEntity1, owner1.get, accessObject))
     }

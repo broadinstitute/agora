@@ -171,7 +171,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with AnyFlatSpecLike with A
   }
 
   "Agora" should "not allow you to post a new configuration if you don't have permission to read the method that it references" in {
-    val noPermission = new AccessControl(AgoraConfig.mockAuthenticatedUserEmail, AgoraPermissions(AgoraPermissions.Nothing))
+    val noPermission = AccessControl(AgoraConfig.mockAuthenticatedUserEmail, AgoraPermissions(AgoraPermissions.Nothing))
     runInDB { db =>
       db.aePerms.editEntityPermission(method1, noPermission)
     }

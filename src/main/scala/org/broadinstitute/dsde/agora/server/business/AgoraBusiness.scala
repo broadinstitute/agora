@@ -209,7 +209,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLo
               }
 
               entityToInsertAction flatMap { entityToInsert =>
-                val userAccess = new AccessControl(username, AgoraPermissions(All))
+                val userAccess = AccessControl(username, AgoraPermissions(All))
 
                 for {
                   entityWithId <-

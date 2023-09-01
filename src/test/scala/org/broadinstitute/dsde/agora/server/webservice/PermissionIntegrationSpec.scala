@@ -196,8 +196,7 @@ class PermissionIntegrationSpec extends AnyFlatSpec with ScalatestRouteTest with
       "/" + agoraEntity1.snapshotId.get + "/" + "permissions" + s"?user=mal%C4%B1c%C4%B1ous@broadinstitute.org&roles=All") ~>
       routes ~>
       check {
-        assert(status == OK)
-        assert(responseAs[String] contains "Manage")
+        assert(status == BadRequest)
       }
   }
 

@@ -703,6 +703,13 @@ object AgoraTestData {
     payload = payload1,
     entityType = Option(AgoraEntityType.Workflow))
 
+  val testMaliciousOwnerEntity = AgoraEntity(namespace = Option("___test4"),
+    name = Option("testWorkflow4"),
+    documentation = documentation1,
+    owner = maliciousOwner,
+    payload = payload1,
+    entityType = Option(AgoraEntityType.Workflow))
+
   val testAgoraEntityWithValidOfficialDockerImageInWdl = new AgoraEntity(namespace = Option("___docker_test"),
     name = name1,
     synopsis = synopsis1,

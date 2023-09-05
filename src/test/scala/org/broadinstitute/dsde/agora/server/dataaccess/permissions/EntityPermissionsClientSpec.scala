@@ -143,21 +143,21 @@ class EntityPermissionsClientSpec extends AnyFlatSpec with ScalaFutures with Bef
   }
 
   "Agora" should "allow batch permission edits" in {
-    val accessObject1 = new AccessControl(owner1.get, AgoraPermissions(AgoraPermissions.All))
-    val accessObject2 = new AccessControl(owner2.get, AgoraPermissions(AgoraPermissions.Nothing))
+    val accessObject1 = AccessControl(owner1.get, AgoraPermissions(AgoraPermissions.All))
+    val accessObject2 = AccessControl(owner2.get, AgoraPermissions(AgoraPermissions.Nothing))
     val rowsEditted = patiently(permissionBusiness.batchEntityPermission(testBatchPermissionEntity, mockAuthenticatedOwner.get, List(accessObject1, accessObject2)))
     assert(rowsEditted == 2)
   }
 
   "Agora" should "prevent a user from overwriting their own entity permission" in {
-    val accessObject = new AccessControl(mockAuthenticatedOwner.get, AgoraPermissions(AgoraPermissions.Nothing))
+    val accessObject = AccessControl(mockAuthenticatedOwner.get, AgoraPermissions(AgoraPermissions.Nothing))
     intercept[PermissionModificationException] {
       patiently(permissionBusiness.insertEntityPermission(testBatchPermissionEntity, mockAuthenticatedOwner.get, accessObject))
     }
   }
 
   "Agora" should "prevent a user from modifying their own entity permission" in {
-    val accessObject = new AccessControl(mockAuthenticatedOwner.get, AgoraPermissions(AgoraPermissions.Nothing))
+    val accessObject = AccessControl(mockAuthenticatedOwner.get, AgoraPermissions(AgoraPermissions.Nothing))
     intercept[PermissionModificationException] {
       patiently(permissionBusiness.editEntityPermission(testBatchPermissionEntity, mockAuthenticatedOwner.get, accessObject))
     }

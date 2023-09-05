@@ -82,7 +82,7 @@ class AgoraBusinessTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
     patiently(permsDataSource.inTransaction { db =>
       DBIOAction.seq(
         db.aePerms.addEntity(testAgoraEntityWithIllegalNameChars),
-        db.aePerms.insertEntityPermission(testAgoraEntityWithIllegalNameChars, new AccessControl(mockAuthenticatedOwner.get, AgoraPermissions(Read)))
+        db.aePerms.insertEntityPermission(testAgoraEntityWithIllegalNameChars, AccessControl(mockAuthenticatedOwner.get, AgoraPermissions(Read)))
       )
     })
 

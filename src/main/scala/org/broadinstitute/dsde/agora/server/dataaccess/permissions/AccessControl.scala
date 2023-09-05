@@ -23,6 +23,8 @@ object AccessControl {
   final val publicUser:String = "public"
 }
 
-case class AccessControl(user: String, roles: AgoraPermissions)
+case class AccessControl(user: String, roles: AgoraPermissions) {
+  require("""[a-zA-Z0-9-_\.@]*""".r.matches(user), "User contains invalid characters.")
+}
 
 case class EntityAccessControl(entity: AgoraEntity, acls: Seq[AccessControl], message: Option[String] = None)

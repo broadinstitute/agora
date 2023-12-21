@@ -33,6 +33,7 @@ jobs:
 
       - name: Run tests
         run: |
+          # Testcontainers does not seem to be able to pull the containers on its own if the image is not present
           docker pull mongo:4.4
           docker pull testcontainersofficial/ryuk:0.3.0
           ./minnie-kenny.sh --force

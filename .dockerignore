@@ -4,5 +4,4 @@
 .idea
 README.md
 target
-.travis.yml
 *-service-account.json

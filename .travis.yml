@@ -1,6 +1,6 @@
 sudo: required
 language: scala
-dist: jammy
+dist: trusty
 scala:
   - 2.13.4
 jdk:

@@ -52,7 +52,7 @@ resolvers += "artifactory-releases" at artifactory + "libs-release"
 resolvers += "artifactory-snapshots" at artifactory + "libs-snapshot"
 
 libraryDependencies ++= Seq(
-  "ch.qos.logback" % "logback-classic" % "1.2.11",
+  "ch.qos.logback" % "logback-classic" % "1.4.14",
   "com.google.api-client" % "google-api-client" % "1.25.0" excludeAll ExclusionRule(organization = "com.google.guava"),
   "com.google.apis" % "google-api-services-admin-directory" % "directory_v1-rev118-1.25.0" excludeAll
     ExclusionRule(organization = "com.google.guava"),
@@ -116,6 +116,7 @@ assemblyMergeStrategy in assembly := {
     MergeStrategy.concat
   case x if x.endsWith("io.netty.versions.properties") =>
     MergeStrategy.discard
+  case x if x.endsWith("module-info.class") => MergeStrategy.discard
   case PathList(ps@_*) if Assembly.isReadme(ps.last) || Assembly.isLicenseFile(ps.last) =>
     MergeStrategy.rename
   case PathList("META-INF", xs@_*) =>

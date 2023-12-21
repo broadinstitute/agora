@@ -43,7 +43,7 @@ val akkaV = "2.6.9"
 val akkaHttpV = "10.2.9"
 val jacksonV = "2.11.3"
 val slickV = "3.3.3"
-val testcontainersScalaV = "1.19.3"
+val testcontainersScalaV = "0.41.0"
 
 val artifactory = "https://broadinstitute.jfrog.io/broadinstitute/"
 

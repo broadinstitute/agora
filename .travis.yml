@@ -7,14 +7,15 @@ jdk:
   - openjdk11
 script:
   - >-
+    ls -la &&
     ./minnie-kenny.sh --force &&
     git secrets --scan-history &&
     sbt clean coverage test coverageReport
 after_success: bash <(curl -s https://codecov.io/bash)
 before_install:
   - >-
-    git clone https://github.com/awslabs/git-secrets.git &&
+    export PATH="${PATH}:${PWD}" &&
+    git clone https://github.com/awslabs/git-secrets.git git-secrets &&
     pushd git-secrets > /dev/null &&
     git checkout ad82d68ee924906a0401dfd48de5057731a9bc84 &&
-    export PATH="${PATH}:${PWD}" &&
     popd > /dev/null

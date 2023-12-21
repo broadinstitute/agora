@@ -7,6 +7,7 @@ jdk:
   - openjdk11
 script:
   - >-
+    ls -la
     ./minnie-kenny.sh --force &&
     git secrets --scan-history &&
     sbt clean coverage test coverageReport
@@ -16,5 +17,5 @@ before_install:
     git clone https://github.com/awslabs/git-secrets.git ~/git-secrets &&
     cd ~/git-secrets &&
     git checkout ad82d68ee924906a0401dfd48de5057731a9bc84 &&
-    sudo make install &&
-    cd ..
+    sudo make install
+    ls -la

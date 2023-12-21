@@ -30,7 +30,6 @@ jobs:
           distribution: temurin
           java-version: 11
 
-      # Testcontainers does not seem to be able to pull the containers on its own if the image is not present
-      - name: Run tests
+      - name: Build image
         run: |
           docker build -t agora .

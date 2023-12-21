@@ -4,6 +4,7 @@ on:
   workflow_dispatch: #Manual trigger from GitHub UI
   push:
   merge_group:
+  pull_request:
 
 jobs:
   build-and-test:

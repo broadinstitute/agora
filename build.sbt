@@ -41,9 +41,9 @@ scalacOptions := Seq(
 
 val akkaV = "2.6.9"
 val akkaHttpV = "10.2.9"
-val jacksonV = "2.15.0"
+val jacksonV = "2.11.3"
 val slickV = "3.3.3"
-val testcontainersScalaV = "0.38.4"
+val testcontainersScalaV = "1.19.3"
 
 val artifactory = "https://broadinstitute.jfrog.io/broadinstitute/"
 

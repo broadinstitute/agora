@@ -16,7 +16,7 @@ object TestAgoraMongoClient extends StrictLogging {
   // Start up in the object static initializer so that we can set AgoraMongoClient.testConnectionString
   {
     if (AgoraConfig.mongoDbTestContainerEnabled) {
-      val imageName = "mongo:6.0.12"
+      val imageName = "mongo:7.0.4 "
       val mongoDBContainer = MongoDBContainer(imageName)
 
       // We may remove this when this is released:

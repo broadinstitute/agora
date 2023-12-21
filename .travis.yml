@@ -9,8 +9,6 @@ script:
   - >-
     ./minnie-kenny.sh --force &&
     git secrets --scan-history &&
-    docker pull mongo:4.4 &&
-    docker pull testcontainersofficial/ryuk:0.3.0 &&
     sbt clean coverage test coverageReport
 after_success: bash <(curl -s https://codecov.io/bash)
 before_install:

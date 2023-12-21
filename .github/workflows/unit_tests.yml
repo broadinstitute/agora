@@ -29,6 +29,9 @@ jobs:
         with:
           distribution: temurin
           java-version: 11
+
       - name: Run tests
         run: |
+          docker pull mongo:4.4
+          docker pull testcontainersofficial/ryuk:0.3.0
           sbt clean coverage test coverageReport

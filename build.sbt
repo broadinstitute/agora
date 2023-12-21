@@ -41,7 +41,7 @@ scalacOptions := Seq(
 
 val akkaV = "2.6.9"
 val akkaHttpV = "10.2.9"
-val jacksonV = "2.15.2"
+val jacksonV = "2.11.3"
 val slickV = "3.3.3"
 val testcontainersScalaV = "0.38.4"
 
@@ -116,6 +116,7 @@ assemblyMergeStrategy in assembly := {
     MergeStrategy.concat
   case x if x.endsWith("io.netty.versions.properties") =>
     MergeStrategy.discard
+  case x if x.endsWith("module-info.class") => MergeStrategy.discard
   case PathList(ps@_*) if Assembly.isReadme(ps.last) || Assembly.isLicenseFile(ps.last) =>
     MergeStrategy.rename
   case PathList("META-INF", xs@_*) =>

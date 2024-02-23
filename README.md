@@ -1,4 +1,4 @@
-[![Build Status](https://img.shields.io/travis/com/broadinstitute/agora)](https://travis-ci.com/broadinstitute/agora?branch=master)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/broadinstitute/agora/unit_tests.yml)](https://github.com/broadinstitute/agora/actions/workflows/unit_tests.yml)
 [![Coverage Status](https://img.shields.io/codecov/c/gh/broadinstitute/agora)](https://codecov.io/gh/broadinstitute/agora)
 
 

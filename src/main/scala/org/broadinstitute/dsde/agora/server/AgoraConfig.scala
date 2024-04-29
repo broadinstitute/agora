@@ -1,10 +1,13 @@
 package org.broadinstitute.dsde.agora.server
 
+import cats.effect.IO
+import cats.effect.unsafe.implicits.global
 import com.typesafe.config.{Config, ConfigException, ConfigFactory}
 import net.ceedubs.ficus.Ficus._
 import org.broadinstitute.dsde.agora.server.model.AgoraEntityType
 import org.broadinstitute.dsde.agora.server.model.AgoraEntityType.EntityType
 import org.broadinstitute.dsde.agora.server.webservice.routes.{AgoraDirectives, MockAgoraDirectives, OpenIdConnectDirectives}
+import org.broadinstitute.dsde.workbench.oauth2.{ClientId, OpenIDConnectConfiguration}
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 
@@ -78,22 +81,13 @@ object AgoraConfig {
   // sam
   lazy val samUrl: String = config.as[String]("sam.url")
 
-  //Config Settings
-  object SwaggerConfig {
-    private val swagger = config.getConfig("swagger")
-    lazy val apiVersion: String = swagger.getString("apiVersion")
-    lazy val swaggerVersion: String = swagger.getString("swaggerVersion")
-    lazy val info: String = swagger.getString("info")
-    lazy val description: String = swagger.getString("description")
-    lazy val termsOfServiceUrl: String = swagger.getString("termsOfServiceUrl")
-    lazy val contact: String = swagger.getString("contact")
-    lazy val license: String = swagger.getString("license")
-    lazy val licenseUrl: String = swagger.getString("licenseUrl")
-    lazy val baseUrl: String = swagger.getString("baseUrl")
-    lazy val apiDocs: String = swagger.getString("apiDocs")
-    lazy val clientId: String = swagger.getOrElse("clientId", "clientId")
-    lazy val realm: String = googleProjectId
-    lazy val appName: String = googleProjectId
+  lazy val openIdConnectConfig: OpenIDConnectConfiguration = {
+    val oidc = config.getConfig("oidc")
+    OpenIDConnectConfiguration[IO](
+      oidc.getString("authorityEndpoint"),
+      ClientId(oidc.getString("oidcClientId")),
+      extraAuthParams = Some("prompt=login")
+    ).unsafeRunSync()
   }
 
   // GA4GH

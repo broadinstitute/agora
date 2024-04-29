@@ -1,3 +1,4 @@
+
 openapi: 3.0.1
 info:
   title: Agora API
@@ -8,8 +9,6 @@ servers:
 security:
   - authorization:
       - openid
-      - email
-      - profile
 paths:
   /status:
     get:
@@ -2470,11 +2469,6 @@ components:
       example: 1
   securitySchemes:
     authorization:
-      type: oauth2
-      flows:
-        implicit:
-          authorizationUrl: https://accounts.google.com/o/oauth2/auth
-          scopes:
-            openid: open id authorization
-            email: email authorization
-            profile: profile authorization
+      type: openIdConnect
+      openIdConnectUrl: OPEN_ID_CONNECT_URL
+      x-tokenName: id_token

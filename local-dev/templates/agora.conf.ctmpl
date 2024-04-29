@@ -1,6 +1,5 @@
 {{- $agoraSecret := ( secret "secret/dsde/firecloud/dev/agora/secrets" ).Data -}}
 {{- $sqlAppSecret := ( secret "secret/dsde/firecloud/dev/agora/secrets/mysql/app_sql_user" ).Data -}}
-{{- $oauthCredSecret := ( secret "secret/dsde/firecloud/dev/common/refresh-token-oauth-client" ).Data -}}
 
 webservice.port = "8000"
 webservice.interface = "0.0.0.0"
@@ -23,18 +22,9 @@ waas {
 
 }
 
-swagger {
-  apiDocs = "api-docs"
-  apiVersion = "0.1"
-  baseUrl = "/"
-  contact = "dsde-engineering@broadinstitute.org"
-  description = "Agora stores methods along with metadata."
-  info = "Agora Methods Repository"
-  license = "BSD"
-  licenseUrl = "http://opensource.org/licenses/BSD-3-Clause"
-  swaggerVersion = "1.2"
-  termsOfServiceUrl = "http://www.github.com/broadinstitute/agora"
-  clientId = "{{ $oauthCredSecret.client_id }}"
+oidc {
+  authorityEndpoint = "https://oauth-proxy.dsp-eng-tools.broadinstitute.org/b2c"
+  oidcClientId = bbd07d43-01cb-4b69-8fd0-5746d9a5c9fe
 }
 
 google.project.id = "broad-dsde-dev"

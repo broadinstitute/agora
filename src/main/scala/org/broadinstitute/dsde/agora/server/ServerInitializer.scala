@@ -46,7 +46,7 @@ class ServerInitializer extends LazyLogging {
   }
 
   private def startWebService() = {
-    val apiService = new ApiService(permsDataSource, actorSystem)(
+    val apiService = new ApiService(permsDataSource, actorSystem, AgoraConfig.openIdConnectConfig)(
       executionContext,
       implicitly,
       agoraBusinessExecutionContext

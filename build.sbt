@@ -92,7 +92,10 @@ libraryDependencies ++= Seq(
   "org.flywaydb" % "flyway-core" % "7.3.2" % Test,
   "org.broadinstitute.dsde.workbench" % "sam-client_2.12" % "0.1-61135c7",      // Should become available for 2.13 once a release happens ( https://github.com/broadinstitute/sam/pull/491 )
   "org.broadinstitute.cromwell" % "cromwell-client_2.12" % "0.1-8b413b45f-SNAP", // Contains only Java, pinning on 2.12
-  "org.broadinstitute.dsde.workbench" %% "workbench-oauth2" % workbenchOauth2V
+  "org.broadinstitute.dsde.workbench" %% "workbench-oauth2" % workbenchOauth2V excludeAll(
+    // these included libs cause conflicts during sbt assembly
+    ExclusionRule(organization = "com.google.protobuf"),
+    ExclusionRule(organization = "com.squareup.okhttp3")),
 )
 
 // Flyway may be run with system properties:

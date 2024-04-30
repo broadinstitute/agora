@@ -30,7 +30,6 @@ class AgoraTestSuite extends Suites(
   new CompatibleConfigurationIntegrationSpec,
   new Ga4ghServiceSpec,
   new Ga4ghModelTest,
-  new SwaggerRoutesSpec,
   new AdminSweeperSpec)
   with BeforeAndAfterAll with AgoraTestFixture {
 

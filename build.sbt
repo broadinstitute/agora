@@ -51,6 +51,9 @@ resolvers += "artifactory-releases" at artifactory + "libs-release"
 
 resolvers += "artifactory-snapshots" at artifactory + "libs-snapshot"
 
+val workbenchLibV = "d16cba9"
+val workbenchOauth2V = s"0.7-$workbenchLibV"
+
 libraryDependencies ++= Seq(
   "ch.qos.logback" % "logback-classic" % "1.4.14",
   "com.google.api-client" % "google-api-client" % "1.25.0" excludeAll ExclusionRule(organization = "com.google.guava"),
@@ -74,7 +77,6 @@ libraryDependencies ++= Seq(
   "com.iheart" %% "ficus" % "1.5.0",
   "org.broadinstitute.dsde.workbench" %% "workbench-util" % "0.6-65bba14",
   "org.mongodb.scala" %% "mongo-scala-driver" % "4.1.0",
-  "org.webjars" % "swagger-ui"  % "4.5.2",
 
   // Not used directly, but keep Jackson up to date plus main+test synced for IntelliJ
   "com.fasterxml.jackson.core" % "jackson-core" % jacksonV,
@@ -89,7 +91,11 @@ libraryDependencies ++= Seq(
   "com.dimafeng" %% "testcontainers-scala-mongodb" % testcontainersScalaV % Test,
   "org.flywaydb" % "flyway-core" % "7.3.2" % Test,
   "org.broadinstitute.dsde.workbench" % "sam-client_2.12" % "0.1-61135c7",      // Should become available for 2.13 once a release happens ( https://github.com/broadinstitute/sam/pull/491 )
-  "org.broadinstitute.cromwell" % "cromwell-client_2.12" % "0.1-8b413b45f-SNAP" // Contains only Java, pinning on 2.12
+  "org.broadinstitute.cromwell" % "cromwell-client_2.12" % "0.1-8b413b45f-SNAP", // Contains only Java, pinning on 2.12
+  "org.broadinstitute.dsde.workbench" %% "workbench-oauth2" % workbenchOauth2V excludeAll(
+    // these included libs cause conflicts during sbt assembly
+    ExclusionRule(organization = "com.google.protobuf"),
+    ExclusionRule(organization = "com.squareup.okhttp3")),
 )
 
 // Flyway may be run with system properties:

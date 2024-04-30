@@ -13,7 +13,7 @@ import akka.http.scaladsl.server.directives.{DebuggingDirectives, LogEntry, Logg
 import akka.stream.Materializer
 import akka.stream.scaladsl.Sink
 import com.typesafe.scalalogging.LazyLogging
-import org.broadinstitute.dsde.agora.server.{AgoraGuardianActor, SwaggerRoutes, errorReportSource}
+import org.broadinstitute.dsde.agora.server.{AgoraGuardianActor, errorReportSource}
 import org.broadinstitute.dsde.agora.server.business.AgoraBusinessExecutionContext
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.PermissionsDataSource
 import org.broadinstitute.dsde.agora.server.exceptions._
@@ -22,6 +22,7 @@ import org.broadinstitute.dsde.agora.server.webservice.configurations.Configurat
 import org.broadinstitute.dsde.agora.server.webservice.methods.MethodsService
 import org.broadinstitute.dsde.agora.server.webservice.permissions.{EntityPermissionsService, MultiEntityPermissionsService, NamespacePermissionsService}
 import org.broadinstitute.dsde.workbench.model.{ErrorReport, WorkbenchException, WorkbenchExceptionWithErrorReport}
+import org.broadinstitute.dsde.workbench.oauth2.OpenIDConnectConfiguration
 import spray.json.DefaultJsonProtocol
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -39,7 +40,7 @@ object ApiService extends LazyLogging with SprayJsonSupport with DefaultJsonProt
       case withErrorReport: WorkbenchExceptionWithErrorReport =>
         complete(withErrorReport.errorReport.statusCode.getOrElse(InternalServerError), withErrorReport.errorReport)
       case workbenchException: WorkbenchException =>
-        val report = ErrorReport(Option(workbenchException.getMessage).getOrElse(""), Some(InternalServerError), Seq(), Seq(), Some(workbenchException.getClass))
+        val report = ErrorReport(Option(workbenchException.getMessage).getOrElse(""), Some(InternalServerError), Seq(), Seq(), Some(workbenchException.getClass), None)
         complete(InternalServerError, report)
       case e: IllegalArgumentException => complete(BadRequest, AgoraException(e.getMessage, e.getCause, BadRequest))
       case e: AgoraEntityAuthorizationException => complete(Forbidden, AgoraException(e.getMessage, e.getCause, Forbidden))
@@ -67,13 +68,13 @@ object ApiService extends LazyLogging with SprayJsonSupport with DefaultJsonProt
 
 }
 
-class ApiService(permissionsDataSource: PermissionsDataSource, agoraGuardian: ActorRef[AgoraGuardianActor.Command])
+class ApiService(permissionsDataSource: PermissionsDataSource, agoraGuardian: ActorRef[AgoraGuardianActor.Command], oidcConfig: OpenIDConnectConfiguration)
                 (implicit
                  ec: ExecutionContext,
                  materializer: Materializer,
                  agoraBusinessExecutionContext: AgoraBusinessExecutionContext
                 )
-  extends LazyLogging with SwaggerRoutes {
+  extends LazyLogging {
 
   val statusService = new StatusService(permissionsDataSource, agoraGuardian)
   val ga4ghService = new Ga4ghService(permissionsDataSource)
@@ -84,7 +85,7 @@ class ApiService(permissionsDataSource: PermissionsDataSource, agoraGuardian: Ac
   val multiEntityPermissionsService = new MultiEntityPermissionsService(permissionsDataSource)
 
   def route: Route = (logRequestResult & ApiService.handleExceptionsAndRejections) {
-    options { complete(OK) } ~ statusService.statusRoute ~ swaggerRoutes ~ ga4ghService.routes ~ methodsService.routes ~
+    options { complete(OK) } ~ statusService.statusRoute ~ oidcConfig.swaggerRoutes("swagger/agora.yaml") ~ ga4ghService.routes ~ methodsService.routes ~
           configurationsService.routes ~ namespacePermissionsService.routes ~ entityPermissionsService.routes ~
           multiEntityPermissionsService.routes
   }

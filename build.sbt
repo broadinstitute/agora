@@ -51,7 +51,7 @@ resolvers += "artifactory-releases" at artifactory + "libs-release"
 
 resolvers += "artifactory-snapshots" at artifactory + "libs-snapshot"
 
-val workbenchLibV = "d16cba9"
+val workbenchLibV = "d2b30c4"
 val workbenchOauth2V = s"0.7-$workbenchLibV"
 
 libraryDependencies ++= Seq(
@@ -123,6 +123,8 @@ assemblyMergeStrategy in assembly := {
   case x if x.endsWith("io.netty.versions.properties") =>
     MergeStrategy.discard
   case x if x.endsWith("module-info.class") => MergeStrategy.discard
+  case x if x.endsWith("/OSGI-INF/MANIFEST.MF") => MergeStrategy.first
+  case x if x.contains("bouncycastle") => MergeStrategy.first
   case PathList(ps@_*) if Assembly.isReadme(ps.last) || Assembly.isLicenseFile(ps.last) =>
     MergeStrategy.rename
   case PathList("META-INF", xs@_*) =>

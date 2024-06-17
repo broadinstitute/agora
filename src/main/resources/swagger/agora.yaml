@@ -7,8 +7,7 @@ info:
 servers:
   - url: /
 security:
-  - authorization:
-      - openid
+  - authorization: []
 paths:
   /status:
     get:
@@ -2469,6 +2468,10 @@ components:
       example: 1
   securitySchemes:
     authorization:
-      type: openIdConnect
-      openIdConnectUrl: OPEN_ID_CONNECT_URL
+      type: oauth2
       x-tokenName: id_token
+      flows:
+        authorizationCode:
+          authorizationUrl: OAUTH_AUTHORIZATION_URL
+          scopes: {}
+          tokenUrl: OAUTH_TOKEN_URL

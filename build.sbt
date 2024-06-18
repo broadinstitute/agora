@@ -51,7 +51,7 @@ resolvers += "artifactory-releases" at artifactory + "libs-release"
 
 resolvers += "artifactory-snapshots" at artifactory + "libs-snapshot"
 
-val workbenchLibV = "d2b30c4"
+val workbenchLibV = "a6ad7dc"
 val workbenchOauth2V = s"0.7-$workbenchLibV"
 
 libraryDependencies ++= Seq(

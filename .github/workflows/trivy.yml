@@ -21,3 +21,15 @@ jobs:
         if: ${{ !github.base_ref }} # omit upload on PRs
         with:
           sarif_file: trivy-results.sarif
+
+       - name: Notify in Slack
+        if: failure()
+        uses: broadinstitute/action-slack@v3.15.0
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        with:
+          status: ${{ job.status }}
+          channel: "trivy-weekly-scans-notblessedimages"
+          username: "Agora Trivy scan"
+          icon_emoji: ':alert_red_light:'
+          text: 'Agora Trivy scan failure. <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Click here> to see the run.'

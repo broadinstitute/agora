@@ -2,7 +2,7 @@ name: dsp-appsec-trivy
 on:
   pull_request:
   schedule:
-    - cron: '0 14 * * 1' # each Monday at 9am EST
+    - cron: '23 1 * * 0'
 
 jobs:
   appsec-trivy:
@@ -10,14 +10,22 @@ jobs:
     name: DSP AppSec Trivy check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-
-      - uses: broadinstitute/dsp-appsec-trivy-action@v1
+      - name: Checkout code
+        uses: actions/checkout@v3
         with:
-          sarif: trivy-results.sarif
+          fetch-depth: 0
 
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v1
-        if: ${{ !github.base_ref }} # omit upload on PRs
+      - name: Run Trivy scan
+        uses: broadinstitute/dsp-appsec-trivy-action@v1
+
+      - name: Notify in Slack
+        if: failure()
+        uses: broadinstitute/action-slack@v3.15.0
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         with:
-          sarif_file: trivy-results.sarif
+          status: ${{ job.status }}
+          channel: "trivy-weekly-scans-notblessedimages"
+          username: "Agora Trivy scan"
+          icon_emoji: ':alert_red_light:'
+          text: 'Agora Trivy scan failure. <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Click here> to see the run.'

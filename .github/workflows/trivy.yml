@@ -10,13 +10,13 @@ jobs:
     name: DSP AppSec Trivy check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      - uses: broadinstitute/dsp-appsec-trivy-action@v1
-        with:
-          sarif: trivy-results.sarif
+      - name: Run Trivy scan
+        uses: broadinstitute/dsp-appsec-trivy-action@v1
 
       - name: Notify in Slack
         if: failure()

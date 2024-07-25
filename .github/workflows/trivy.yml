@@ -18,7 +18,7 @@ jobs:
         with:
           sarif: trivy-results.sarif
 
-       - name: Notify in Slack
+      - name: Notify in Slack
         if: failure()
         uses: broadinstitute/action-slack@v3.15.0
         env:

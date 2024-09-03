@@ -1,6 +1,9 @@
 # Production build/deploy/start of DSDE Methods Repository Webservice
 
-FROM sbtscala/scala-sbt:eclipse-temurin-jammy-11.0.22_7_1.9.9_2.13.13 as builder
+# TODO: adopt `sbtscala/scala-sbt:eclipse-temurin-jammy-11.0.22_7_1.9.9_2.13.13`
+# Currently using the very outdated http://github.com/broadinstitute/scala-baseimage
+# because the Docker version on Jenkins is obsolete and does not support recent images.
+FROM broadinstitute/scala-baseimage as builder
 
 # Install Agora
 ADD . /agora

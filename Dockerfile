@@ -1,13 +1,12 @@
 # Production build/deploy/start of DSDE Methods Repository Webservice
 
-# http://github.com/broadinstitute/scala-baseimage
-FROM broadinstitute/scala-baseimage as builder
+FROM sbtscala/scala-sbt:eclipse-temurin-jammy-11.0.22_7_1.9.9_2.13.13 as builder
 
 # Install Agora
 ADD . /agora
 RUN ["/bin/bash", "-c", "/agora/docker/install.sh /agora"]
 
-FROM adoptopenjdk:11-hotspot
+FROM us.gcr.io/broad-dsp-gcr-public/base/jre:11-debian
 
 # Expose the port used by Agora webservice
 EXPOSE 8000

@@ -1,6 +1,5 @@
 # Production build/deploy/start of DSDE Methods Repository Webservice
 
-# http://github.com/broadinstitute/scala-baseimage
 FROM broadinstitute/scala-baseimage as builder
 
 # Install Agora

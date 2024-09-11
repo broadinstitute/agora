@@ -101,8 +101,10 @@ class PermissionBusiness(permissionsDataSource: PermissionsDataSource) {
         } recover {
           // AgoraEntityAuthorizationException means we don't have permissions to read the entity's acls,
           // or the entity doesn't exist. For purposes of this method, call these non-fatal.
-          // we don't recover from any other exceptions.
-          case aeae: AgoraEntityAuthorizationException => EntityAccessControl(annotatedEntity, Seq.empty[AccessControl], Some(aeae.getMessage))
+          // we don't recover from any other exceptions. Additionally, for unauthorized access return entity information
+          // that was already part of request. Don't send additional information. This meets previous response expectations
+          // and fixes the issue mentioned in https://broadworkbench.atlassian.net/browse/WX-1764.
+          case aeae: AgoraEntityAuthorizationException => EntityAccessControl(entity, Seq.empty[AccessControl], Some(aeae.getMessage))
         }
       }
     })

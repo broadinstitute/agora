@@ -101,9 +101,10 @@ class PermissionBusiness(permissionsDataSource: PermissionsDataSource) {
         } recover {
           // AgoraEntityAuthorizationException means we don't have permissions to read the entity's acls,
           // or the entity doesn't exist. For purposes of this method, call these non-fatal.
-          // we don't recover from any other exceptions. Additionally, for unauthorized access return empty
-          // entity and ACLs values. See https://broadworkbench.atlassian.net/browse/WX-1764
-          case aeae: AgoraEntityAuthorizationException => EntityAccessControl(new AgoraEntity(), Seq.empty[AccessControl], Some(aeae.getMessage))
+          // we don't recover from any other exceptions. Additionally, for unauthorized access return entity information
+          // that was already part of request. Don't send additional information. This meets previous response expectations
+          // and fixes the issue mentioned in https://broadworkbench.atlassian.net/browse/WX-1764.
+          case aeae: AgoraEntityAuthorizationException => EntityAccessControl(entity, Seq.empty[AccessControl], Some(aeae.getMessage))
         }
       }
     })
@@ -126,9 +127,11 @@ class PermissionBusiness(permissionsDataSource: PermissionsDataSource) {
           batchEntityPermission(entity, requester, listAccessControl) map { _ =>
             EntityAccessControl(entity, listAccessControl, None)
           } recover {
-            // For unauthorized access return empty entity and ACLs values. See https://broadworkbench.atlassian.net/browse/WX-1764
+            // For unauthorized access return entity information that was already in the request and empty ACLs values.
+            // This meets previous response expectations, keeps response schema similar to POST API and fixes the
+            // issue mentioned in https://broadworkbench.atlassian.net/browse/WX-1764.
             case aeae: AgoraEntityAuthorizationException =>
-              EntityAccessControl(new AgoraEntity(), Seq.empty[AccessControl], Some(aeae.getMessage))
+              EntityAccessControl(entity, Seq.empty[AccessControl], Some(aeae.getMessage))
             case e:Exception =>
               EntityAccessControl(entity, listAccessControl, Some(e.getMessage))
           }

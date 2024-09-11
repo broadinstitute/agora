@@ -127,11 +127,6 @@ class PermissionBusiness(permissionsDataSource: PermissionsDataSource) {
           batchEntityPermission(entity, requester, listAccessControl) map { _ =>
             EntityAccessControl(entity, listAccessControl, None)
           } recover {
-            // For unauthorized access return entity information that was already in the request and empty ACLs values.
-            // This meets previous response expectations, keeps response schema similar to POST API and fixes the
-            // issue mentioned in https://broadworkbench.atlassian.net/browse/WX-1764.
-            case aeae: AgoraEntityAuthorizationException =>
-              EntityAccessControl(entity, Seq.empty[AccessControl], Some(aeae.getMessage))
             case e:Exception =>
               EntityAccessControl(entity, listAccessControl, Some(e.getMessage))
           }

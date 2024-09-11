@@ -370,7 +370,9 @@ class PermissionIntegrationSpec extends AnyFlatSpec with ScalatestRouteTest with
           val stubEntity = AgoraEntity(agoraEntity2.namespace, agoraEntity2.name, agoraEntity2.snapshotId)
           val found = entityAclList.find(_.entity.toShortString == stubEntity.toShortString)
           assert(found.isDefined, "second")
-          assertResult(Set(owner2.get), "second") {found.get.entity.managers.toSet}
+          assert(found.get.entity.managers.isEmpty, "second") // since user doesn't have permission they shouldn't see additional information about method
+          assert(found.get.message.isDefined, "second")
+          assert(found.get.message.get.contains("Authorization exception for user"), "second")
         }
         // check third - it doesn't exist in the db
         {
@@ -434,7 +436,8 @@ class PermissionIntegrationSpec extends AnyFlatSpec with ScalatestRouteTest with
           val stubEntity = AgoraEntity(agoraEntity2.namespace, agoraEntity2.name, agoraEntity2.snapshotId)
           val found = entityAclList.find(_.entity.toShortString == stubEntity.toShortString)
           assert(found.isDefined, "second")
-          assertResult(Some(true)) {found.get.entity.public}
+          assert(found.get.entity.public.isEmpty, "second") // since user doesn't have permission they shouldn't see additional information about method
+          assert(found.get.message.get.contains("Authorization exception for user"), "second")
         }
         // check third - it doesn't exist in the db
         {

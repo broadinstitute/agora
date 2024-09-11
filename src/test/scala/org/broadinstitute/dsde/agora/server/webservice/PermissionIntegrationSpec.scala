@@ -436,7 +436,8 @@ class PermissionIntegrationSpec extends AnyFlatSpec with ScalatestRouteTest with
           val stubEntity = AgoraEntity(agoraEntity2.namespace, agoraEntity2.name, agoraEntity2.snapshotId)
           val found = entityAclList.find(_.entity.toShortString == stubEntity.toShortString)
           assert(found.isDefined, "second")
-          assert(found.get.entity.public.isEmpty, "second") // since user doesn't have permission they shouldn't see additional information about method
+          // since user doesn't have permission they shouldn't see additional information about method
+          assertResult(None) {found.get.entity.public}
           assert(found.get.message.get.contains("Authorization exception for user"), "second")
         }
         // check third - it doesn't exist in the db
@@ -444,14 +445,18 @@ class PermissionIntegrationSpec extends AnyFlatSpec with ScalatestRouteTest with
           val stubEntity = AgoraEntity(agoraEntity1.namespace, agoraEntity1.name, Some(12345))
           val found = entityAclList.find(_.entity.toShortString == stubEntity.toShortString)
           assert(found.isDefined, "third")
-          assertResult(Some(false)) {found.get.entity.public} // entity doesn't exist, so it's not public
+          // it seems when entity doesn't exist 'AgoraEntityAuthorizationException' is thrown and hence
+          // public information is now not available because of https://broadworkbench.atlassian.net/browse/WX-1764
+          assertResult(None) {found.get.entity.public}
         }
         // check fourth - it has been redacted, which resolves to us not having permissions to see it
         {
           val stubEntity = AgoraEntity(redactedEntity.namespace, redactedEntity.name, redactedEntity.snapshotId)
           val found = entityAclList.find(_.entity.toShortString == stubEntity.toShortString)
           assert(found.isDefined, "fourth")
-          assertResult(Some(false)) {found.get.entity.public} // when redacted, so it's not public
+          // it seems when entity is redacted 'AgoraEntityAuthorizationException' is thrown and hence
+          // public information is now not available because of https://broadworkbench.atlassian.net/browse/WX-1764
+          assertResult(None) {found.get.entity.public}
         }
       }
   }

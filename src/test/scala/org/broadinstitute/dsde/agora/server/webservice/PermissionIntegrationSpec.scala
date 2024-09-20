@@ -462,7 +462,6 @@ class PermissionIntegrationSpec extends AnyFlatSpec with ScalatestRouteTest with
   }
 
   "Agora" should "successfully upsert permissions for multiple methods and users simultaneously" in {
-
     // initial state should start with no permissions for our test cases
     assertResult(None) {getUserPermissions(agoraEntity1, owner2.get)(mockAuthenticatedOwner.get)}
     assertResult(None) {getUserPermissions(agoraEntity1, owner3.get)(mockAuthenticatedOwner.get)}

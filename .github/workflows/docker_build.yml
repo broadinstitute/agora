@@ -44,4 +44,4 @@ jobs:
 
       - name: Build image
         run: |
-          docker build -t agora .
+          docker build -t agora:${{ steps.tag.outputs.new_tag }} .

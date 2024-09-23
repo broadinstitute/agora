@@ -45,7 +45,8 @@ jobs:
       - name: Construct dockerhub and GCR image names
         id: image-name
         run: |
-          echo ::set-output name=DOCKERHUB_NAME::broadinstitute/agora:${{ steps.tag.outputs.new_tag }}
+#          echo ::set-output name=DOCKERHUB_NAME::broadinstitute/agora:${{ steps.tag.outputs.new_tag }}
+          echo "{name}=DOCKERHUB_NAME::broadinstitute/agora:${{ steps.tag.outputs.new_tag }}" >> $GITHUB_OUTPUT
           echo ::set-output name=GCR_NAME::gcr.io/broad-dsp-gcr-public/agora:${{ steps.tag.outputs.new_tag }}
 
       - name: Build image

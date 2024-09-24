@@ -11,6 +11,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.BROADBOT_TOKEN }} # this allows the push to succeed later
 
       - name: Git secrets setup
         run: |

@@ -63,8 +63,8 @@ jobs:
           username: dsdejenkins
           password: ${{ secrets.DSDEJENKINS_DOCKERHUB_PASSWORD }}
 
-#      - name: Push dockerhub image
-#        run: docker push ${{ steps.image-name.outputs.DOCKERHUB_NAME }}
+      - name: Push dockerhub image
+        run: docker push ${{ steps.image-name.outputs.DOCKERHUB_NAME }}
 
       - name: Re-tag image for GCR
         run: docker tag ${{ steps.image-name.outputs.DOCKERHUB_NAME }} ${{ steps.image-name.outputs.GCR_NAME }}

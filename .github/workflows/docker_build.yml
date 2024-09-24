@@ -66,15 +66,17 @@ jobs:
       - name: Re-tag image for GCR
         run: docker tag ${{ steps.image-name.outputs.DOCKERHUB_NAME }} ${{ steps.image-name.outputs.GCR_NAME }}
 
-      - name: Set up gcloud
-        uses: google-github-actions/setup-gcloud@v0
-
       - name: Authenticate to Google Cloud
-        uses: 'google-github-actions/auth@v0'
+        id: 'auth'
+        uses: google-github-actions/auth@v2
         with:
           # Centralized in dsp-tools-k8s; ask in #dsp-devops-champions for help troubleshooting
           workload_identity_provider: 'projects/1038484894585/locations/global/workloadIdentityPools/github-wi-pool/providers/github-wi-provider'
           service_account: 'gcr-publish@broad-dsp-gcr-public.iam.gserviceaccount.com'
+
+      # Install gcloud, `setup-gcloud` automatically picks up authentication from `auth`.
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2'
 
       - name: Explicitly auth Docker for GCR
         run: gcloud auth configure-docker --quiet

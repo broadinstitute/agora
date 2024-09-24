@@ -8,6 +8,9 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
 
     steps:
       - uses: actions/checkout@v3
@@ -60,8 +63,8 @@ jobs:
           username: dsdejenkins
           password: ${{ secrets.DSDEJENKINS_DOCKERHUB_PASSWORD }}
 
-      - name: Push dockerhub image
-        run: docker push ${{ steps.image-name.outputs.DOCKERHUB_NAME }}
+#      - name: Push dockerhub image
+#        run: docker push ${{ steps.image-name.outputs.DOCKERHUB_NAME }}
 
       - name: Re-tag image for GCR
         run: docker tag ${{ steps.image-name.outputs.DOCKERHUB_NAME }} ${{ steps.image-name.outputs.GCR_NAME }}
@@ -75,8 +78,8 @@ jobs:
           service_account: 'gcr-publish@broad-dsp-gcr-public.iam.gserviceaccount.com'
 
       # Install gcloud, `setup-gcloud` automatically picks up authentication from `auth`.
-      - name: 'Set up Cloud SDK'
-        uses: 'google-github-actions/setup-gcloud@v2'
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
 
       - name: Explicitly auth Docker for GCR
         run: gcloud auth configure-docker --quiet

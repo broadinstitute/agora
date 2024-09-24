@@ -42,11 +42,11 @@ jobs:
           RELEASE_BRANCHES: develop
           WITH_V: true
 
-      - name: Construct dockerhub and GCR image names #  echo ::set-output name=DOCKERHUB_NAME::broadinstitute/agora:${{ steps.tag.outputs.new_tag }}
+      - name: Construct Dockerhub and GCR image names
         id: image-name
         run: |
           echo "DOCKERHUB_NAME=broadinstitute/agora:${{ steps.tag.outputs.new_tag }}" >> $GITHUB_OUTPUT
-          echo ::set-output name=GCR_NAME::gcr.io/broad-dsp-gcr-public/agora:${{ steps.tag.outputs.new_tag }}
+          echo "GCR_NAME=gcr.io/broad-dsp-gcr-public/agora:${{ steps.tag.outputs.new_tag }}" >> $GITHUB_OUTPUT
 
       - name: Build image
         run: |

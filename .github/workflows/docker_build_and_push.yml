@@ -6,11 +6,13 @@ on:
   pull_request:
 
 jobs:
-  build-and-push:
+  build-and-push-job:
     runs-on: ubuntu-latest
     permissions:
       contents: 'read'
       id-token: 'write'
+    outputs:
+      tag: ${{ steps.tag.outputs.new_tag }}
 
     steps:
       - uses: actions/checkout@v3
@@ -86,3 +88,14 @@ jobs:
 
       - name: Push GCR image
         run: docker push ${{ steps.image-name.outputs.GCR_NAME }}
+
+  report-to-sherlock:
+    # Report new Agora version to Sherlock and hence Beehive
+    uses: broadinstitute/sherlock/.github/workflows/client-report-app-version.yaml@main
+    needs: [ build-and-push-job ]
+    with:
+      new-version: ${{ needs.build-and-push-job.outputs.new_tag }}
+      chart-name: 'agora'
+    permissions:
+      contents: 'read'
+      id-token: 'write'

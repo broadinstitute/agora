@@ -14,3 +14,6 @@ env.properties
 *~
 .DS_Store
 /.bsp/sbt.json
+
+# Ignore generated credentials from google-github-actions/auth
+gha-creds-*.json

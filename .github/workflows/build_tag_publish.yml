@@ -1,9 +1,13 @@
-name: 'Agora build and push'
+name: 'Build tag and publish'
 
 on:
   workflow_dispatch:
   merge_group:
   pull_request:
+    paths-ignore: [ '**.md' ]
+  push:
+    branches: [ develop ]
+    paths-ignore: [ '**.md' ]
 
 jobs:
   build-and-push-job:
@@ -100,16 +104,16 @@ jobs:
       contents: 'read'
       id-token: 'write'
 
-#  set-version-in-dev:
-#    # Put new Agora version in dev environment
-#    uses: broadinstitute/sherlock/.github/workflows/client-set-environment-app-version.yaml@main
-#    needs: [ build-and-push-job, report-to-sherlock ]
-#    if: ${{ github.ref_name == 'develop' }}
-#    with:
-#      new-version: ${{ needs.build-and-push-job.outputs.tag }}
-#      chart-name: 'agora'
-#      environment-name: 'dev'
-#    secrets:
-#      sync-git-token: ${{ secrets.BROADBOT_TOKEN }}
-#    permissions:
-#      id-token: 'write'
+  set-version-in-dev:
+    # Put new Agora version in dev environment
+    uses: broadinstitute/sherlock/.github/workflows/client-set-environment-app-version.yaml@main
+    needs: [ build-and-push-job, report-to-sherlock ]
+    if: ${{ github.ref_name == 'develop' }}
+    with:
+      new-version: ${{ needs.build-and-push-job.outputs.tag }}
+      chart-name: 'agora'
+      environment-name: 'dev'
+    secrets:
+      sync-git-token: ${{ secrets.BROADBOT_TOKEN }}
+    permissions:
+      id-token: 'write'

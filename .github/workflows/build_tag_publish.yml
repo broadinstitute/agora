@@ -1,5 +1,4 @@
 name: 'Build tag and publish'
-
 on:
   workflow_dispatch:
   merge_group:
@@ -83,7 +82,7 @@ jobs:
           workload_identity_provider: 'projects/1038484894585/locations/global/workloadIdentityPools/github-wi-pool/providers/github-wi-provider'
           service_account: 'gcr-publish@broad-dsp-gcr-public.iam.gserviceaccount.com'
 
-      # Install gcloud, `setup-gcloud` automatically picks up authentication from `auth`.
+      # Install gcloud, `setup-gcloud` automatically picks up authentication from `auth`
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 

@@ -42,13 +42,14 @@ jobs:
           git secrets --scan-history
         shell: bash
 
+      # TODO: change RELEASE_BRANCHES to develop
       - name: Bump the tag to a new version
         uses: databiosphere/github-actions/actions/bumper@bumper-0.4.0
         id: tag
         env:
           DEFAULT_BUMP: patch
           GITHUB_TOKEN: ${{ secrets.BROADBOT_TOKEN }}
-          RELEASE_BRANCHES: sps_fix_tag_step # TODO: change it to develop
+          RELEASE_BRANCHES: sps_fix_tag_step, origin/sps_fix_tag_step
           WITH_V: true
 
       - name: Construct Dockerhub and GCR image names

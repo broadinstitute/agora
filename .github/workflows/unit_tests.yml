@@ -3,6 +3,8 @@ name: 'Agora unit tests'
 on:
   workflow_dispatch: #Manual trigger from GitHub UI
   push:
+    branches: [ develop ]
+    paths-ignore: [ '**.md' ]
   merge_group:
   pull_request:
 

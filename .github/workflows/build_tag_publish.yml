@@ -55,7 +55,7 @@ jobs:
         env:
           DEFAULT_BUMP: patch
           GITHUB_TOKEN: ${{ secrets.BROADBOT_TOKEN }}
-          RELEASE_BRANCHES: sps_fix_tag_step
+          RELEASE_BRANCHES: .*
           WITH_V: true
 
 #      - name: Construct Dockerhub and GCR image names

@@ -42,12 +42,6 @@ jobs:
           git secrets --scan-history
         shell: bash
 
-      - name: Check ref
-        shell: bash
-        run: |
-          git_refs_url=$(jq .repository.git_refs_url $GITHUB_EVENT_PATH | tr -d '"' | sed 's/{\/sha}//g')
-          echo $git_refs_url
-
       # TODO: change RELEASE_BRANCHES to develop
       - name: Bump the tag to a new version
         uses: databiosphere/github-actions/actions/bumper@bumper-0.4.0

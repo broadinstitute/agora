@@ -42,6 +42,12 @@ jobs:
           git secrets --scan-history
         shell: bash
 
+      - name: Check ref
+        shell: bash
+        run: |
+          git_refs_url=$(jq .repository.git_refs_url $GITHUB_EVENT_PATH | tr -d '"' | sed 's/{\/sha}//g')
+          echo $git_refs_url
+
       # TODO: change RELEASE_BRANCHES to develop
       - name: Bump the tag to a new version
         uses: databiosphere/github-actions/actions/bumper@bumper-0.4.0
@@ -52,51 +58,51 @@ jobs:
           RELEASE_BRANCHES: HEAD
           WITH_V: true
 
-      - name: Construct Dockerhub and GCR image names
-        id: image-name
-        run: |
-          echo "DOCKERHUB_NAME=broadinstitute/agora:${{ steps.tag.outputs.tag }}" >> $GITHUB_OUTPUT
-          echo "GCR_NAME=gcr.io/broad-dsp-gcr-public/agora:${{ steps.tag.outputs.tag }}" >> $GITHUB_OUTPUT
-
-      - name: Setup JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 11
-
-      - name: Build image
-        run: |
-          docker build -t ${{ steps.image-name.outputs.DOCKERHUB_NAME }} .
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v1
-        with:
-          username: dsdejenkins
-          password: ${{ secrets.DSDEJENKINS_DOCKERHUB_PASSWORD }}
-
-      - name: Push dockerhub image
-        run: docker push ${{ steps.image-name.outputs.DOCKERHUB_NAME }}
-
-      - name: Re-tag image for GCR
-        run: docker tag ${{ steps.image-name.outputs.DOCKERHUB_NAME }} ${{ steps.image-name.outputs.GCR_NAME }}
-
-      - name: Authenticate to Google Cloud
-        id: 'auth'
-        uses: google-github-actions/auth@v2
-        with:
-          # Centralized in dsp-tools-k8s; ask in #dsp-devops-champions for help troubleshooting
-          workload_identity_provider: 'projects/1038484894585/locations/global/workloadIdentityPools/github-wi-pool/providers/github-wi-provider'
-          service_account: 'gcr-publish@broad-dsp-gcr-public.iam.gserviceaccount.com'
-
-      # Install gcloud, `setup-gcloud` automatically picks up authentication from `auth`
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-
-      - name: Explicitly auth Docker for GCR
-        run: gcloud auth configure-docker --quiet
-
-      - name: Push GCR image
-        run: docker push ${{ steps.image-name.outputs.GCR_NAME }}
+#      - name: Construct Dockerhub and GCR image names
+#        id: image-name
+#        run: |
+#          echo "DOCKERHUB_NAME=broadinstitute/agora:${{ steps.tag.outputs.tag }}" >> $GITHUB_OUTPUT
+#          echo "GCR_NAME=gcr.io/broad-dsp-gcr-public/agora:${{ steps.tag.outputs.tag }}" >> $GITHUB_OUTPUT
+#
+#      - name: Setup JDK
+#        uses: actions/setup-java@v4
+#        with:
+#          distribution: temurin
+#          java-version: 11
+#
+#      - name: Build image
+#        run: |
+#          docker build -t ${{ steps.image-name.outputs.DOCKERHUB_NAME }} .
+#
+#      - name: Login to Docker Hub
+#        uses: docker/login-action@v1
+#        with:
+#          username: dsdejenkins
+#          password: ${{ secrets.DSDEJENKINS_DOCKERHUB_PASSWORD }}
+#
+#      - name: Push dockerhub image
+#        run: docker push ${{ steps.image-name.outputs.DOCKERHUB_NAME }}
+#
+#      - name: Re-tag image for GCR
+#        run: docker tag ${{ steps.image-name.outputs.DOCKERHUB_NAME }} ${{ steps.image-name.outputs.GCR_NAME }}
+#
+#      - name: Authenticate to Google Cloud
+#        id: 'auth'
+#        uses: google-github-actions/auth@v2
+#        with:
+#          # Centralized in dsp-tools-k8s; ask in #dsp-devops-champions for help troubleshooting
+#          workload_identity_provider: 'projects/1038484894585/locations/global/workloadIdentityPools/github-wi-pool/providers/github-wi-provider'
+#          service_account: 'gcr-publish@broad-dsp-gcr-public.iam.gserviceaccount.com'
+#
+#      # Install gcloud, `setup-gcloud` automatically picks up authentication from `auth`
+#      - name: Set up Cloud SDK
+#        uses: google-github-actions/setup-gcloud@v2
+#
+#      - name: Explicitly auth Docker for GCR
+#        run: gcloud auth configure-docker --quiet
+#
+#      - name: Push GCR image
+#        run: docker push ${{ steps.image-name.outputs.GCR_NAME }}
 
 #  report-to-sherlock:
 #    # Report new Agora version to Sherlock and hence Beehive

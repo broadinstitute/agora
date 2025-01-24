@@ -19,7 +19,7 @@ object TestPermissionsClient {
       Set("url", "user", "password", "properties", "driver", "driverClassName"),
     )
 
-    Flyway.configure().dataSource(driverDataSource).load()
+    Flyway.configure().dataSource(driverDataSource).cleanDisabled(false).load()
   }
 
   def ensureRunning(): Unit = flyway.migrate()

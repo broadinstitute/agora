@@ -1,7 +1,7 @@
 
 package org.broadinstitute.dsde.agora.server.dataaccess.permissions
 
-import org.broadinstitute.dsde.agora.server.{AgoraTestData, AgoraTestFixture}
+import org.broadinstitute.dsde.agora.server.{AgoraConfig, AgoraTestData, AgoraTestFixture}
 import org.broadinstitute.dsde.agora.server.dataaccess.permissions.AgoraPermissions._
 import org.broadinstitute.dsde.agora.server.webservice.ApiServiceSpec
 import org.scalatest.flatspec.AnyFlatSpecLike
@@ -10,12 +10,23 @@ import org.scalatest.{BeforeAndAfterAll, DoNotDiscover}
 @DoNotDiscover
 class AgoraPermissionsSpec extends ApiServiceSpec with BeforeAndAfterAll with AgoraTestFixture with AnyFlatSpecLike {
 
+  import AgoraConfig.sqlDatabase.profile.api._
+
   override protected def beforeAll(): Unit = {
     ensureDatabasesAreRunning()
   }
 
   override protected def afterAll(): Unit = {
     clearDatabases()
+  }
+
+  "Agora" should "run on expected SQL version" in {
+    val action = for {
+      version <- sql"select version();".as[String]
+    } yield version.head
+    val version = runInDB { _ => action }
+
+    assert(version equals "8.4.3")
   }
 
   "Agora" should "return true if someone has read access and we ask if they have read access " in {

@@ -1,6 +1,7 @@
 package org.broadinstitute.dsde.agora.server.dataaccess.mongo
 
 import com.dimafeng.testcontainers.MongoDBContainer
+import org.testcontainers.utility.DockerImageName
 import com.mongodb.ConnectionString
 import com.typesafe.scalalogging.StrictLogging
 import org.broadinstitute.dsde.agora.server.AgoraConfig
@@ -16,7 +17,7 @@ object TestAgoraMongoClient extends StrictLogging {
   // Start up in the object static initializer so that we can set AgoraMongoClient.testConnectionString
   {
     if (AgoraConfig.mongoDbTestContainerEnabled) {
-      val imageName = "mongo:4.4"
+      val imageName = DockerImageName.parse("mongo:4.4")
       val mongoDBContainer = MongoDBContainer(imageName)
 
       // We may remove this when this is released:

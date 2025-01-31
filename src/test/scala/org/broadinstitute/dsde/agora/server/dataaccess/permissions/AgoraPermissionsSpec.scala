@@ -26,7 +26,7 @@ class AgoraPermissionsSpec extends ApiServiceSpec with BeforeAndAfterAll with Ag
     } yield version.head
     val version = runInDB { _ => action }
 
-    assert(version equals "5.6.51")
+    assert(version equals "8.0.40")
   }
 
   "Agora" should "return true if someone has read access and we ask if they have read access " in {

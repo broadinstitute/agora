@@ -89,8 +89,7 @@ libraryDependencies ++= Seq(
   "org.mock-server" % "mockserver-netty" % "5.11.1" % Test,
   "com.dimafeng" %% "testcontainers-scala-mysql" % testcontainersScalaV % Test,
   "com.dimafeng" %% "testcontainers-scala-mongodb" % testcontainersScalaV % Test,
-  "org.flywaydb" % "flyway-core" % "9.22.3" % Test, // Starting 10.0.0 Flyway only supports Java 17. Agora is on Java 11
-  "org.flywaydb" % "flyway-mysql" % "9.22.3" % Test,
+  "org.flywaydb" % "flyway-core" % "7.3.2" % Test, // Starting 10.0.0 Flyway only supports Java 17. Agora is on Java 11
   "org.broadinstitute.dsde.workbench" % "sam-client_2.12" % "0.1-61135c7",      // Should become available for 2.13 once a release happens ( https://github.com/broadinstitute/sam/pull/491 )
   "org.broadinstitute.cromwell" % "cromwell-client_2.12" % "0.1-8b413b45f-SNAP", // Contains only Java, pinning on 2.12
   "org.broadinstitute.dsde.workbench" %% "workbench-oauth2" % workbenchOauth2V excludeAll(

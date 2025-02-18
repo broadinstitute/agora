@@ -50,8 +50,7 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with AnyFlatSpecLike with A
   }
 
   "Agora" should "never include server version in response header" in {
-    Get(ApiUtil.Configurations.withLeadingVersion) ~>
-      routes ~> check {
+    Get(ApiUtil.Configurations.withLeadingVersion) ~> addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {
       assert(header("Server").exists(_.value() == ""))
     }
   }

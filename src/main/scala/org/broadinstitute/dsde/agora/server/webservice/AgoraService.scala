@@ -5,9 +5,8 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes.{BadRequest, Created}
 import akka.http.scaladsl.model.HttpMethods.{DELETE, GET}
 import akka.http.scaladsl.server.{MethodRejection, PathMatcher, Route}
-import akka.http.scaladsl.model.headers.`Cache-Control`
+import akka.http.scaladsl.model.headers.{RawHeader, `Cache-Control`}
 import akka.http.scaladsl.model.headers.CacheDirectives.`no-cache`
-import akka.http.scaladsl.model.headers.Server
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.agora.server.AgoraConfig.authenticationDirectives
 import org.broadinstitute.dsde.agora.server.business.{AgoraBusiness, AgoraBusinessExecutionContext}
@@ -36,7 +35,7 @@ abstract class AgoraService(permissionsDataSource: PermissionsDataSource) extend
   final def routes(implicit
                    executionContext: ExecutionContext,
                    agoraBusinessExecutionContext: AgoraBusinessExecutionContext): Route =
-    respondWithHeaders(`Cache-Control`(`no-cache`), Server("")) {
+    respondWithHeaders(`Cache-Control`(`no-cache`), RawHeader("Server", "")) {
       queryAssociatedConfigurationsRoute ~ queryCompatibleConfigurationsRoute ~ querySingleRoute ~
         queryMethodDefinitionsRoute ~ queryRoute ~ postRoute
     }

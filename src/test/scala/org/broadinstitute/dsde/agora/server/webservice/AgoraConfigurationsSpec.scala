@@ -49,6 +49,13 @@ class AgoraConfigurationsSpec extends ApiServiceSpec with AnyFlatSpecLike with A
     stopMockWaas()
   }
 
+  "Agora" should "never include server version in response header" in {
+    Get(ApiUtil.Configurations.withLeadingVersion) ~>
+      routes ~> check {
+      assert(header("Server").exists(_.value() == ""))
+    }
+  }
+
   "Agora" should "accept and record a snapshot comment when creating the initial snapshot of a config" in {
     Post(ApiUtil.Configurations.withLeadingVersion, testConfigWithSnapshotComment1.copy(snapshotId = None, payload = taskConfigPayload)) ~>
       addHeader(MockAgoraDirectives.mockAccessToken, mockAccessToken) ~> routes ~> check {

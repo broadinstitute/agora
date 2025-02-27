@@ -1,8 +1,8 @@
 package org.broadinstitute.dsde.agora.server.dataaccess
 
 import java.util
-
 import akka.http.scaladsl.model.StatusCodes
+import okhttp3.Dispatcher
 import org.broadinstitute.dsde.agora.server.AgoraConfig
 import org.broadinstitute.dsde.workbench.client.sam.api.UsersApi
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo
@@ -11,8 +11,17 @@ import org.broadinstitute.dsde.workbench.client.sam.{ApiCallback, ApiClient, Api
 import scala.concurrent.{Future, Promise}
 
 object SamClient {
+  private val okHttpClient = {
+    val dispatcher = new Dispatcher()
+    dispatcher.setMaxRequests(AgoraConfig.samMaxConcurrentRequests)
+    dispatcher.setMaxRequestsPerHost(AgoraConfig.samMaxConcurrentRequests)
+    new ApiClient().getHttpClient.newBuilder.
+      dispatcher(dispatcher).
+      build()
+  }
+
   private def samUserApi(accessToken: String) = {
-    val apiClient = new ApiClient()
+    val apiClient = new ApiClient().setHttpClient(okHttpClient)
     apiClient.setAccessToken(accessToken)
     apiClient.setBasePath(AgoraConfig.samUrl)
     new UsersApi(apiClient)

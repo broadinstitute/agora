@@ -80,6 +80,7 @@ object AgoraConfig {
 
   // sam
   lazy val samUrl: String = config.as[String]("sam.url")
+  lazy val samMaxConcurrentRequests: Int = config.as[Int]("sam.maxConcurrentRequests")
 
   lazy val openIdConnectConfig: OpenIDConnectConfiguration = {
     val oidc = config.getConfig("oidc")

@@ -49,10 +49,13 @@ class Ga4ghService(permissionsDataSource: PermissionsDataSource) extends Ga4ghQu
           complete(StatusCodes.NotImplemented)
         } ~
         path("tools" / Segment / "versions" / Segment / Segment / "descriptor") { (id, versionId, descriptorType) =>
-          val agoraEntity: Future[AgoraEntity] = queryPublicSingleEntity(entityFromArguments(id, versionId))
+          val entity = entityFromArguments(id, versionId)
+          logger.info(s"In route tools/${id}/versions/${versionId}/${descriptorType}/descriptor")
+          val agoraEntity: Future[AgoraEntity] = queryPublicSingleEntity(entity)
           val descriptor = parseDescriptorType(descriptorType)
           onComplete(agoraEntity) {
             case Success(ae) =>
+              logger.info(s"Completed fetching WDL in tools/${id}/versions/${versionId}/${descriptorType}/descriptor")
               descriptor match {
                 case ToolDescriptorType.WDL =>
                   // the url we return here is known to be incorrect in FireCloud (GAWB-1741).
@@ -61,6 +64,7 @@ class Ga4ghService(permissionsDataSource: PermissionsDataSource) extends Ga4ghQu
                   complete(ToolDescriptor(ae))
                 case ToolDescriptorType.PLAIN_WDL =>
                   val payload: String = ae.payload.getOrElse("")
+                  logger.info("Returning WDL payload in tools/${id}/versions/${versionId}/${descriptorType}/descriptor")
                   complete(payload)
               }
             case Failure(ex) => failWith(ex)

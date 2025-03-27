@@ -517,7 +517,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLo
       val result = for {
         // No need to try to insert the public user again, this can also be the source of a DB live lock
         // See more details in https://broadworkbench.atlassian.net/browse/AN-453
-        _ <- if (username != "public") db.aePerms.addUserIfNotInDatabase(username) else DBIO.successful()
+        _ <- if (username != "public") db.aePerms.addUserIfNotInDatabase(username) else DBIO.successful(())
         foundEntity <- DBIO.from(foundEntityFuture)
         agoraEntities <- db.aePerms.filterEntityByRead(Seq(foundEntity), username, "findSingle")
         agoraEntityResult <- agoraEntities match {

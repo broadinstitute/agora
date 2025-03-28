@@ -515,8 +515,6 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLo
     val foundEntityFuture = AgoraDao.createAgoraDao(entityTypes).findSingle(namespace, name, snapshotId)
     permissionsDataSource.inTransaction { db =>
       val result = for {
-        // No need to try to insert the public user again, this can also be the source of a DB live lock
-        // See more details in https://broadworkbench.atlassian.net/browse/AN-453
         _ <- db.aePerms.addUserIfNotInDatabase(username)
         foundEntity <- DBIO.from(foundEntityFuture)
         agoraEntities <- db.aePerms.filterEntityByRead(Seq(foundEntity), username, "findSingle")

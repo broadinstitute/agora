@@ -46,6 +46,8 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
   def addUserIfNotInDatabase(userEmail: String)(implicit executionContext: ExecutionContext): ReadWriteAction[Int] = {
     doesUserExists(userEmail) flatMap {
       // Only add user if it does not already exist
+      // No need to try to insert the user again as this can also be the source of a DB live lock
+      // See more details in https://broadworkbench.atlassian.net/browse/AN-453
       case false => addUserInDatabase(userEmail)
       case true => DBIO.successful(0)
     }

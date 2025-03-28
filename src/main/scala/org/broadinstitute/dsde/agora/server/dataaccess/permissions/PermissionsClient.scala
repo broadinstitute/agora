@@ -31,14 +31,11 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
   // Users
   def addUserIfNotInDatabase(userEmail: String)(implicit executionContext: ExecutionContext): WriteAction[Int] = {
     // Attempts to add user to UserTable and ignores errors if user already exists
-    if (userEmail != AccessControl.publicUser) {
       (users += UserDao(userEmail)).asTry flatMap {
         case Success(count) => DBIO.successful(count)
         case Failure(_) => DBIO.successful(0)
       }
-    } else { DBIO.successful(0)
     }
-  }
 
   def isAdmin(userEmail: String)(implicit executionContext: ExecutionContext): ReadAction[Boolean] = {
     users.findByEmail(userEmail).result map { users =>

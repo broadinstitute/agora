@@ -512,13 +512,17 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLo
                  username: String)
                 (implicit executionContext: ExecutionContext): Future[AgoraEntity] = {
     // Start looking for the entity with an eager Future.
+    logger.info(s"start findSingle for ${namespace}:${name}/versions/${snapshotId} for user $username")
     val foundEntityFuture = AgoraDao.createAgoraDao(entityTypes).findSingle(namespace, name, snapshotId)
     permissionsDataSource.inTransaction { db =>
+      logger.info(s"start permission lookup in findSingle for ${namespace}:${name}/versions/${snapshotId} for user $username")
       val result = for {
         // No need to try to insert the public user again, this can also be the source of a DB live lock
         // See more details in https://broadworkbench.atlassian.net/browse/AN-453
-        _ <- if (username != "public") db.aePerms.addUserIfNotInDatabase(username) else DBIO.successful(())
+        _ <- db.aePerms.addUserIfNotInDatabase(username) if (username != AccessControl.publicUser)
+        _ = logger.info(s"added user to database in findSingle for ${namespace}:${name}/versions/${snapshotId} for user $username") if (username != "public")
         foundEntity <- DBIO.from(foundEntityFuture)
+        _ = logger.info(s"found entity in mongo in findSingle for ${namespace}:${name}/versions/${snapshotId} for user $username")
         agoraEntities <- db.aePerms.filterEntityByRead(Seq(foundEntity), username, "findSingle")
         agoraEntityResult <- agoraEntities match {
           case Seq(agoraEntity: AgoraEntity) =>

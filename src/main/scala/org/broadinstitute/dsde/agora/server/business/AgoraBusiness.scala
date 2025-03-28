@@ -520,7 +520,7 @@ class AgoraBusiness(permissionsDataSource: PermissionsDataSource) extends LazyLo
         // No need to try to insert the public user again, this can also be the source of a DB live lock
         // See more details in https://broadworkbench.atlassian.net/browse/AN-453
         _ <- db.aePerms.addUserIfNotInDatabase(username) if (username != AccessControl.publicUser)
-        _ = logger.info(s"added user to database in findSingle for ${namespace}:${name}/versions/${snapshotId} for user $username") if (username != "public")
+        _ = logger.info(s"added user to database in findSingle for ${namespace}:${name}/versions/${snapshotId} for user $username") if (username != AccessControl.publicUser)
         foundEntity <- DBIO.from(foundEntityFuture)
         _ = logger.info(s"found entity in mongo in findSingle for ${namespace}:${name}/versions/${snapshotId} for user $username")
         agoraEntities <- db.aePerms.filterEntityByRead(Seq(foundEntity), username, "findSingle")

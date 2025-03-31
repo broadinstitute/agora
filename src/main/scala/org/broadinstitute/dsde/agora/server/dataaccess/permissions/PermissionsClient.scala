@@ -29,11 +29,27 @@ abstract class PermissionsClient(profile: JdbcProfile) extends LazyLogging {
   }
 
   // Users
-  def addUserIfNotInDatabase(userEmail: String)(implicit executionContext: ExecutionContext): WriteAction[Int] = {
+  def doesUserExists(userEmail: String)(implicit executionContext: ExecutionContext): ReadAction[Boolean] = {
+    users.findByEmail(userEmail).result map { user =>
+      user.nonEmpty
+    }
+  }
+
+  def addUserInDatabase(userEmail: String)(implicit executionContext: ExecutionContext): WriteAction[Int] = {
     // Attempts to add user to UserTable and ignores errors if user already exists
     (users += UserDao(userEmail)).asTry flatMap {
       case Success(count) => DBIO.successful(count)
       case Failure(_) => DBIO.successful(0)
+    }
+  }
+
+  def addUserIfNotInDatabase(userEmail: String)(implicit executionContext: ExecutionContext): ReadWriteAction[Int] = {
+    doesUserExists(userEmail) flatMap {
+      // Only add user if it does not already exist
+      // No need to try to insert the user again as this can also be the source of a DB live lock
+      // See more details in https://broadworkbench.atlassian.net/browse/AN-453
+      case false => addUserInDatabase(userEmail)
+      case true => DBIO.successful(0)
     }
   }
 

@@ -45,7 +45,7 @@ val jacksonV = "2.11.3"
 val slickV = "3.3.3"
 val testcontainersScalaV = "0.41.8"
 
-val artifactory = "https://broadinstitute.jfrog.io/broadinstitute/"
+val artifactory = "https://us-central1-maven.pkg.dev/dsp-artifact-registry/"
 
 resolvers += "artifactory-releases" at artifactory + "libs-release"
 

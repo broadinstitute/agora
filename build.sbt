@@ -55,7 +55,7 @@ val workbenchLibV = "12ee68d"
 val workbenchOauth2V = s"0.9-$workbenchLibV"
 
 libraryDependencies ++= Seq(
-  "ch.qos.logback" % "logback-classic" % "1.4.14",
+  "ch.qos.logback" % "logback-classic" % "1.5.25",
   "com.google.api-client" % "google-api-client" % "1.25.0" excludeAll ExclusionRule(organization = "com.google.guava"),
   "com.google.apis" % "google-api-services-admin-directory" % "directory_v1-rev118-1.25.0" excludeAll
     ExclusionRule(organization = "com.google.guava"),

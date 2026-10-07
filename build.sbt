@@ -51,8 +51,8 @@ resolvers += "artifactory-releases" at artifactory + "libs-release"
 
 resolvers += "artifactory-snapshots" at artifactory + "libs-snapshot"
 
-val workbenchLibV = "12ee68d"
-val workbenchOauth2V = s"0.9-$workbenchLibV"
+val workbenchLibV = "21b215b"
+val workbenchOauth2V = s"0.11-$workbenchLibV"
 
 libraryDependencies ++= Seq(
   "ch.qos.logback" % "logback-classic" % "1.5.25",

@@ -76,6 +76,7 @@ libraryDependencies ++= Seq(
   // ficus was being pulled in transitively from wdl-draft2 previously, now made explicit
   "com.iheart" %% "ficus" % "1.5.0",
   "org.broadinstitute.dsde.workbench" %% "workbench-util" % "0.6-65bba14",
+  "org.broadinstitute.dsde.workbench" %% "workbench-model" % s"0.21-$workbenchLibV",
   "org.mongodb.scala" %% "mongo-scala-driver" % "4.1.0",
 
   // Not used directly, but keep Jackson up to date plus main+test synced for IntelliJ

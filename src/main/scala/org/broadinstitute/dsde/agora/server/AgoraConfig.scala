@@ -8,6 +8,8 @@ import org.broadinstitute.dsde.agora.server.model.AgoraEntityType
 import org.broadinstitute.dsde.agora.server.model.AgoraEntityType.EntityType
 import org.broadinstitute.dsde.agora.server.webservice.routes.{AgoraDirectives, MockAgoraDirectives, OpenIdConnectDirectives}
 import org.broadinstitute.dsde.workbench.oauth2.{ClientId, OpenIDConnectConfiguration}
+import org.typelevel.log4cats.LoggerFactory
+import org.typelevel.log4cats.slf4j.Slf4jFactory
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 
@@ -84,6 +86,7 @@ object AgoraConfig {
 
   lazy val openIdConnectConfig: OpenIDConnectConfiguration = {
     val oidc = config.getConfig("oidc")
+    implicit val loggerFactory: LoggerFactory[IO] = Slf4jFactory.create[IO]
     OpenIDConnectConfiguration[IO](
       oidc.getString("authorityEndpoint"),
       ClientId(oidc.getString("oidcClientId")),

@@ -92,6 +92,8 @@ libraryDependencies ++= Seq(
   "org.flywaydb" % "flyway-core" % "7.3.2" % Test, // Starting 10.0.0 Flyway only supports Java 17. Agora is on Java 11. See https://broadworkbench.atlassian.net/browse/AN-394
   "org.broadinstitute.dsde.workbench" % "sam-client_2.12" % "0.1-61135c7",      // Should become available for 2.13 once a release happens ( https://github.com/broadinstitute/sam/pull/491 )
   "org.broadinstitute.cromwell" % "cromwell-client_2.12" % "0.1-8b413b45f-SNAP", // Contains only Java, pinning on 2.12
+  // workbench-oauth2 requires an implicit log4cats LoggerFactory; version should match the log4cats-core it pulls in
+  "org.typelevel" %% "log4cats-slf4j" % "2.7.1",
   "org.broadinstitute.dsde.workbench" %% "workbench-oauth2" % workbenchOauth2V excludeAll(
     // these included libs cause conflicts during sbt assembly
     ExclusionRule(organization = "com.google.protobuf"),

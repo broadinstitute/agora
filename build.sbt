@@ -41,7 +41,8 @@ scalacOptions := Seq(
 
 val akkaV = "2.6.9"
 val akkaHttpV = "10.2.9"
-val jacksonV = "2.15.0"
+val jacksonV = "2.22.3"
+val jacksonAnnotationsV = "2.22"
 val slickV = "3.3.3"
 val testcontainersScalaV = "0.41.8"
 
@@ -55,7 +56,7 @@ val workbenchLibV = "21b215b"
 val workbenchOauth2V = s"0.11-$workbenchLibV"
 
 libraryDependencies ++= Seq(
-  "ch.qos.logback" % "logback-classic" % "1.5.25",
+  "ch.qos.logback" % "logback-classic" % "1.6.5",
   "com.google.api-client" % "google-api-client" % "1.25.0" excludeAll ExclusionRule(organization = "com.google.guava"),
   "com.google.apis" % "google-api-services-admin-directory" % "directory_v1-rev118-1.25.0" excludeAll
     ExclusionRule(organization = "com.google.guava"),
@@ -81,7 +82,7 @@ libraryDependencies ++= Seq(
 
   // Not used directly, but keep Jackson up to date plus main+test synced for IntelliJ
   "com.fasterxml.jackson.core" % "jackson-core" % jacksonV,
-  "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonV % Test,
+  "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonAnnotationsV % Test,
   "com.fasterxml.jackson.core" % "jackson-databind" % jacksonV % Test,
 
   "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaV % Test,
@@ -99,6 +100,18 @@ libraryDependencies ++= Seq(
     // these included libs cause conflicts during sbt assembly
     ExclusionRule(organization = "com.google.protobuf"),
     ExclusionRule(organization = "com.squareup.okhttp3")),
+)
+
+// version overrides for transitive dependencies
+dependencyOverrides ++= Seq(
+  "com.google.code.gson" % "gson" % "2.14.0",
+  "io.gsonfire" % "gson-fire" % "1.9.0",
+  "io.swagger" % "swagger-annotations" % "1.6.16",
+  "org.apache.commons" % "commons-lang3" % "3.21.0",
+  "commons-codec" % "commons-codec" % "1.22.1",
+  "commons-io" % "commons-io" % "2.22.0",
+  "org.apache.commons" % "commons-compress" % "1.28.0",
+  "org.yaml" % "snakeyaml" % "2.7",
 )
 
 // Flyway may be run with system properties:

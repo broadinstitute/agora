@@ -52,8 +52,8 @@ resolvers += "artifactory-releases" at artifactory + "libs-release"
 
 resolvers += "artifactory-snapshots" at artifactory + "libs-snapshot"
 
-val workbenchLibV = "21b215b"
-val workbenchOauth2V = s"0.11-$workbenchLibV"
+val workbenchLibV = "b3c715c"
+val workbenchOauth2V = s"0.12-$workbenchLibV"
 
 libraryDependencies ++= Seq(
   "ch.qos.logback" % "logback-classic" % "1.6.5",
@@ -76,7 +76,7 @@ libraryDependencies ++= Seq(
 
   // ficus was being pulled in transitively from wdl-draft2 previously, now made explicit
   "com.iheart" %% "ficus" % "1.5.0",
-  "org.broadinstitute.dsde.workbench" %% "workbench-util" % "0.6-65bba14",
+  "org.broadinstitute.dsde.workbench" %% "workbench-util" % s"0.10-$workbenchLibV",
   "org.broadinstitute.dsde.workbench" %% "workbench-model" % s"0.21-$workbenchLibV",
   "org.mongodb.scala" %% "mongo-scala-driver" % "4.1.0",
 

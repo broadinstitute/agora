@@ -112,6 +112,9 @@ dependencyOverrides ++= Seq(
   "commons-io" % "commons-io" % "2.22.0",
   "org.apache.commons" % "commons-compress" % "1.28.0",
   "org.yaml" % "snakeyaml" % "2.7",
+  "org.testcontainers" % "testcontainers" % "1.21.4",
+  "org.testcontainers" % "mysql"          % "1.21.4",
+  "org.testcontainers" % "mongodb"        % "1.21.4",
 )
 
 // Flyway may be run with system properties:

@@ -44,7 +44,7 @@ val akkaHttpV = "10.2.9"
 val jacksonV = "2.22.3"
 val jacksonAnnotationsV = "2.22"
 val slickV = "3.3.3"
-val testcontainersScalaV = "0.41.8"
+val testcontainersScalaV = "0.43.6"
 
 val artifactory = "https://us-central1-maven.pkg.dev/dsp-artifact-registry/"
 
@@ -52,8 +52,8 @@ resolvers += "artifactory-releases" at artifactory + "libs-release"
 
 resolvers += "artifactory-snapshots" at artifactory + "libs-snapshot"
 
-val workbenchLibV = "21b215b"
-val workbenchOauth2V = s"0.11-$workbenchLibV"
+val workbenchLibV = "b3c715c"
+val workbenchOauth2V = s"0.12-$workbenchLibV"
 
 libraryDependencies ++= Seq(
   "ch.qos.logback" % "logback-classic" % "1.6.5",
@@ -112,6 +112,9 @@ dependencyOverrides ++= Seq(
   "commons-io" % "commons-io" % "2.22.0",
   "org.apache.commons" % "commons-compress" % "1.28.0",
   "org.yaml" % "snakeyaml" % "2.7",
+  "org.testcontainers" % "testcontainers" % "1.21.4",
+  "org.testcontainers" % "mysql"          % "1.21.4",
+  "org.testcontainers" % "mongodb"        % "1.21.4",
 )
 
 // Flyway may be run with system properties:
